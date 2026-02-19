@@ -1,12 +1,13 @@
 # ComputeSDK Benchmarks
 
+[![Benchmarks](https://github.com/computesdk/benchmarks/actions/workflows/benchmarks.yml/badge.svg)](https://github.com/computesdk/benchmarks/actions/workflows/benchmarks.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
 **Independent performance benchmarks for cloud sandbox providers.**
 
-We measure what matters: how fast can developers go from API call to running code? Our benchmarks run daily, results are public, and methodology is open source.
+How fast can you go from API call to running code? We measure it daily, publish everything, and let the numbers speak.
 
-[View Full Methodology](./METHODOLOGY.md) | [Become a Sponsor](./SPONSORSHIP.md)
-
----
+<br>
 
 ## Latest Results
 
@@ -22,95 +23,87 @@ We measure what matters: how fast can developers go from API call to running cod
 | vercel | 2.80s | 2.51s | 3.18s | 10/10 OK |
 <!-- BENCHMARK-RESULTS-END -->
 
-> **TTI (Time to Interactive)** = Total time from API call to first command execution. Lower is better.
+**TTI (Time to Interactive)** = API call to first command execution. Lower is better.
 
----
+<br>
 
 ## What We Measure
 
-**Time to Interactive (TTI)** captures the full developer experience:
-
 ```
-API Request → Infrastructure Provisioning → Environment Ready → First Command Executes
-└──────────────────────────── TTI ────────────────────────────────┘
+API Request → Provisioning → Boot → Ready → First Command
+└───────────────────── TTI ─────────────────────┘
 ```
 
-Each benchmark iteration:
-1. Creates a fresh sandbox via the provider's API
-2. Executes a simple command (`echo "benchmark"`)
-3. Records the total wall-clock time
+Each benchmark:
+1. Creates a fresh sandbox
+2. Runs `echo "benchmark"`
+3. Records wall-clock time
 
-We run **10 iterations per provider, daily**, from a consistent environment. Results include min, max, median, and average times.
+**10 iterations per provider. Every day. Fully automated.**
 
-See [METHODOLOGY.md](./METHODOLOGY.md) for complete technical details.
+[Full methodology →](./METHODOLOGY.md)
 
----
+<br>
 
-## Providers Tested
+## Providers
 
 | Provider | Status |
-|----------|--------|
-| [Daytona](https://daytona.io) | Active |
-| [E2B](https://e2b.dev) | Active |
-| [Modal](https://modal.com) | Active |
-| [Blaxel](https://blaxel.ai) | Active |
-| [Vercel](https://vercel.com) | Active |
+|:---------|:------:|
+| [Daytona](https://daytona.io) | ✓ |
+| [E2B](https://e2b.dev) | ✓ |
+| [Modal](https://modal.com) | ✓ |
+| [Blaxel](https://blaxel.ai) | ✓ |
+| [Vercel](https://vercel.com) | ✓ |
 
-Want your provider included? See [SPONSORSHIP.md](./SPONSORSHIP.md).
+Want in? [See sponsorship →](./SPONSORSHIP.md)
 
----
+<br>
 
 ## Run It Yourself
 
-Everything is open source. Reproduce our results locally:
-
 ```bash
 git clone https://github.com/computesdk/benchmarks.git
-cd benchmarks
-npm install
+cd benchmarks && npm install
 cp env.example .env  # Add your API keys
+npm run bench
 ```
 
-```bash
-npm run bench                    # All providers
-npm run bench -- --provider e2b  # Single provider
-npm run bench -- --iterations 20 # Custom iterations
-```
-
-Results are saved to `results/` as JSON.
-
----
+<br>
 
 ## Transparency
 
-- **Open source**: All benchmark code is public
-- **Raw data**: Every result is committed to this repo
-- **Reproducible**: Anyone can run the same tests
-- **Daily runs**: Automated via GitHub Actions
-- **No editorial control**: Sponsors cannot influence results
+| | |
+|:--|:--|
+| Open source | All benchmark code is public |
+| Raw data | Every result committed to repo |
+| Reproducible | Anyone can run the same tests |
+| Automated | Daily runs via GitHub Actions |
+| Independent | Sponsors cannot influence results |
 
----
-
-## Sponsors
-
-This benchmark is supported by sandbox providers who believe in transparent performance measurement.
-
-Sponsorship includes benchmark participation and helps fund infrastructure for large-scale quarterly tests. **Sponsors have no influence over methodology or results.**
-
-[View sponsorship details →](./SPONSORSHIP.md)
-
----
+<br>
 
 ## Roadmap
 
-- [ ] **Q2 2026**: Launch benchmarks.computesdk.com with historical charts
-- [ ] **Q2 2026**: First 10,000 concurrent sandbox stress test
-- [ ] **Q3 2026**: Add cold start vs warm start metrics
-- [ ] **Q3 2026**: Multi-region testing (US, EU, Asia)
-- [ ] **Q4 2026**: Cost-per-sandbox-minute tracking
+| When | What |
+|:-----|:-----|
+| Q2 2026 | benchmarks.computesdk.com |
+| Q2 2026 | 10,000 concurrent sandbox stress test |
+| Q3 2026 | Cold start vs warm start metrics |
+| Q3 2026 | Multi-region testing |
+| Q4 2026 | Cost-per-sandbox-minute |
+
+<br>
+
+## Sponsors
+
+Sponsorship funds infrastructure for large-scale tests. Sponsors get included in quarterly stress tests and future benchmark categories.
+
+**Sponsors cannot influence methodology or results.**
+
+[Become a sponsor →](./SPONSORSHIP.md)
+
+<br>
 
 ---
 
-## License
-
-MIT. See [LICENSE](./LICENSE).
+MIT License
