@@ -70,8 +70,8 @@ function generateSVG(results: BenchmarkResult[], timestamp: string): string {
     .bg { fill: #ffffff; }
     .header-bg { fill: url(#headerGrad); }
     .table-header-bg { fill: #f6f8fa; }
-    .table-header { font: 600 12px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #57606a; text-transform: uppercase; letter-spacing: 0.5px; }
-    .row { font: 14px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #24292f; }
+    .table-header { font: 600 12px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #57606a; text-transform: uppercase; letter-spacing: 0.5px; }
+    .row { font: 14px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #24292f; }
     .rank { font-weight: 700; fill: #57606a; }
     .rank-1 { fill: #d4a000; }
     .rank-2 { fill: #8a8a8a; }
@@ -84,9 +84,9 @@ function generateSVG(results: BenchmarkResult[], timestamp: string): string {
     .status { fill: #57606a; }
     .divider { stroke: #d0d7de; stroke-width: 1; }
     .border { stroke: #d0d7de; stroke-width: 1; fill: none; }
-    .timestamp { font: 11px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #57606a; }
-    .title { font: bold 28px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #24292f; }
-    .subtitle { font: 14px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #57606a; }
+    .timestamp { font: 11px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #57606a; }
+    .title { font: bold 28px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #24292f; }
+    .subtitle { font: 14px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #57606a; }
     .logo { fill: #24292f; }
   </style>
   
