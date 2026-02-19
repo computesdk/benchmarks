@@ -27,17 +27,13 @@ Each benchmark:
 
 <br>
 
-## Providers
+## Sponsors
 
-| Provider | Status |
-|:---------|:------:|
-| [Daytona](https://daytona.io) | ✓ |
-| [E2B](https://e2b.dev) | ✓ |
-| [Modal](https://modal.com) | ✓ |
-| [Blaxel](https://blaxel.ai) | ✓ |
-| [Vercel](https://vercel.com) | ✓ |
+[Daytona](https://daytona.io) ・ [E2B](https://e2b.dev) ・ [Modal](https://modal.com) ・ [Blaxel](https://blaxel.ai) ・ [Vercel](https://vercel.com)
 
-Want in? [See sponsorship →](./SPONSORSHIP.md)
+Sponsors fund large-scale infrastructure tests. **Sponsors cannot influence methodology or results.**
+
+[Become a sponsor →](./SPONSORSHIP.md)
 
 <br>
 
@@ -73,16 +69,6 @@ npm run bench
 | Q3 2026 | Cold start vs warm start metrics |
 | Q3 2026 | Multi-region testing |
 | Q4 2026 | Cost-per-sandbox-minute |
-
-<br>
-
-## Sponsors
-
-Sponsorship funds infrastructure for large-scale tests. Sponsors get included in quarterly stress tests and future benchmark categories.
-
-**Sponsors cannot influence methodology or results.**
-
-[Become a sponsor →](./SPONSORSHIP.md)
 
 <br>
 
