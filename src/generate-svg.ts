@@ -91,11 +91,10 @@ function generateSVG(results: BenchmarkResult[], timestamp: string): string {
   </style>
   
   <!-- Background -->
-  <rect class="bg" width="${width}" height="${height}" rx="8"/>
-  <rect class="border" x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="8"/>
+  <rect class="bg" width="${width}" height="${height}"/>
   
   <!-- Header section -->
-  <rect class="header-bg" width="${width}" height="${headerHeight}" rx="8"/>
+  <rect class="header-bg" width="${width}" height="${headerHeight}"/>
   <rect class="bg" y="${headerHeight - 8}" width="${width}" height="8"/>
   
   <!-- Logo (black square with white C) -->
@@ -120,9 +119,6 @@ function generateSVG(results: BenchmarkResult[], timestamp: string): string {
   <text class="table-header" x="${cols.min}" y="${tableTop + 28}">Min</text>
   <text class="table-header" x="${cols.max}" y="${tableTop + 28}">Max</text>
   <text class="table-header" x="${cols.status}" y="${tableTop + 28}">Status</text>
-  
-  <!-- Divider -->
-  <line class="divider" x1="0" y1="${tableTop + tableHeaderHeight}" x2="${width}" y2="${tableTop + tableHeaderHeight}"/>
 `;
 
   sorted.forEach((r, i) => {

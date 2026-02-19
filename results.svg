@@ -30,11 +30,10 @@
   </style>
   
   <!-- Background -->
-  <rect class="bg" width="800" height="468" rx="8"/>
-  <rect class="border" x="0.5" y="0.5" width="799" height="467" rx="8"/>
+  <rect class="bg" width="800" height="468"/>
   
   <!-- Header section -->
-  <rect class="header-bg" width="800" height="140" rx="8"/>
+  <rect class="header-bg" width="800" height="140"/>
   <rect class="bg" y="132" width="800" height="8"/>
   
   <!-- Logo (black square with white C) -->
@@ -59,9 +58,6 @@
   <text class="table-header" x="480" y="168">Min</text>
   <text class="table-header" x="600" y="168">Max</text>
   <text class="table-header" x="720" y="168">Status</text>
-  
-  <!-- Divider -->
-  <line class="divider" x1="0" y1="184" x2="800" y2="184"/>
 
   <!-- Row 1 -->
   <text class="rank rank-1" x="40" y="214">1</text>
