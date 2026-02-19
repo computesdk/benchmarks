@@ -1,0 +1,215 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-02-19T17:37:45.943Z",
+  "environment": {
+    "node": "v20.20.0",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "config": {
+    "iterations": 3,
+    "timeoutMs": 120000
+  },
+  "results": [
+    {
+      "provider": "e2b",
+      "iterations": [
+        {
+          "ttiMs": 0,
+          "error": "WebSocket is not available. In Node.js, pass WebSocket implementation:\nimport WebSocket from \"ws\";\nnew Sandbox({ sandboxUrl: \"...\", WebSocket })"
+        },
+        {
+          "ttiMs": 0,
+          "error": "WebSocket is not available. In Node.js, pass WebSocket implementation:\nimport WebSocket from \"ws\";\nnew Sandbox({ sandboxUrl: \"...\", WebSocket })"
+        },
+        {
+          "ttiMs": 0,
+          "error": "WebSocket is not available. In Node.js, pass WebSocket implementation:\nimport WebSocket from \"ws\";\nnew Sandbox({ sandboxUrl: \"...\", WebSocket })"
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "avg": 0
+        }
+      }
+    },
+    {
+      "provider": "vercel",
+      "iterations": [
+        {
+          "ttiMs": 0,
+          "error": "WebSocket is not available. In Node.js, pass WebSocket implementation:\nimport WebSocket from \"ws\";\nnew Sandbox({ sandboxUrl: \"...\", WebSocket })"
+        },
+        {
+          "ttiMs": 0,
+          "error": "WebSocket is not available. In Node.js, pass WebSocket implementation:\nimport WebSocket from \"ws\";\nnew Sandbox({ sandboxUrl: \"...\", WebSocket })"
+        },
+        {
+          "ttiMs": 0,
+          "error": "WebSocket is not available. In Node.js, pass WebSocket implementation:\nimport WebSocket from \"ws\";\nnew Sandbox({ sandboxUrl: \"...\", WebSocket })"
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "avg": 0
+        }
+      }
+    },
+    {
+      "provider": "blaxel",
+      "iterations": [
+        {
+          "ttiMs": 0,
+          "error": "WebSocket is not available. In Node.js, pass WebSocket implementation:\nimport WebSocket from \"ws\";\nnew Sandbox({ sandboxUrl: \"...\", WebSocket })"
+        },
+        {
+          "ttiMs": 0,
+          "error": "WebSocket is not available. In Node.js, pass WebSocket implementation:\nimport WebSocket from \"ws\";\nnew Sandbox({ sandboxUrl: \"...\", WebSocket })"
+        },
+        {
+          "ttiMs": 0,
+          "error": "WebSocket is not available. In Node.js, pass WebSocket implementation:\nimport WebSocket from \"ws\";\nnew Sandbox({ sandboxUrl: \"...\", WebSocket })"
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "avg": 0
+        }
+      }
+    },
+    {
+      "provider": "modal",
+      "iterations": [
+        {
+          "ttiMs": 0,
+          "error": "WebSocket is not available. In Node.js, pass WebSocket implementation:\nimport WebSocket from \"ws\";\nnew Sandbox({ sandboxUrl: \"...\", WebSocket })"
+        },
+        {
+          "ttiMs": 0,
+          "error": "WebSocket is not available. In Node.js, pass WebSocket implementation:\nimport WebSocket from \"ws\";\nnew Sandbox({ sandboxUrl: \"...\", WebSocket })"
+        },
+        {
+          "ttiMs": 0,
+          "error": "WebSocket is not available. In Node.js, pass WebSocket implementation:\nimport WebSocket from \"ws\";\nnew Sandbox({ sandboxUrl: \"...\", WebSocket })"
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "avg": 0
+        }
+      }
+    },
+    {
+      "provider": "daytona",
+      "iterations": [
+        {
+          "ttiMs": 0,
+          "error": "Request timed out after 30000ms"
+        },
+        {
+          "ttiMs": 0,
+          "error": "Request timed out after 30000ms"
+        },
+        {
+          "ttiMs": 0,
+          "error": "Request timed out after 30000ms"
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "avg": 0
+        }
+      }
+    },
+    {
+      "provider": "namespace",
+      "iterations": [
+        {
+          "ttiMs": 0,
+          "error": "WebSocket is not available. In Node.js, pass WebSocket implementation:\nimport WebSocket from \"ws\";\nnew Sandbox({ sandboxUrl: \"...\", WebSocket })"
+        },
+        {
+          "ttiMs": 0,
+          "error": "WebSocket is not available. In Node.js, pass WebSocket implementation:\nimport WebSocket from \"ws\";\nnew Sandbox({ sandboxUrl: \"...\", WebSocket })"
+        },
+        {
+          "ttiMs": 0,
+          "error": "WebSocket is not available. In Node.js, pass WebSocket implementation:\nimport WebSocket from \"ws\";\nnew Sandbox({ sandboxUrl: \"...\", WebSocket })"
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "avg": 0
+        }
+      }
+    },
+    {
+      "provider": "railway",
+      "iterations": [
+        {
+          "ttiMs": 0,
+          "error": "WebSocket is not available. In Node.js, pass WebSocket implementation:\nimport WebSocket from \"ws\";\nnew Sandbox({ sandboxUrl: \"...\", WebSocket })"
+        },
+        {
+          "ttiMs": 0,
+          "error": "WebSocket is not available. In Node.js, pass WebSocket implementation:\nimport WebSocket from \"ws\";\nnew Sandbox({ sandboxUrl: \"...\", WebSocket })"
+        },
+        {
+          "ttiMs": 0,
+          "error": "WebSocket is not available. In Node.js, pass WebSocket implementation:\nimport WebSocket from \"ws\";\nnew Sandbox({ sandboxUrl: \"...\", WebSocket })"
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "avg": 0
+        }
+      }
+    },
+    {
+      "provider": "render",
+      "iterations": [
+        {
+          "ttiMs": 0,
+          "error": "WebSocket is not available. In Node.js, pass WebSocket implementation:\nimport WebSocket from \"ws\";\nnew Sandbox({ sandboxUrl: \"...\", WebSocket })"
+        },
+        {
+          "ttiMs": 0,
+          "error": "WebSocket is not available. In Node.js, pass WebSocket implementation:\nimport WebSocket from \"ws\";\nnew Sandbox({ sandboxUrl: \"...\", WebSocket })"
+        },
+        {
+          "ttiMs": 0,
+          "error": "WebSocket is not available. In Node.js, pass WebSocket implementation:\nimport WebSocket from \"ws\";\nnew Sandbox({ sandboxUrl: \"...\", WebSocket })"
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "avg": 0
+        }
+      }
+    }
+  ]
+}
