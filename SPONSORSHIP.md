@@ -12,7 +12,15 @@ ComputeSDK Benchmarks is becoming the industry standard for measuring cloud sand
 
 **Quarterly Stress Test** — 10,000+ concurrent sandbox creation. Measures performance under real-world pressure: reliability at scale, P50/P95/P99 latencies, failure rates. Results published in quarterly reports.
 
-*More sponsor tests coming soon.*
+### Coming Soon
+
+We're continuously developing new benchmark categories. Sponsors are automatically included in all future tests as they launch.
+
+- **Warm start performance** — Snapshots, templates, pre-warmed pools
+- **Multi-region latency** — US, EU, Asia
+- **Cost efficiency** — $ per sandbox-minute
+- **Long-running stability** — Hours-long session reliability
+- **Resource scaling** — CPU/memory performance under load
 
 ## Why Sponsor?
 
