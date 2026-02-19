@@ -36,11 +36,11 @@ Each benchmark creates a fresh sandbox, runs `echo "benchmark"`, and records wal
 
 ## Transparency
 
-- **Open source** — All benchmark code is public
-- **Raw data** — Every result committed to repo
-- **Reproducible** — Anyone can run the same tests
-- **Automated** — Daily runs via GitHub Actions
-- **Independent** — Sponsors cannot influence results
+- 📖 **Open source** — All benchmark code is public
+- 📊 **Raw data** — Every result committed to repo
+- 🔁 **Reproducible** — Anyone can run the same tests
+- ⚙️ **Automated** — Daily runs via GitHub Actions
+- 🛡️ **Independent** — Sponsors cannot influence results
 
 <br>
 
