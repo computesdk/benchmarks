@@ -17,6 +17,16 @@ Sponsors fund large-scale infrastructure tests. **Sponsors cannot influence meth
 
 <br>
 
+## Transparency
+
+- 📖 **Open source** — All benchmark code is public
+- 📊 **Raw data** — Every result committed to repo
+- 🔁 **Reproducible** — Anyone can run the same tests
+- ⚙️ **Automated** — Daily runs via GitHub Actions
+- 🛡️ **Independent** — Sponsors cannot influence results
+
+<br>
+
 ## What We Measure
 
 **Daily: Time to Interactive (TTI)**
@@ -31,16 +41,6 @@ Each benchmark creates a fresh sandbox, runs `echo "benchmark"`, and records wal
 **Sponsor-only tests coming soon:** Stress tests, warm starts, multi-region, and more. [See roadmap →](#roadmap)
 
 [Full methodology →](./METHODOLOGY.md)
-
-<br>
-
-## Transparency
-
-- 📖 **Open source** — All benchmark code is public
-- 📊 **Raw data** — Every result committed to repo
-- 🔁 **Reproducible** — Anyone can run the same tests
-- ⚙️ **Automated** — Daily runs via GitHub Actions
-- 🛡️ **Independent** — Sponsors cannot influence results
 
 <br>
 
