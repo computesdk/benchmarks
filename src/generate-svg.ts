@@ -93,10 +93,6 @@ function generateSVG(results: BenchmarkResult[], timestamp: string): string {
   <!-- Background -->
   <rect class="bg" width="${width}" height="${height}"/>
   
-  <!-- Header section -->
-  <rect class="header-bg" width="${width}" height="${headerHeight}"/>
-  <rect class="bg" y="${headerHeight - 8}" width="${width}" height="8"/>
-  
   <!-- Logo (black square with white C) -->
   <g transform="translate(${padding}, 24)">
     <rect width="60" height="60" fill="#000000"/>
