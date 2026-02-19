@@ -46,13 +46,11 @@ Each benchmark creates a fresh sandbox, runs `echo "benchmark"`, and records wal
 
 ## Roadmap
 
-| When | What |
-|:-----|:-----|
-| Q2 2026 | benchmarks.computesdk.com |
-| Q2 2026 | 10,000 concurrent sandbox stress test |
-| Q3 2026 | Cold start vs warm start metrics |
-| Q3 2026 | Multi-region testing |
-| Q4 2026 | Cost-per-sandbox-minute |
+- [ ] **Q2 2026** — benchmarks.computesdk.com
+- [ ] **Q2 2026** — 10,000 concurrent sandbox stress test
+- [ ] **Q3 2026** — Cold start vs warm start metrics
+- [ ] **Q3 2026** — Multi-region testing
+- [ ] **Q4 2026** — Cost-per-sandbox-minute
 
 <br>
 
