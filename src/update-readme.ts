@@ -32,6 +32,10 @@ function formatSeconds(ms: number): string {
   return (ms / 1000).toFixed(2) + 's';
 }
 
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 function buildTable(results: BenchmarkResult[]): string {
   const sorted = [...results].sort((a, b) => {
     if (a.skipped && !b.skipped) return 1;
@@ -40,20 +44,32 @@ function buildTable(results: BenchmarkResult[]): string {
   });
 
   const lines: string[] = [];
-  lines.push('| Provider | Median TTI | Min | Max | Status |');
-  lines.push('|----------|-----------|-----|-----|--------|');
+  lines.push('<table width="100%">');
+  lines.push('<thead>');
+  lines.push('<tr>');
+  lines.push('<th align="left">Provider</th>');
+  lines.push('<th align="center">Median TTI</th>');
+  lines.push('<th align="center">Min</th>');
+  lines.push('<th align="center">Max</th>');
+  lines.push('<th align="center">Status</th>');
+  lines.push('</tr>');
+  lines.push('</thead>');
+  lines.push('<tbody>');
 
   for (const r of sorted) {
     if (r.skipped) {
-      lines.push(`| ${r.provider} | -- | -- | -- | Skipped |`);
+      lines.push(`<tr><td>${capitalize(r.provider)}</td><td align="center">--</td><td align="center">--</td><td align="center">--</td><td align="center">Skipped</td></tr>`);
     } else {
       const ok = r.iterations.filter(i => !i.error).length;
       const total = r.iterations.length;
       lines.push(
-        `| ${r.provider} | ${formatSeconds(r.summary.ttiMs.median)} | ${formatSeconds(r.summary.ttiMs.min)} | ${formatSeconds(r.summary.ttiMs.max)} | ${ok}/${total} OK |`
+        `<tr><td>${capitalize(r.provider)}</td><td align="center"><b>${formatSeconds(r.summary.ttiMs.median)}</b></td><td align="center">${formatSeconds(r.summary.ttiMs.min)}</td><td align="center">${formatSeconds(r.summary.ttiMs.max)}</td><td align="center">${ok}/${total}</td></tr>`
       );
     }
   }
+  
+  lines.push('</tbody>');
+  lines.push('</table>');
   return lines.join('\n');
 }
 
@@ -73,7 +89,6 @@ function main() {
   // }
 
   if (direct) {
-    sections.push(`### Direct Mode (provider SDKs only)`);
     sections.push(`> Last run: ${direct.timestamp}`);
     sections.push('');
     sections.push(buildTable(direct.results));
