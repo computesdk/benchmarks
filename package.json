@@ -23,12 +23,13 @@
     "generate-svg": "tsx src/generate-svg.ts"
   },
   "dependencies": {
-    "computesdk": "latest",
-    "@computesdk/e2b": "latest",
-    "@computesdk/daytona": "latest",
     "@computesdk/blaxel": "latest",
+    "@computesdk/daytona": "latest",
+    "@computesdk/e2b": "latest",
     "@computesdk/modal": "latest",
+    "@computesdk/namespace": "^1.1.34",
     "@computesdk/vercel": "latest",
+    "computesdk": "latest",
     "dotenv": "^17.2.1"
   },
   "devDependencies": {
