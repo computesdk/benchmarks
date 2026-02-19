@@ -29,7 +29,7 @@ Each benchmark:
 
 ## Sponsors
 
-[Daytona](https://daytona.io) ・ [E2B](https://e2b.dev) ・ [Modal](https://modal.com) ・ [Blaxel](https://blaxel.ai) ・ [Vercel](https://vercel.com)
+[E2B](https://e2b.dev)
 
 Sponsors fund large-scale infrastructure tests. **Sponsors cannot influence methodology or results.**
 
