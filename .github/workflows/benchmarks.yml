@@ -68,6 +68,7 @@ jobs:
       - run: npm ci
       - name: Run direct mode benchmarks
         env:
+          COMPUTESDK_API_KEY: ${{ secrets.COMPUTESDK_API_KEY }}
           E2B_API_KEY: ${{ secrets.E2B_API_KEY }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
