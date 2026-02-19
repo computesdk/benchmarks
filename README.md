@@ -28,7 +28,7 @@ API Request → Provisioning → Boot → Ready → First Command
 
 Each benchmark creates a fresh sandbox, runs `echo "benchmark"`, and records wall-clock time. 10 iterations per provider, every day, fully automated.
 
-**Coming soon: Stress tests, warm starts, multi-region, and more.** [See roadmap →](#roadmap)
+**Sponsor-only tests coming soon:** Stress tests, warm starts, multi-region, and more. [See roadmap →](#roadmap)
 
 [Full methodology →](./METHODOLOGY.md)
 
