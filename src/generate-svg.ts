@@ -103,7 +103,7 @@ function generateSVG(results: BenchmarkResult[], timestamp: string): string {
   
   <!-- Title -->
   <text class="title" x="${padding + 76}" y="55">Benchmarks</text>
-  <text class="subtitle" x="${padding + 76}" y="78">Independent performance benchmarks for cloud sandbox providers</text>
+  <text class="subtitle" x="${padding + 76}" y="78">Independent performance benchmarks for sandbox providers</text>
   
   <!-- Table header background -->
   <rect class="table-header-bg" y="${tableTop}" width="${width}" height="${tableHeaderHeight}"/>

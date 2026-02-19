@@ -1,6 +1,6 @@
 # Sponsorship
 
-ComputeSDK Benchmarks is becoming the industry standard for measuring cloud sandbox performance.
+ComputeSDK Benchmarks is becoming the industry standard for measuring sandbox performance.
 
 ## Free vs Sponsor
 
