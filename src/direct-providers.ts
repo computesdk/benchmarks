@@ -9,7 +9,7 @@ import type { DirectBenchmarkConfig } from './types.js';
  * Direct mode provider configurations.
  *
  * These use individual provider packages (@computesdk/e2b, etc.) that wrap
- * provider SDKs directly — no ComputeSDK API key or gateway required.
+ * provider SDKs directly — no ComputeSDK API key or orchestrator required.
  */
 export const directProviders: DirectBenchmarkConfig[] = [
   {

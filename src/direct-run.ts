@@ -21,7 +21,7 @@ function getArgValue(args: string[], flag: string): string | undefined {
 }
 
 async function main() {
-  console.log('ComputeSDK Direct Mode Benchmarks (no gateway)');
+  console.log('ComputeSDK Direct Mode Benchmarks (no orchestrator)');
   console.log(`Iterations per provider: ${iterations}`);
   console.log(`Date: ${new Date().toISOString()}\n`);
 

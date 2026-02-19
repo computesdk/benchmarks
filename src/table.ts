@@ -73,14 +73,52 @@ function formatSeconds(ms: number): string {
 }
 
 /**
- * Write results to a JSON file
+ * Round a number to 2 decimal places
+ */
+function round(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+/**
+ * Write results to a JSON file with clean formatting
  */
 export async function writeResultsJson(results: BenchmarkResult[], outPath: string): Promise<void> {
   const fs = await import('fs');
+  const os = await import('os');
+
+  // Clean up floating point noise in results
+  const cleanResults = results.map(r => ({
+    provider: r.provider,
+    iterations: r.iterations.map(i => ({
+      ttiMs: round(i.ttiMs),
+      ...(i.error ? { error: i.error } : {}),
+    })),
+    summary: {
+      ttiMs: {
+        min: round(r.summary.ttiMs.min),
+        max: round(r.summary.ttiMs.max),
+        median: round(r.summary.ttiMs.median),
+        avg: round(r.summary.ttiMs.avg),
+      },
+    },
+    ...(r.skipped ? { skipped: r.skipped, skipReason: r.skipReason } : {}),
+  }));
+
   const output = {
+    version: '1.0',
     timestamp: new Date().toISOString(),
-    results,
+    environment: {
+      node: process.version,
+      platform: os.platform(),
+      arch: os.arch(),
+    },
+    config: {
+      iterations: results[0]?.iterations.length || 0,
+      timeoutMs: 120000,
+    },
+    results: cleanResults,
   };
+
   fs.writeFileSync(outPath, JSON.stringify(output, null, 2));
   console.log(`Results written to ${outPath}`);
 }

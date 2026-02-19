@@ -63,7 +63,7 @@ function main() {
 
   const sections: string[] = [''];
 
-  // TODO: Re-enable magic mode results once gateway benchmarks are stable
+  // TODO: Re-enable magic mode results once orchestrator benchmarks are stable
   // if (magic) {
   //   sections.push(`### Magic Mode (via ComputeSDK Gateway)`);
   //   sections.push(`> Last run: ${magic.timestamp}`);
