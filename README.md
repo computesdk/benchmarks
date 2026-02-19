@@ -14,13 +14,13 @@ How fast can you go from API call to running code? We measure it daily, publish 
 <!-- BENCHMARK-RESULTS-START -->
 > Last run: 2026-02-19T00:30:31.834Z
 
-| Provider | Median TTI | Min | Max | Status |
-|----------|-----------|-----|-----|--------|
-| daytona | 0.29s | 0.18s | 0.87s | 10/10 OK |
-| e2b | 0.41s | 0.36s | 0.69s | 10/10 OK |
-| modal | 1.57s | 1.21s | 2.14s | 10/10 OK |
-| blaxel | 2.70s | 2.66s | 2.79s | 10/10 OK |
-| vercel | 2.80s | 2.51s | 3.18s | 10/10 OK |
+| Provider   | Median TTI   | Min      | Max      | Status     |
+|:-----------|:------------:|:--------:|:--------:|:----------:|
+| Daytona    | **0.29s**    | 0.18s    | 0.87s    | 10/10 |
+| E2B        | **0.41s**    | 0.36s    | 0.69s    | 10/10 |
+| Modal      | **1.57s**    | 1.21s    | 2.14s    | 10/10 |
+| Blaxel     | **2.70s**    | 2.66s    | 2.79s    | 10/10 |
+| Vercel     | **2.80s**    | 2.51s    | 3.18s    | 10/10 |
 <!-- BENCHMARK-RESULTS-END -->
 
 **TTI (Time to Interactive)** = API call to first command execution. Lower is better.
