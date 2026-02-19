@@ -8,6 +8,9 @@ const ROOT = path.resolve(__dirname, '..');
 const RESULTS_DIR = path.join(ROOT, 'results');
 const SVG_PATH = path.join(ROOT, 'results.svg');
 
+// ComputeSDK logo path (white version)
+const LOGO_PATH = `M1036.26,1002.28h237.87l-.93,19.09c-8.38,110.32-49.81,198.3-123.82,262.07-73.09,63.31-170.84,95.43-290.48,95.43-130.81,0-235.55-44.69-311.43-133.6-74.48-87.98-112.65-209.48-112.65-361.23v-60.51c0-96.83,17.7-183.41,51.68-257.43,34.91-74.95,85.19-133.61,149.89-173.63,64.7-40.04,140.12-60.52,225.3-60.52,117.77,0,214.13,32.12,286.29,95.9,72.62,63.3,114.98,153.61,126.15,267.67l1.86,19.08h-238.34l-.93-15.83c-4.65-59.11-20.95-101.94-47.95-127.08-27-25.6-69.83-38.17-127.08-38.17-61.91,0-107.06,20.95-137.33,65.17-31.65,45.15-47.94,117.77-48.87,215.53v74.48c0,102.41,15.36,177.83,45.62,223.91,28.86,44.22,74.01,65.63,137.79,65.63,58.19,0,101.48-12.57,128.95-38.17,26.99-25.14,43.29-66.1,47.48-121.5l.93-16.3Z`;
+
 interface ResultFile {
   timestamp: string;
   results: BenchmarkResult[];
@@ -29,6 +32,7 @@ function formatSeconds(ms: number): string {
 }
 
 function capitalize(s: string): string {
+  if (s.toLowerCase() === 'e2b') return 'E2B';
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
@@ -37,70 +41,116 @@ function generateSVG(results: BenchmarkResult[], timestamp: string): string {
     .filter(r => !r.skipped)
     .sort((a, b) => a.summary.ttiMs.median - b.summary.ttiMs.median);
 
-  const rowHeight = 40;
-  const headerHeight = 50;
-  const padding = 20;
-  const width = 700;
-  const height = headerHeight + (sorted.length * rowHeight) + padding * 2 + 30;
+  const rowHeight = 44;
+  const headerHeight = 140; // Space for logo and title
+  const tableHeaderHeight = 44;
+  const padding = 24;
+  const width = 800;
+  const tableTop = headerHeight;
+  const height = tableTop + tableHeaderHeight + (sorted.length * rowHeight) + padding + 40;
 
   // Column positions
   const cols = {
-    provider: 30,
-    median: 200,
-    min: 350,
-    max: 470,
-    status: 590,
+    rank: 40,
+    provider: 90,
+    median: 320,
+    min: 480,
+    max: 600,
+    status: 720,
   };
 
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <defs>
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1f2e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0d1117;stop-opacity:1" />
+    </linearGradient>
+  </defs>
   <style>
     .bg { fill: #0d1117; }
-    .header-bg { fill: #161b22; }
-    .header { font: bold 14px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #8b949e; }
+    .header-bg { fill: url(#headerGrad); }
+    .table-header-bg { fill: #161b22; }
+    .table-header { font: 600 12px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; }
     .row { font: 14px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #c9d1d9; }
+    .rank { font-weight: 700; fill: #6e7681; }
+    .rank-1 { fill: #ffd700; }
+    .rank-2 { fill: #c0c0c0; }
+    .rank-3 { fill: #cd7f32; }
     .provider { font-weight: 600; fill: #58a6ff; }
-    .median { font-weight: 700; fill: #7ee787; }
+    .median { font-weight: 700; font-size: 15px; }
+    .fast { fill: #7ee787; }
+    .medium { fill: #d29922; }
+    .slow { fill: #f85149; }
     .status { fill: #8b949e; }
     .divider { stroke: #21262d; stroke-width: 1; }
-    .timestamp { font: 12px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #6e7681; }
-    .title { font: bold 16px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #c9d1d9; }
+    .timestamp { font: 11px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #6e7681; }
+    .title { font: bold 28px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #ffffff; }
+    .subtitle { font: 14px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #8b949e; }
+    .logo { fill: #ffffff; }
   </style>
   
   <!-- Background -->
-  <rect class="bg" width="${width}" height="${height}" rx="6"/>
+  <rect class="bg" width="${width}" height="${height}" rx="8"/>
   
-  <!-- Header background -->
-  <rect class="header-bg" x="0" y="0" width="${width}" height="${headerHeight}" rx="6"/>
-  <rect class="bg" x="0" y="6" width="${width}" height="${headerHeight - 6}"/>
-  <rect class="header-bg" x="0" y="0" width="${width}" height="${headerHeight}"/>
+  <!-- Header section -->
+  <rect class="header-bg" width="${width}" height="${headerHeight}" rx="8"/>
+  <rect class="bg" y="${headerHeight - 8}" width="${width}" height="8"/>
   
-  <!-- Header text -->
-  <text class="header" x="${cols.provider}" y="32">Provider</text>
-  <text class="header" x="${cols.median}" y="32">Median TTI</text>
-  <text class="header" x="${cols.min}" y="32">Min</text>
-  <text class="header" x="${cols.max}" y="32">Max</text>
-  <text class="header" x="${cols.status}" y="32">Status</text>
+  <!-- Logo -->
+  <g transform="translate(${padding}, 30) scale(0.05)">
+    <path class="logo" d="${LOGO_PATH}"/>
+  </g>
+  
+  <!-- Title -->
+  <text class="title" x="110" y="68">Benchmarks</text>
+  <text class="subtitle" x="110" y="95">Independent performance benchmarks for cloud sandbox providers</text>
+  
+  <!-- Table header background -->
+  <rect class="table-header-bg" y="${tableTop}" width="${width}" height="${tableHeaderHeight}"/>
+  
+  <!-- Table header text -->
+  <text class="table-header" x="${cols.rank}" y="${tableTop + 28}">#</text>
+  <text class="table-header" x="${cols.provider}" y="${tableTop + 28}">Provider</text>
+  <text class="table-header" x="${cols.median}" y="${tableTop + 28}">Median TTI</text>
+  <text class="table-header" x="${cols.min}" y="${tableTop + 28}">Min</text>
+  <text class="table-header" x="${cols.max}" y="${tableTop + 28}">Max</text>
+  <text class="table-header" x="${cols.status}" y="${tableTop + 28}">Status</text>
   
   <!-- Divider -->
-  <line class="divider" x1="0" y1="${headerHeight}" x2="${width}" y2="${headerHeight}"/>
+  <line class="divider" x1="0" y1="${tableTop + tableHeaderHeight}" x2="${width}" y2="${tableTop + tableHeaderHeight}"/>
 `;
 
   sorted.forEach((r, i) => {
-    const y = headerHeight + padding + (i * rowHeight) + 25;
+    const y = tableTop + tableHeaderHeight + (i * rowHeight) + 30;
     const ok = r.iterations.filter(it => !it.error).length;
     const total = r.iterations.length;
+    const rank = i + 1;
+    const medianMs = r.summary.ttiMs.median;
+    
+    // Color code based on speed
+    let speedClass = 'fast';
+    if (medianMs > 2000) speedClass = 'slow';
+    else if (medianMs > 1000) speedClass = 'medium';
+    
+    // Rank styling
+    let rankClass = 'rank';
+    if (rank === 1) rankClass = 'rank rank-1';
+    else if (rank === 2) rankClass = 'rank rank-2';
+    else if (rank === 3) rankClass = 'rank rank-3';
     
     svg += `
-  <!-- Row ${i + 1} -->
+  <!-- Row ${rank} -->
+  <text class="${rankClass}" x="${cols.rank}" y="${y}">${rank}</text>
   <text class="row provider" x="${cols.provider}" y="${y}">${capitalize(r.provider)}</text>
-  <text class="row median" x="${cols.median}" y="${y}">${formatSeconds(r.summary.ttiMs.median)}</text>
+  <text class="row median ${speedClass}" x="${cols.median}" y="${y}">${formatSeconds(medianMs)}</text>
   <text class="row" x="${cols.min}" y="${y}">${formatSeconds(r.summary.ttiMs.min)}</text>
   <text class="row" x="${cols.max}" y="${y}">${formatSeconds(r.summary.ttiMs.max)}</text>
   <text class="row status" x="${cols.status}" y="${y}">${ok}/${total}</text>
 `;
     
     if (i < sorted.length - 1) {
-      svg += `  <line class="divider" x1="${padding}" y1="${headerHeight + padding + ((i + 1) * rowHeight)}" x2="${width - padding}" y2="${headerHeight + padding + ((i + 1) * rowHeight)}"/>
+      const lineY = tableTop + tableHeaderHeight + ((i + 1) * rowHeight);
+      svg += `  <line class="divider" x1="${padding}" y1="${lineY}" x2="${width - padding}" y2="${lineY}"/>
 `;
     }
   });
@@ -116,7 +166,7 @@ function generateSVG(results: BenchmarkResult[], timestamp: string): string {
   
   svg += `
   <!-- Timestamp -->
-  <text class="timestamp" x="${padding}" y="${height - 12}">Last updated: ${date}</text>
+  <text class="timestamp" x="${padding}" y="${height - 14}">Last updated: ${date}</text>
   
 </svg>`;
 

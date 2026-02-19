@@ -1,75 +1,108 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="700" height="320" viewBox="0 0 700 320">
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="468" viewBox="0 0 800 468">
+  <defs>
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1f2e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0d1117;stop-opacity:1" />
+    </linearGradient>
+  </defs>
   <style>
     .bg { fill: #0d1117; }
-    .header-bg { fill: #161b22; }
-    .header { font: bold 14px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #8b949e; }
+    .header-bg { fill: url(#headerGrad); }
+    .table-header-bg { fill: #161b22; }
+    .table-header { font: 600 12px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; }
     .row { font: 14px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #c9d1d9; }
+    .rank { font-weight: 700; fill: #6e7681; }
+    .rank-1 { fill: #ffd700; }
+    .rank-2 { fill: #c0c0c0; }
+    .rank-3 { fill: #cd7f32; }
     .provider { font-weight: 600; fill: #58a6ff; }
-    .median { font-weight: 700; fill: #7ee787; }
+    .median { font-weight: 700; font-size: 15px; }
+    .fast { fill: #7ee787; }
+    .medium { fill: #d29922; }
+    .slow { fill: #f85149; }
     .status { fill: #8b949e; }
     .divider { stroke: #21262d; stroke-width: 1; }
-    .timestamp { font: 12px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #6e7681; }
-    .title { font: bold 16px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #c9d1d9; }
+    .timestamp { font: 11px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #6e7681; }
+    .title { font: bold 28px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #ffffff; }
+    .subtitle { font: 14px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: #8b949e; }
+    .logo { fill: #ffffff; }
   </style>
   
   <!-- Background -->
-  <rect class="bg" width="700" height="320" rx="6"/>
+  <rect class="bg" width="800" height="468" rx="8"/>
   
-  <!-- Header background -->
-  <rect class="header-bg" x="0" y="0" width="700" height="50" rx="6"/>
-  <rect class="bg" x="0" y="6" width="700" height="44"/>
-  <rect class="header-bg" x="0" y="0" width="700" height="50"/>
+  <!-- Header section -->
+  <rect class="header-bg" width="800" height="140" rx="8"/>
+  <rect class="bg" y="132" width="800" height="8"/>
   
-  <!-- Header text -->
-  <text class="header" x="30" y="32">Provider</text>
-  <text class="header" x="200" y="32">Median TTI</text>
-  <text class="header" x="350" y="32">Min</text>
-  <text class="header" x="470" y="32">Max</text>
-  <text class="header" x="590" y="32">Status</text>
+  <!-- Logo -->
+  <g transform="translate(24, 30) scale(0.05)">
+    <path class="logo" d="M1036.26,1002.28h237.87l-.93,19.09c-8.38,110.32-49.81,198.3-123.82,262.07-73.09,63.31-170.84,95.43-290.48,95.43-130.81,0-235.55-44.69-311.43-133.6-74.48-87.98-112.65-209.48-112.65-361.23v-60.51c0-96.83,17.7-183.41,51.68-257.43,34.91-74.95,85.19-133.61,149.89-173.63,64.7-40.04,140.12-60.52,225.3-60.52,117.77,0,214.13,32.12,286.29,95.9,72.62,63.3,114.98,153.61,126.15,267.67l1.86,19.08h-238.34l-.93-15.83c-4.65-59.11-20.95-101.94-47.95-127.08-27-25.6-69.83-38.17-127.08-38.17-61.91,0-107.06,20.95-137.33,65.17-31.65,45.15-47.94,117.77-48.87,215.53v74.48c0,102.41,15.36,177.83,45.62,223.91,28.86,44.22,74.01,65.63,137.79,65.63,58.19,0,101.48-12.57,128.95-38.17,26.99-25.14,43.29-66.1,47.48-121.5l.93-16.3Z"/>
+  </g>
+  
+  <!-- Title -->
+  <text class="title" x="110" y="68">Benchmarks</text>
+  <text class="subtitle" x="110" y="95">Independent performance benchmarks for cloud sandbox providers</text>
+  
+  <!-- Table header background -->
+  <rect class="table-header-bg" y="140" width="800" height="44"/>
+  
+  <!-- Table header text -->
+  <text class="table-header" x="40" y="168">#</text>
+  <text class="table-header" x="90" y="168">Provider</text>
+  <text class="table-header" x="320" y="168">Median TTI</text>
+  <text class="table-header" x="480" y="168">Min</text>
+  <text class="table-header" x="600" y="168">Max</text>
+  <text class="table-header" x="720" y="168">Status</text>
   
   <!-- Divider -->
-  <line class="divider" x1="0" y1="50" x2="700" y2="50"/>
+  <line class="divider" x1="0" y1="184" x2="800" y2="184"/>
 
   <!-- Row 1 -->
-  <text class="row provider" x="30" y="95">Daytona</text>
-  <text class="row median" x="200" y="95">0.29s</text>
-  <text class="row" x="350" y="95">0.18s</text>
-  <text class="row" x="470" y="95">0.87s</text>
-  <text class="row status" x="590" y="95">10/10</text>
-  <line class="divider" x1="20" y1="110" x2="680" y2="110"/>
+  <text class="rank rank-1" x="40" y="214">1</text>
+  <text class="row provider" x="90" y="214">Daytona</text>
+  <text class="row median fast" x="320" y="214">0.29s</text>
+  <text class="row" x="480" y="214">0.18s</text>
+  <text class="row" x="600" y="214">0.87s</text>
+  <text class="row status" x="720" y="214">10/10</text>
+  <line class="divider" x1="24" y1="228" x2="776" y2="228"/>
 
   <!-- Row 2 -->
-  <text class="row provider" x="30" y="135">E2b</text>
-  <text class="row median" x="200" y="135">0.41s</text>
-  <text class="row" x="350" y="135">0.36s</text>
-  <text class="row" x="470" y="135">0.69s</text>
-  <text class="row status" x="590" y="135">10/10</text>
-  <line class="divider" x1="20" y1="150" x2="680" y2="150"/>
+  <text class="rank rank-2" x="40" y="258">2</text>
+  <text class="row provider" x="90" y="258">E2B</text>
+  <text class="row median fast" x="320" y="258">0.41s</text>
+  <text class="row" x="480" y="258">0.36s</text>
+  <text class="row" x="600" y="258">0.69s</text>
+  <text class="row status" x="720" y="258">10/10</text>
+  <line class="divider" x1="24" y1="272" x2="776" y2="272"/>
 
   <!-- Row 3 -->
-  <text class="row provider" x="30" y="175">Modal</text>
-  <text class="row median" x="200" y="175">1.57s</text>
-  <text class="row" x="350" y="175">1.21s</text>
-  <text class="row" x="470" y="175">2.14s</text>
-  <text class="row status" x="590" y="175">10/10</text>
-  <line class="divider" x1="20" y1="190" x2="680" y2="190"/>
+  <text class="rank rank-3" x="40" y="302">3</text>
+  <text class="row provider" x="90" y="302">Modal</text>
+  <text class="row median medium" x="320" y="302">1.57s</text>
+  <text class="row" x="480" y="302">1.21s</text>
+  <text class="row" x="600" y="302">2.14s</text>
+  <text class="row status" x="720" y="302">10/10</text>
+  <line class="divider" x1="24" y1="316" x2="776" y2="316"/>
 
   <!-- Row 4 -->
-  <text class="row provider" x="30" y="215">Blaxel</text>
-  <text class="row median" x="200" y="215">2.70s</text>
-  <text class="row" x="350" y="215">2.66s</text>
-  <text class="row" x="470" y="215">2.79s</text>
-  <text class="row status" x="590" y="215">10/10</text>
-  <line class="divider" x1="20" y1="230" x2="680" y2="230"/>
+  <text class="rank" x="40" y="346">4</text>
+  <text class="row provider" x="90" y="346">Blaxel</text>
+  <text class="row median slow" x="320" y="346">2.70s</text>
+  <text class="row" x="480" y="346">2.66s</text>
+  <text class="row" x="600" y="346">2.79s</text>
+  <text class="row status" x="720" y="346">10/10</text>
+  <line class="divider" x1="24" y1="360" x2="776" y2="360"/>
 
   <!-- Row 5 -->
-  <text class="row provider" x="30" y="255">Vercel</text>
-  <text class="row median" x="200" y="255">2.80s</text>
-  <text class="row" x="350" y="255">2.51s</text>
-  <text class="row" x="470" y="255">3.18s</text>
-  <text class="row status" x="590" y="255">10/10</text>
+  <text class="rank" x="40" y="390">5</text>
+  <text class="row provider" x="90" y="390">Vercel</text>
+  <text class="row median slow" x="320" y="390">2.80s</text>
+  <text class="row" x="480" y="390">2.51s</text>
+  <text class="row" x="600" y="390">3.18s</text>
+  <text class="row status" x="720" y="390">10/10</text>
 
   <!-- Timestamp -->
-  <text class="timestamp" x="20" y="308">Last updated: Feb 18, 2026, 06:30 PM CST</text>
+  <text class="timestamp" x="24" y="454">Last updated: Feb 18, 2026, 06:30 PM CST</text>
   
 </svg>

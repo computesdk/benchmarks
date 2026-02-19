@@ -1,17 +1,7 @@
-# ComputeSDK Benchmarks
+![ComputeSDK Benchmarks](./results.svg)
 
 [![Benchmarks](https://github.com/computesdk/benchmarks/actions/workflows/benchmarks.yml/badge.svg)](https://github.com/computesdk/benchmarks/actions/workflows/benchmarks.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-
-**Independent performance benchmarks for cloud sandbox providers.**
-
-How fast can you go from API call to running code? We measure it daily, publish everything, and let the numbers speak.
-
-<br>
-
-## Latest Results
-
-![Benchmark Results](./results.svg)
 
 **TTI (Time to Interactive)** = API call to first command execution. Lower is better.
 
