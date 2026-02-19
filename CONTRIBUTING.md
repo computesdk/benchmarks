@@ -108,5 +108,4 @@ npm run bench:direct -- --iterations 5
 ## Questions
 
 - **General questions**: Open a GitHub issue
-- **Sponsorship**: sponsors@computesdk.com
 - **Security issues**: security@computesdk.com (do not open public issues)

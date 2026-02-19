@@ -103,36 +103,6 @@ For each provider, we report:
 
 We emphasize **median** as the primary metric because it's robust to outliers and represents the typical developer experience.
 
-## Benchmark Modes
-
-### Direct Mode
-
-Tests each provider's native SDK without any abstraction layer.
-
-```typescript
-import { E2B } from '@computesdk/e2b';
-
-const compute = new E2B({ apiKey: process.env.E2B_API_KEY });
-const sandbox = await compute.sandbox.create();
-```
-
-**Purpose**: Measure raw provider performance.
-
-### Magic Mode
-
-Tests providers through the ComputeSDK orchestrator.
-
-```typescript
-import { compute } from 'computesdk';
-
-compute.setConfig({ provider: 'e2b', ... });
-const sandbox = await compute.sandbox.create();
-```
-
-**Purpose**: Measure the experience when using ComputeSDK's abstraction layer.
-
-**Note**: Magic Mode includes additional latency from the ComputeSDK orchestrator (Tributary routing + Daemon protocol). This is intentional—it measures the real-world experience for ComputeSDK users.
-
 ## Environment & Infrastructure
 
 ### Test Runner
@@ -154,6 +124,28 @@ We do not:
 - Use dedicated/reserved network capacity
 - Retry failed requests (failures count against success rate)
 
+## Quarterly Stress Tests
+
+Starting Q2 2026, we're introducing large-scale stress tests that go beyond daily TTI measurements.
+
+### What We're Exploring
+
+**Concurrency at scale** — How do providers perform when spinning up thousands of sandboxes simultaneously? Daily tests measure one-at-a-time performance. Real workloads often burst.
+
+Example test: *Spin up 10,000 sandboxes concurrently, measure time until all are interactive, track failure rates.*
+
+**Sustained load** — Can providers maintain performance over extended periods under continuous demand?
+
+**Recovery behavior** — How quickly do providers recover from partial failures or rate limiting?
+
+### Why This Matters
+
+Daily TTI benchmarks show best-case, low-contention performance. Stress tests reveal how providers behave when infrastructure is under pressure—which is when reliability matters most.
+
+Methodology details will be published before the first quarterly test runs.
+
+---
+
 ## Fairness & Limitations
 
 ### What This Benchmark Shows
@@ -162,26 +154,13 @@ We do not:
 - Typical cold-start times for on-demand sandbox creation
 - Provider reliability (success rate over time)
 
-### What This Benchmark Does NOT Show
+### What This Benchmark Does NOT Show (Yet)
 
 - Performance with pre-warmed pools or snapshots
-- Performance under high concurrency (coming Q2 2026)
-- Geographic variation (coming Q3 2026)
+- Performance under high concurrency
+- Geographic variation
 - Cost efficiency
 - Feature differences between providers
-
-### Provider-Specific Notes
-
-Some providers offer optimizations that aren't captured in our default test:
-
-| Provider | Available Optimization | Benchmark Status |
-|----------|----------------------|------------------|
-| E2B | Snapshots | Not tested (yet) |
-| Daytona | Templates | Not tested (yet) |
-| Modal | Warm containers | Not tested (yet) |
-| Namespace | Liquid pools | Not tested (yet) |
-
-We plan to add warm-start benchmarks in Q3 2026.
 
 ## Data & Reproducibility
 
@@ -249,11 +228,4 @@ npm run bench:direct -- --iterations 10
 
 ## Questions & Disputes
 
-Providers or users who have questions about methodology or wish to dispute results should open a GitHub issue. We commit to:
-
-- Responding within 5 business days
-- Investigating any reproducible discrepancies
-- Updating methodology if we identify unfairness
-- Publishing corrections if errors are found
-
-Contact: benchmarks@computesdk.com
+Providers or users who have questions about methodology or wish to dispute results should open a GitHub issue.

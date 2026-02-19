@@ -1,96 +1,65 @@
 # Sponsorship
 
-ComputeSDK Benchmarks is an independent project that provides transparent, reproducible performance data for cloud sandbox providers. Sponsorship supports ongoing operations and enables large-scale testing.
+ComputeSDK Benchmarks is becoming the industry standard for measuring cloud sandbox performance.
+
+## Free vs Sponsor
+
+**Daily TTI benchmarks are free.** Any provider can submit a PR to be included in our daily Time to Interactive tests. We'll review and merge integrations that meet our technical requirements.
+
+**Sponsor tests are sponsor-only.** These are additional benchmark categories that require significant infrastructure or ongoing investment to run. Sponsors fund these tests and are included in them.
+
+### Current Sponsor Tests
+
+**Quarterly Stress Test** — 10,000+ concurrent sandbox creation. Measures performance under real-world pressure: reliability at scale, P50/P95/P99 latencies, failure rates. Results published in quarterly reports.
+
+*More sponsor tests coming soon.*
 
 ## Why Sponsor?
 
-**For the ecosystem**: Developers deserve objective performance data when choosing infrastructure. Your sponsorship funds independent measurement that benefits everyone.
+Daily TTI shows best-case, one-at-a-time performance. Sponsor tests show how you perform when it matters—at scale, under load, in real-world conditions. That's what sophisticated buyers care about.
 
-**For your company**: Participation in a credible, third-party benchmark demonstrates confidence in your product and provides ongoing performance visibility.
+## What Sponsors Get
 
-## What Sponsorship Includes
+**Sponsor tests** — Inclusion in all sponsor-only benchmark categories.
 
-### Benchmark Participation
+**Logo & badge** — Your logo on benchmarks.computesdk.com and in quarterly reports. Plus a "ComputeSDK Benchmarked" badge to use on your own site.
 
-- Your provider included in daily automated benchmarks
-- Results published alongside all other providers
-- Historical data tracked over time
-- Listed on benchmarks.computesdk.com (launching Q2 2026)
+**Technical integration** — We build and maintain your SDK integration. You provide API access, we handle the rest.
 
-### Quarterly Stress Tests
+**Priority support** — Direct line for integration questions and early access to new benchmark categories.
 
-Starting Q2 2026, sponsors participate in large-scale concurrency tests:
+## What Sponsors Don't Get
 
-- **10,000 concurrent sandbox** creation and execution
-- Reliability metrics under load
-- P50/P95/P99 latency distributions
-- Results published in quarterly reports
+Sponsors **cannot** influence results. Period.
 
-### Technical Integration
+- No preview before publication
+- No editing unfavorable results
+- No preferential test conditions
+- No methodology input
 
-- We implement and maintain the SDK integration for your provider
-- Direct line to our engineering team for integration questions
-- Early access to new benchmark categories before public release
-
-## What Sponsorship Does NOT Include
-
-To maintain credibility, sponsors **cannot**:
-
-- Influence benchmark methodology
-- Preview or edit results before publication
-- Remove unfavorable results
-- Receive preferential test conditions
-
-All providers are tested with identical methodology. Results reflect actual measured performance.
+All providers are tested identically. Results reflect actual measured performance.
 
 ## Pricing
 
-**$10,000/month** — Includes everything above.
+**$10,000/month**
 
 - Billed quarterly ($30,000/quarter)
-- Annual commitment available at $100,000/year (2 months free)
+- Annual: $100,000/year (2 months free)
 
-## Current Sponsors
+## Get Started
 
-Providers currently participating in ComputeSDK Benchmarks:
-
-- Daytona
-- E2B
-- Modal
-- Blaxel
-- Vercel
-- Railway
-- Namespace
-- Render
-
-## How to Get Started
-
-1. **Email**: sponsors@computesdk.com
-2. **Include**: Provider name, technical contact, billing contact
-3. **We'll respond** within 2 business days with integration details
+[Become a Sponsor](https://buy.stripe.com/3cIdR2aJ58r5eNA8Su5AQ01) or email garrison@computesdk.com with questions.
 
 ## FAQ
 
-**Q: Can we run benchmarks from our own infrastructure?**
+**What if we're slower than competitors?**
 
-A: Our published results run from GitHub Actions for consistency. You're welcome to run the open-source benchmark locally to verify our methodology.
+Results are published as measured. Use it as motivation to optimize.
 
-**Q: What if our performance is slower than competitors?**
+**Can we see results before they go live?**
 
-A: Results are published as measured. Many factors affect TTI, and slower providers often have other strengths (features, pricing, reliability). We recommend using benchmark participation as motivation to optimize cold-start performance.
+No. Results publish automatically via CI.
 
-**Q: Can we see results before they're published?**
+**Can we sponsor without being benchmarked?**
 
-A: No. Results are published automatically via CI. We don't manually review or gate results.
-
-**Q: What if we find a bug in the benchmark code?**
-
-A: Please open a GitHub issue or email us. We'll investigate and fix legitimate bugs. If a bug affected published results, we'll publish corrected data.
-
-**Q: Can we sponsor without being benchmarked?**
-
-A: No. Sponsorship and benchmark participation are bundled. We don't accept sponsorship from providers who don't want their performance measured.
-
----
-
-Contact: sponsors@computesdk.com
+No. If you don't want to be measured, we don't want your money.

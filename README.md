@@ -11,7 +11,6 @@ We measure what matters: how fast can developers go from API call to running cod
 ## Latest Results
 
 <!-- BENCHMARK-RESULTS-START -->
-### Direct Mode
 > Last run: 2026-02-19T00:30:31.834Z
 
 | Provider | Median TTI | Min | Max | Status |
@@ -49,26 +48,15 @@ See [METHODOLOGY.md](./METHODOLOGY.md) for complete technical details.
 
 ## Providers Tested
 
-| Provider | Status | Notes |
-|----------|--------|-------|
-| [Daytona](https://daytona.io) | Active | |
-| [E2B](https://e2b.dev) | Active | |
-| [Modal](https://modal.com) | Active | |
-| [Blaxel](https://blaxel.ai) | Active | |
-| [Vercel](https://vercel.com) | Active | Fluid Compute |
-| [Railway](https://railway.app) | Active | Magic Mode only |
-| [Namespace](https://namespace.so) | Active | Magic Mode only |
-| [Render](https://render.com) | Active | Magic Mode only |
+| Provider | Status |
+|----------|--------|
+| [Daytona](https://daytona.io) | Active |
+| [E2B](https://e2b.dev) | Active |
+| [Modal](https://modal.com) | Active |
+| [Blaxel](https://blaxel.ai) | Active |
+| [Vercel](https://vercel.com) | Active |
 
 Want your provider included? See [SPONSORSHIP.md](./SPONSORSHIP.md).
-
----
-
-## Benchmark Modes
-
-**Direct Mode** — Tests each provider's native SDK directly. Measures raw provider performance.
-
-**Magic Mode** — Routes through the ComputeSDK orchestrator. Measures the unified SDK experience across all providers.
 
 ---
 
@@ -84,17 +72,9 @@ cp env.example .env  # Add your API keys
 ```
 
 ```bash
-# Direct mode (provider SDKs)
-npm run bench:direct
-
-# Magic mode (ComputeSDK orchestrator)
-npm run bench
-
-# Single provider
-npm run bench:direct:e2b
-
-# Custom iterations
-npm run bench:direct -- --iterations 20
+npm run bench                    # All providers
+npm run bench -- --provider e2b  # Single provider
+npm run bench -- --iterations 20 # Custom iterations
 ```
 
 Results are saved to `results/` as JSON.
