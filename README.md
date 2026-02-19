@@ -24,16 +24,6 @@ Each benchmark creates a fresh sandbox, runs `echo "benchmark"`, and records wal
 
 <br>
 
-## Sponsors
-
-<a href="https://e2b.dev"><img src="./logos/e2b.svg" alt="E2B" height="40"></a>
-
-Sponsors fund large-scale infrastructure tests. **Sponsors cannot influence methodology or results.**
-
-[Become a sponsor →](./SPONSORSHIP.md)
-
-<br>
-
 ## Transparency
 
 - 📖 **Open source** — All benchmark code is public
@@ -41,6 +31,16 @@ Sponsors fund large-scale infrastructure tests. **Sponsors cannot influence meth
 - 🔁 **Reproducible** — Anyone can run the same tests
 - ⚙️ **Automated** — Daily runs via GitHub Actions
 - 🛡️ **Independent** — Sponsors cannot influence results
+
+<br>
+
+## Sponsors
+
+<a href="https://e2b.dev"><img src="./logos/e2b.svg" alt="E2B" height="40"></a>
+
+Sponsors fund large-scale infrastructure tests. **Sponsors cannot influence methodology or results.**
+
+[Become a sponsor →](./SPONSORSHIP.md)
 
 <br>
 
