@@ -5,8 +5,6 @@
 
 **TTI (Time to Interactive)** = API call to first command execution. Lower is better.
 
-**Want your provider here?** [Become a sponsor →](./SPONSORSHIP.md)
-
 <br>
 
 ## Sponsors
