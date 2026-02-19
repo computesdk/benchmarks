@@ -25,6 +25,8 @@ How fast can you go from API call to running code? We measure it daily, publish 
 
 **TTI (Time to Interactive)** = API call to first command execution. Lower is better.
 
+**Want your provider here?** [Become a sponsor →](./SPONSORSHIP.md)
+
 <br>
 
 ## What We Measure
