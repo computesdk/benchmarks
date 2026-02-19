@@ -3,6 +3,7 @@ import { daytona } from '@computesdk/daytona';
 import { blaxel } from '@computesdk/blaxel';
 import { modal } from '@computesdk/modal';
 import { vercel } from '@computesdk/vercel';
+import { namespace } from '@computesdk/namespace';
 import type { DirectBenchmarkConfig } from './types.js';
 
 /**
@@ -36,5 +37,10 @@ export const directProviders: DirectBenchmarkConfig[] = [
     name: 'vercel',
     requiredEnvVars: ['VERCEL_TOKEN', 'VERCEL_TEAM_ID', 'VERCEL_PROJECT_ID'],
     createCompute: () => vercel({ token: process.env.VERCEL_TOKEN!, teamId: process.env.VERCEL_TEAM_ID!, projectId: process.env.VERCEL_PROJECT_ID! }),
+  },
+  {
+    name: 'namespace',
+    requiredEnvVars: ['NSC_TOKEN'],
+    createCompute: () => namespace({ token: process.env.NSC_TOKEN! }),
   },
 ];

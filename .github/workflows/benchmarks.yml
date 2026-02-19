@@ -77,6 +77,7 @@ jobs:
           MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
           MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
           DAYTONA_API_KEY: ${{ secrets.DAYTONA_API_KEY }}
+          NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
         run: npm run bench:direct -- --iterations ${{ github.event.inputs.iterations || '5' }}
       - uses: actions/upload-artifact@v4
         with:
