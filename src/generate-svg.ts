@@ -100,7 +100,7 @@ function generateSVG(results: BenchmarkResult[], timestamp: string): string {
   
   <!-- Logo (black square with white C) -->
   <g transform="translate(${padding}, 24)">
-    <rect width="60" height="60" rx="8" fill="#000000"/>
+    <rect width="60" height="60" fill="#000000"/>
     <g transform="scale(0.035) translate(0, 0)">
       <path fill="#ffffff" d="${LOGO_C_PATH}"/>
     </g>
