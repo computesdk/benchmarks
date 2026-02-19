@@ -63,13 +63,14 @@ function main() {
 
   const sections: string[] = [''];
 
-  if (magic) {
-    sections.push(`### Magic Mode (via ComputeSDK Gateway)`);
-    sections.push(`> Last run: ${magic.timestamp}`);
-    sections.push('');
-    sections.push(buildTable(magic.results));
-    sections.push('');
-  }
+  // TODO: Re-enable magic mode results once gateway benchmarks are stable
+  // if (magic) {
+  //   sections.push(`### Magic Mode (via ComputeSDK Gateway)`);
+  //   sections.push(`> Last run: ${magic.timestamp}`);
+  //   sections.push('');
+  //   sections.push(buildTable(magic.results));
+  //   sections.push('');
+  // }
 
   if (direct) {
     sections.push(`### Direct Mode (provider SDKs only)`);
