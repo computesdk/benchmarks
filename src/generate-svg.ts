@@ -42,11 +42,11 @@ function generateSVG(results: BenchmarkResult[], timestamp: string): string {
     .sort((a, b) => a.summary.ttiMs.median - b.summary.ttiMs.median);
 
   const rowHeight = 44;
-  const headerHeight = 140; // Space for logo and title
+  const headerHeight = 110; // Space for logo and title
   const tableHeaderHeight = 44;
   const padding = 24;
   const width = 800;
-  const tableTop = headerHeight;
+  const tableTop = headerHeight + padding; // Add padding between header and table
   const height = tableTop + tableHeaderHeight + (sorted.length * rowHeight) + padding + 40;
 
   // Column positions
