@@ -26,7 +26,7 @@ export const directProviders: DirectBenchmarkConfig[] = [
   {
     name: 'blaxel',
     requiredEnvVars: ['BL_API_KEY', 'BL_WORKSPACE'],
-    createCompute: () => blaxel({ apiKey: process.env.BL_API_KEY!, workspace: process.env.BL_WORKSPACE! }),
+    createCompute: () => blaxel({ apiKey: process.env.BL_API_KEY!, workspace: process.env.BL_WORKSPACE!, image: "blaxel/benchmark:latest", region: "us-was-1" }),
   },
   {
     name: 'modal',
