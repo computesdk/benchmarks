@@ -23,13 +23,13 @@
     "generate-svg": "tsx src/generate-svg.ts"
   },
   "dependencies": {
-    "@computesdk/blaxel": "latest",
-    "@computesdk/daytona": "latest",
-    "@computesdk/e2b": "latest",
-    "@computesdk/modal": "latest",
+    "@computesdk/blaxel": "^1.5.7",
+    "@computesdk/daytona": "^1.7.14",
+    "@computesdk/e2b": "^1.7.34",
+    "@computesdk/modal": "^1.8.29",
     "@computesdk/namespace": "^1.2.0",
-    "@computesdk/vercel": "latest",
-    "computesdk": "latest",
+    "@computesdk/vercel": "^1.7.13",
+    "computesdk": "^2.2.1",
     "dotenv": "^17.2.1"
   },
   "devDependencies": {
