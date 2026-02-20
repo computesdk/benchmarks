@@ -13,7 +13,7 @@ config({ path: path.resolve(__dirname, '../.env') });
 // Parse CLI args
 const args = process.argv.slice(2);
 const providerFilter = getArgValue(args, '--provider');
-const iterations = parseInt(getArgValue(args, '--iterations') || '3', 10);
+const iterations = parseInt(getArgValue(args, '--iterations') || '10', 10);
 
 function getArgValue(args: string[], flag: string): string | undefined {
   const idx = args.indexOf(flag);
