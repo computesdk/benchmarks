@@ -1,0 +1,316 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-02-21T01:11:59.563Z",
+  "environment": {
+    "node": "v24.13.1",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "config": {
+    "iterations": 10,
+    "timeoutMs": 120000
+  },
+  "results": [
+    {
+      "provider": "e2b",
+      "iterations": [
+        {
+          "ttiMs": 474.06
+        },
+        {
+          "ttiMs": 399.43
+        },
+        {
+          "ttiMs": 234.34
+        },
+        {
+          "ttiMs": 235.01
+        },
+        {
+          "ttiMs": 212.56
+        },
+        {
+          "ttiMs": 231.59
+        },
+        {
+          "ttiMs": 369.8
+        },
+        {
+          "ttiMs": 233.3
+        },
+        {
+          "ttiMs": 233.49
+        },
+        {
+          "ttiMs": 247.2
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 212.56,
+          "max": 474.06,
+          "median": 234.68,
+          "avg": 287.08
+        }
+      }
+    },
+    {
+      "provider": "daytona",
+      "iterations": [
+        {
+          "ttiMs": 236.14
+        },
+        {
+          "ttiMs": 191.97
+        },
+        {
+          "ttiMs": 361.51
+        },
+        {
+          "ttiMs": 201.79
+        },
+        {
+          "ttiMs": 146.32
+        },
+        {
+          "ttiMs": 216.53
+        },
+        {
+          "ttiMs": 147.27
+        },
+        {
+          "ttiMs": 255.55
+        },
+        {
+          "ttiMs": 514.99
+        },
+        {
+          "ttiMs": 139.87
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 139.87,
+          "max": 514.99,
+          "median": 209.16,
+          "avg": 241.19
+        }
+      }
+    },
+    {
+      "provider": "blaxel",
+      "iterations": [
+        {
+          "ttiMs": 1929.88
+        },
+        {
+          "ttiMs": 1628.61
+        },
+        {
+          "ttiMs": 1710.37
+        },
+        {
+          "ttiMs": 1663.92
+        },
+        {
+          "ttiMs": 1615.48
+        },
+        {
+          "ttiMs": 1616.1
+        },
+        {
+          "ttiMs": 1672.4
+        },
+        {
+          "ttiMs": 1648.47
+        },
+        {
+          "ttiMs": 1626.93
+        },
+        {
+          "ttiMs": 1623.8
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 1615.48,
+          "max": 1929.88,
+          "median": 1638.54,
+          "avg": 1673.6
+        }
+      }
+    },
+    {
+      "provider": "modal",
+      "iterations": [
+        {
+          "ttiMs": 1601.51
+        },
+        {
+          "ttiMs": 1916.14
+        },
+        {
+          "ttiMs": 1867.09
+        },
+        {
+          "ttiMs": 2869.17
+        },
+        {
+          "ttiMs": 1731.84
+        },
+        {
+          "ttiMs": 2156.01
+        },
+        {
+          "ttiMs": 2054.9
+        },
+        {
+          "ttiMs": 1696.58
+        },
+        {
+          "ttiMs": 1623.48
+        },
+        {
+          "ttiMs": 1708.26
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 1601.51,
+          "max": 2869.17,
+          "median": 1799.46,
+          "avg": 1922.5
+        }
+      }
+    },
+    {
+      "provider": "vercel",
+      "iterations": [
+        {
+          "ttiMs": 2857.53
+        },
+        {
+          "ttiMs": 2682.04
+        },
+        {
+          "ttiMs": 2441.82
+        },
+        {
+          "ttiMs": 2864.81
+        },
+        {
+          "ttiMs": 2712.76
+        },
+        {
+          "ttiMs": 2451.37
+        },
+        {
+          "ttiMs": 2535.26
+        },
+        {
+          "ttiMs": 3014.55
+        },
+        {
+          "ttiMs": 2354.3
+        },
+        {
+          "ttiMs": 2738.87
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 2354.3,
+          "max": 3014.55,
+          "median": 2697.4,
+          "avg": 2665.33
+        }
+      }
+    },
+    {
+      "provider": "namespace",
+      "iterations": [
+        {
+          "ttiMs": 10245.37
+        },
+        {
+          "ttiMs": 5993.4
+        },
+        {
+          "ttiMs": 4634.64
+        },
+        {
+          "ttiMs": 5855.83
+        },
+        {
+          "ttiMs": 5789.83
+        },
+        {
+          "ttiMs": 4788.53
+        },
+        {
+          "ttiMs": 5692.32
+        },
+        {
+          "ttiMs": 5709.81
+        },
+        {
+          "ttiMs": 5811.4
+        },
+        {
+          "ttiMs": 5939.84
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 4634.64,
+          "max": 10245.37,
+          "median": 5800.62,
+          "avg": 6046.1
+        }
+      }
+    },
+    {
+      "provider": "railway",
+      "iterations": [
+        {
+          "ttiMs": 10976.81
+        },
+        {
+          "ttiMs": 11821.27
+        },
+        {
+          "ttiMs": 10916.87
+        },
+        {
+          "ttiMs": 12996.72
+        },
+        {
+          "ttiMs": 12856.93
+        },
+        {
+          "ttiMs": 10750.6
+        },
+        {
+          "ttiMs": 11481.89
+        },
+        {
+          "ttiMs": 6850.21
+        },
+        {
+          "ttiMs": 12995.88
+        },
+        {
+          "ttiMs": 10680.27
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 6850.21,
+          "max": 12996.72,
+          "median": 11229.35,
+          "avg": 11232.75
+        }
+      }
+    }
+  ]
+}
