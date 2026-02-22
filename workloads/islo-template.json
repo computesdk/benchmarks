@@ -1,0 +1,6 @@
+{
+  "name": "islo-template",
+  "setupCommand": "git clone --depth 1 https://github.com/your-org/your-repo.git /workspace/repo && cd /workspace/repo && npm ci",
+  "command": "cd /workspace/repo && npm test",
+  "timeoutMs": 300000
+}

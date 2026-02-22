@@ -4,6 +4,7 @@ import { blaxel } from '@computesdk/blaxel';
 import { modal } from '@computesdk/modal';
 import { vercel } from '@computesdk/vercel';
 import { compute } from 'computesdk';
+import { createIsloCompute } from './islo-provider.js';
 import type { ProviderConfig } from './types.js';
 
 /**
@@ -38,6 +39,21 @@ export const providers: ProviderConfig[] = [
     name: 'vercel',
     requiredEnvVars: ['VERCEL_TOKEN', 'VERCEL_TEAM_ID', 'VERCEL_PROJECT_ID'],
     createCompute: () => vercel({ token: process.env.VERCEL_TOKEN!, teamId: process.env.VERCEL_TEAM_ID!, projectId: process.env.VERCEL_PROJECT_ID! }),
+  },
+  {
+    name: 'islo',
+    requiredEnvVars: ['ISLO_API_URL', 'ISLO_BEARER_TOKEN'],
+    createCompute: () =>
+      createIsloCompute({
+        baseUrl: process.env.ISLO_API_URL!,
+        token: process.env.ISLO_BEARER_TOKEN!,
+        tenantPublicId: process.env.ISLO_PUBLIC_TENANT_ID,
+        userPublicId: process.env.ISLO_PUBLIC_USER_ID,
+        image: process.env.ISLO_IMAGE,
+        vcpus: parseOptionalInt(process.env.ISLO_VCPUS),
+        memoryMb: parseOptionalInt(process.env.ISLO_MEMORY_MB),
+        diskGb: parseOptionalInt(process.env.ISLO_DISK_GB),
+      }),
   },
   // --- Automatic mode (via ComputeSDK gateway) ---
   {
@@ -77,3 +93,11 @@ export const providers: ProviderConfig[] = [
   //   },
   // },
 ];
+
+function parseOptionalInt(value: string | undefined): number | undefined {
+  if (!value) {
+    return undefined;
+  }
+  const parsed = parseInt(value, 10);
+  return Number.isInteger(parsed) ? parsed : undefined;
+}

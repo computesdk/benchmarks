@@ -26,6 +26,66 @@ Each benchmark creates a fresh sandbox, runs `echo "benchmark"`, and records wal
 
 <br>
 
+## Benchmark Your Workloads
+
+You can benchmark real project commands (for example setup + test/build) in addition to TTI.
+
+### 1) Use a workload file
+
+```bash
+npm run bench -- \
+  --provider namespace \
+  --iterations 3 \
+  --workload-file workloads/islo-frontend-build.json
+```
+
+Template file for custom repos: `workloads/islo-template.json`.
+
+### 2) Pass commands directly
+
+```bash
+npm run bench -- \
+  --provider e2b \
+  --iterations 3 \
+  --setup-cmd 'git clone --depth 1 https://github.com/your-org/your-repo.git /workspace/repo && cd /workspace/repo && npm ci' \
+  --workload-cmd 'cd /workspace/repo && npm test' \
+  --workload-name 'repo test run' \
+  --workload-timeout-ms 300000
+```
+
+### Workload flags
+
+- `--workload-file <path>` JSON file with `name`, `setupCommand`, `command`, `cwd`, `timeoutMs`
+- `--setup-cmd "<command>"` optional prep command
+- `--workload-cmd "<command>"` optional workload command
+- `--workload-name "<name>"` label shown in logs
+- `--workload-cwd "<path>"` working directory inside sandbox
+- `--workload-timeout-ms <ms>` timeout per setup/workload command
+
+Results still include standard TTI metrics, plus workload and total timing when workload mode is used.
+
+<br>
+
+## Evaluate ISLO.dev
+
+You can benchmark ISLO directly by adding `ISLO_*` vars to `.env` (see `env.example`) and running:
+
+```bash
+npm run bench:islo -- --iterations 5
+```
+
+To benchmark an ISLO-hosted workload:
+
+```bash
+npm run bench:islo -- \
+  --iterations 3 \
+  --workload-file workloads/islo-frontend-build.json
+```
+
+If your token is an operator/admin token, also set `ISLO_PUBLIC_TENANT_ID` (and optionally `ISLO_PUBLIC_USER_ID`) so requests are scoped to a tenant.
+
+<br>
+
 ## Transparency
 
 - 📖 **Open source** — All benchmark code is public

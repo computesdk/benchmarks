@@ -1,0 +1,6 @@
+{
+  "name": "islo-frontend-build",
+  "setupCommand": "git clone --depth 1 https://github.com/islo-labs/islo-frontend.git /workspace/islo-frontend && cd /workspace/islo-frontend && npm ci",
+  "command": "cd /workspace/islo-frontend && npm run build",
+  "timeoutMs": 300000
+}

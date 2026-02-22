@@ -1,4 +1,11 @@
-import type { BenchmarkResult } from './types.js';
+import type { BenchmarkResult, WorkloadConfig } from './types.js';
+
+interface ResultsFileConfig {
+  iterations: number;
+  timeoutMs: number;
+  providerFilter?: string;
+  workload?: WorkloadConfig;
+}
 
 /**
  * Print a comparison table of benchmark results to stdout
@@ -6,22 +13,32 @@ import type { BenchmarkResult } from './types.js';
 export function printResultsTable(results: BenchmarkResult[]): void {
   const nameWidth = 12;
   const colWidth = 14;
+  const hasWorkloadMetric = results.some(result => !!result.summary.workloadMs);
+  const hasTotalMetric = results.some(result => !!result.summary.totalMs);
 
-  const header = [
+  const headerColumns = [
     pad('Provider', nameWidth),
     pad('TTI (s)', colWidth),
     pad('Min (s)', colWidth),
     pad('Max (s)', colWidth),
+    ...(hasWorkloadMetric ? [pad('Workload (s)', colWidth)] : []),
+    ...(hasTotalMetric ? [pad('Total (s)', colWidth)] : []),
     pad('Status', 10),
-  ].join(' | ');
+  ];
 
-  const separator = [
+  const header = headerColumns.join(' | ');
+
+  const separatorColumns = [
     '-'.repeat(nameWidth),
     '-'.repeat(colWidth),
     '-'.repeat(colWidth),
     '-'.repeat(colWidth),
+    ...(hasWorkloadMetric ? ['-'.repeat(colWidth)] : []),
+    ...(hasTotalMetric ? ['-'.repeat(colWidth)] : []),
     '-'.repeat(10),
-  ].join('-+-');
+  ];
+
+  const separator = separatorColumns.join('-+-');
 
   console.log('\n' + '='.repeat(separator.length));
   console.log('  SANDBOX PROVIDER BENCHMARK RESULTS');
@@ -38,30 +55,46 @@ export function printResultsTable(results: BenchmarkResult[]): void {
 
   for (const result of sorted) {
     if (result.skipped) {
-      console.log([
+      const skippedColumns = [
         pad(result.provider, nameWidth),
         pad('--', colWidth),
         pad('--', colWidth),
         pad('--', colWidth),
+        ...(hasWorkloadMetric ? [pad('--', colWidth)] : []),
+        ...(hasTotalMetric ? [pad('--', colWidth)] : []),
         pad('SKIPPED', 10),
-      ].join(' | '));
+      ];
+
+      console.log(skippedColumns.join(' | '));
       continue;
     }
 
     const successful = result.iterations.filter(r => !r.error).length;
     const total = result.iterations.length;
 
-    console.log([
+    const rowColumns = [
       pad(result.provider, nameWidth),
       pad(formatSeconds(result.summary.ttiMs.median), colWidth),
       pad(formatSeconds(result.summary.ttiMs.min), colWidth),
       pad(formatSeconds(result.summary.ttiMs.max), colWidth),
+      ...(hasWorkloadMetric
+        ? [pad(result.summary.workloadMs ? formatSeconds(result.summary.workloadMs.median) : '--', colWidth)]
+        : []),
+      ...(hasTotalMetric
+        ? [pad(result.summary.totalMs ? formatSeconds(result.summary.totalMs.median) : '--', colWidth)]
+        : []),
       pad(`${successful}/${total} OK`, 10),
-    ].join(' | '));
+    ];
+
+    console.log(rowColumns.join(' | '));
   }
 
   console.log('='.repeat(separator.length));
-  console.log('  TTI = Time to Interactive (median). Create + first code execution.\n');
+  console.log('  TTI = Time to Interactive (median). Create + first code execution.');
+  if (hasWorkloadMetric || hasTotalMetric) {
+    console.log('  Workload = Setup + workload commands. Total = TTI + workload.');
+  }
+  console.log('');
 }
 
 function pad(str: string, width: number): string {
@@ -82,7 +115,11 @@ function round(n: number): number {
 /**
  * Write results to a JSON file with clean formatting
  */
-export async function writeResultsJson(results: BenchmarkResult[], outPath: string): Promise<void> {
+export async function writeResultsJson(
+  results: BenchmarkResult[],
+  outPath: string,
+  config: ResultsFileConfig
+): Promise<void> {
   const fs = await import('fs');
   const os = await import('os');
 
@@ -91,6 +128,8 @@ export async function writeResultsJson(results: BenchmarkResult[], outPath: stri
     provider: r.provider,
     iterations: r.iterations.map(i => ({
       ttiMs: round(i.ttiMs),
+      ...(typeof i.workloadMs === 'number' ? { workloadMs: round(i.workloadMs) } : {}),
+      ...(typeof i.totalMs === 'number' ? { totalMs: round(i.totalMs) } : {}),
       ...(i.error ? { error: i.error } : {}),
     })),
     summary: {
@@ -100,6 +139,26 @@ export async function writeResultsJson(results: BenchmarkResult[], outPath: stri
         median: round(r.summary.ttiMs.median),
         avg: round(r.summary.ttiMs.avg),
       },
+      ...(r.summary.workloadMs
+        ? {
+            workloadMs: {
+              min: round(r.summary.workloadMs.min),
+              max: round(r.summary.workloadMs.max),
+              median: round(r.summary.workloadMs.median),
+              avg: round(r.summary.workloadMs.avg),
+            },
+          }
+        : {}),
+      ...(r.summary.totalMs
+        ? {
+            totalMs: {
+              min: round(r.summary.totalMs.min),
+              max: round(r.summary.totalMs.max),
+              median: round(r.summary.totalMs.median),
+              avg: round(r.summary.totalMs.avg),
+            },
+          }
+        : {}),
     },
     ...(r.skipped ? { skipped: r.skipped, skipReason: r.skipReason } : {}),
   }));
@@ -113,8 +172,22 @@ export async function writeResultsJson(results: BenchmarkResult[], outPath: stri
       arch: os.arch(),
     },
     config: {
-      iterations: results[0]?.iterations.length || 0,
-      timeoutMs: 120000,
+      iterations: config.iterations,
+      timeoutMs: config.timeoutMs,
+      ...(config.providerFilter ? { providerFilter: config.providerFilter } : {}),
+      ...(config.workload
+        ? {
+            workload: {
+              name: config.workload.name,
+              hasSetupCommand: Boolean(config.workload.setupCommand),
+              hasWorkloadCommand: Boolean(config.workload.command),
+              ...(config.workload.cwd ? { cwd: config.workload.cwd } : {}),
+              ...(typeof config.workload.timeoutMs === 'number'
+                ? { timeoutMs: config.workload.timeoutMs }
+                : {}),
+            },
+          }
+        : {}),
     },
     results: cleanResults,
   };
