@@ -48,6 +48,8 @@ jobs:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           RENDER_OWNER_ID: ${{ secrets.RENDER_OWNER_ID }}
         run: npm run bench -- --iterations ${{ github.event.inputs.iterations || '10' }}
+      - name: Copy latest results
+        run: cp $(ls -t results/*.json | head -1) results/latest.json
       - run: npm run generate-svg
       - name: Commit and push
         run: |

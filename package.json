@@ -13,15 +13,20 @@
     "bench:railway": "tsx src/run.ts --provider railway",
     "bench:namespace": "tsx src/run.ts --provider namespace",
     "bench:render": "tsx src/run.ts --provider render",
+    "bench:hopx": "tsx src/run.ts --provider hopx",
+    "bench:codesandbox": "tsx src/run.ts --provider codesandbox",
+    "bench:runloop": "tsx src/run.ts --provider runloop",
     "update-readme": "tsx src/update-readme.ts",
     "generate-svg": "tsx src/generate-svg.ts"
   },
   "dependencies": {
     "@computesdk/blaxel": "^1.5.7",
+    "@computesdk/codesandbox": "^1.5.34",
     "@computesdk/daytona": "^1.7.14",
     "@computesdk/e2b": "^1.7.34",
     "@computesdk/hopx": "^0.2.10",
     "@computesdk/modal": "^1.8.29",
+    "@computesdk/runloop": "^1.3.34",
     "@computesdk/vercel": "^1.7.13",
     "computesdk": "^2.2.1",
     "dotenv": "^17.2.1"
