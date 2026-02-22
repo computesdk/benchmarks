@@ -4,6 +4,7 @@ import { blaxel } from '@computesdk/blaxel';
 import { modal } from '@computesdk/modal';
 import { vercel } from '@computesdk/vercel';
 import { compute } from 'computesdk';
+import { createIsloCompute } from './islo-provider.js';
 import type { ProviderConfig } from './types.js';
 
 /**
@@ -38,6 +39,15 @@ export const providers: ProviderConfig[] = [
     name: 'vercel',
     requiredEnvVars: ['VERCEL_TOKEN', 'VERCEL_TEAM_ID', 'VERCEL_PROJECT_ID'],
     createCompute: () => vercel({ token: process.env.VERCEL_TOKEN!, teamId: process.env.VERCEL_TEAM_ID!, projectId: process.env.VERCEL_PROJECT_ID! }),
+  },
+  {
+    name: 'islo',
+    requiredEnvVars: ['ISLO_API_URL', 'ISLO_BEARER_TOKEN'],
+    createCompute: () =>
+      createIsloCompute({
+        baseUrl: process.env.ISLO_API_URL!,
+        token: process.env.ISLO_BEARER_TOKEN!,
+      }),
   },
   // --- Automatic mode (via ComputeSDK gateway) ---
   {
