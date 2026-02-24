@@ -32,7 +32,7 @@ function formatSeconds(ms: number): string {
 }
 
 // Providers that require COMPUTESDK_API_KEY (via ComputeSDK orchestrator)
-const GATEWAY_PROVIDERS = ['namespace', 'railway', 'render'];
+const GATEWAY_PROVIDERS = ['railway', 'render'];
 
 function formatProviderName(s: string): string {
   if (s.toLowerCase() === 'e2b') return 'E2B';
