@@ -6,6 +6,7 @@ import { vercel } from '@computesdk/vercel';
 import { hopx } from '@computesdk/hopx';
 import { codesandbox } from '@computesdk/codesandbox';
 import { runloop } from '@computesdk/runloop';
+import { namespace } from '@computesdk/namespace';
 import { compute } from 'computesdk';
 import type { ProviderConfig } from './types.js';
 
@@ -57,19 +58,12 @@ export const providers: ProviderConfig[] = [
     requiredEnvVars: ['RUNLOOP_API_KEY'],
     createCompute: () => runloop({ apiKey: process.env.RUNLOOP_API_KEY! }),
   },
-  // --- Automatic mode (via ComputeSDK gateway) ---
   {
     name: 'namespace',
-    requiredEnvVars: ['COMPUTESDK_API_KEY', 'NSC_TOKEN'],
-    createCompute: () => {
-      compute.setConfig({
-        provider: 'namespace',
-        computesdkApiKey: process.env.COMPUTESDK_API_KEY!,
-        namespace: { token: process.env.NSC_TOKEN! },
-      } as any);
-      return compute;
-    },
+    requiredEnvVars: ['NSC_TOKEN'],
+    createCompute: () => namespace({ token: process.env.NSC_TOKEN! }),
   },
+  // --- Automatic mode (via ComputeSDK gateway) ---
   {
     name: 'railway',
     requiredEnvVars: ['COMPUTESDK_API_KEY', 'RAILWAY_API_KEY', 'RAILWAY_PROJECT_ID', 'RAILWAY_ENVIRONMENT_ID'],
