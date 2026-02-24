@@ -3,6 +3,9 @@ import { daytona } from '@computesdk/daytona';
 import { blaxel } from '@computesdk/blaxel';
 import { modal } from '@computesdk/modal';
 import { vercel } from '@computesdk/vercel';
+import { hopx } from '@computesdk/hopx';
+import { codesandbox } from '@computesdk/codesandbox';
+import { runloop } from '@computesdk/runloop';
 import { compute } from 'computesdk';
 import type { ProviderConfig } from './types.js';
 
@@ -39,6 +42,21 @@ export const providers: ProviderConfig[] = [
     requiredEnvVars: ['VERCEL_TOKEN', 'VERCEL_TEAM_ID', 'VERCEL_PROJECT_ID'],
     createCompute: () => vercel({ token: process.env.VERCEL_TOKEN!, teamId: process.env.VERCEL_TEAM_ID!, projectId: process.env.VERCEL_PROJECT_ID! }),
   },
+  {
+    name: 'hopx',
+    requiredEnvVars: ['HOPX_API_KEY'],
+    createCompute: () => hopx({ apiKey: process.env.HOPX_API_KEY! }),
+  },
+  {
+    name: 'codesandbox',
+    requiredEnvVars: ['CSB_API_KEY'],
+    createCompute: () => codesandbox({ apiKey: process.env.CSB_API_KEY! }),
+  },
+  {
+    name: 'runloop',
+    requiredEnvVars: ['RUNLOOP_API_KEY'],
+    createCompute: () => runloop({ apiKey: process.env.RUNLOOP_API_KEY! }),
+  },
   // --- Automatic mode (via ComputeSDK gateway) ---
   {
     name: 'namespace',
@@ -64,16 +82,16 @@ export const providers: ProviderConfig[] = [
       return compute;
     },
   },
-  // {
-  //   name: 'render',
-  //   requiredEnvVars: ['COMPUTESDK_API_KEY', 'RENDER_API_KEY', 'RENDER_OWNER_ID'],
-  //   createCompute: () => {
-  //     compute.setConfig({
-  //       provider: 'render',
-  //       computesdkApiKey: process.env.COMPUTESDK_API_KEY!,
-  //       render: { apiKey: process.env.RENDER_API_KEY!, ownerId: process.env.RENDER_OWNER_ID! },
-  //     } as any);
-  //     return compute;
-  //   },
-  // },
+  {
+    name: 'render',
+    requiredEnvVars: ['COMPUTESDK_API_KEY', 'RENDER_API_KEY', 'RENDER_OWNER_ID'],
+    createCompute: () => {
+      compute.setConfig({
+        provider: 'render',
+        computesdkApiKey: process.env.COMPUTESDK_API_KEY!,
+        render: { apiKey: process.env.RENDER_API_KEY!, ownerId: process.env.RENDER_OWNER_ID! },
+      } as any);
+      return compute;
+    },
+  },
 ];
