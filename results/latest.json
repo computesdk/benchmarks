@@ -1,0 +1,488 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-02-25T00:28:49.447Z",
+  "environment": {
+    "node": "v24.13.1",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "config": {
+    "iterations": 10,
+    "timeoutMs": 120000
+  },
+  "results": [
+    {
+      "provider": "e2b",
+      "iterations": [
+        {
+          "ttiMs": 597.78
+        },
+        {
+          "ttiMs": 351.12
+        },
+        {
+          "ttiMs": 227.87
+        },
+        {
+          "ttiMs": 210.8
+        },
+        {
+          "ttiMs": 258.05
+        },
+        {
+          "ttiMs": 327.23
+        },
+        {
+          "ttiMs": 247.01
+        },
+        {
+          "ttiMs": 201.82
+        },
+        {
+          "ttiMs": 244.64
+        },
+        {
+          "ttiMs": 289.88
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 201.82,
+          "max": 597.78,
+          "median": 252.53,
+          "avg": 295.62
+        }
+      }
+    },
+    {
+      "provider": "daytona",
+      "iterations": [
+        {
+          "ttiMs": 388.59
+        },
+        {
+          "ttiMs": 266.88
+        },
+        {
+          "ttiMs": 386.69
+        },
+        {
+          "ttiMs": 897.26
+        },
+        {
+          "ttiMs": 178.95
+        },
+        {
+          "ttiMs": 323.54
+        },
+        {
+          "ttiMs": 192.74
+        },
+        {
+          "ttiMs": 535.48
+        },
+        {
+          "ttiMs": 275.9
+        },
+        {
+          "ttiMs": 209.79
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 178.95,
+          "max": 897.26,
+          "median": 299.72,
+          "avg": 365.58
+        }
+      }
+    },
+    {
+      "provider": "blaxel",
+      "iterations": [
+        {
+          "ttiMs": 1792.85
+        },
+        {
+          "ttiMs": 1702.84
+        },
+        {
+          "ttiMs": 1657.32
+        },
+        {
+          "ttiMs": 1668.8
+        },
+        {
+          "ttiMs": 1751.19
+        },
+        {
+          "ttiMs": 1739.28
+        },
+        {
+          "ttiMs": 1671.83
+        },
+        {
+          "ttiMs": 1664.33
+        },
+        {
+          "ttiMs": 1671.01
+        },
+        {
+          "ttiMs": 1660.33
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 1657.32,
+          "max": 1792.85,
+          "median": 1671.42,
+          "avg": 1697.98
+        }
+      }
+    },
+    {
+      "provider": "modal",
+      "iterations": [
+        {
+          "ttiMs": 2225.89
+        },
+        {
+          "ttiMs": 2197.16
+        },
+        {
+          "ttiMs": 1847.77
+        },
+        {
+          "ttiMs": 1945.16
+        },
+        {
+          "ttiMs": 2070.73
+        },
+        {
+          "ttiMs": 1431.31
+        },
+        {
+          "ttiMs": 1852.89
+        },
+        {
+          "ttiMs": 1446.07
+        },
+        {
+          "ttiMs": 2162.24
+        },
+        {
+          "ttiMs": 1433.98
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 1431.31,
+          "max": 2225.89,
+          "median": 1899.02,
+          "avg": 1861.32
+        }
+      }
+    },
+    {
+      "provider": "vercel",
+      "iterations": [
+        {
+          "ttiMs": 2742.46
+        },
+        {
+          "ttiMs": 2791.22
+        },
+        {
+          "ttiMs": 2481.85
+        },
+        {
+          "ttiMs": 2573.56
+        },
+        {
+          "ttiMs": 2711.38
+        },
+        {
+          "ttiMs": 2821.21
+        },
+        {
+          "ttiMs": 2862.61
+        },
+        {
+          "ttiMs": 2618.65
+        },
+        {
+          "ttiMs": 2605.09
+        },
+        {
+          "ttiMs": 2404.17
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 2404.17,
+          "max": 2862.61,
+          "median": 2665.02,
+          "avg": 2661.22
+        }
+      }
+    },
+    {
+      "provider": "hopx",
+      "iterations": [
+        {
+          "ttiMs": 1156.66
+        },
+        {
+          "ttiMs": 1093.98
+        },
+        {
+          "ttiMs": 836.82
+        },
+        {
+          "ttiMs": 870.49
+        },
+        {
+          "ttiMs": 838.84
+        },
+        {
+          "ttiMs": 873.7
+        },
+        {
+          "ttiMs": 852.6
+        },
+        {
+          "ttiMs": 852.4
+        },
+        {
+          "ttiMs": 867.36
+        },
+        {
+          "ttiMs": 856.68
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 836.82,
+          "max": 1156.66,
+          "median": 862.02,
+          "avg": 909.95
+        }
+      }
+    },
+    {
+      "provider": "codesandbox",
+      "iterations": [
+        {
+          "ttiMs": 2183.08
+        },
+        {
+          "ttiMs": 1992.23
+        },
+        {
+          "ttiMs": 2078.94
+        },
+        {
+          "ttiMs": 2096.77
+        },
+        {
+          "ttiMs": 2078.55
+        },
+        {
+          "ttiMs": 2196.44
+        },
+        {
+          "ttiMs": 2050.7
+        },
+        {
+          "ttiMs": 1960.47
+        },
+        {
+          "ttiMs": 2093.32
+        },
+        {
+          "ttiMs": 2203.32
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 1960.47,
+          "max": 2203.32,
+          "median": 2086.13,
+          "avg": 2093.38
+        }
+      }
+    },
+    {
+      "provider": "runloop",
+      "iterations": [
+        {
+          "ttiMs": 4088.64
+        },
+        {
+          "ttiMs": 3941.6
+        },
+        {
+          "ttiMs": 4030.35
+        },
+        {
+          "ttiMs": 3921.1
+        },
+        {
+          "ttiMs": 4035.24
+        },
+        {
+          "ttiMs": 4028.95
+        },
+        {
+          "ttiMs": 3915.78
+        },
+        {
+          "ttiMs": 4020.13
+        },
+        {
+          "ttiMs": 4054.25
+        },
+        {
+          "ttiMs": 6060.46
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 3915.78,
+          "max": 6060.46,
+          "median": 4029.65,
+          "avg": 4209.65
+        }
+      }
+    },
+    {
+      "provider": "namespace",
+      "iterations": [
+        {
+          "ttiMs": 2566.64
+        },
+        {
+          "ttiMs": 2645.31
+        },
+        {
+          "ttiMs": 1912.35
+        },
+        {
+          "ttiMs": 2462.74
+        },
+        {
+          "ttiMs": 1974.95
+        },
+        {
+          "ttiMs": 2436.19
+        },
+        {
+          "ttiMs": 2406.7
+        },
+        {
+          "ttiMs": 4188.62
+        },
+        {
+          "ttiMs": 2158
+        },
+        {
+          "ttiMs": 2240.03
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 1912.35,
+          "max": 4188.62,
+          "median": 2421.45,
+          "avg": 2499.15
+        }
+      }
+    },
+    {
+      "provider": "railway",
+      "iterations": [
+        {
+          "ttiMs": 17345
+        },
+        {
+          "ttiMs": 13744.2
+        },
+        {
+          "ttiMs": 12307.53
+        },
+        {
+          "ttiMs": 12326.15
+        },
+        {
+          "ttiMs": 12347.96
+        },
+        {
+          "ttiMs": 14495.49
+        },
+        {
+          "ttiMs": 15677.72
+        },
+        {
+          "ttiMs": 13801.91
+        },
+        {
+          "ttiMs": 20622.03
+        },
+        {
+          "ttiMs": 21531.14
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 12307.53,
+          "max": 21531.14,
+          "median": 14148.7,
+          "avg": 15419.91
+        }
+      }
+    },
+    {
+      "provider": "render",
+      "iterations": [
+        {
+          "ttiMs": 19509.72
+        },
+        {
+          "ttiMs": 18915.01
+        },
+        {
+          "ttiMs": 17143.91
+        },
+        {
+          "ttiMs": 17823.23
+        },
+        {
+          "ttiMs": 18506.21
+        },
+        {
+          "ttiMs": 16594.08
+        },
+        {
+          "ttiMs": 17656.12
+        },
+        {
+          "ttiMs": 19069.33
+        },
+        {
+          "ttiMs": 19528.18
+        },
+        {
+          "ttiMs": 17850.52
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "min": 16594.08,
+          "max": 19528.18,
+          "median": 18178.36,
+          "avg": 18259.63
+        }
+      }
+    }
+  ]
+}
