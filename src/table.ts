@@ -9,9 +9,11 @@ export function printResultsTable(results: BenchmarkResult[]): void {
 
   const header = [
     pad('Provider', nameWidth),
-    pad('TTI (s)', colWidth),
+    pad('Median (s)', colWidth),
     pad('Min (s)', colWidth),
     pad('Max (s)', colWidth),
+    pad('P95 (s)', colWidth),
+    pad('P99 (s)', colWidth),
     pad('Status', 10),
   ].join(' | ');
 
@@ -20,11 +22,13 @@ export function printResultsTable(results: BenchmarkResult[]): void {
     '-'.repeat(colWidth),
     '-'.repeat(colWidth),
     '-'.repeat(colWidth),
+    '-'.repeat(colWidth),
+    '-'.repeat(colWidth),
     '-'.repeat(10),
   ].join('-+-');
 
   console.log('\n' + '='.repeat(separator.length));
-  console.log('  SANDBOX PROVIDER BENCHMARK RESULTS');
+  console.log('  SANDBOX PROVIDER BENCHMARK RESULTS - TTI (Time to Interactive)');
   console.log('='.repeat(separator.length));
   console.log(header);
   console.log(separator);
@@ -43,6 +47,8 @@ export function printResultsTable(results: BenchmarkResult[]): void {
         pad('--', colWidth),
         pad('--', colWidth),
         pad('--', colWidth),
+        pad('--', colWidth),
+        pad('--', colWidth),
         pad('SKIPPED', 10),
       ].join(' | '));
       continue;
@@ -56,12 +62,14 @@ export function printResultsTable(results: BenchmarkResult[]): void {
       pad(formatSeconds(result.summary.ttiMs.median), colWidth),
       pad(formatSeconds(result.summary.ttiMs.min), colWidth),
       pad(formatSeconds(result.summary.ttiMs.max), colWidth),
+      pad(formatSeconds(result.summary.ttiMs.p95), colWidth),
+      pad(formatSeconds(result.summary.ttiMs.p99), colWidth),
       pad(`${successful}/${total} OK`, 10),
     ].join(' | '));
   }
 
   console.log('='.repeat(separator.length));
-  console.log('  TTI = Time to Interactive (median). Create + first code execution.\n');
+  console.log('  TTI = Time to Interactive. Create + first code execution.\n');
 }
 
 function pad(str: string, width: number): string {
@@ -98,6 +106,8 @@ export async function writeResultsJson(results: BenchmarkResult[], outPath: stri
         min: round(r.summary.ttiMs.min),
         max: round(r.summary.ttiMs.max),
         median: round(r.summary.ttiMs.median),
+        p95: round(r.summary.ttiMs.p95),
+        p99: round(r.summary.ttiMs.p99),
         avg: round(r.summary.ttiMs.avg),
       },
     },
