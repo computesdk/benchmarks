@@ -1,7 +1,12 @@
 import type { ProviderConfig, BenchmarkResult, TimingResult, Stats } from './types.js';
 
+function percentile(sorted: number[], p: number): number {
+  const idx = Math.ceil((p / 100) * sorted.length) - 1;
+  return sorted[Math.min(idx, sorted.length - 1)];
+}
+
 function computeStats(values: number[]): Stats {
-  if (values.length === 0) return { min: 0, max: 0, median: 0, avg: 0 };
+  if (values.length === 0) return { min: 0, max: 0, median: 0, p95: 0, p99: 0, avg: 0 };
 
   const sorted = [...values].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
@@ -13,12 +18,14 @@ function computeStats(values: number[]): Stats {
     min: sorted[0],
     max: sorted[sorted.length - 1],
     median,
+    p95: percentile(sorted, 95),
+    p99: percentile(sorted, 99),
     avg: values.reduce((a, b) => a + b, 0) / values.length,
   };
 }
 
 export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkResult> {
-  const { name, iterations = 10, timeout = 120_000, requiredEnvVars } = config;
+  const { name, iterations = 100, timeout = 120_000, requiredEnvVars } = config;
 
   // Check if all required credentials are available
   const missingVars = requiredEnvVars.filter(v => !process.env[v]);
@@ -26,7 +33,7 @@ export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkRes
     return {
       provider: name,
       iterations: [],
-      summary: { ttiMs: { min: 0, max: 0, median: 0, avg: 0 } },
+      summary: { ttiMs: { min: 0, max: 0, median: 0, p95: 0, p99: 0, avg: 0 } },
       skipped: true,
       skipReason: `Missing: ${missingVars.join(', ')}`,
     };
@@ -58,7 +65,7 @@ export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkRes
     return {
       provider: name,
       iterations: results,
-      summary: { ttiMs: { min: 0, max: 0, median: 0, avg: 0 } },
+      summary: { ttiMs: { min: 0, max: 0, median: 0, p95: 0, p99: 0, avg: 0 } },
       skipped: true,
       skipReason: 'All iterations failed',
     };

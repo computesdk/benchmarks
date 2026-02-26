@@ -49,7 +49,7 @@ function generateSVG(results: BenchmarkResult[], timestamp: string): string {
   const headerHeight = 110; // Space for logo and title
   const tableHeaderHeight = 44;
   const padding = 24;
-  const width = 1000; // Wider to fill GitHub readme
+  const width = 1200; // Wider to fit P95/P99 columns
   const tableTop = headerHeight + padding; // Add padding between header and table
   const tableBottom = tableTop + tableHeaderHeight + (sorted.length * rowHeight);
   const footnoteHeight = 20;
@@ -58,11 +58,13 @@ function generateSVG(results: BenchmarkResult[], timestamp: string): string {
   // Column positions (spread out for wider layout)
   const cols = {
     rank: 40,
-    provider: 100,
-    median: 400,
-    min: 600,
-    max: 750,
-    status: 900,
+    provider: 80,
+    median: 340,
+    min: 500,
+    max: 630,
+    p95: 760,
+    p99: 890,
+    status: 1050,
   };
 
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
@@ -120,6 +122,8 @@ function generateSVG(results: BenchmarkResult[], timestamp: string): string {
   <text class="table-header" x="${cols.median}" y="${tableTop + 28}">Median TTI</text>
   <text class="table-header" x="${cols.min}" y="${tableTop + 28}">Min</text>
   <text class="table-header" x="${cols.max}" y="${tableTop + 28}">Max</text>
+  <text class="table-header" x="${cols.p95}" y="${tableTop + 28}">P95</text>
+  <text class="table-header" x="${cols.p99}" y="${tableTop + 28}">P99</text>
   <text class="table-header" x="${cols.status}" y="${tableTop + 28}">Status</text>
 `;
 
@@ -148,6 +152,8 @@ function generateSVG(results: BenchmarkResult[], timestamp: string): string {
   <text class="row median ${speedClass}" x="${cols.median}" y="${y}">${formatSeconds(medianMs)}</text>
   <text class="row" x="${cols.min}" y="${y}">${formatSeconds(r.summary.ttiMs.min)}</text>
   <text class="row" x="${cols.max}" y="${y}">${formatSeconds(r.summary.ttiMs.max)}</text>
+  <text class="row" x="${cols.p95}" y="${y}">${formatSeconds(r.summary.ttiMs.p95)}</text>
+  <text class="row" x="${cols.p99}" y="${y}">${formatSeconds(r.summary.ttiMs.p99)}</text>
   <text class="row status" x="${cols.status}" y="${y}">${ok}/${total}</text>
 `;
     

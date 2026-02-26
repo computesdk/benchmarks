@@ -64,28 +64,28 @@ export const providers: ProviderConfig[] = [
     createCompute: () => namespace({ token: process.env.NSC_TOKEN! }),
   },
   // --- Automatic mode (via ComputeSDK gateway) ---
-  {
-    name: 'railway',
-    requiredEnvVars: ['COMPUTESDK_API_KEY', 'RAILWAY_API_KEY', 'RAILWAY_PROJECT_ID', 'RAILWAY_ENVIRONMENT_ID'],
-    createCompute: () => {
-      compute.setConfig({
-        provider: 'railway',
-        computesdkApiKey: process.env.COMPUTESDK_API_KEY!,
-        railway: { apiToken: process.env.RAILWAY_API_KEY!, projectId: process.env.RAILWAY_PROJECT_ID!, environmentId: process.env.RAILWAY_ENVIRONMENT_ID! },
-      } as any);
-      return compute;
-    },
-  },
-  {
-    name: 'render',
-    requiredEnvVars: ['COMPUTESDK_API_KEY', 'RENDER_API_KEY', 'RENDER_OWNER_ID'],
-    createCompute: () => {
-      compute.setConfig({
-        provider: 'render',
-        computesdkApiKey: process.env.COMPUTESDK_API_KEY!,
-        render: { apiKey: process.env.RENDER_API_KEY!, ownerId: process.env.RENDER_OWNER_ID! },
-      } as any);
-      return compute;
-    },
-  },
+  // {
+  //   name: 'railway',
+  //   requiredEnvVars: ['COMPUTESDK_API_KEY', 'RAILWAY_API_KEY', 'RAILWAY_PROJECT_ID', 'RAILWAY_ENVIRONMENT_ID'],
+  //   createCompute: () => {
+  //     compute.setConfig({
+  //       provider: 'railway',
+  //       computesdkApiKey: process.env.COMPUTESDK_API_KEY!,
+  //       railway: { apiToken: process.env.RAILWAY_API_KEY!, projectId: process.env.RAILWAY_PROJECT_ID!, environmentId: process.env.RAILWAY_ENVIRONMENT_ID! },
+  //     } as any);
+  //     return compute;
+  //   },
+  // },
+  // {
+  //   name: 'render',
+  //   requiredEnvVars: ['COMPUTESDK_API_KEY', 'RENDER_API_KEY', 'RENDER_OWNER_ID'],
+  //   createCompute: () => {
+  //     compute.setConfig({
+  //       provider: 'render',
+  //       computesdkApiKey: process.env.COMPUTESDK_API_KEY!,
+  //       render: { apiKey: process.env.RENDER_API_KEY!, ownerId: process.env.RENDER_OWNER_ID! },
+  //     } as any);
+  //     return compute;
+  //   },
+  // },
 ];
