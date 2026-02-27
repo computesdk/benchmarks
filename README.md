@@ -46,7 +46,10 @@ Sponsors fund large-scale infrastructure tests. **Sponsors cannot influence meth
 
 ## Roadmap
 
-- [ ] benchmarks.computesdk.com
+- [x] computesdk.com/benchmarks
+- [x] Add P95 & P99
+- [x] TTI n=100 test
+- [ ] TTI n=100 concurrency test
 - [ ] 10,000 concurrent sandbox stress test
 - [ ] Cold start vs warm start metrics
 - [ ] Multi-region testing
