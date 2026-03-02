@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import type { BenchmarkResult } from './types.js';
+import { sortByCompositeScore, computeCompositeScores } from './scoring.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -41,9 +42,13 @@ function formatProviderName(s: string): string {
 }
 
 function generateSVG(results: BenchmarkResult[], timestamp: string): string {
-  const sorted = [...results]
-    .filter(r => !r.skipped)
-    .sort((a, b) => a.summary.ttiMs.median - b.summary.ttiMs.median);
+  // Compute scores if not already attached (backward compat with old JSON files)
+  const hasScores = results.some(r => r.compositeScore !== undefined);
+  if (!hasScores) {
+    computeCompositeScores(results);
+  }
+
+  const sorted = sortByCompositeScore(results).filter(r => !r.skipped);
 
   const rowHeight = 44;
   const headerHeight = 110; // Space for logo and title
@@ -59,10 +64,11 @@ function generateSVG(results: BenchmarkResult[], timestamp: string): string {
   const cols = {
     rank: 40,
     provider: 80,
-    median: 340,
-    min: 500,
-    max: 630,
-    p95: 760,
+    score: 280,
+    median: 400,
+    min: 530,
+    max: 650,
+    p95: 770,
     p99: 890,
     status: 1050,
   };
@@ -119,6 +125,7 @@ function generateSVG(results: BenchmarkResult[], timestamp: string): string {
   <!-- Table header text -->
   <text class="table-header" x="${cols.rank}" y="${tableTop + 28}">#</text>
   <text class="table-header" x="${cols.provider}" y="${tableTop + 28}">Provider</text>
+  <text class="table-header" x="${cols.score}" y="${tableTop + 28}">Score</text>
   <text class="table-header" x="${cols.median}" y="${tableTop + 28}">Median TTI</text>
   <text class="table-header" x="${cols.min}" y="${tableTop + 28}">Min</text>
   <text class="table-header" x="${cols.max}" y="${tableTop + 28}">Max</text>
@@ -133,7 +140,8 @@ function generateSVG(results: BenchmarkResult[], timestamp: string): string {
     const total = r.iterations.length;
     const rank = i + 1;
     const medianMs = r.summary.ttiMs.median;
-    
+    const score = r.compositeScore !== undefined ? r.compositeScore.toFixed(1) : '--';
+
     // Color code based on speed
     let speedClass = 'fast';
     if (medianMs > 2000) speedClass = 'slow';
@@ -149,6 +157,7 @@ function generateSVG(results: BenchmarkResult[], timestamp: string): string {
   <!-- Row ${rank} -->
   <text class="${rankClass}" x="${cols.rank}" y="${y}">${rank}</text>
   <text class="row provider" x="${cols.provider}" y="${y}">${formatProviderName(r.provider)}</text>
+  <text class="row median" x="${cols.score}" y="${y}">${score}</text>
   <text class="row median ${speedClass}" x="${cols.median}" y="${y}">${formatSeconds(medianMs)}</text>
   <text class="row" x="${cols.min}" y="${y}">${formatSeconds(r.summary.ttiMs.min)}</text>
   <text class="row" x="${cols.max}" y="${y}">${formatSeconds(r.summary.ttiMs.max)}</text>

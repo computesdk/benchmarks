@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import type { BenchmarkResult } from './types.js';
+import { sortByCompositeScore, computeCompositeScores } from './scoring.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -37,17 +38,20 @@ function capitalize(s: string): string {
 }
 
 function buildTable(results: BenchmarkResult[]): string {
-  const sorted = [...results].sort((a, b) => {
-    if (a.skipped && !b.skipped) return 1;
-    if (!a.skipped && b.skipped) return -1;
-    return a.summary.ttiMs.median - b.summary.ttiMs.median;
-  });
+  // Compute scores if not already attached (backward compat with old JSON files)
+  const hasScores = results.some(r => r.compositeScore !== undefined);
+  if (!hasScores) {
+    computeCompositeScores(results);
+  }
+
+  const sorted = sortByCompositeScore(results);
 
   const lines: string[] = [];
   lines.push('<table width="100%">');
   lines.push('<thead>');
   lines.push('<tr>');
   lines.push('<th align="left">Provider</th>');
+  lines.push('<th align="center">Score</th>');
   lines.push('<th align="center">Median TTI</th>');
   lines.push('<th align="center">Min</th>');
   lines.push('<th align="center">Max</th>');
@@ -60,12 +64,13 @@ function buildTable(results: BenchmarkResult[]): string {
 
   for (const r of sorted) {
     if (r.skipped) {
-      lines.push(`<tr><td>${capitalize(r.provider)}</td><td align="center">--</td><td align="center">--</td><td align="center">--</td><td align="center">--</td><td align="center">--</td><td align="center">Skipped</td></tr>`);
+      lines.push(`<tr><td>${capitalize(r.provider)}</td><td align="center">--</td><td align="center">--</td><td align="center">--</td><td align="center">--</td><td align="center">--</td><td align="center">--</td><td align="center">Skipped</td></tr>`);
     } else {
       const ok = r.iterations.filter(i => !i.error).length;
       const total = r.iterations.length;
+      const score = r.compositeScore !== undefined ? r.compositeScore.toFixed(1) : '--';
       lines.push(
-        `<tr><td>${capitalize(r.provider)}</td><td align="center"><b>${formatSeconds(r.summary.ttiMs.median)}</b></td><td align="center">${formatSeconds(r.summary.ttiMs.min)}</td><td align="center">${formatSeconds(r.summary.ttiMs.max)}</td><td align="center">${formatSeconds(r.summary.ttiMs.p95)}</td><td align="center">${formatSeconds(r.summary.ttiMs.p99)}</td><td align="center">${ok}/${total}</td></tr>`
+        `<tr><td>${capitalize(r.provider)}</td><td align="center"><b>${score}</b></td><td align="center">${formatSeconds(r.summary.ttiMs.median)}</td><td align="center">${formatSeconds(r.summary.ttiMs.min)}</td><td align="center">${formatSeconds(r.summary.ttiMs.max)}</td><td align="center">${formatSeconds(r.summary.ttiMs.p95)}</td><td align="center">${formatSeconds(r.summary.ttiMs.p99)}</td><td align="center">${ok}/${total}</td></tr>`
       );
     }
   }

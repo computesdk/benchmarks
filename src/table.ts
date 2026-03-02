@@ -1,4 +1,5 @@
 import type { BenchmarkResult } from './types.js';
+import { sortByCompositeScore } from './scoring.js';
 
 /**
  * Print a comparison table of benchmark results to stdout
@@ -9,6 +10,7 @@ export function printResultsTable(results: BenchmarkResult[]): void {
 
   const header = [
     pad('Provider', nameWidth),
+    pad('Score', 8),
     pad('Median (s)', colWidth),
     pad('Min (s)', colWidth),
     pad('Max (s)', colWidth),
@@ -19,6 +21,7 @@ export function printResultsTable(results: BenchmarkResult[]): void {
 
   const separator = [
     '-'.repeat(nameWidth),
+    '-'.repeat(8),
     '-'.repeat(colWidth),
     '-'.repeat(colWidth),
     '-'.repeat(colWidth),
@@ -33,17 +36,14 @@ export function printResultsTable(results: BenchmarkResult[]): void {
   console.log(header);
   console.log(separator);
 
-  // Sort by TTI (skipped providers last)
-  const sorted = [...results].sort((a, b) => {
-    if (a.skipped && !b.skipped) return 1;
-    if (!a.skipped && b.skipped) return -1;
-    return a.summary.ttiMs.median - b.summary.ttiMs.median;
-  });
+  // Sort by composite score (highest first, skipped last)
+  const sorted = sortByCompositeScore(results);
 
   for (const result of sorted) {
     if (result.skipped) {
       console.log([
         pad(result.provider, nameWidth),
+        pad('--', 8),
         pad('--', colWidth),
         pad('--', colWidth),
         pad('--', colWidth),
@@ -56,9 +56,13 @@ export function printResultsTable(results: BenchmarkResult[]): void {
 
     const successful = result.iterations.filter(r => !r.error).length;
     const total = result.iterations.length;
+    const score = result.compositeScore !== undefined
+      ? result.compositeScore.toFixed(1)
+      : '--';
 
     console.log([
       pad(result.provider, nameWidth),
+      pad(score, 8),
       pad(formatSeconds(result.summary.ttiMs.median), colWidth),
       pad(formatSeconds(result.summary.ttiMs.min), colWidth),
       pad(formatSeconds(result.summary.ttiMs.max), colWidth),
@@ -111,11 +115,13 @@ export async function writeResultsJson(results: BenchmarkResult[], outPath: stri
         avg: round(r.summary.ttiMs.avg),
       },
     },
+    ...(r.compositeScore !== undefined ? { compositeScore: round(r.compositeScore) } : {}),
+    ...(r.successRate !== undefined ? { successRate: round(r.successRate) } : {}),
     ...(r.skipped ? { skipped: r.skipped, skipReason: r.skipReason } : {}),
   }));
 
   const output = {
-    version: '1.0',
+    version: '1.1',
     timestamp: new Date().toISOString(),
     environment: {
       node: process.version,

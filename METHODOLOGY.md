@@ -74,7 +74,7 @@ We use a minimal command to isolate sandbox startup time from command complexity
 
 | Parameter | Value |
 |-----------|-------|
-| Iterations per provider | 10 |
+| Iterations per provider | 100 |
 | Timeout per iteration | 120 seconds |
 | Run frequency | Daily at 00:00 UTC |
 | Runner environment | GitHub Actions (namespace-profile-default) |
@@ -108,6 +108,36 @@ For each provider, we report:
 | **Success Rate** | Iterations completed without error |
 
 We emphasize **median** as the primary metric because it's robust to outliers and represents the typical developer experience.
+
+### Composite Score
+
+Providers are ranked by a composite score (0–100, higher = better) that combines timing metrics with reliability.
+
+**Formula**: `compositeScore = timingScore × successRate`
+
+Each timing metric is scored against a **fixed 10-second ceiling**:
+
+```
+metricScore = 100 × (1 − value / 10,000ms)
+```
+
+A 200ms median scores 98. A 4,000ms median scores 60. Anything at or above 10s scores 0. These scores are **absolute** — they don't shift when providers are added or removed.
+
+The **timingScore** is a weighted sum of individual metric scores. The **successRate** (0–1) acts as a linear multiplier — a provider with 50% success has its score halved.
+
+**Timing weights** (sum to 1.0):
+
+| Metric | Weight | Rationale |
+|--------|--------|-----------|
+| Median | 0.50 | Primary signal — typical developer experience |
+| P95 | 0.20 | Tail latency — consistency matters |
+| Max | 0.15 | Worst-case exposure |
+| P99 | 0.10 | Extreme tail |
+| Min | 0.05 | Best-case capability |
+
+**Why multiplicative?** A provider with lower than 100% success rate shouldn't rank above a provider with 100% success and a slightly slower median. The multiplicative penalty ensures reliability is non-negotiable — a provider must be both fast *and* reliable to score well.
+
+When all providers have 100% success, ranking is determined purely by weighted timing.
 
 ## Environment & Infrastructure
 
@@ -227,6 +257,7 @@ npm run bench:direct -- --iterations 10
 
 | Date | Change |
 |------|--------|
+| 2026-03-01 | Added composite scoring methodology |
 | 2026-02-19 | Initial methodology documentation |
 | 2026-02-01 | Increased default iterations from 3 to 10 |
 | 2026-01-15 | Added Direct Mode benchmarks |

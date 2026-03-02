@@ -33,6 +33,10 @@ export interface BenchmarkResult {
   summary: {
     ttiMs: Stats;
   };
+  /** Composite weighted score (0-100, higher = better). Computed post-benchmark. */
+  compositeScore?: number;
+  /** Success rate as a fraction (0 to 1). Computed post-benchmark. */
+  successRate?: number;
   skipped?: boolean;
   skipReason?: string;
 }

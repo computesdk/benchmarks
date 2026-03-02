@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import { runBenchmark } from './benchmark.js';
 import { printResultsTable, writeResultsJson } from './table.js';
 import { providers } from './providers.js';
+import { computeCompositeScores } from './scoring.js';
 import type { BenchmarkResult } from './types.js';
 
 // Load .env from the benchmarking root
@@ -43,6 +44,9 @@ async function main() {
     const result = await runBenchmark({ ...providerConfig, iterations });
     results.push(result);
   }
+
+  // Compute composite scores across all results
+  computeCompositeScores(results);
 
   // Print comparison table
   printResultsTable(results);
