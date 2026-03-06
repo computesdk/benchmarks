@@ -14,31 +14,13 @@ Providers must integrate with [ComputeSDK](https://github.com/computesdk/compute
 
 See [`packages/e2b`](https://github.com/computesdk/computesdk/tree/main/packages/e2b) for a reference implementation.
 
-**Step 2:** Once your `@computesdk/<provider>` package is published, submit a PR to this repo:
-
-1. Add your provider to `src/providers.ts`:
-
-```typescript
-import { yourProvider } from '@computesdk/your-provider';
-
-export const providers: ProviderConfig[] = [
-  {
-    name: 'your-provider',
-    requiredEnvVars: ['YOUR_API_KEY'],
-    createCompute: () => yourProvider({ apiKey: process.env.YOUR_API_KEY! }),
-  },
-];
-```
-
-2. Update `env.example` with required environment variables
-3. Provide API credentials for ongoing daily benchmarks
-4. We'll review and merge
+**Step 2:** Once your `@computesdk/<provider>` package is published, the ComputeSDK team will add it to the benchmarks. No action needed from you — we'll handle the integration.
 
 ### Requirements
 
 - **ComputeSDK Package:** Must be published as `@computesdk/<provider>`
 - **Standard Interface:** Support `create`, `run`, `destroy` operations
-- **Free Tier:** Provide ongoing API access for daily benchmarks
+- **API Access:** Provide credentials for ongoing daily benchmarks
 - **Stability:** Production-ready service
 
 ---
