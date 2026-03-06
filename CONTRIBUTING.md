@@ -8,17 +8,21 @@ Want your provider included in our benchmarks? **Providers and sponsors are sepa
 
 ### How to Add Your Provider
 
-Providers must integrate with [ComputeSDK](https://github.com/computesdk/computesdk) first. This is a two-step process:
-
-**Step 1:** Submit a PR to [`computesdk/computesdk`](https://github.com/computesdk/computesdk) adding your provider package to the `packages/` directory. This creates a `@computesdk/<provider>` npm package.
+Submit a PR to [`computesdk/computesdk`](https://github.com/computesdk/computesdk) adding your provider to the `packages/` directory. 
 
 See [`packages/e2b`](https://github.com/computesdk/computesdk/tree/main/packages/e2b) for a reference implementation.
 
-**Step 2:** Once your `@computesdk/<provider>` package is published, the ComputeSDK team will add it to the benchmarks. No action needed from you — we'll handle the integration.
+**What happens next:**
+1. We review and merge your PR
+2. We publish your package as `@computesdk/<provider>` on npm
+3. We add your provider to the benchmarks
+4. You provide API credentials for ongoing daily tests
+
+That's it. We handle the rest.
 
 ### Requirements
 
-- **ComputeSDK Package:** Must be published as `@computesdk/<provider>`
+- **Package Code:** Working integration in `packages/<provider>/`
 - **Standard Interface:** Support `create`, `run`, `destroy` operations
 - **API Access:** Provide credentials for ongoing daily benchmarks
 - **Stability:** Production-ready service
