@@ -4,30 +4,24 @@ ComputeSDK Benchmarks is open source. We welcome contributions that improve meas
 
 ## For Sandbox Providers
 
-Want your provider included in the benchmark? This requires two steps:
+Want your provider included in our benchmarks? **Providers and sponsors are separate.** You don't need to sponsor to be benchmarked.
 
-### Step 1: Add Your Provider to ComputeSDK
+### How to Add Your Provider
 
-First, submit a PR to [`computesdk/computesdk`](https://github.com/computesdk/computesdk) adding your provider package to the `packages/` directory. This creates a `@computesdk/<provider>` npm package.
+Providers must integrate with [ComputeSDK](https://github.com/computesdk/computesdk) first. This is a two-step process:
 
-**Example:** See [`packages/e2b`](https://github.com/computesdk/computesdk/tree/main/packages/e2b) for a reference implementation.
+**Step 1:** Submit a PR to [`computesdk/computesdk`](https://github.com/computesdk/computesdk) adding your provider package to the `packages/` directory. This creates a `@computesdk/<provider>` npm package.
 
-**Requirements:**
-- Standard interface: `create`, `run`, `destroy` operations
-- TypeScript support
-- Published as `@computesdk/<provider>` on npm
+See [`packages/e2b`](https://github.com/computesdk/computesdk/tree/main/packages/e2b) for a reference implementation.
 
-### Step 2: Add to Benchmarks
+**Step 2:** Once your `@computesdk/<provider>` package is published, submit a PR to this repo:
 
-Once your `@computesdk/<provider>` package is published:
-
-1. Submit a PR to this repo adding your provider to `src/providers.ts`:
+1. Add your provider to `src/providers.ts`:
 
 ```typescript
 import { yourProvider } from '@computesdk/your-provider';
 
 export const providers: ProviderConfig[] = [
-  // ... existing providers
   {
     name: 'your-provider',
     requiredEnvVars: ['YOUR_API_KEY'],
@@ -40,14 +34,24 @@ export const providers: ProviderConfig[] = [
 3. Provide API credentials for ongoing daily benchmarks
 4. We'll review and merge
 
-### Ongoing Requirements
+### Requirements
 
-- **Free Tier or Credits:** We run benchmarks daily. You'll need to provide ongoing API access.
-- **Stability:** Your service should be production-ready. Frequent outages or breaking changes will be removed.
+- **ComputeSDK Package:** Must be published as `@computesdk/<provider>`
+- **Standard Interface:** Support `create`, `run`, `destroy` operations
+- **Free Tier:** Provide ongoing API access for daily benchmarks
+- **Stability:** Production-ready service
 
-### Questions?
+---
 
-Open an issue and tag `@garrison`.
+## For Sponsors
+
+**Sponsorship is completely separate from being a provider.**
+
+Sponsors are companies (AI studios, dev tools, platforms) that want visibility in front of developers making infrastructure decisions. See [SPONSORSHIP.md](./SPONSORSHIP.md) for details.
+
+- Sponsors don't need to be providers
+- Providers don't need to sponsor
+- Results are independent of sponsorship status
 
 ## For General Contributors
 
