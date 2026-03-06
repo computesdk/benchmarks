@@ -1,3 +1,5 @@
+![TTI](./results.svg)
+
 ![Sequential TTI](./sequential_tti.svg)
 
 ![Staggered TTI](./staggered_tti.svg)
