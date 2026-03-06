@@ -1,4 +1,8 @@
-![ComputeSDK Benchmarks](./results.svg)
+![Sequential TTI](./sequential_tti.svg)
+
+![Staggered TTI](./staggered_tti.svg)
+
+![Burst TTI](./burst_tti.svg)
 
 [![Benchmarks](https://github.com/computesdk/benchmarks/actions/workflows/benchmarks.yml/badge.svg)](https://github.com/computesdk/benchmarks/actions/workflows/benchmarks.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
@@ -40,6 +44,8 @@ Each benchmark creates a fresh sandbox, runs `echo "benchmark"`, and records wal
 
 Sponsors fund large-scale infrastructure tests. **Sponsors cannot influence methodology or results.**
 
+<a href="https://archil.com/"><img src="./sponsors/archil-logo.webp" alt="Archil Logo" height="40"></a>
+
 [Become a sponsor →](./SPONSORSHIP.md)
 
 <br>
@@ -49,7 +55,7 @@ Sponsors fund large-scale infrastructure tests. **Sponsors cannot influence meth
 - [x] computesdk.com/benchmarks
 - [x] Add P95 & P99
 - [x] TTI n=100 test
-- [ ] TTI n=100 concurrency test
+- [x] TTI n=100 concurrency test (staggered + burst)
 - [ ] 10,000 concurrent sandbox stress test
 - [ ] Cold start vs warm start metrics
 - [ ] Multi-region testing

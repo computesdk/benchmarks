@@ -1,4 +1,13 @@
-import type { BenchmarkResult } from './types.js';
+import type { BenchmarkResult, ConcurrentBenchmarkResult, StaggeredBenchmarkResult } from './types.js';
+import { sortByCompositeScore } from './scoring.js';
+
+function isConcurrent(r: BenchmarkResult): r is ConcurrentBenchmarkResult {
+  return r.mode === 'concurrent';
+}
+
+function isStaggered(r: BenchmarkResult): r is StaggeredBenchmarkResult {
+  return r.mode === 'staggered';
+}
 
 /**
  * Print a comparison table of benchmark results to stdout
@@ -9,6 +18,7 @@ export function printResultsTable(results: BenchmarkResult[]): void {
 
   const header = [
     pad('Provider', nameWidth),
+    pad('Score', 8),
     pad('Median (s)', colWidth),
     pad('Min (s)', colWidth),
     pad('Max (s)', colWidth),
@@ -19,6 +29,7 @@ export function printResultsTable(results: BenchmarkResult[]): void {
 
   const separator = [
     '-'.repeat(nameWidth),
+    '-'.repeat(8),
     '-'.repeat(colWidth),
     '-'.repeat(colWidth),
     '-'.repeat(colWidth),
@@ -33,17 +44,14 @@ export function printResultsTable(results: BenchmarkResult[]): void {
   console.log(header);
   console.log(separator);
 
-  // Sort by TTI (skipped providers last)
-  const sorted = [...results].sort((a, b) => {
-    if (a.skipped && !b.skipped) return 1;
-    if (!a.skipped && b.skipped) return -1;
-    return a.summary.ttiMs.median - b.summary.ttiMs.median;
-  });
+  // Sort by composite score (highest first, skipped last)
+  const sorted = sortByCompositeScore(results);
 
   for (const result of sorted) {
     if (result.skipped) {
       console.log([
         pad(result.provider, nameWidth),
+        pad('--', 8),
         pad('--', colWidth),
         pad('--', colWidth),
         pad('--', colWidth),
@@ -56,9 +64,13 @@ export function printResultsTable(results: BenchmarkResult[]): void {
 
     const successful = result.iterations.filter(r => !r.error).length;
     const total = result.iterations.length;
+    const score = result.compositeScore !== undefined
+      ? result.compositeScore.toFixed(1)
+      : '--';
 
     console.log([
       pad(result.provider, nameWidth),
+      pad(score, 8),
       pad(formatSeconds(result.summary.ttiMs.median), colWidth),
       pad(formatSeconds(result.summary.ttiMs.min), colWidth),
       pad(formatSeconds(result.summary.ttiMs.max), colWidth),
@@ -69,6 +81,25 @@ export function printResultsTable(results: BenchmarkResult[]): void {
   }
 
   console.log('='.repeat(separator.length));
+
+  // Show concurrent-specific metrics if applicable
+  const concurrentResults = sorted.filter(isConcurrent);
+  if (concurrentResults.length > 0) {
+    console.log('  Burst concurrent metrics:');
+    for (const r of concurrentResults) {
+      console.log(`    ${r.provider}: ${r.concurrency} sandboxes | Wall clock: ${formatSeconds(r.wallClockMs)}s | First ready: ${formatSeconds(r.timeToFirstReadyMs)}s`);
+    }
+  }
+
+  // Show staggered-specific metrics if applicable
+  const staggeredResults = sorted.filter(isStaggered);
+  if (staggeredResults.length > 0) {
+    console.log('  Staggered metrics:');
+    for (const r of staggeredResults) {
+      console.log(`    ${r.provider}: ${r.concurrency} sandboxes (${r.staggerDelayMs}ms apart) | Wall clock: ${formatSeconds(r.wallClockMs)}s | First ready: ${formatSeconds(r.timeToFirstReadyMs)}s`);
+    }
+  }
+
   console.log('  TTI = Time to Interactive. Create + first code execution.\n');
 }
 
@@ -97,6 +128,23 @@ export async function writeResultsJson(results: BenchmarkResult[], outPath: stri
   // Clean up floating point noise in results
   const cleanResults = results.map(r => ({
     provider: r.provider,
+    ...(r.mode ? { mode: r.mode } : {}),
+    ...(isConcurrent(r) ? {
+      concurrency: r.concurrency,
+      wallClockMs: round(r.wallClockMs),
+      timeToFirstReadyMs: round(r.timeToFirstReadyMs),
+    } : {}),
+    ...(isStaggered(r) ? {
+      concurrency: r.concurrency,
+      staggerDelayMs: r.staggerDelayMs,
+      wallClockMs: round(r.wallClockMs),
+      timeToFirstReadyMs: round(r.timeToFirstReadyMs),
+      rampProfile: r.rampProfile.map(p => ({
+        launchedAt: round(p.launchedAt),
+        readyAt: round(p.readyAt),
+        ttiMs: round(p.ttiMs),
+      })),
+    } : {}),
     iterations: r.iterations.map(i => ({
       ttiMs: round(i.ttiMs),
       ...(i.error ? { error: i.error } : {}),
@@ -111,11 +159,13 @@ export async function writeResultsJson(results: BenchmarkResult[], outPath: stri
         avg: round(r.summary.ttiMs.avg),
       },
     },
+    ...(r.compositeScore !== undefined ? { compositeScore: round(r.compositeScore) } : {}),
+    ...(r.successRate !== undefined ? { successRate: round(r.successRate) } : {}),
     ...(r.skipped ? { skipped: r.skipped, skipReason: r.skipReason } : {}),
   }));
 
   const output = {
-    version: '1.0',
+    version: '1.1',
     timestamp: new Date().toISOString(),
     environment: {
       node: process.version,

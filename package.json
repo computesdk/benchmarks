@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "bench": "tsx src/run.ts",
+    "bench:sequential": "tsx src/run.ts --mode sequential",
+    "bench:staggered": "tsx src/run.ts --mode staggered",
+    "bench:burst": "tsx src/run.ts --mode burst",
     "bench:e2b": "tsx src/run.ts --provider e2b",
     "bench:vercel": "tsx src/run.ts --provider vercel",
     "bench:blaxel": "tsx src/run.ts --provider blaxel",
@@ -17,7 +20,10 @@
     "bench:codesandbox": "tsx src/run.ts --provider codesandbox",
     "bench:runloop": "tsx src/run.ts --provider runloop",
     "update-readme": "tsx src/update-readme.ts",
-    "generate-svg": "tsx src/generate-svg.ts"
+    "generate-svg": "tsx src/generate-svg.ts",
+    "generate-svg:sequential": "tsx src/generate-svg.ts --mode sequential",
+    "generate-svg:staggered": "tsx src/generate-svg.ts --mode staggered",
+    "generate-svg:burst": "tsx src/generate-svg.ts --mode burst"
   },
   "dependencies": {
     "@computesdk/blaxel": "^1.5.7",

@@ -1,11 +1,11 @@
 import type { ProviderConfig, BenchmarkResult, TimingResult, Stats } from './types.js';
 
-function percentile(sorted: number[], p: number): number {
+export function percentile(sorted: number[], p: number): number {
   const idx = Math.ceil((p / 100) * sorted.length) - 1;
   return sorted[Math.min(idx, sorted.length - 1)];
 }
 
-function computeStats(values: number[]): Stats {
+export function computeStats(values: number[]): Stats {
   if (values.length === 0) return { min: 0, max: 0, median: 0, p95: 0, p99: 0, avg: 0 };
 
   const sorted = [...values].sort((a, b) => a - b);
@@ -80,7 +80,7 @@ export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkRes
   };
 }
 
-async function runIteration(compute: any, timeout: number): Promise<TimingResult> {
+export async function runIteration(compute: any, timeout: number): Promise<TimingResult> {
   let sandbox: any = null;
 
   try {
@@ -111,7 +111,7 @@ async function runIteration(compute: any, timeout: number): Promise<TimingResult
   }
 }
 
-function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+export function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
   return Promise.race([
     promise,
     new Promise<T>((_, reject) => setTimeout(() => reject(new Error(message)), ms)),

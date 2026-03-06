@@ -68,27 +68,104 @@ We use a minimal command to isolate sandbox startup time from command complexity
 - Produces deterministic output
 - Validates the full request/response cycle
 
+## Test Modes
+
+We run three independent TTI tests daily, each measuring a different aspect of provider performance.
+
+### Sequential TTI
+
+Sandboxes are created one at a time. Each sandbox is created, tested, and destroyed before the next begins.
+
+```bash
+npm run bench:sequential -- --iterations 100
+```
+
+| Parameter | Value |
+|-----------|-------|
+| Iterations per provider | 100 |
+| Timeout per iteration | 120 seconds |
+
+This is the baseline measurement — isolated cold-start performance with no contention.
+
+### Staggered TTI
+
+Sandboxes are launched with a fixed delay between each, ramping up concurrent load gradually.
+
+```bash
+npm run bench:staggered -- --concurrency 100 --stagger-delay 200
+```
+
+| Parameter | Default |
+|-----------|---------|
+| Concurrency | 100 sandboxes |
+| Stagger delay | 200ms between launches |
+| Timeout per sandbox | 120 seconds |
+
+Each sandbox still measures its own individual TTI. Additionally, we capture a **ramp profile** — the TTI of each sandbox plotted against its launch offset — which reveals how TTI degrades as concurrent load increases.
+
+**What staggered reveals that burst doesn't:**
+- How TTI degrades as concurrent load gradually increases
+- Queue depth impact — providers with pre-warmed pools may handle early requests fast but slow down as the pool drains
+- Rate limiting behavior — some providers throttle after N requests/second
+- Sustainable throughput under steady load
+
+### Burst TTI
+
+All sandboxes are created simultaneously — no waiting between launches.
+
+```bash
+npm run bench:burst -- --concurrency 100
+```
+
+| Parameter | Default |
+|-----------|---------|
+| Concurrency | 100 sandboxes |
+| Timeout per sandbox | 120 seconds |
+
+Each sandbox still measures its own individual TTI. We also capture:
+
+| Metric | Description |
+|--------|-------------|
+| **Wall Clock** | Total time from first request to last sandbox ready |
+| **Time to First Ready** | How quickly the fastest sandbox responded under load |
+| **Individual TTI** | Per-sandbox startup time (same stats: median, p95, p99, etc.) |
+| **Success Rate** | Fraction of sandboxes that came up successfully |
+
+**Why burst matters:** AI agents and orchestration tools often spin up many sandboxes at once. Burst testing reveals how providers handle sudden spikes — provisioning queue depth, rate limiting, and failure rates under peak demand.
+
+### Running All Tests
+
+By default, `npm run bench` runs all three tests in sequence:
+
+```bash
+npm run bench                          # Runs sequential → staggered → burst
+npm run bench -- --provider e2b        # All 3 tests, single provider
+npm run bench:sequential               # Sequential only
+npm run bench:staggered                # Staggered only
+npm run bench:burst                    # Burst only
+```
+
 ## Test Configuration
 
 ### Daily Automated Runs
 
 | Parameter | Value |
 |-----------|-------|
-| Iterations per provider | 10 |
-| Timeout per iteration | 120 seconds |
+| Sequential iterations | 100 |
+| Staggered/Burst concurrency | 100 sandboxes |
+| Stagger delay | 200ms |
+| Timeout per sandbox | 120 seconds |
 | Run frequency | Daily at 00:00 UTC |
 | Runner environment | GitHub Actions (namespace-profile-default) |
-| Node.js version | 20.x |
+| Node.js version | 24.x |
 
 ### Provider Integration
 
-**Native SDK**: Uses provider's native SDK package (daytona, blaxel, modal, vercel)
-
-**Via ComputeSDK orchestrator**: Routes through ComputeSDK's orchestrator for platforms without native sandbox APIs (namespace, railway, render)
+**Native SDK**: Uses provider's native SDK package (e2b, daytona, blaxel, modal, vercel, hopx, codesandbox, runloop, namespace)
 
 ### Provider Execution Order
 
-Providers are tested **sequentially** to:
+Within each test mode, providers are tested **sequentially** to:
 - Avoid resource contention on the test runner
 - Prevent rate limiting issues
 - Ensure consistent network conditions per provider
@@ -104,10 +181,42 @@ For each provider, we report:
 | **Min** | Fastest iteration (best case) |
 | **Max** | Slowest iteration (worst case) |
 | **Median** | Middle value (typical case) |
+| **P95** | 95th percentile (tail latency) |
+| **P99** | 99th percentile (extreme tail) |
 | **Average** | Arithmetic mean |
 | **Success Rate** | Iterations completed without error |
 
 We emphasize **median** as the primary metric because it's robust to outliers and represents the typical developer experience.
+
+### Composite Score
+
+Providers are ranked by a composite score (0–100, higher = better) that combines timing metrics with reliability. The same scoring formula is used across all three test modes.
+
+**Formula**: `compositeScore = timingScore × successRate`
+
+Each timing metric is scored against a **fixed 10-second ceiling**:
+
+```
+metricScore = 100 × (1 − value / 10,000ms)
+```
+
+A 200ms median scores 98. A 4,000ms median scores 60. Anything at or above 10s scores 0. These scores are **absolute** — they don't shift when providers are added or removed.
+
+The **timingScore** is a weighted sum of individual metric scores. The **successRate** (0–1) acts as a linear multiplier — a provider with 50% success has its score halved.
+
+**Timing weights** (sum to 1.0):
+
+| Metric | Weight | Rationale |
+|--------|--------|-----------|
+| Median | 0.50 | Primary signal — typical developer experience |
+| P95 | 0.20 | Tail latency — consistency matters |
+| Max | 0.15 | Worst-case exposure |
+| P99 | 0.10 | Extreme tail |
+| Min | 0.05 | Best-case capability |
+
+**Why multiplicative?** A provider with lower than 100% success rate shouldn't rank above a provider with 100% success and a slightly slower median. The multiplicative penalty ensures reliability is non-negotiable — a provider must be both fast *and* reliable to score well.
+
+When all providers have 100% success, ranking is determined purely by weighted timing.
 
 ## Environment & Infrastructure
 
@@ -129,65 +238,45 @@ We do not:
 - Use dedicated/reserved network capacity
 - Retry failed requests (failures count against success rate)
 
-## Quarterly Stress Tests
+## Results Storage
 
-Starting Q2 2026, we're introducing large-scale stress tests that go beyond daily TTI measurements.
-
-### What We're Exploring
-
-**Concurrency at scale** — How do providers perform when spinning up thousands of sandboxes simultaneously? Daily tests measure one-at-a-time performance. Real workloads often burst.
-
-Example test: *Spin up 10,000 sandboxes concurrently, measure time until all are interactive, track failure rates.*
-
-**Sustained load** — Can providers maintain performance over extended periods under continuous demand?
-
-**Recovery behavior** — How quickly do providers recover from partial failures or rate limiting?
-
-### Why This Matters
-
-Daily TTI benchmarks show best-case, low-contention performance. Stress tests reveal how providers behave when infrastructure is under pressure—which is when reliability matters most.
-
-Methodology details will be published before the first quarterly test runs.
-
----
-
-## Fairness & Limitations
-
-### What This Benchmark Shows
-
-- Relative performance between providers under consistent conditions
-- Typical cold-start times for on-demand sandbox creation
-- Provider reliability (success rate over time)
-
-### What This Benchmark Does NOT Show (Yet)
-
-- Performance with pre-warmed pools or snapshots
-- Performance under high concurrency
-- Geographic variation
-- Cost efficiency
-- Feature differences between providers
-
-## Data & Reproducibility
-
-### Raw Data
-
-All benchmark results are committed to this repository:
+Results are stored in per-test subdirectories with a `latest.json` symlink in each:
 
 ```
 results/
-├── 2026-02-19T00-30-31-832Z.json      # Magic mode results
-├── direct-2026-02-19T00-30-31-832Z.json # Direct mode results
-└── ...
+├── sequential_tti/
+│   ├── 2026-03-02T00-43-35-416Z.json
+│   ├── ...
+│   └── latest.json → most recent
+├── staggered_tti/
+│   ├── ...
+│   └── latest.json → most recent
+└── burst_tti/
+    ├── ...
+    └── latest.json → most recent
 ```
+
+Each test mode generates its own SVG visualization: `sequential_tti.svg`, `staggered_tti.svg`, `burst_tti.svg`.
 
 ### JSON Schema
 
 ```json
 {
+  "version": "1.1",
   "timestamp": "ISO 8601 timestamp",
+  "environment": {
+    "node": "v24.x.x",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "config": {
+    "iterations": 100,
+    "timeoutMs": 120000
+  },
   "results": [
     {
       "provider": "provider-name",
+      "mode": "sequential | staggered | burst",
       "iterations": [
         { "ttiMs": 123.45 },
         { "ttiMs": 0, "error": "error message" }
@@ -197,15 +286,19 @@ results/
           "min": 100.0,
           "max": 150.0,
           "median": 125.0,
+          "p95": 140.0,
+          "p99": 148.0,
           "avg": 124.5
         }
       },
-      "skipped": false,
-      "skipReason": null
+      "compositeScore": 96.85,
+      "successRate": 1.0
     }
   ]
 }
 ```
+
+Staggered results additionally include `concurrency`, `staggerDelayMs`, `wallClockMs`, `timeToFirstReadyMs`, and `rampProfile`. Burst results include `concurrency`, `wallClockMs`, and `timeToFirstReadyMs`.
 
 ### Running Locally
 
@@ -217,16 +310,64 @@ cd benchmarks
 npm install
 cp env.example .env  # Add your API keys
 
-# Run with same settings as CI
-npm run bench:direct -- --iterations 10
+# Run all 3 tests
+npm run bench
+
+# Run individual tests
+npm run bench:sequential -- --iterations 10
+npm run bench:staggered -- --concurrency 10 --stagger-delay 200
+npm run bench:burst -- --concurrency 10
+
+# Single provider
+npm run bench -- --provider e2b
 ```
 
 **Note**: Your results will differ based on your network location and conditions.
+
+## Quarterly Stress Tests
+
+Starting Q2 2026, we're introducing large-scale stress tests that go beyond daily measurements.
+
+### What We're Exploring
+
+**Concurrency at scale** — How do providers perform when spinning up thousands of sandboxes simultaneously?
+
+Example test: *Spin up 10,000 sandboxes concurrently, measure time until all are interactive, track failure rates.*
+
+**Sustained load** — Can providers maintain performance over extended periods under continuous demand?
+
+**Recovery behavior** — How quickly do providers recover from partial failures or rate limiting?
+
+### Why This Matters
+
+Daily benchmarks show performance at moderate scale. Stress tests reveal how providers behave when infrastructure is under pressure—which is when reliability matters most.
+
+Methodology details will be published before the first quarterly test runs.
+
+---
+
+## Fairness & Limitations
+
+### What This Benchmark Shows
+
+- Relative performance between providers under consistent conditions
+- Cold-start times for on-demand sandbox creation
+- Provider reliability (success rate over time)
+- Performance under concurrent load (staggered and burst)
+
+### What This Benchmark Does NOT Show (Yet)
+
+- Performance with pre-warmed pools or snapshots
+- Geographic variation
+- Cost efficiency
+- Feature differences between providers
 
 ## Changelog
 
 | Date | Change |
 |------|--------|
+| 2026-03-04 | Added staggered TTI and burst TTI test modes; separated results into per-test subdirectories |
+| 2026-03-01 | Added composite scoring methodology |
 | 2026-02-19 | Initial methodology documentation |
 | 2026-02-01 | Increased default iterations from 3 to 10 |
 | 2026-01-15 | Added Direct Mode benchmarks |

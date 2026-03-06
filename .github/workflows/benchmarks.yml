@@ -9,6 +9,20 @@ on:
         description: 'Iterations per provider'
         required: false
         default: '100'
+      concurrency:
+        description: 'Concurrent sandboxes for burst/staggered tests'
+        required: false
+        default: '100'
+      mode:
+        description: 'Test mode (leave empty to run all)'
+        required: false
+        default: ''
+        type: choice
+        options:
+          - ''
+          - sequential
+          - staggered
+          - burst
 
 concurrency:
   group: benchmarks
@@ -50,15 +64,21 @@ jobs:
           HOPX_API_KEY: ${{ secrets.HOPX_API_KEY}}
           CSB_API_KEY: ${{ secrets.CSB_API_KEY}}
           RUNLOOP_API_KEY: ${{ secrets.RUNLOOP_API_KEY}}
-        run: npm run bench -- --iterations ${{ github.event.inputs.iterations || '100' }}
-      - name: Copy latest results
-        run: cp $(ls -t results/*.json | head -1) results/latest.json
+        run: |
+          MODE_FLAG=""
+          if [ -n "${{ github.event.inputs.mode }}" ]; then
+            MODE_FLAG="--mode ${{ github.event.inputs.mode }}"
+          fi
+          npm run bench -- \
+            --iterations ${{ github.event.inputs.iterations || '100' }} \
+            --concurrency ${{ github.event.inputs.concurrency || '100' }} \
+            $MODE_FLAG
       - run: npm run generate-svg
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add results.svg results/
+          git add results.svg *_tti.svg results/
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "chore: update benchmark results [skip ci]"
           git push
