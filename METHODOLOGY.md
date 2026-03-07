@@ -161,7 +161,7 @@ npm run bench:burst                    # Burst only
 
 ### Provider Integration
 
-**Native SDK**: Uses provider's native SDK package (e2b, daytona, blaxel, modal, vercel, hopx, codesandbox, runloop, namespace)
+**ComputeSDK**: Uses ComputeSDK for consistency and ease-of-use (e2b, daytona, blaxel, modal, vercel, hopx, codesandbox, runloop, namespace)
 
 ### Provider Execution Order
 

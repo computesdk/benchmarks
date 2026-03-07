@@ -29,7 +29,7 @@ function getArgValue(args: string[], flag: string): string | undefined {
 
 /** Resolve which modes to run */
 function getModesToRun(): BenchmarkMode[] {
-  if (!rawMode) return ['sequential', 'staggered'];
+  if (!rawMode) return ['sequential', 'staggered', 'burst'];
   const m = rawMode === 'concurrent' ? 'burst' : rawMode as BenchmarkMode;
   return [m];
 }

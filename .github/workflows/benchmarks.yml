@@ -22,7 +22,7 @@ on:
           - ''
           - sequential
           - staggered
-          # - burst
+          - burst
 
 concurrency:
   group: benchmarks
