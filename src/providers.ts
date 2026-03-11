@@ -37,7 +37,7 @@ export const providers: ProviderConfig[] = [
   {
     name: 'just-bash',
     requiredEnvVars: [],
-    createCompute: () => justBash(),
+    createCompute: () => justBash({ files: {} }),
   },
   {
     name: 'modal',
