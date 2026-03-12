@@ -1,5 +1,6 @@
 import { e2b } from '@computesdk/e2b';
 import { daytona } from '@computesdk/daytona';
+import { beam } from '@computesdk/beam'
 import { blaxel } from '@computesdk/blaxel';
 import { justBash } from '@computesdk/just-bash';
 import { modal } from '@computesdk/modal';
@@ -33,6 +34,11 @@ export const providers: ProviderConfig[] = [
     name: 'blaxel',
     requiredEnvVars: ['BL_API_KEY', 'BL_WORKSPACE'],
     createCompute: () => blaxel({ apiKey: process.env.BL_API_KEY!, workspace: process.env.BL_WORKSPACE!, image: 'blaxel/benchmark:latest', region: 'us-was-1' }),
+  },
+  {
+    name: 'beam',
+    requiredEnvVars: ['BEAM_TOKEN', 'BEAM_WORKSPACE_ID'],
+    createCompute: () => beam({ token: process.env.BEAM_TOKEN!, workspaceId: process.env.BEAM_WORKSPACE_ID! }),
   },
   {
     name: 'just-bash',
