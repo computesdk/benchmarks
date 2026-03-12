@@ -9,6 +9,7 @@ import { codesandbox } from '@computesdk/codesandbox';
 import { runloop } from '@computesdk/runloop';
 import { namespace } from '@computesdk/namespace';
 import { cloudflare } from '@computesdk/cloudflare';
+import { sprites } from '@computesdk/sprites';
 import { compute } from 'computesdk';
 import type { ProviderConfig } from './types.js';
 
@@ -75,6 +76,11 @@ export const providers: ProviderConfig[] = [
     name: 'cloudflare',
     requiredEnvVars: ['CLOUDFLARE_SANDBOX_URL', 'CLOUDFLARE_SANDBOX_SECRET'],
     createCompute: () => cloudflare({ sandboxUrl: process.env.CLOUDFLARE_SANDBOX_URL!, sandboxSecret: process.env.CLOUDFLARE_SANDBOX_SECRET! }),
+  },
+  {
+    name: 'sprites',
+    requiredEnvVars: ['SPRITES_TOKEN'],
+    createCompute: () => sprites({ apiKey: process.env.SPRITES_TOKEN! }),
   },
   // --- Automatic mode (via ComputeSDK gateway) ---
   // {
