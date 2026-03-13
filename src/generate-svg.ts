@@ -7,6 +7,36 @@ import { sortByCompositeScore, computeCompositeScores } from './scoring.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const RESULTS_DIR = path.join(ROOT, 'results');
+const SPONSORS_DIR = path.join(ROOT, 'sponsors');
+
+/**
+ * Load sponsor logo from the sponsors/ directory.
+ * Returns the first .png or .jpg file found as a base64 data URI, or null.
+ */
+function loadSponsorImage(): { dataUri: string; name: string } | null {
+  if (!fs.existsSync(SPONSORS_DIR)) return null;
+
+  const files = fs.readdirSync(SPONSORS_DIR)
+    .filter(f => /\.(png|jpe?g|svg)$/i.test(f))
+    .sort();
+
+  if (files.length === 0) return null;
+
+  const file = files[0];
+  const ext = path.extname(file).toLowerCase();
+  const mimeTypes: Record<string, string> = {
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.svg': 'image/svg+xml',
+  };
+  const mime = mimeTypes[ext] || 'image/png';
+  const raw = fs.readFileSync(path.join(SPONSORS_DIR, file));
+  const b64 = raw.toString('base64');
+  const name = path.basename(file, ext);
+
+  return { dataUri: `data:${mime};base64,${b64}`, name };
+}
 
 // ComputeSDK logo - the "C" path
 const LOGO_C_PATH = `M1036.26,1002.28h237.87l-.93,19.09c-8.38,110.32-49.81,198.3-123.82,262.07-73.09,63.31-170.84,95.43-290.48,95.43-130.81,0-235.55-44.69-311.43-133.6-74.48-87.98-112.65-209.48-112.65-361.23v-60.51c0-96.83,17.7-183.41,51.68-257.43,34.91-74.95,85.19-133.61,149.89-173.63,64.7-40.04,140.12-60.52,225.3-60.52,117.77,0,214.13,32.12,286.29,95.9,72.62,63.3,114.98,153.61,126.15,267.67l1.86,19.08h-238.34l-.93-15.83c-4.65-59.11-20.95-101.94-47.95-127.08-27-25.6-69.83-38.17-127.08-38.17-61.91,0-107.06,20.95-137.33,65.17-31.65,45.15-47.94,117.77-48.87,215.53v74.48c0,102.41,15.36,177.83,45.62,223.91,28.86,44.22,74.01,65.63,137.79,65.63,58.19,0,101.48-12.57,128.95-38.17,26.99-25.14,43.29-66.1,47.48-121.5l.93-16.3Z`;
@@ -107,6 +137,9 @@ function buildFootnote(results: BenchmarkResult[], mode: string): string {
   return '* Uses ComputeSDK orchestrator';
 }
 
+// Cache the sponsor image so we only read it once per run
+const sponsorImage = loadSponsorImage();
+
 function generateSVG(results: BenchmarkResult[], timestamp: string, mode: string): string {
   // Compute scores if not already attached
   const hasScores = results.some(r => r.compositeScore !== undefined);
@@ -147,7 +180,7 @@ function generateSVG(results: BenchmarkResult[], timestamp: string, mode: string
   const title = MODE_TITLES[mode] || 'Benchmarks';
   const subtitle = MODE_SUBTITLES[mode] || 'Independent performance benchmarks for sandbox providers';
 
-  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
   <defs>
     <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#f6f8fa;stop-opacity:1" />
@@ -194,7 +227,11 @@ function generateSVG(results: BenchmarkResult[], timestamp: string, mode: string
   <!-- Title -->
   <text class="title" x="${padding + 76}" y="55">${title}</text>
   <text class="subtitle" x="${padding + 76}" y="78">${subtitle}</text>
-
+${sponsorImage ? `
+  <!-- Sponsor -->
+  <text font-size="11" font-family="Inter, SF Pro Display, sans-serif" fill="#8c959f" x="1100" y="32" text-anchor="middle" letter-spacing="1">SPONSORED BY</text>
+  <image href="${sponsorImage.dataUri}" x="1074" y="42" width="52" height="52" preserveAspectRatio="xMidYMid meet"/>
+` : ''}
   <!-- Table header background -->
   <rect class="table-header-bg" y="${tableTop}" width="${width}" height="${tableHeaderHeight}"/>
 
