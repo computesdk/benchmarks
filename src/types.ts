@@ -9,6 +9,8 @@ export interface ProviderConfig {
   requiredEnvVars: string[];
   /** Creates a compute instance — either direct SDK or gateway-based */
   createCompute: () => any;
+  /** Options passed to sandbox.create() (e.g. { image: 'node:20' }) */
+  sandboxOptions?: Record<string, any>;
 }
 
 export interface TimingResult {

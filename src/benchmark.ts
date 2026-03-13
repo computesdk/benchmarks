@@ -25,7 +25,7 @@ export function computeStats(values: number[]): Stats {
 }
 
 export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkResult> {
-  const { name, iterations = 100, timeout = 120_000, requiredEnvVars } = config;
+  const { name, iterations = 100, timeout = 120_000, requiredEnvVars, sandboxOptions } = config;
 
   // Check if all required credentials are available
   const missingVars = requiredEnvVars.filter(v => !process.env[v]);
@@ -48,7 +48,7 @@ export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkRes
     console.log(`  Iteration ${i + 1}/${iterations}...`);
 
     try {
-      const iterationResult = await runIteration(compute, timeout);
+      const iterationResult = await runIteration(compute, timeout, sandboxOptions);
       results.push(iterationResult);
       console.log(`    TTI: ${(iterationResult.ttiMs / 1000).toFixed(2)}s`);
     } catch (err) {
@@ -80,13 +80,13 @@ export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkRes
   };
 }
 
-export async function runIteration(compute: any, timeout: number): Promise<TimingResult> {
+export async function runIteration(compute: any, timeout: number, sandboxOptions?: Record<string, any>): Promise<TimingResult> {
   let sandbox: any = null;
 
   try {
     const start = performance.now();
 
-    sandbox = await withTimeout(compute.sandbox.create(), timeout, 'Sandbox creation timed out');
+    sandbox = await withTimeout(compute.sandbox.create(sandboxOptions), timeout, 'Sandbox creation timed out');
 
     const result = await withTimeout(
       sandbox.runCommand('node -v'),

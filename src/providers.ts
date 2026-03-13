@@ -33,7 +33,7 @@ export const providers: ProviderConfig[] = [
   {
     name: 'blaxel',
     requiredEnvVars: ['BL_API_KEY', 'BL_WORKSPACE'],
-    createCompute: () => blaxel({ apiKey: process.env.BL_API_KEY!, workspace: process.env.BL_WORKSPACE!, image: 'blaxel/benchmark:latest', region: 'us-was-1' }),
+    createCompute: () => blaxel({ apiKey: process.env.BL_API_KEY!, workspace: process.env.BL_WORKSPACE!, region: 'us-was-1' }),
   },
   {
     name: 'just-bash',
@@ -69,6 +69,7 @@ export const providers: ProviderConfig[] = [
     name: 'namespace',
     requiredEnvVars: ['NSC_TOKEN'],
     createCompute: () => namespace({ token: process.env.NSC_TOKEN! }),
+    sandboxOptions: { image: 'node:22' },
   },
   {
     name: 'cloudflare',

@@ -6,7 +6,7 @@ interface ConcurrentConfig extends ProviderConfig {
 }
 
 export async function runConcurrentBenchmark(config: ConcurrentConfig): Promise<ConcurrentBenchmarkResult> {
-  const { name, concurrency, timeout = 120_000, requiredEnvVars } = config;
+  const { name, concurrency, timeout = 120_000, requiredEnvVars, sandboxOptions } = config;
 
   // Check if all required credentials are available
   const missingVars = requiredEnvVars.filter(v => !process.env[v]);
@@ -32,7 +32,7 @@ export async function runConcurrentBenchmark(config: ConcurrentConfig): Promise<
 
   // Fire all sandbox creations simultaneously — no awaiting between launches
   const promises = Array.from({ length: concurrency }, (_, i) =>
-    runIteration(compute, timeout)
+    runIteration(compute, timeout, sandboxOptions)
       .then(result => {
         console.log(`  Sandbox ${i + 1}/${concurrency}: TTI ${(result.ttiMs / 1000).toFixed(2)}s`);
         return result;
