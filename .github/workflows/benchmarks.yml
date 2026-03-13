@@ -33,9 +33,24 @@ permissions:
 
 jobs:
   bench:
-    name: Run Benchmarks
+    name: Bench ${{ matrix.provider }}
     runs-on: namespace-profile-default
-    timeout-minutes: 180
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        provider:
+          - e2b
+          - daytona
+          - blaxel
+          - just-bash
+          - modal
+          - vercel
+          - hopx
+          - codesandbox
+          - runloop
+          - namespace
+          - cloudflare
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -43,7 +58,7 @@ jobs:
           node-version: 24
           cache: 'npm'
       - run: npm ci
-      - name: Run benchmarks
+      - name: Run benchmark
         env:
           COMPUTESDK_API_KEY: ${{ secrets.COMPUTESDK_API_KEY }}
           E2B_API_KEY: ${{ secrets.E2B_API_KEY }}
@@ -55,24 +70,49 @@ jobs:
           MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
           MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
           DAYTONA_API_KEY: ${{ secrets.DAYTONA_API_KEY }}
-          RAILWAY_API_KEY: ${{ secrets.RAILWAY_API_KEY }}
-          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
-          RAILWAY_ENVIRONMENT_ID: ${{ secrets.RAILWAY_ENVIRONMENT_ID }}
           NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
-          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
-          RENDER_OWNER_ID: ${{ secrets.RENDER_OWNER_ID }}
-          HOPX_API_KEY: ${{ secrets.HOPX_API_KEY}}
-          CSB_API_KEY: ${{ secrets.CSB_API_KEY}}
-          RUNLOOP_API_KEY: ${{ secrets.RUNLOOP_API_KEY}}
+          HOPX_API_KEY: ${{ secrets.HOPX_API_KEY }}
+          CSB_API_KEY: ${{ secrets.CSB_API_KEY }}
+          RUNLOOP_API_KEY: ${{ secrets.RUNLOOP_API_KEY }}
+          CLOUDFLARE_SANDBOX_URL: ${{ secrets.CLOUDFLARE_SANDBOX_URL }}
+          CLOUDFLARE_SANDBOX_SECRET: ${{ secrets.CLOUDFLARE_SANDBOX_SECRET }}
         run: |
           MODE_FLAG=""
           if [ -n "${{ github.event.inputs.mode }}" ]; then
             MODE_FLAG="--mode ${{ github.event.inputs.mode }}"
           fi
           npm run bench -- \
+            --provider ${{ matrix.provider }} \
             --iterations ${{ github.event.inputs.iterations || '100' }} \
             --concurrency ${{ github.event.inputs.concurrency || '100' }} \
             $MODE_FLAG
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: results-${{ matrix.provider }}
+          path: results/
+          retention-days: 7
+
+  collect:
+    name: Collect Results
+    runs-on: namespace-profile-default
+    needs: bench
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - run: npm ci
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+          pattern: results-*
+      - name: Merge results
+        run: npx tsx src/merge-results.ts --input artifacts
       - run: npm run generate-svg
       - name: Commit and push
         run: |
