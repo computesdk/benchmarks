@@ -20,6 +20,7 @@
     "bench:runloop": "tsx src/run.ts --provider runloop",
     "bench:vercel": "tsx src/run.ts --provider vercel",
     "bench:just-bash": "tsx src/run.ts --provider just-bash",
+    "bench:sprites": "tsx src/run.ts --provider sprites",
     "update-readme": "tsx src/update-readme.ts",
     "generate-svg": "tsx src/generate-svg.ts",
     "generate-svg:sequential": "tsx src/generate-svg.ts --mode sequential",
