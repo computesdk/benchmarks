@@ -103,21 +103,29 @@ export async function runIteration(compute: any, timeout: number, sandboxOptions
     return { ttiMs };
   } finally {
     if (sandbox) {
+      let timer: ReturnType<typeof setTimeout> | undefined;
       try {
         await Promise.race([
           sandbox.destroy(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Destroy timeout')), 15_000)),
+          new Promise((_, reject) => {
+            timer = setTimeout(() => reject(new Error('Destroy timeout')), 15_000);
+          }),
         ]);
-      } catch {
-        // Ignore cleanup errors
+      } catch (err) {
+        console.warn(`    [cleanup] destroy failed: ${err instanceof Error ? err.message : String(err)}`);
+      } finally {
+        if (timer) clearTimeout(timer);
       }
     }
   }
 }
 
 export function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
   return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(message)), ms)),
+    promise.then(v => { clearTimeout(timer); return v; }),
+    new Promise<T>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(message)), ms);
+    }),
   ]);
 }
