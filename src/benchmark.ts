@@ -24,6 +24,41 @@ export function computeStats(values: number[]): Stats {
   };
 }
 
+/**
+ * Sweep-cleanup: list all sandboxes for a provider and destroy any that are still alive.
+ * This catches anything the per-iteration finally blocks missed (timeouts, silent failures, etc).
+ */
+export async function cleanupAllSandboxes(compute: any, providerName: string): Promise<void> {
+  try {
+    const sandboxes = await Promise.race([
+      compute.sandbox.list(),
+      new Promise<any[]>((_, reject) => setTimeout(() => reject(new Error('List timeout')), 30_000)),
+    ]);
+
+    if (!sandboxes || sandboxes.length === 0) return;
+
+    console.log(`  [cleanup] ${providerName}: found ${sandboxes.length} lingering sandbox(es), destroying...`);
+
+    const destroyResults = await Promise.allSettled(
+      sandboxes.map((s: any) =>
+        Promise.race([
+          s.destroy(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Destroy timeout')), 15_000)),
+        ])
+      )
+    );
+
+    const failed = destroyResults.filter(r => r.status === 'rejected');
+    if (failed.length > 0) {
+      console.warn(`  [cleanup] ${providerName}: ${failed.length}/${sandboxes.length} destroy(s) failed`);
+    } else {
+      console.log(`  [cleanup] ${providerName}: all ${sandboxes.length} sandbox(es) destroyed`);
+    }
+  } catch (err) {
+    console.warn(`  [cleanup] ${providerName}: sweep failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
 export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkResult> {
   const { name, iterations = 100, timeout = 120_000, requiredEnvVars, sandboxOptions } = config;
 
