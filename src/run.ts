@@ -131,7 +131,9 @@ async function main() {
   console.log('\nAll tests complete.');
 }
 
-main().catch(err => {
+main().then(() => {
+  process.exit(0);
+}).catch(err => {
   console.error('Benchmark failed:', err);
   process.exit(1);
 });
