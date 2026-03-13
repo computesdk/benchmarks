@@ -3,7 +3,7 @@
  *
  * Usage: tsx src/merge-results.ts --input <artifacts-dir>
  *
- * Reads all JSON files from the input directory (one per provider per mode),
+ * Reads latest.json files from the input directory (one per provider per mode),
  * groups them by mode, merges results, computes composite scores, and writes
  * combined files to results/<mode>/latest.json.
  */
@@ -37,26 +37,38 @@ interface ResultFile {
   results: BenchmarkResult[];
 }
 
-/** Map mode to results subdirectory name */
+/** Map mode to results subdirectory name, matching run.ts logic */
 function modeToDir(mode: string): string {
-  return `${mode}_tti`;
+  switch (mode) {
+    case 'sequential': return 'sequential_tti';
+    case 'staggered': return 'staggered_tti';
+    case 'burst':
+    case 'concurrent': return 'burst_tti';
+    default: return `${mode}_tti`;
+  }
 }
 
-function main() {
-  // Find all JSON files recursively in the input directory
+/** Normalize mode name (concurrent -> burst) */
+function normalizeMode(mode: string): string {
+  return mode === 'concurrent' ? 'burst' : mode;
+}
+
+async function main() {
+  // Find only latest.json files recursively to avoid duplicates.
+  // Artifact layout: artifacts/results-<provider>/<mode>_tti/latest.json
   const jsonFiles: string[] = [];
   function walk(dir: string) {
     if (!fs.existsSync(dir)) return;
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) walk(full);
-      else if (entry.name.endsWith('.json')) jsonFiles.push(full);
+      else if (entry.name === 'latest.json') jsonFiles.push(full);
     }
   }
   walk(inputDir!);
 
   if (jsonFiles.length === 0) {
-    console.error(`No JSON files found in ${inputDir}`);
+    console.error(`No latest.json files found in ${inputDir}`);
     process.exit(1);
   }
 
@@ -68,11 +80,10 @@ function main() {
   for (const file of jsonFiles) {
     const raw: ResultFile = JSON.parse(fs.readFileSync(file, 'utf-8'));
     for (const result of raw.results) {
-      // Determine mode from the file path or result
-      // File paths are like: <provider>-<mode>/results.json
+      // Determine mode from the directory name (e.g. sequential_tti, burst_tti)
       const dirName = path.basename(path.dirname(file));
-      let mode = result.mode || 'sequential';
-      // Also try to infer from directory name
+      let mode = normalizeMode(result.mode || 'sequential');
+      // Infer from directory name if available
       if (dirName.includes('sequential')) mode = 'sequential';
       else if (dirName.includes('staggered')) mode = 'staggered';
       else if (dirName.includes('burst')) mode = 'burst';
@@ -85,7 +96,7 @@ function main() {
   }
 
   // For each mode, compute scores, print table, and write combined results
-  for (const [mode, { results, meta }] of Object.entries(byMode)) {
+  for (const [mode, { results }] of Object.entries(byMode)) {
     console.log(`\nMerging ${results.length} provider results for mode: ${mode}`);
 
     // Compute composite scores across all providers
@@ -101,7 +112,7 @@ function main() {
     fs.mkdirSync(resultsDir, { recursive: true });
 
     const outPath = path.join(resultsDir, `${timestamp}.json`);
-    writeResultsJson(results, outPath);
+    await writeResultsJson(results, outPath);
 
     // Copy to latest.json
     const latestPath = path.join(resultsDir, 'latest.json');
@@ -110,4 +121,7 @@ function main() {
   }
 }
 
-main();
+main().catch(err => {
+  console.error('Merge failed:', err);
+  process.exit(1);
+});
