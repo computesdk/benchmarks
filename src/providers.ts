@@ -1,6 +1,6 @@
 import { e2b } from '@computesdk/e2b';
 import { daytona } from '@computesdk/daytona';
-import { beam } from '@computesdk/beam'
+import { beam } from '@computesdk/beam';
 import { blaxel } from '@computesdk/blaxel';
 import { justBash } from '@computesdk/just-bash';
 import { modal } from '@computesdk/modal';
