@@ -25,7 +25,8 @@
     "generate-svg": "tsx src/generate-svg.ts",
     "generate-svg:sequential": "tsx src/generate-svg.ts --mode sequential",
     "generate-svg:staggered": "tsx src/generate-svg.ts --mode staggered",
-    "generate-svg:burst": "tsx src/generate-svg.ts --mode burst"
+    "generate-svg:burst": "tsx src/generate-svg.ts --mode burst",
+    "generate-pricing-svg": "tsx src/generate-pricing-svg.ts"
   },
   "dependencies": {
     "@computesdk/blaxel": "^1.6.0",
