@@ -117,11 +117,12 @@ jobs:
       - name: Merge results
         run: npx tsx src/merge-results.ts --input artifacts
       - run: npm run generate-svg
+      - run: npm run generate-pricing-svg
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add results.svg *_tti.svg results/
+          git add results.svg *_tti.svg pricing.svg results/
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "chore: update benchmark results [skip ci]"
           git push

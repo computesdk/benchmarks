@@ -1,10 +1,13 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import type { BenchmarkResult } from './types.js';
+import { computeCompositeScores, computeSuccessRate } from './scoring.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const PRICING_PATH = path.join(ROOT, 'pricing.json');
+const RESULTS_DIR = path.join(ROOT, 'results');
 const SPONSORS_DIR = path.join(ROOT, 'sponsors');
 
 // ComputeSDK logo - the "C" path (same as generate-svg.ts)
@@ -125,6 +128,43 @@ function valueColorClass(score: number | null): string {
   if (score >= 60) return 'fast';
   if (score >= 40) return 'medium';
   return 'slow';
+}
+
+/**
+ * Load live benchmark scores from sequential results.
+ * Returns a map of provider id -> { score, success_rate } or null if no results found.
+ */
+function loadLiveBenchmarkScores(): Map<string, { score: number; successRate: string }> | null {
+  const latestPath = path.join(RESULTS_DIR, 'sequential_tti', 'latest.json');
+  if (!fs.existsSync(latestPath)) return null;
+
+  try {
+    const raw = fs.readFileSync(latestPath, 'utf-8');
+    const data = JSON.parse(raw);
+    const results: BenchmarkResult[] = data.results;
+
+    // Compute composite scores if not already present
+    const hasScores = results.some(r => r.compositeScore !== undefined);
+    if (!hasScores) {
+      computeCompositeScores(results);
+    }
+
+    const scores = new Map<string, { score: number; successRate: string }>();
+    for (const r of results) {
+      const ok = r.iterations.filter(it => !it.error).length;
+      const total = r.iterations.length;
+      scores.set(r.provider, {
+        score: r.compositeScore ?? 0,
+        successRate: `${ok}/${total}`,
+      });
+    }
+
+    console.log(`Loaded live benchmark scores for ${scores.size} providers from sequential results`);
+    return scores;
+  } catch (err) {
+    console.warn(`Warning: failed to load live benchmark scores: ${err}`);
+    return null;
+  }
 }
 
 function generatePricingSVG(data: PricingData): string {
@@ -303,6 +343,19 @@ function main() {
 
   const raw = fs.readFileSync(PRICING_PATH, 'utf-8');
   const data: PricingData = JSON.parse(raw);
+
+  // Overlay live benchmark scores if available
+  const liveScores = loadLiveBenchmarkScores();
+  if (liveScores) {
+    for (const provider of data.providers) {
+      const live = liveScores.get(provider.id);
+      if (live) {
+        provider.benchmark.score = live.score;
+        provider.benchmark.success_rate = live.successRate;
+        provider.benchmark.status = live.score > 0 ? 'ok' : 'failed';
+      }
+    }
+  }
 
   const svg = generatePricingSVG(data);
   const outputPath = path.join(ROOT, 'pricing.svg');

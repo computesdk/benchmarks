@@ -17,12 +17,12 @@
       "pricing": {
         "model": "per_second",
         "cpu": {
-          "rate": 0.000014,
+          "rate": 1.4e-05,
           "unit": "vCPU-sec",
           "confidence": "exact"
         },
         "memory": {
-          "rate": 0.0000045,
+          "rate": 4.5e-06,
           "unit": "GiB-sec",
           "bundled_with_cpu": false,
           "confidence": "exact"
@@ -97,7 +97,7 @@
           "notes": "CPU allocated based on RAM tier. 2 GB RAM = 1 vCPU."
         },
         "memory": {
-          "rate": 0.0000115,
+          "rate": 1.15e-05,
           "unit": "GB-sec",
           "bundled_with_cpu": true,
           "confidence": "exact",
@@ -106,7 +106,7 @@
         "storage": {
           "volumes_rate": 0.12,
           "volumes_unit": "GB-month",
-          "snapshot_rate": 0.20,
+          "snapshot_rate": 0.2,
           "snapshot_unit": "GB-month",
           "image_rate": 0.045,
           "image_unit": "GB-month",
@@ -144,7 +144,7 @@
       ],
       "free_credits": 200,
       "isolation": "microvm",
-      "notes": "Perpetual standby — sandboxes persist indefinitely. 25ms resume from standby. No charge during standby, only storage."
+      "notes": "Perpetual standby \u2014 sandboxes persist indefinitely. 25ms resume from standby. No charge during standby, only storage."
     },
     {
       "id": "modal",
@@ -157,13 +157,13 @@
       "pricing": {
         "model": "per_second",
         "cpu": {
-          "rate": 0.00003942,
+          "rate": 3.942e-05,
           "unit": "core-sec",
           "notes": "1 physical core = 2 vCPU. Sandbox non-preemptible rate = 3x base serverless rate of $0.0000131/core-sec. Regional multipliers 1.25x-2.5x apply on top.",
           "confidence": "exact"
         },
         "memory": {
-          "rate": 0.00000672,
+          "rate": 6.72e-06,
           "unit": "GiB-sec",
           "bundled_with_cpu": false,
           "confidence": "exact",
@@ -252,7 +252,7 @@
           "cache_volume_unit": "GB-day",
           "cache_snapshot_rate": 0.002,
           "cache_snapshot_unit": "GB-hr",
-          "container_registry_rate": 0.20,
+          "container_registry_rate": 0.2,
           "container_registry_unit": "GB-month",
           "confidence": "exact"
         },
@@ -344,7 +344,7 @@
           "memory_per_gib_hr": 0.0106,
           "total_1vcpu_2gb_hr": 0.1492,
           "confidence": "exact",
-          "notes": "1 vCPU x $0.128 active + 2 GB x $0.0106 wall-clock. CPU component assumes 100% utilization — actual cost lower for I/O-bound workloads."
+          "notes": "1 vCPU x $0.128 active + 2 GB x $0.0106 wall-clock. CPU component assumes 100% utilization \u2014 actual cost lower for I/O-bound workloads."
         }
       },
       "plans": [
@@ -392,12 +392,12 @@
       "pricing": {
         "model": "per_second",
         "cpu": {
-          "rate": 0.00003,
+          "rate": 3e-05,
           "unit": "CPU-sec",
           "confidence": "exact"
         },
         "memory": {
-          "rate": 0.000007,
+          "rate": 7e-06,
           "unit": "GB-sec",
           "bundled_with_cpu": false,
           "confidence": "exact"
@@ -405,7 +405,7 @@
         "storage": {
           "active_rate": 0.00034236,
           "active_unit": "GB-hr",
-          "snapshot_rate": 0.000072,
+          "snapshot_rate": 7.2e-05,
           "snapshot_unit": "GB-hr",
           "free_gb": 100,
           "confidence": "exact",
@@ -473,12 +473,42 @@
           "confidence": "estimated"
         },
         "vm_tiers": [
-          { "name": "nano",  "vcpu": 2,  "ram_gb": 4,   "rate_per_hr": 0.1486 },
-          { "name": "micro", "vcpu": 4,  "ram_gb": 8,   "rate_per_hr": 0.2972 },
-          { "name": "small", "vcpu": 8,  "ram_gb": 16,  "rate_per_hr": 0.5944 },
-          { "name": "medium","vcpu": 16, "ram_gb": 32,  "rate_per_hr": 1.1888 },
-          { "name": "large", "vcpu": 32, "ram_gb": 64,  "rate_per_hr": 2.3776 },
-          { "name": "xlarge","vcpu": 64, "ram_gb": 128, "rate_per_hr": 4.7552 }
+          {
+            "name": "nano",
+            "vcpu": 2,
+            "ram_gb": 4,
+            "rate_per_hr": 0.1486
+          },
+          {
+            "name": "micro",
+            "vcpu": 4,
+            "ram_gb": 8,
+            "rate_per_hr": 0.2972
+          },
+          {
+            "name": "small",
+            "vcpu": 8,
+            "ram_gb": 16,
+            "rate_per_hr": 0.5944
+          },
+          {
+            "name": "medium",
+            "vcpu": 16,
+            "ram_gb": 32,
+            "rate_per_hr": 1.1888
+          },
+          {
+            "name": "large",
+            "vcpu": 32,
+            "ram_gb": 64,
+            "rate_per_hr": 2.3776
+          },
+          {
+            "name": "xlarge",
+            "vcpu": 64,
+            "ram_gb": 128,
+            "rate_per_hr": 4.7552
+          }
         ],
         "storage": {
           "included_gb_per_vm": 20,
@@ -522,7 +552,7 @@
       ],
       "free_credits": null,
       "isolation": "microvm",
-      "notes": "Now part of Together AI. VM cloning and forking supported. TypeScript /JavaScript SDK only."
+      "notes": "Now part of Together AI. VM cloning and forking supported. TypeScript/JavaScript SDK only."
     },
     {
       "id": "hopx",
@@ -535,19 +565,19 @@
       "pricing": {
         "model": "per_second",
         "cpu": {
-          "rate": 0.000014,
+          "rate": 1.4e-05,
           "unit": "vCPU-sec",
           "confidence": "exact",
           "notes": "Identical to e2b rates."
         },
         "memory": {
-          "rate": 0.0000045,
+          "rate": 4.5e-06,
           "unit": "GiB-sec",
           "bundled_with_cpu": false,
           "confidence": "exact"
         },
         "storage": {
-          "rate": 0.00000003,
+          "rate": 3e-08,
           "unit": "GiB-sec",
           "included_gb": null,
           "confidence": "exact",
@@ -576,7 +606,7 @@
       ],
       "free_credits": 200,
       "isolation": "firecracker_microvm",
-      "notes": "Built by Bunnyshell. Early stage — no subscription tiers yet. Mirrors e2b pricing exactly."
+      "notes": "Built by Bunnyshell. Early stage \u2014 no subscription tiers yet. Mirrors e2b pricing exactly."
     },
     {
       "id": "cloudflare",
@@ -589,14 +619,14 @@
       "pricing": {
         "model": "active_cpu_per_10ms",
         "cpu": {
-          "rate": 0.00002,
+          "rate": 2e-05,
           "unit": "vCPU-sec",
           "billing": "active_only",
           "confidence": "exact",
           "notes": "Active CPU usage only, billed per 10ms intervals."
         },
         "memory": {
-          "rate": 0.0000025,
+          "rate": 2.5e-06,
           "unit": "GiB-sec",
           "billing": "provisioned",
           "bundled_with_cpu": false,
@@ -604,13 +634,13 @@
           "notes": "Provisioned (wall-clock), not active. Cheapest memory rate in the field."
         },
         "storage": {
-          "rate": 0.00000007,
+          "rate": 7e-08,
           "unit": "GB-sec",
           "billing": "provisioned",
           "persistence": false,
           "free_gb_hr_per_month": 200,
           "confidence": "exact",
-          "notes": "Ephemeral only — all state lost when sandbox sleeps. No persistent storage available."
+          "notes": "Ephemeral only \u2014 all state lost when sandbox sleeps. No persistent storage available."
         },
         "egress": {
           "rate": 0.025,
@@ -650,7 +680,7 @@
       ],
       "free_credits": null,
       "isolation": "container",
-      "notes": "Currently in public beta. No persistent storage — state lost on sleep. Requires $5/mo Workers Paid base. 9/100 benchmark success rate suggests significant reliability issues."
+      "notes": "Currently in public beta. No persistent storage \u2014 state lost on sleep. Requires $5/mo Workers Paid base. 9/100 benchmark success rate suggests significant reliability issues."
     },
     {
       "id": "daytona",
@@ -663,20 +693,20 @@
       "pricing": {
         "model": "per_second",
         "cpu": {
-          "rate": 0.000014,
+          "rate": 1.4e-05,
           "unit": "vCPU-sec",
-          "confidence": "estimated",
-          "notes": "Back-calculated from $0.067/hr for 1vCPU+1GiB. Same rate as e2b."
+          "confidence": "exact",
+          "notes": "Published directly on pricing page. Same rate as e2b and hopx."
         },
         "memory": {
-          "rate": 0.0000045,
+          "rate": 4.5e-06,
           "unit": "GiB-sec",
           "bundled_with_cpu": false,
           "confidence": "exact",
           "notes": "First 5 GiB free. Same rate as e2b and hopx."
         },
         "storage": {
-          "rate": 0.00000003,
+          "rate": 3e-08,
           "unit": "GiB-sec",
           "free_gib": 5,
           "archive_rate": null,
@@ -693,8 +723,8 @@
           "cpu_per_vcpu_hr": 0.0504,
           "memory_per_gib_hr": 0.0162,
           "total_1vcpu_2gb_hr": 0.0828,
-          "confidence": "estimated",
-          "notes": "CPU back-calculated. Memory exact. Same total as e2b and hopx."
+          "confidence": "exact",
+          "notes": "CPU and memory both exact. Same total as e2b and hopx."
         }
       },
       "plans": [
