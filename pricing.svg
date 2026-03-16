@@ -1,0 +1,173 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="712" viewBox="0 0 1200 712">
+  <defs>
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f6f8fa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <style>
+    .bg { fill: #ffffff; }
+    .header-bg { fill: url(#headerGrad); }
+    .table-header-bg { fill: #f6f8fa; }
+    .table-header { font: 600 12px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #57606a; text-transform: uppercase; letter-spacing: 0.5px; }
+    .row { font: 14px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #24292f; }
+    .rank { font-weight: 700; fill: #57606a; }
+    .rank-1 { fill: #d4a000; }
+    .rank-2 { fill: #8a8a8a; }
+    .rank-3 { fill: #a0522d; }
+    .provider { font-weight: 600; fill: #0969da; }
+    .cost { font-weight: 700; font-size: 15px; }
+    .value { font-weight: 700; font-size: 15px; }
+    .fast { fill: #1a7f37; }
+    .medium { fill: #9a6700; }
+    .slow { fill: #cf222e; }
+    .status { fill: #57606a; }
+    .divider { stroke: #d0d7de; stroke-width: 1; }
+    .border { stroke: #d0d7de; stroke-width: 1; fill: none; }
+    .timestamp { font: 11px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #57606a; }
+    .title { font: bold 28px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #24292f; }
+    .subtitle { font: 14px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #57606a; }
+    .logo { fill: #24292f; }
+    .confidence-exact { fill: #1a7f37; }
+    .confidence-estimated { fill: #9a6700; }
+    .confidence-unknown { fill: #cf222e; }
+  </style>
+
+  <!-- Background -->
+  <rect class="bg" width="1200" height="712"/>
+
+  <!-- Logo (black square with white C) -->
+  <g transform="translate(24, 24)">
+    <rect width="60" height="60" fill="#000000"/>
+    <g transform="scale(0.035) translate(0, 0)">
+      <path fill="#ffffff" d="M1036.26,1002.28h237.87l-.93,19.09c-8.38,110.32-49.81,198.3-123.82,262.07-73.09,63.31-170.84,95.43-290.48,95.43-130.81,0-235.55-44.69-311.43-133.6-74.48-87.98-112.65-209.48-112.65-361.23v-60.51c0-96.83,17.7-183.41,51.68-257.43,34.91-74.95,85.19-133.61,149.89-173.63,64.7-40.04,140.12-60.52,225.3-60.52,117.77,0,214.13,32.12,286.29,95.9,72.62,63.3,114.98,153.61,126.15,267.67l1.86,19.08h-238.34l-.93-15.83c-4.65-59.11-20.95-101.94-47.95-127.08-27-25.6-69.83-38.17-127.08-38.17-61.91,0-107.06,20.95-137.33,65.17-31.65,45.15-47.94,117.77-48.87,215.53v74.48c0,102.41,15.36,177.83,45.62,223.91,28.86,44.22,74.01,65.63,137.79,65.63,58.19,0,101.48-12.57,128.95-38.17,26.99-25.14,43.29-66.1,47.48-121.5l.93-16.3Z"/>
+    </g>
+  </g>
+
+  <!-- Title -->
+  <text class="title" x="100" y="55">Pricing Comparison</text>
+  <text class="subtitle" x="100" y="78">Normalized to 1 vCPU + 2 GB RAM / hour — sorted by value score</text>
+
+  <!-- Sponsor -->
+  <text font-size="11" font-family="Inter, SF Pro Display, sans-serif" fill="#8c959f" x="1100" y="32" text-anchor="middle" letter-spacing="1">SPONSORED BY</text>
+  <image href="data:image/png;base64,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" x="1074" y="42" width="52" height="52" preserveAspectRatio="xMidYMid meet"/>
+
+  <!-- Table header background -->
+  <rect class="table-header-bg" y="134" width="1200" height="44"/>
+
+  <!-- Table header text -->
+  <text class="table-header" x="40" y="162">#</text>
+  <text class="table-header" x="80" y="162">Provider</text>
+  <text class="table-header" x="260" y="162">Cost / hr</text>
+  <text class="table-header" x="460" y="162">Benchmark</text>
+  <text class="table-header" x="660" y="162">Billing</text>
+  <text class="table-header" x="860" y="162">Value Score</text>
+  <text class="table-header" x="1020" y="162">Confidence</text>
+
+  <!-- Row 1: e2b -->
+  <text class="rank rank-1" x="40" y="208">1</text>
+  <text class="row provider" x="80" y="208">E2B</text>
+  <text class="row cost fast" x="260" y="208">$0.0828</text>
+  <text class="row" x="460" y="208">68.4 (100/100)</text>
+  <text class="row" x="660" y="208">Per-second</text>
+  <text class="row value fast" x="860" y="208">63.3</text>
+  <text class="row confidence-exact" x="1020" y="208">exact</text>
+  <line class="divider" x1="24" y1="222" x2="1176" y2="222"/>
+
+  <!-- Row 2: blaxel -->
+  <text class="rank rank-2" x="40" y="252">2</text>
+  <text class="row provider" x="80" y="252">Blaxel</text>
+  <text class="row cost fast" x="260" y="252">$0.0828</text>
+  <text class="row" x="460" y="252">60.5 (71/100)</text>
+  <text class="row" x="660" y="252">Per-second</text>
+  <text class="row value medium" x="860" y="252">59.5</text>
+  <text class="row confidence-exact" x="1020" y="252">exact</text>
+  <line class="divider" x1="24" y1="266" x2="1176" y2="266"/>
+
+  <!-- Row 3: namespace -->
+  <text class="rank rank-3" x="40" y="296">3</text>
+  <text class="row provider" x="80" y="296">Namespace</text>
+  <text class="row cost fast" x="260" y="296">$0.0900</text>
+  <text class="row" x="460" y="296">43.7 (100/100)</text>
+  <text class="row" x="660" y="296">Per-minute</text>
+  <text class="row value medium" x="860" y="296">49.0</text>
+  <text class="row confidence-exact" x="1020" y="296">exact</text>
+  <line class="divider" x1="24" y1="310" x2="1176" y2="310"/>
+
+  <!-- Row 4: modal -->
+  <text class="rank" x="40" y="340">4</text>
+  <text class="row provider" x="80" y="340">Modal</text>
+  <text class="row cost medium" x="260" y="340">$0.1191</text>
+  <text class="row" x="460" y="340">55.9 (99/100)</text>
+  <text class="row" x="660" y="340">Per-second</text>
+  <text class="row value medium" x="860" y="340">47.5</text>
+  <text class="row confidence-exact" x="1020" y="340">exact</text>
+  <line class="divider" x1="24" y1="354" x2="1176" y2="354"/>
+
+  <!-- Row 5: vercel -->
+  <text class="rank" x="40" y="384">5</text>
+  <text class="row provider" x="80" y="384">Vercel</text>
+  <text class="row cost slow" x="260" y="384">$0.1492</text>
+  <text class="row" x="460" y="384">25.9 (33/100)</text>
+  <text class="row" x="660" y="384">Active CPU</text>
+  <text class="row value slow" x="860" y="384">25.6</text>
+  <text class="row confidence-exact" x="1020" y="384">exact</text>
+  <line class="divider" x1="24" y1="398" x2="1176" y2="398"/>
+
+  <!-- Row 6: codesandbox -->
+  <text class="rank" x="40" y="428">6</text>
+  <text class="row provider" x="80" y="428">Codesandbox</text>
+  <text class="row cost slow" x="260" y="428">$0.1486</text>
+  <text class="row" x="460" y="428">9.7 (82/100)</text>
+  <text class="row" x="660" y="428">Per-hour</text>
+  <text class="row value slow" x="860" y="428">15.8</text>
+  <text class="row confidence-estimated" x="1020" y="428">estimated</text>
+  <line class="divider" x1="24" y1="442" x2="1176" y2="442"/>
+
+  <!-- Row 7: runloop -->
+  <text class="rank" x="40" y="472">7</text>
+  <text class="row provider" x="80" y="472">Runloop</text>
+  <text class="row cost slow" x="260" y="472">$0.1584</text>
+  <text class="row" x="460" y="472">9.9 (100/100)</text>
+  <text class="row" x="660" y="472">Per-second</text>
+  <text class="row value slow" x="860" y="472">14.3</text>
+  <text class="row confidence-exact" x="1020" y="472">exact</text>
+  <line class="divider" x1="24" y1="486" x2="1176" y2="486"/>
+
+  <!-- Row 8: hopx -->
+  <text class="rank" x="40" y="516">8</text>
+  <text class="row provider" x="80" y="516">Hopx</text>
+  <text class="row cost fast" x="260" y="516">$0.0828</text>
+  <text class="row" x="460" y="516">2.9 (66/100)</text>
+  <text class="row" x="660" y="516">Per-second</text>
+  <text class="row value slow" x="860" y="516">13.0</text>
+  <text class="row confidence-exact" x="1020" y="516">exact</text>
+  <line class="divider" x1="24" y1="530" x2="1176" y2="530"/>
+
+  <!-- Row 9: cloudflare -->
+  <text class="rank" x="40" y="560">9</text>
+  <text class="row provider" x="80" y="560">Cloudflare</text>
+  <text class="row cost fast" x="260" y="560">$0.0900</text>
+  <text class="row" x="460" y="560">2.5 (9/100)</text>
+  <text class="row" x="660" y="560">Active CPU</text>
+  <text class="row value slow" x="860" y="560">11.7</text>
+  <text class="row confidence-exact" x="1020" y="560">exact</text>
+  <line class="divider" x1="24" y1="574" x2="1176" y2="574"/>
+
+  <!-- Row 10: daytona -->
+  <text class="rank" x="40" y="604">10</text>
+  <text class="row provider" x="80" y="604">Daytona</text>
+  <text class="row cost fast" x="260" y="604">$0.0828</text>
+  <text class="row" x="460" y="604">-- (0/100)</text>
+  <text class="row" x="660" y="604">Per-second</text>
+  <text class="row value status" x="860" y="604">--</text>
+  <text class="row confidence-estimated" x="1020" y="604">estimated</text>
+
+  <!-- Timestamp -->
+  <text class="timestamp" x="1176" y="674" text-anchor="end">Last updated: Mar 15, 2026</text>
+
+  <!-- Footnotes -->
+  <text class="timestamp" x="24" y="688">Cost = 1 vCPU + 2 GB RAM per hour (normalized). Value Score = sqrt(benchmark score x cost efficiency).</text>
+  <text class="timestamp" x="24" y="702">Confidence: exact = official pricing page, estimated = back-calculated from bundled tier.</text>
+
+</svg>

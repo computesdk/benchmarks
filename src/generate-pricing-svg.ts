@@ -1,0 +1,313 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, '..');
+const PRICING_PATH = path.join(ROOT, 'pricing.json');
+const SPONSORS_DIR = path.join(ROOT, 'sponsors');
+
+// ComputeSDK logo - the "C" path (same as generate-svg.ts)
+const LOGO_C_PATH = `M1036.26,1002.28h237.87l-.93,19.09c-8.38,110.32-49.81,198.3-123.82,262.07-73.09,63.31-170.84,95.43-290.48,95.43-130.81,0-235.55-44.69-311.43-133.6-74.48-87.98-112.65-209.48-112.65-361.23v-60.51c0-96.83,17.7-183.41,51.68-257.43,34.91-74.95,85.19-133.61,149.89-173.63,64.7-40.04,140.12-60.52,225.3-60.52,117.77,0,214.13,32.12,286.29,95.9,72.62,63.3,114.98,153.61,126.15,267.67l1.86,19.08h-238.34l-.93-15.83c-4.65-59.11-20.95-101.94-47.95-127.08-27-25.6-69.83-38.17-127.08-38.17-61.91,0-107.06,20.95-137.33,65.17-31.65,45.15-47.94,117.77-48.87,215.53v74.48c0,102.41,15.36,177.83,45.62,223.91,28.86,44.22,74.01,65.63,137.79,65.63,58.19,0,101.48-12.57,128.95-38.17,26.99-25.14,43.29-66.1,47.48-121.5l.93-16.3Z`;
+
+interface PricingProvider {
+  id: string;
+  benchmark: {
+    score: number | null;
+    success_rate: string;
+    status: string;
+    cold_start_ms: number | null;
+  };
+  pricing: {
+    model: string;
+    normalized: {
+      total_1vcpu_2gb_hr: number;
+      confidence: string;
+      notes?: string;
+    };
+  };
+  free_credits: number | null;
+  isolation: string;
+}
+
+interface PricingData {
+  meta: {
+    version: string;
+    last_updated: string;
+    normalization_basis: string;
+  };
+  providers: PricingProvider[];
+}
+
+/**
+ * Load sponsor logo from the sponsors/ directory.
+ */
+function loadSponsorImage(): { dataUri: string; name: string } | null {
+  if (!fs.existsSync(SPONSORS_DIR)) return null;
+
+  const files = fs.readdirSync(SPONSORS_DIR)
+    .filter(f => /\.(png|jpe?g|svg)$/i.test(f))
+    .sort();
+
+  if (files.length === 0) return null;
+
+  const file = files[0];
+  const ext = path.extname(file).toLowerCase();
+  const mimeTypes: Record<string, string> = {
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.svg': 'image/svg+xml',
+  };
+  const mime = mimeTypes[ext] || 'image/png';
+  const raw = fs.readFileSync(path.join(SPONSORS_DIR, file));
+  const b64 = raw.toString('base64');
+  const name = path.basename(file, ext);
+
+  return { dataUri: `data:${mime};base64,${b64}`, name };
+}
+
+function formatProviderName(s: string): string {
+  if (s.toLowerCase() === 'e2b') return 'E2B';
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function formatCost(cost: number): string {
+  return `$${cost.toFixed(4)}`;
+}
+
+function formatBillingModel(model: string): string {
+  const labels: Record<string, string> = {
+    'per_second': 'Per-second',
+    'per_minute': 'Per-minute',
+    'active_cpu': 'Active CPU',
+    'active_cpu_per_10ms': 'Active CPU',
+    'per_hour_credits': 'Per-hour',
+  };
+  return labels[model] || model;
+}
+
+/**
+ * Compute a value score that combines cost efficiency and benchmark performance.
+ *
+ * Value score = benchmarkScore * costEfficiency
+ *
+ * Cost efficiency is scored on a 0-100 scale where:
+ *   - $0.00/hr = 100 (free)
+ *   - $0.20/hr = 0 (ceiling)
+ *
+ * The two are multiplied and normalized to 0-100.
+ */
+function computeValueScore(benchmarkScore: number | null, costPerHr: number): number | null {
+  if (benchmarkScore === null || benchmarkScore === 0) return null;
+
+  const COST_CEILING = 0.20; // $/hr — anything at or above this scores 0 for cost
+  const costScore = Math.max(0, 100 * (1 - costPerHr / COST_CEILING));
+
+  // Geometric mean gives balanced weight to both dimensions
+  return Math.round(Math.sqrt(benchmarkScore * costScore) * 10) / 10;
+}
+
+/**
+ * Get color class for cost — lower is better (green).
+ */
+function costColorClass(cost: number): string {
+  if (cost <= 0.09) return 'fast';    // green — cheap
+  if (cost <= 0.12) return 'medium';  // yellow — moderate
+  return 'slow';                       // red — expensive
+}
+
+/**
+ * Get color class for value score — higher is better.
+ */
+function valueColorClass(score: number | null): string {
+  if (score === null) return 'status';
+  if (score >= 60) return 'fast';
+  if (score >= 40) return 'medium';
+  return 'slow';
+}
+
+function generatePricingSVG(data: PricingData): string {
+  const sponsorImage = loadSponsorImage();
+
+  // Sort providers by value score (highest first), null scores last
+  const providers = data.providers.map(p => ({
+    ...p,
+    valueScore: computeValueScore(
+      p.benchmark.score,
+      p.pricing.normalized.total_1vcpu_2gb_hr
+    ),
+  }));
+
+  providers.sort((a, b) => {
+    if (a.valueScore === null && b.valueScore === null) return 0;
+    if (a.valueScore === null) return 1;
+    if (b.valueScore === null) return -1;
+    return b.valueScore - a.valueScore;
+  });
+
+  const rowHeight = 44;
+  const headerHeight = 110;
+  const tableHeaderHeight = 44;
+  const padding = 24;
+  const width = 1200;
+  const tableTop = headerHeight + padding;
+  const tableBottom = tableTop + tableHeaderHeight + (providers.length * rowHeight);
+  const footnoteHeight = 40;
+  const height = tableBottom + padding + 30 + footnoteHeight;
+
+  // Column positions
+  const cols = {
+    rank: 40,
+    provider: 80,
+    cost: 260,
+    benchmark: 460,
+    billing: 660,
+    value: 860,
+    confidence: 1020,
+  };
+
+  const title = 'Pricing Comparison';
+  const subtitle = `Normalized to ${data.meta.normalization_basis} — sorted by value score`;
+
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <defs>
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f6f8fa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <style>
+    .bg { fill: #ffffff; }
+    .header-bg { fill: url(#headerGrad); }
+    .table-header-bg { fill: #f6f8fa; }
+    .table-header { font: 600 12px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #57606a; text-transform: uppercase; letter-spacing: 0.5px; }
+    .row { font: 14px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #24292f; }
+    .rank { font-weight: 700; fill: #57606a; }
+    .rank-1 { fill: #d4a000; }
+    .rank-2 { fill: #8a8a8a; }
+    .rank-3 { fill: #a0522d; }
+    .provider { font-weight: 600; fill: #0969da; }
+    .cost { font-weight: 700; font-size: 15px; }
+    .value { font-weight: 700; font-size: 15px; }
+    .fast { fill: #1a7f37; }
+    .medium { fill: #9a6700; }
+    .slow { fill: #cf222e; }
+    .status { fill: #57606a; }
+    .divider { stroke: #d0d7de; stroke-width: 1; }
+    .border { stroke: #d0d7de; stroke-width: 1; fill: none; }
+    .timestamp { font: 11px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #57606a; }
+    .title { font: bold 28px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #24292f; }
+    .subtitle { font: 14px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #57606a; }
+    .logo { fill: #24292f; }
+    .confidence-exact { fill: #1a7f37; }
+    .confidence-estimated { fill: #9a6700; }
+    .confidence-unknown { fill: #cf222e; }
+  </style>
+
+  <!-- Background -->
+  <rect class="bg" width="${width}" height="${height}"/>
+
+  <!-- Logo (black square with white C) -->
+  <g transform="translate(${padding}, 24)">
+    <rect width="60" height="60" fill="#000000"/>
+    <g transform="scale(0.035) translate(0, 0)">
+      <path fill="#ffffff" d="${LOGO_C_PATH}"/>
+    </g>
+  </g>
+
+  <!-- Title -->
+  <text class="title" x="${padding + 76}" y="55">${title}</text>
+  <text class="subtitle" x="${padding + 76}" y="78">${subtitle}</text>
+${sponsorImage ? `
+  <!-- Sponsor -->
+  <text font-size="11" font-family="Inter, SF Pro Display, sans-serif" fill="#8c959f" x="1100" y="32" text-anchor="middle" letter-spacing="1">SPONSORED BY</text>
+  <image href="${sponsorImage.dataUri}" x="1074" y="42" width="52" height="52" preserveAspectRatio="xMidYMid meet"/>
+` : ''}
+  <!-- Table header background -->
+  <rect class="table-header-bg" y="${tableTop}" width="${width}" height="${tableHeaderHeight}"/>
+
+  <!-- Table header text -->
+  <text class="table-header" x="${cols.rank}" y="${tableTop + 28}">#</text>
+  <text class="table-header" x="${cols.provider}" y="${tableTop + 28}">Provider</text>
+  <text class="table-header" x="${cols.cost}" y="${tableTop + 28}">Cost / hr</text>
+  <text class="table-header" x="${cols.benchmark}" y="${tableTop + 28}">Benchmark</text>
+  <text class="table-header" x="${cols.billing}" y="${tableTop + 28}">Billing</text>
+  <text class="table-header" x="${cols.value}" y="${tableTop + 28}">Value Score</text>
+  <text class="table-header" x="${cols.confidence}" y="${tableTop + 28}">Confidence</text>
+`;
+
+  providers.forEach((p, i) => {
+    const y = tableTop + tableHeaderHeight + (i * rowHeight) + 30;
+    const rank = i + 1;
+
+    const cost = p.pricing.normalized.total_1vcpu_2gb_hr;
+    const benchScore = p.benchmark.score !== null ? p.benchmark.score.toFixed(1) : '--';
+    const valueScore = p.valueScore !== null ? p.valueScore.toFixed(1) : '--';
+    const billing = formatBillingModel(p.pricing.model);
+    const confidence = p.pricing.normalized.confidence;
+
+    // Rank styling
+    let rankClass = 'rank';
+    if (rank === 1) rankClass = 'rank rank-1';
+    else if (rank === 2) rankClass = 'rank rank-2';
+    else if (rank === 3) rankClass = 'rank rank-3';
+
+    // Confidence styling
+    let confidenceClass = 'status';
+    if (confidence === 'exact') confidenceClass = 'confidence-exact';
+    else if (confidence === 'estimated') confidenceClass = 'confidence-estimated';
+
+    svg += `
+  <!-- Row ${rank}: ${p.id} -->
+  <text class="${rankClass}" x="${cols.rank}" y="${y}">${rank}</text>
+  <text class="row provider" x="${cols.provider}" y="${y}">${formatProviderName(p.id)}</text>
+  <text class="row cost ${costColorClass(cost)}" x="${cols.cost}" y="${y}">${formatCost(cost)}</text>
+  <text class="row" x="${cols.benchmark}" y="${y}">${benchScore} (${p.benchmark.success_rate})</text>
+  <text class="row" x="${cols.billing}" y="${y}">${billing}</text>
+  <text class="row value ${valueColorClass(p.valueScore)}" x="${cols.value}" y="${y}">${valueScore}</text>
+  <text class="row ${confidenceClass}" x="${cols.confidence}" y="${y}">${confidence}</text>
+`;
+
+    if (i < providers.length - 1) {
+      const lineY = tableTop + tableHeaderHeight + ((i + 1) * rowHeight);
+      svg += `  <line class="divider" x1="${padding}" y1="${lineY}" x2="${width - padding}" y2="${lineY}"/>
+`;
+    }
+  });
+
+  const date = new Date(data.meta.last_updated).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+
+  svg += `
+  <!-- Timestamp -->
+  <text class="timestamp" x="${width - padding}" y="${height - 38}" text-anchor="end">Last updated: ${date}</text>
+
+  <!-- Footnotes -->
+  <text class="timestamp" x="${padding}" y="${height - 24}">Cost = 1 vCPU + 2 GB RAM per hour (normalized). Value Score = sqrt(benchmark score x cost efficiency).</text>
+  <text class="timestamp" x="${padding}" y="${height - 10}">Confidence: exact = official pricing page, estimated = back-calculated from bundled tier.</text>
+
+</svg>`;
+
+  return svg;
+}
+
+function main() {
+  if (!fs.existsSync(PRICING_PATH)) {
+    console.error(`pricing.json not found at ${PRICING_PATH}`);
+    process.exit(1);
+  }
+
+  const raw = fs.readFileSync(PRICING_PATH, 'utf-8');
+  const data: PricingData = JSON.parse(raw);
+
+  const svg = generatePricingSVG(data);
+  const outputPath = path.join(ROOT, 'pricing.svg');
+  fs.writeFileSync(outputPath, svg);
+  console.log(`Pricing SVG written to ${outputPath}`);
+}
+
+main();

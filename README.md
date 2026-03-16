@@ -4,6 +4,8 @@
 
 ![Burst TTI](./burst_tti.svg)
 
+![Pricing Comparison](./pricing.svg)
+
 [![Benchmarks](https://github.com/computesdk/benchmarks/actions/workflows/benchmarks.yml/badge.svg)](https://github.com/computesdk/benchmarks/actions/workflows/benchmarks.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
@@ -79,7 +81,7 @@ Sponsors enable independent benchmark infrastructure. **Sponsors cannot influenc
 - [ ] 10,000 concurrent sandbox stress test
 - [ ] Cold start vs warm start metrics
 - [ ] Multi-region testing
-- [ ] Cost-per-sandbox-minute
+- [x] Cost-per-sandbox-minute
 
 <br>
 

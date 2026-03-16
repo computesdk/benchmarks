@@ -1,0 +1,714 @@
+{
+  "meta": {
+    "version": "1.0",
+    "last_updated": "2026-03-16",
+    "normalization_basis": "1 vCPU + 2 GB RAM / hour",
+    "notes": "Rates sourced from official pricing pages. Confidence field indicates data quality: exact = from official pricing page, estimated = back-calculated from bundled tier, unknown = not published."
+  },
+  "providers": [
+    {
+      "id": "e2b",
+      "benchmark": {
+        "score": 68.4,
+        "success_rate": "100/100",
+        "status": "ok",
+        "cold_start_ms": 150
+      },
+      "pricing": {
+        "model": "per_second",
+        "cpu": {
+          "rate": 0.000014,
+          "unit": "vCPU-sec",
+          "confidence": "exact"
+        },
+        "memory": {
+          "rate": 0.0000045,
+          "unit": "GiB-sec",
+          "bundled_with_cpu": false,
+          "confidence": "exact"
+        },
+        "storage": {
+          "included_gb": 10,
+          "overage_rate": null,
+          "overage_unit": null,
+          "confidence": "exact",
+          "notes": "10 GiB on Hobby, 20 GiB on Pro. No published overage rate. Paused sandboxes: no charge."
+        },
+        "egress": {
+          "rate": null,
+          "free_gb_per_month": null,
+          "confidence": "unknown"
+        },
+        "normalized": {
+          "cpu_per_vcpu_hr": 0.0504,
+          "memory_per_gib_hr": 0.0162,
+          "total_1vcpu_2gb_hr": 0.0828,
+          "confidence": "exact"
+        }
+      },
+      "plans": [
+        {
+          "name": "hobby",
+          "base_fee_per_month": 0,
+          "credits": 100,
+          "one_time_credit": true,
+          "requires_cc": false,
+          "max_session_hr": 1,
+          "max_concurrent_sandboxes": 20
+        },
+        {
+          "name": "pro",
+          "base_fee_per_month": 150,
+          "credits": 0,
+          "one_time_credit": false,
+          "requires_cc": true,
+          "max_session_hr": 24,
+          "max_concurrent_sandboxes": 100
+        },
+        {
+          "name": "enterprise",
+          "base_fee_per_month": null,
+          "credits": null,
+          "one_time_credit": false,
+          "requires_cc": true,
+          "max_session_hr": null,
+          "max_concurrent_sandboxes": null
+        }
+      ],
+      "free_credits": 100,
+      "isolation": "firecracker_microvm",
+      "notes": "Paused sandboxes incur zero charges. Pro unlocks 24-hr sessions and 100 concurrent sandboxes."
+    },
+    {
+      "id": "blaxel",
+      "benchmark": {
+        "score": 60.5,
+        "success_rate": "71/100",
+        "status": "ok",
+        "cold_start_ms": 25
+      },
+      "pricing": {
+        "model": "per_second",
+        "cpu": {
+          "rate": null,
+          "unit": null,
+          "bundled_with_memory": true,
+          "confidence": "exact",
+          "notes": "CPU allocated based on RAM tier. 2 GB RAM = 1 vCPU."
+        },
+        "memory": {
+          "rate": 0.0000115,
+          "unit": "GB-sec",
+          "bundled_with_cpu": true,
+          "confidence": "exact",
+          "notes": "Billed as combined CPU+RAM rate per GB-sec. Auto-suspend after 15s inactivity; no charge during standby."
+        },
+        "storage": {
+          "volumes_rate": 0.12,
+          "volumes_unit": "GB-month",
+          "snapshot_rate": 0.20,
+          "snapshot_unit": "GB-month",
+          "image_rate": 0.045,
+          "image_unit": "GB-month",
+          "included_gb": null,
+          "confidence": "exact"
+        },
+        "egress": {
+          "rate": null,
+          "free_gb_per_month": null,
+          "confidence": "unknown"
+        },
+        "normalized": {
+          "cpu_per_vcpu_hr": 0.0504,
+          "memory_per_gib_hr": 0.0414,
+          "total_1vcpu_2gb_hr": 0.0828,
+          "confidence": "exact",
+          "notes": "XS tier: 2 GB RAM -> 1 vCPU. $0.0000115/GB-sec x 2 GB x 3600s."
+        }
+      },
+      "plans": [
+        {
+          "name": "pay_as_you_go",
+          "base_fee_per_month": 0,
+          "credits": 200,
+          "one_time_credit": false,
+          "requires_cc": false
+        },
+        {
+          "name": "enterprise",
+          "base_fee_per_month": null,
+          "credits": null,
+          "one_time_credit": false,
+          "requires_cc": true
+        }
+      ],
+      "free_credits": 200,
+      "isolation": "microvm",
+      "notes": "Perpetual standby — sandboxes persist indefinitely. 25ms resume from standby. No charge during standby, only storage."
+    },
+    {
+      "id": "modal",
+      "benchmark": {
+        "score": 55.9,
+        "success_rate": "99/100",
+        "status": "ok",
+        "cold_start_ms": 2000
+      },
+      "pricing": {
+        "model": "per_second",
+        "cpu": {
+          "rate": 0.00003942,
+          "unit": "core-sec",
+          "notes": "1 physical core = 2 vCPU. Sandbox non-preemptible rate = 3x base serverless rate of $0.0000131/core-sec. Regional multipliers 1.25x-2.5x apply on top.",
+          "confidence": "exact"
+        },
+        "memory": {
+          "rate": 0.00000672,
+          "unit": "GiB-sec",
+          "bundled_with_cpu": false,
+          "confidence": "exact",
+          "notes": "Sandbox rate. Standard function rate is $0.00000222/GiB-sec."
+        },
+        "storage": {
+          "included_gb": null,
+          "overage_rate": 0,
+          "overage_unit": "GB-month",
+          "confidence": "semi_official",
+          "notes": "Volumes currently free. May change. Ephemeral disk billed indirectly via memory at 20:1 ratio."
+        },
+        "egress": {
+          "rate": 0,
+          "free_gb_per_month": null,
+          "confidence": "semi_official",
+          "notes": "Egress free per official statements."
+        },
+        "normalized": {
+          "cpu_per_vcpu_hr": 0.07096,
+          "memory_per_gib_hr": 0.02419,
+          "total_1vcpu_2gb_hr": 0.11914,
+          "confidence": "exact",
+          "notes": "$0.00003942/core-sec / 2 vCPU x 3600s for CPU. Sandbox non-preemptible rate."
+        }
+      },
+      "plans": [
+        {
+          "name": "starter",
+          "base_fee_per_month": 0,
+          "credits": 30,
+          "one_time_credit": false,
+          "requires_cc": false,
+          "max_containers": 100,
+          "max_gpu_concurrency": 10
+        },
+        {
+          "name": "team",
+          "base_fee_per_month": 250,
+          "credits": 100,
+          "one_time_credit": false,
+          "requires_cc": true,
+          "max_containers": 1000,
+          "max_gpu_concurrency": 50
+        },
+        {
+          "name": "enterprise",
+          "base_fee_per_month": null,
+          "credits": null,
+          "one_time_credit": false,
+          "requires_cc": true,
+          "max_containers": null,
+          "max_gpu_concurrency": null
+        }
+      ],
+      "free_credits": 30,
+      "isolation": "gvisor",
+      "notes": "GPU support available. Regional multipliers (1.25x-2.5x) and non-preemptible multiplier (3x) compound. Startup credits up to $25K for eligible startups."
+    },
+    {
+      "id": "namespace",
+      "benchmark": {
+        "score": 43.7,
+        "success_rate": "100/100",
+        "status": "ok",
+        "cold_start_ms": null
+      },
+      "pricing": {
+        "model": "per_minute",
+        "cpu": {
+          "prepaid_rate": 0.001,
+          "overage_rate": 0.0015,
+          "unit": "unit-min",
+          "notes": "1 unit = 1 vCPU x 1 min (Linux). Windows 2x multiplier, macOS 10x multiplier.",
+          "confidence": "exact"
+        },
+        "memory": {
+          "rate": null,
+          "unit": null,
+          "bundled_with_cpu": true,
+          "confidence": "exact",
+          "notes": "Standard shape: 1 vCPU + 2 GB RAM per unit-min. Memory not separately billed."
+        },
+        "storage": {
+          "cache_volume_rate": 0.0048,
+          "cache_volume_unit": "GB-day",
+          "cache_snapshot_rate": 0.002,
+          "cache_snapshot_unit": "GB-hr",
+          "container_registry_rate": 0.20,
+          "container_registry_unit": "GB-month",
+          "confidence": "exact"
+        },
+        "egress": {
+          "rate": null,
+          "free_gb_per_month": null,
+          "confidence": "unknown",
+          "notes": "Not published. Likely included."
+        },
+        "normalized": {
+          "cpu_per_vcpu_hr": 0.09,
+          "memory_per_gib_hr": 0.03,
+          "total_1vcpu_2gb_hr": 0.09,
+          "confidence": "exact",
+          "notes": "PAYG overage rate: $0.0015/unit-min x 60 min. CPU+memory bundled so total = CPU rate."
+        }
+      },
+      "plans": [
+        {
+          "name": "developer",
+          "base_fee_per_month": 0,
+          "unit_minutes_included": null,
+          "docker_builds_included": null,
+          "billing": "pay_as_you_go"
+        },
+        {
+          "name": "team",
+          "base_fee_per_month": 100,
+          "unit_minutes_included": 100000,
+          "docker_builds_included": 1000
+        },
+        {
+          "name": "business",
+          "base_fee_per_month": 250,
+          "unit_minutes_included": 250000,
+          "docker_builds_included": 2500
+        },
+        {
+          "name": "enterprise",
+          "base_fee_per_month": null,
+          "unit_minutes_included": null,
+          "docker_builds_included": null
+        }
+      ],
+      "free_credits": null,
+      "isolation": "vm",
+      "notes": "Primarily a CI/CD runner platform, not a pure AI sandbox. macOS on Apple M4 Pro available. SOC2 Type II."
+    },
+    {
+      "id": "vercel",
+      "benchmark": {
+        "score": 25.9,
+        "success_rate": "33/100",
+        "status": "ok",
+        "cold_start_ms": null
+      },
+      "pricing": {
+        "model": "active_cpu",
+        "cpu": {
+          "rate": 0.128,
+          "unit": "active-CPU-hr",
+          "confidence": "exact",
+          "notes": "Active CPU only. I/O wait time (LLM calls, network, DB queries) not billed. Effective cost much lower for I/O-heavy workloads."
+        },
+        "memory": {
+          "rate": 0.0106,
+          "unit": "GB-hr",
+          "bundled_with_cpu": false,
+          "billing": "wall_clock",
+          "confidence": "exact",
+          "notes": "Provisioned memory, billed wall-clock regardless of CPU activity. 2 GB per vCPU."
+        },
+        "storage": {
+          "included_gb": 15,
+          "overage_rate": 0.08,
+          "overage_unit": "GB-month",
+          "confidence": "exact",
+          "notes": "Snapshots included. 15 GB free on Hobby."
+        },
+        "egress": {
+          "rate": 0.15,
+          "unit": "GB",
+          "free_gb_per_month": 20,
+          "confidence": "exact",
+          "notes": "20 GB free on Hobby plan. Currently US East (iad1) only."
+        },
+        "normalized": {
+          "cpu_per_vcpu_hr": 0.128,
+          "memory_per_gib_hr": 0.0106,
+          "total_1vcpu_2gb_hr": 0.1492,
+          "confidence": "exact",
+          "notes": "1 vCPU x $0.128 active + 2 GB x $0.0106 wall-clock. CPU component assumes 100% utilization — actual cost lower for I/O-bound workloads."
+        }
+      },
+      "plans": [
+        {
+          "name": "hobby",
+          "base_fee_per_month": 0,
+          "credits": null,
+          "requires_cc": false,
+          "max_session_hr": 0.75,
+          "max_concurrent_sandboxes": 10,
+          "included_cpu_hr": 5,
+          "included_memory_gb_hr": 420,
+          "included_network_gb": 20,
+          "included_creations": 5000
+        },
+        {
+          "name": "pro",
+          "base_fee_per_month": 20,
+          "credits": 20,
+          "requires_cc": true,
+          "max_session_hr": 5,
+          "max_concurrent_sandboxes": 2000
+        },
+        {
+          "name": "enterprise",
+          "base_fee_per_month": null,
+          "credits": null,
+          "requires_cc": true,
+          "max_session_hr": 5,
+          "max_concurrent_sandboxes": 2000
+        }
+      ],
+      "free_credits": null,
+      "isolation": "firecracker_microvm",
+      "notes": "Currently US East (iad1) only. Beta. Sandbox creation rate-limited by vCPU allocation per minute."
+    },
+    {
+      "id": "runloop",
+      "benchmark": {
+        "score": 9.9,
+        "success_rate": "100/100",
+        "status": "ok",
+        "cold_start_ms": 2000
+      },
+      "pricing": {
+        "model": "per_second",
+        "cpu": {
+          "rate": 0.00003,
+          "unit": "CPU-sec",
+          "confidence": "exact"
+        },
+        "memory": {
+          "rate": 0.000007,
+          "unit": "GB-sec",
+          "bundled_with_cpu": false,
+          "confidence": "exact"
+        },
+        "storage": {
+          "active_rate": 0.00034236,
+          "active_unit": "GB-hr",
+          "snapshot_rate": 0.000072,
+          "snapshot_unit": "GB-hr",
+          "free_gb": 100,
+          "confidence": "exact",
+          "notes": "Basic plan: 100 GB free. Pro plan: 1 TB free. Active storage ~$0.247/GB-month."
+        },
+        "egress": {
+          "rate": null,
+          "free_gb_per_month": null,
+          "confidence": "unknown"
+        },
+        "normalized": {
+          "cpu_per_vcpu_hr": 0.108,
+          "memory_per_gib_hr": 0.0252,
+          "total_1vcpu_2gb_hr": 0.1584,
+          "confidence": "exact",
+          "notes": "1 vCPU x $0.108 + 2 GB x $0.0252."
+        }
+      },
+      "plans": [
+        {
+          "name": "basic",
+          "base_fee_per_month": 0,
+          "credits": 25,
+          "one_time_credit": false,
+          "storage_included_gb": 100
+        },
+        {
+          "name": "pro",
+          "base_fee_per_month": 250,
+          "credits": null,
+          "storage_included_gb": 1000
+        },
+        {
+          "name": "enterprise",
+          "base_fee_per_month": null,
+          "credits": null,
+          "storage_included_gb": null
+        }
+      ],
+      "free_credits": 25,
+      "isolation": "microvm",
+      "notes": "SOC2 certified. Built-in benchmarking tools. VPC deployment available. Founded by ex-Google/Stripe engineers."
+    },
+    {
+      "id": "codesandbox",
+      "benchmark": {
+        "score": 9.7,
+        "success_rate": "82/100",
+        "status": "ok",
+        "cold_start_ms": 500
+      },
+      "pricing": {
+        "model": "per_hour_credits",
+        "cpu": {
+          "rate": null,
+          "unit": null,
+          "bundled_with_memory": true,
+          "confidence": "estimated",
+          "notes": "VM-hour pricing bundles CPU and memory. 1 credit = $0.015. On-demand: $0.1486/hr."
+        },
+        "memory": {
+          "rate": null,
+          "unit": null,
+          "bundled_with_cpu": true,
+          "confidence": "estimated"
+        },
+        "vm_tiers": [
+          { "name": "nano",  "vcpu": 2,  "ram_gb": 4,   "rate_per_hr": 0.1486 },
+          { "name": "micro", "vcpu": 4,  "ram_gb": 8,   "rate_per_hr": 0.2972 },
+          { "name": "small", "vcpu": 8,  "ram_gb": 16,  "rate_per_hr": 0.5944 },
+          { "name": "medium","vcpu": 16, "ram_gb": 32,  "rate_per_hr": 1.1888 },
+          { "name": "large", "vcpu": 32, "ram_gb": 64,  "rate_per_hr": 2.3776 },
+          { "name": "xlarge","vcpu": 64, "ram_gb": 128, "rate_per_hr": 4.7552 }
+        ],
+        "storage": {
+          "included_gb_per_vm": 20,
+          "overage_rate": null,
+          "confidence": "exact",
+          "notes": "20 GB per VM included. No published overage rate."
+        },
+        "egress": {
+          "rate": null,
+          "free_gb_per_month": null,
+          "confidence": "unknown"
+        },
+        "normalized": {
+          "cpu_per_vcpu_hr": 0.075,
+          "memory_per_gib_hr": 0.037,
+          "total_1vcpu_2gb_hr": 0.1486,
+          "confidence": "estimated",
+          "notes": "No 1 vCPU + 2 GB tier. Using Nano (2 vCPU + 4 GB) as closest match at $0.1486/hr. Actual 1vCPU+2GB cost would be ~$0.074 if offered."
+        }
+      },
+      "plans": [
+        {
+          "name": "build",
+          "base_fee_per_month": 0,
+          "vm_credits_hr_per_month": 40,
+          "max_members": 5,
+          "max_concurrent_vms": 10
+        },
+        {
+          "name": "pro",
+          "base_fee_per_month": 9,
+          "vm_credits_hr_per_month": 60,
+          "max_members": 20
+        },
+        {
+          "name": "scale",
+          "base_fee_per_month": 170,
+          "vm_credits_hr_per_month": 160,
+          "max_concurrent_vms": 250
+        }
+      ],
+      "free_credits": null,
+      "isolation": "microvm",
+      "notes": "Now part of Together AI. VM cloning and forking supported. TypeScript /JavaScript SDK only."
+    },
+    {
+      "id": "hopx",
+      "benchmark": {
+        "score": 2.9,
+        "success_rate": "66/100",
+        "status": "ok",
+        "cold_start_ms": 100
+      },
+      "pricing": {
+        "model": "per_second",
+        "cpu": {
+          "rate": 0.000014,
+          "unit": "vCPU-sec",
+          "confidence": "exact",
+          "notes": "Identical to e2b rates."
+        },
+        "memory": {
+          "rate": 0.0000045,
+          "unit": "GiB-sec",
+          "bundled_with_cpu": false,
+          "confidence": "exact"
+        },
+        "storage": {
+          "rate": 0.00000003,
+          "unit": "GiB-sec",
+          "included_gb": null,
+          "confidence": "exact",
+          "notes": "~$0.078/GiB-month. Within $200 free credit."
+        },
+        "egress": {
+          "rate": null,
+          "free_gb_per_month": null,
+          "confidence": "unknown"
+        },
+        "normalized": {
+          "cpu_per_vcpu_hr": 0.0504,
+          "memory_per_gib_hr": 0.0162,
+          "total_1vcpu_2gb_hr": 0.0828,
+          "confidence": "exact",
+          "notes": "Identical to e2b normalization."
+        }
+      },
+      "plans": [
+        {
+          "name": "pay_as_you_go",
+          "base_fee_per_month": 0,
+          "credits": 200,
+          "requires_cc": false
+        }
+      ],
+      "free_credits": 200,
+      "isolation": "firecracker_microvm",
+      "notes": "Built by Bunnyshell. Early stage — no subscription tiers yet. Mirrors e2b pricing exactly."
+    },
+    {
+      "id": "cloudflare",
+      "benchmark": {
+        "score": 2.5,
+        "success_rate": "9/100",
+        "status": "ok",
+        "cold_start_ms": 2000
+      },
+      "pricing": {
+        "model": "active_cpu_per_10ms",
+        "cpu": {
+          "rate": 0.00002,
+          "unit": "vCPU-sec",
+          "billing": "active_only",
+          "confidence": "exact",
+          "notes": "Active CPU usage only, billed per 10ms intervals."
+        },
+        "memory": {
+          "rate": 0.0000025,
+          "unit": "GiB-sec",
+          "billing": "provisioned",
+          "bundled_with_cpu": false,
+          "confidence": "exact",
+          "notes": "Provisioned (wall-clock), not active. Cheapest memory rate in the field."
+        },
+        "storage": {
+          "rate": 0.00000007,
+          "unit": "GB-sec",
+          "billing": "provisioned",
+          "persistence": false,
+          "free_gb_hr_per_month": 200,
+          "confidence": "exact",
+          "notes": "Ephemeral only — all state lost when sandbox sleeps. No persistent storage available."
+        },
+        "egress": {
+          "rate": 0.025,
+          "unit": "GB",
+          "regional_rates": {
+            "north_america": 0.025,
+            "europe": 0.025,
+            "other": 0.05
+          },
+          "free_gb_per_month": 500,
+          "confidence": "exact",
+          "notes": "500 GB - 1 TB free per month depending on region."
+        },
+        "normalized": {
+          "cpu_per_vcpu_hr": 0.072,
+          "memory_per_gib_hr": 0.009,
+          "total_1vcpu_2gb_hr": 0.09,
+          "confidence": "exact",
+          "notes": "1 vCPU x $0.072 active + 2 GiB x $0.009 provisioned."
+        }
+      },
+      "plans": [
+        {
+          "name": "workers_free",
+          "base_fee_per_month": 0,
+          "sandboxes_available": false,
+          "notes": "Sandboxes require Workers Paid."
+        },
+        {
+          "name": "workers_paid",
+          "base_fee_per_month": 5,
+          "sandboxes_available": true,
+          "included_memory_gb_hr": 25,
+          "included_disk_gb_hr": 200,
+          "included_vcpu_min": 375
+        }
+      ],
+      "free_credits": null,
+      "isolation": "container",
+      "notes": "Currently in public beta. No persistent storage — state lost on sleep. Requires $5/mo Workers Paid base. 9/100 benchmark success rate suggests significant reliability issues."
+    },
+    {
+      "id": "daytona",
+      "benchmark": {
+        "score": null,
+        "success_rate": "0/100",
+        "status": "failed",
+        "cold_start_ms": 90
+      },
+      "pricing": {
+        "model": "per_second",
+        "cpu": {
+          "rate": 0.000014,
+          "unit": "vCPU-sec",
+          "confidence": "estimated",
+          "notes": "Back-calculated from $0.067/hr for 1vCPU+1GiB. Same rate as e2b."
+        },
+        "memory": {
+          "rate": 0.0000045,
+          "unit": "GiB-sec",
+          "bundled_with_cpu": false,
+          "confidence": "exact",
+          "notes": "First 5 GiB free. Same rate as e2b and hopx."
+        },
+        "storage": {
+          "rate": 0.00000003,
+          "unit": "GiB-sec",
+          "free_gib": 5,
+          "archive_rate": null,
+          "confidence": "exact",
+          "notes": "Stopped sandboxes: disk-only charges. Auto-archive after 7 days to cheaper object storage. Archive rate not published."
+        },
+        "egress": {
+          "rate": 0,
+          "free_gb_per_month": null,
+          "confidence": "exact",
+          "notes": "Included free. Tier 1 accounts restricted to whitelisted services only (GitHub, package registries). Full internet requires higher tier."
+        },
+        "normalized": {
+          "cpu_per_vcpu_hr": 0.0504,
+          "memory_per_gib_hr": 0.0162,
+          "total_1vcpu_2gb_hr": 0.0828,
+          "confidence": "estimated",
+          "notes": "CPU back-calculated. Memory exact. Same total as e2b and hopx."
+        }
+      },
+      "plans": [
+        {
+          "name": "pay_as_you_go",
+          "base_fee_per_month": 0,
+          "credits": 200,
+          "requires_cc": false,
+          "startup_credits_available": 50000
+        }
+      ],
+      "free_credits": 200,
+      "isolation": "docker_oci",
+      "notes": "Failed benchmark run. Raised $24M Series A Feb 2026. Docker/OCI containers by default (not microVMs). Optional Kata Containers for stronger isolation. Sub-90ms cold starts from warm pool. Auto-stop at 15min idle."
+    }
+  ]
+}
