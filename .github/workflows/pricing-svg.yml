@@ -2,7 +2,7 @@ name: Pricing SVG
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'pricing.json'
   workflow_dispatch:
