@@ -56,6 +56,15 @@ function computeEstimatedCost(provider: PricingProvider): number | null {
   return cpuCost + memCost;
 }
 
+/**
+ * Get the effective cost for a provider.
+ * For active-CPU providers, uses estimated 25% CPU utilization.
+ * For wall-clock providers, uses the full normalized cost.
+ */
+function getEffectiveCost(provider: PricingProvider): number {
+  return computeEstimatedCost(provider) ?? provider.pricing.normalized.total_1vcpu_2gb_hr;
+}
+
 interface PricingData {
   meta: {
     version: string;
@@ -194,13 +203,15 @@ function generatePricingSVG(data: PricingData): string {
   const sponsorImage = loadSponsorImage();
 
   // Sort providers by value score (highest first), null scores last
-  const providers = data.providers.map(p => ({
-    ...p,
-    valueScore: computeValueScore(
-      p.benchmark.score,
-      p.pricing.normalized.total_1vcpu_2gb_hr
-    ),
-  }));
+  const providers = data.providers.map(p => {
+    const effCost = getEffectiveCost(p);
+    return {
+      ...p,
+      effectiveCost: effCost,
+      isActiveCpu: ACTIVE_CPU_MODELS.includes(p.pricing.model),
+      valueScore: computeValueScore(p.benchmark.score, effCost),
+    };
+  });
 
   providers.sort((a, b) => {
     if (a.valueScore === null && b.valueScore === null) return 0;
@@ -223,10 +234,9 @@ function generatePricingSVG(data: PricingData): string {
   const cols = {
     rank: 40,
     provider: 80,
-    cost: 230,
-    estCost: 370,
-    benchmark: 510,
-    billing: 680,
+    cost: 260,
+    benchmark: 460,
+    billing: 660,
     value: 840,
     confidence: 1000,
   };
@@ -294,8 +304,7 @@ ${sponsorImage ? `
   <!-- Table header text -->
   <text class="table-header" x="${cols.rank}" y="${tableTop + 28}">#</text>
   <text class="table-header" x="${cols.provider}" y="${tableTop + 28}">Provider</text>
-  <text class="table-header" x="${cols.cost}" y="${tableTop + 28}">Cost / hr</text>
-  <text class="table-header" x="${cols.estCost}" y="${tableTop + 28}">Est. 25% CPU</text>
+  <text class="table-header" x="${cols.cost}" y="${tableTop + 28}">Eff. Cost / hr</text>
   <text class="table-header" x="${cols.benchmark}" y="${tableTop + 28}">Benchmark</text>
   <text class="table-header" x="${cols.billing}" y="${tableTop + 28}">Billing</text>
   <text class="table-header" x="${cols.value}" y="${tableTop + 28}">Value Score</text>
@@ -306,12 +315,14 @@ ${sponsorImage ? `
     const y = tableTop + tableHeaderHeight + (i * rowHeight) + 30;
     const rank = i + 1;
 
-    const cost = p.pricing.normalized.total_1vcpu_2gb_hr;
-    const estCost = computeEstimatedCost(p);
+    const cost = p.effectiveCost;
     const benchScore = p.benchmark.score !== null ? p.benchmark.score.toFixed(1) : '--';
     const valueScore = p.valueScore !== null ? p.valueScore.toFixed(1) : '--';
     const billing = formatBillingModel(p.pricing.model);
     const confidence = p.pricing.normalized.confidence;
+
+    // Cost display: add ~ prefix for active-CPU estimated costs
+    const costDisplay = p.isActiveCpu ? `~${formatCost(cost)}` : formatCost(cost);
 
     // Rank styling
     let rankClass = 'rank';
@@ -324,16 +335,11 @@ ${sponsorImage ? `
     if (confidence === 'exact') confidenceClass = 'confidence-exact';
     else if (confidence === 'estimated') confidenceClass = 'confidence-estimated';
 
-    // Estimated cost display
-    const estCostDisplay = estCost !== null ? formatCost(estCost) : '--';
-    const estCostClass = estCost !== null ? costColorClass(estCost) : 'status';
-
     svg += `
   <!-- Row ${rank}: ${p.id} -->
   <text class="${rankClass}" x="${cols.rank}" y="${y}">${rank}</text>
   <text class="row provider" x="${cols.provider}" y="${y}">${formatProviderName(p.id)}</text>
-  <text class="row cost ${costColorClass(cost)}" x="${cols.cost}" y="${y}">${formatCost(cost)}</text>
-  <text class="row cost ${estCostClass}" x="${cols.estCost}" y="${y}">${estCostDisplay}</text>
+  <text class="row cost ${costColorClass(cost)}" x="${cols.cost}" y="${y}">${costDisplay}</text>
   <text class="row" x="${cols.benchmark}" y="${y}">${benchScore} (${p.benchmark.success_rate})</text>
   <text class="row" x="${cols.billing}" y="${y}">${billing}</text>
   <text class="row value ${valueColorClass(p.valueScore)}" x="${cols.value}" y="${y}">${valueScore}</text>
@@ -358,8 +364,8 @@ ${sponsorImage ? `
   <text class="timestamp" x="${width - padding}" y="${height - 38}" text-anchor="end">Last updated: ${date}</text>
 
   <!-- Footnotes -->
-  <text class="timestamp" x="${padding}" y="${height - 38}">Cost = 1 vCPU + 2 GB RAM per hour (normalized). Value Score = sqrt(benchmark score x cost efficiency).</text>
-  <text class="timestamp" x="${padding}" y="${height - 24}">Est. 25% CPU = estimated cost at 25% CPU utilization. Applies to active-CPU billing only (Vercel, Cloudflare). Memory is always wall-clock.</text>
+  <text class="timestamp" x="${padding}" y="${height - 38}">Eff. Cost = effective cost for 1 vCPU + 2 GB RAM / hr. Active-CPU providers (~) estimated at 25% utilization. Value Score = sqrt(benchmark x cost efficiency).</text>
+  <text class="timestamp" x="${padding}" y="${height - 24}">Active-CPU billing (Vercel, Cloudflare): CPU charged only during execution, memory always wall-clock. Wall-clock providers: full rate shown.</text>
   <text class="timestamp" x="${padding}" y="${height - 10}">Confidence: exact = official pricing page, estimated = back-calculated from bundled tier.</text>
 
 </svg>`;
