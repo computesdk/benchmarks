@@ -10,32 +10,33 @@ const RESULTS_DIR = path.join(ROOT, 'results');
 const SPONSORS_DIR = path.join(ROOT, 'sponsors');
 
 /**
- * Load sponsor logo from the sponsors/ directory.
- * Returns the first .png or .jpg file found as a base64 data URI, or null.
+ * Load all sponsor logos from the sponsors/ directory.
+ * Returns an array of { dataUri, name } for each image file found, sorted alphabetically.
  */
-function loadSponsorImage(): { dataUri: string; name: string } | null {
-  if (!fs.existsSync(SPONSORS_DIR)) return null;
+function loadSponsorImages(): { dataUri: string; name: string }[] {
+  if (!fs.existsSync(SPONSORS_DIR)) return [];
 
   const files = fs.readdirSync(SPONSORS_DIR)
     .filter(f => /\.(png|jpe?g|svg)$/i.test(f))
     .sort();
 
-  if (files.length === 0) return null;
+  if (files.length === 0) return [];
 
-  const file = files[0];
-  const ext = path.extname(file).toLowerCase();
   const mimeTypes: Record<string, string> = {
     '.png': 'image/png',
     '.jpg': 'image/jpeg',
     '.jpeg': 'image/jpeg',
     '.svg': 'image/svg+xml',
   };
-  const mime = mimeTypes[ext] || 'image/png';
-  const raw = fs.readFileSync(path.join(SPONSORS_DIR, file));
-  const b64 = raw.toString('base64');
-  const name = path.basename(file, ext);
 
-  return { dataUri: `data:${mime};base64,${b64}`, name };
+  return files.map(file => {
+    const ext = path.extname(file).toLowerCase();
+    const mime = mimeTypes[ext] || 'image/png';
+    const raw = fs.readFileSync(path.join(SPONSORS_DIR, file));
+    const b64 = raw.toString('base64');
+    const name = path.basename(file, ext);
+    return { dataUri: `data:${mime};base64,${b64}`, name };
+  });
 }
 
 // ComputeSDK logo - the "C" path
@@ -137,8 +138,8 @@ function buildFootnote(results: BenchmarkResult[], mode: string): string {
   return '* Uses ComputeSDK orchestrator';
 }
 
-// Cache the sponsor image so we only read it once per run
-const sponsorImage = loadSponsorImage();
+// Cache the sponsor images so we only read them once per run
+const sponsorImages = loadSponsorImages();
 
 function generateSVG(results: BenchmarkResult[], timestamp: string, mode: string): string {
   // Compute scores if not already attached
@@ -225,11 +226,18 @@ function generateSVG(results: BenchmarkResult[], timestamp: string, mode: string
   <!-- Title -->
   <text class="title" x="${padding + 76}" y="55">${title}</text>
   <text class="subtitle" x="${padding + 76}" y="78">${subtitle}</text>
-${sponsorImage ? `
-  <!-- Sponsor -->
-  <text font-size="11" font-family="Inter, SF Pro Display, sans-serif" fill="#8c959f" x="1100" y="32" text-anchor="middle" letter-spacing="1">SPONSORED BY</text>
-  <image href="${sponsorImage.dataUri}" x="1074" y="42" width="52" height="52" preserveAspectRatio="xMidYMid meet"/>
-` : ''}
+${sponsorImages.length > 0 ? (() => {
+  const logoW = 100;
+  const logoH = 32;
+  const logoGap = 12;
+  const totalLogosW = sponsorImages.length * logoW + (sponsorImages.length - 1) * logoGap;
+  const logosStartX = 1200 - padding - totalLogosW;
+  return `
+  <!-- Sponsors -->
+  <text font-size="11" font-family="Inter, SF Pro Display, sans-serif" fill="#8c959f" x="${logosStartX + totalLogosW / 2}" y="36" text-anchor="middle" letter-spacing="1">SPONSORED BY</text>
+  ${sponsorImages.map((img, i) => `<image href="${img.dataUri}" x="${logosStartX + i * (logoW + logoGap)}" y="46" width="${logoW}" height="${logoH}" preserveAspectRatio="xMidYMid meet"/>`).join('\n  ')}`;
+})()
+ : ''}
   <!-- Table header background -->
   <rect class="table-header-bg" y="${tableTop}" width="${width}" height="${tableHeaderHeight}"/>
 
