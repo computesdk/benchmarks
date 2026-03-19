@@ -12,7 +12,7 @@ Your customers care about infrastructure performance. So do the developers choos
 
 ## Tiers
 
-### Claimed Profile — $2,000/mo
+### Claimed Profile
 
 The low-friction entry point for any provider on the platform.
 
@@ -20,7 +20,7 @@ The low-friction entry point for any provider on the platform.
 
 **Remove the "Unclaimed" banner** — The default "Unclaimed profile" CTA disappears from your page.
 
-### Category Sponsor — $5,000/mo
+### Category Sponsor
 
 Everything in Claimed Profile, plus:
 
@@ -34,7 +34,7 @@ Everything in Claimed Profile, plus:
 
 **Early access** — Private benchmark datasets and API access before public release.
 
-### Platform Sponsor — $10,000/mo
+### Platform Sponsor
 
 Everything in Category Sponsor, plus:
 
