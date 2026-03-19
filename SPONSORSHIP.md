@@ -36,29 +36,6 @@ Your customers care about infrastructure performance. So do the developers choos
 
 ---
 
-### What You Don't Get (Either Tier)
-
-**No influence on results.** Ever. Sponsors cannot:
-- Preview benchmark results before publication
-- Edit or suppress unfavorable data
-- Select which providers appear in comparisons
-- Modify methodology or test conditions
-
-All providers are tested identically. Results reflect actual measured performance.
-
----
-
-## Current Sponsors
-
-### Tier 1
-- [Archil](https://archil.com/)
-- [Latitude](https://latitude.so/)
-
-### Tier 2
-- [Tigris](https://www.tigrisdata.com/)
-
----
-
 ## Become a Sponsor
 
 ComputeSDK Benchmarks sponsorship is invite-only and limited to a small number of companies per year.
@@ -75,7 +52,7 @@ Maximum 12 per year. We prioritize companies building interesting things with sa
 
 **Can we see results before they're published?**
 
-No. Results publish automatically via CI. No preview, no exceptions.
+Results publish automatically via CI.
 
 **Can sponsors recommend which providers to benchmark?**
 
