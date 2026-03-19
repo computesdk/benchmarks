@@ -66,9 +66,11 @@ All tests run on GitHub Actions at 00:00 UTC daily. Providers are tested using C
 
 Sponsors enable independent benchmark infrastructure.
 
-<a href="https://dub.sh/CwsSQul"><img src="./sponsors/tier-1/archil-logo.png" alt="Archil Logo" height="40"></a>&nbsp;&nbsp;&nbsp;
-<a href="https://dub.sh/zqttNSR"><img src="./sponsors/tier-1/latitude-logo.svg" alt="Latitude.sh Logo" height="40"></a>&nbsp;&nbsp;&nbsp;
-<a href="https://dub.sh/RuX0uKg"><img src="./sponsors/tier-2/tigris-logo.svg" alt="Tigris Logo" height="28"></a>
+<p align="center">
+  <a href="https://dub.sh/CwsSQul"><img src="./sponsors/tier-1/archil-logo.svg" alt="Archil Logo" height="40"></a>&nbsp;&nbsp;&nbsp;
+  <a href="https://dub.sh/zqttNSR"><img src="./sponsors/tier-1/latitude-logo.svg" alt="Latitude.sh Logo" height="40"></a>&nbsp;&nbsp;&nbsp;
+  <a href="https://dub.sh/RuX0uKg"><img src="./sponsors/tier-2/tigris-logo.svg" alt="Tigris Logo" height="40"></a>
+</p>
 
 [Learn more →](./SPONSORSHIP.md)
 
