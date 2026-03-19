@@ -75,7 +75,7 @@ interface PricingData {
 }
 
 /**
- * Load Tier 1 sponsor logos from the sponsors/tier-1/ directory.
+ * Load Tier 1 (Platform Sponsor) logos from the sponsors/tier-1/ directory.
  * Only Tier 1 sponsors appear in SVG table headers.
  */
 function loadSponsorImages(): { dataUri: string; name: string }[] {
