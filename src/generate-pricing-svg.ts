@@ -118,7 +118,7 @@ function formatBillingModel(model: string): string {
     'per_minute': 'Per-minute',
     'active_cpu': 'Active CPU',
     'active_cpu_per_10ms': 'Active CPU',
-    'per_hour_credits': 'Per-hour',
+    'per_hour_credits': 'Credits',
   };
   return labels[model] || model;
 }
