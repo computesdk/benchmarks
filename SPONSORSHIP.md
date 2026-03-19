@@ -12,17 +12,25 @@ Your customers care about infrastructure performance. So do the developers choos
 
 ## Tiers
 
-### Claimed Profile
+### Tier 1
 
-The low-friction entry point for any provider on the platform.
+**Logo in benchmark tables** — Prominent placement in the "SPONSORED BY" header of all benchmark and pricing SVG tables on GitHub and computesdk.com.
 
-**Claim your page** — Add your branding, team responses, and custom benchmarks to your provider profile on computesdk.com.
+**Across all categories** — Your logo on every leaderboard and every unclaimed provider page.
 
-**Remove the "Unclaimed" banner** — The default "Unclaimed profile" CTA disappears from your page.
+**Large logo in README** — Featured placement in the sponsors section of the repository README.
 
-### Category Sponsor
+**Claimed profile** — Add your branding, team responses, and custom benchmarks to your provider profile on computesdk.com.
 
-Everything in Claimed Profile, plus:
+**Quarterly reports** — "Brought to you by [Your Company]" branding with case study opportunities.
+
+**Co-marketing** — Joint blog posts, social amplification, and featured use cases.
+
+**Early access** — Private benchmark datasets and API access before public release.
+
+**Direct input** — Advisory seat on upcoming benchmark categories.
+
+### Tier 2
 
 **"Sponsored by" on category leaderboards** — Your logo appears on the leaderboard for your sponsored category.
 
@@ -30,42 +38,28 @@ Everything in Claimed Profile, plus:
 
 **Logo in README** — Placement in the sponsors section of the repository README.
 
+**Claimed profile** — Add your branding, team responses, and custom benchmarks to your provider profile on computesdk.com.
+
 **Quarterly reports** — Named in quarterly benchmark reports.
 
 **Early access** — Private benchmark datasets and API access before public release.
-
-### Platform Sponsor
-
-Everything in Category Sponsor, plus:
-
-**Across all categories** — Your logo on every leaderboard and every unclaimed provider page, not just one category.
-
-**Logo in benchmark tables** — Prominent placement in the "SPONSORED BY" header of all benchmark and pricing SVG tables on GitHub and computesdk.com.
-
-**Large logo in README** — Featured placement in the sponsors section of the repository README.
-
-**Quarterly reports** — "Brought to you by [Your Company]" branding with case study opportunities.
-
-**Co-marketing** — Joint blog posts, social amplification, and featured use cases.
-
-**Direct input** — Advisory seat on upcoming benchmark categories.
 
 ---
 
 ## Current Sponsors
 
-### Platform Sponsors
+### Tier 1
 - [Archil](https://archil.com/)
 - [Latitude](https://latitude.so/)
 
-### Category Sponsors
+### Tier 2
 - [Tigris](https://www.tigrisdata.com/)
 
 ---
 
 ## Become a Sponsor
 
-Claimed Profile is self-serve — any provider can claim their page. Category and Platform sponsorships are limited and invite-only.
+Sponsorship is limited and invite-only.
 
 [Contact us](mailto:garrison@computesdk.com) to discuss availability and fit.
 
@@ -87,4 +81,4 @@ Yes — we take input on roadmap, but final decisions are ours. We'll benchmark 
 
 **What's the commitment?**
 
-Annual agreements, billed quarterly. Claimed Profile can be month-to-month.
+Annual agreements, billed quarterly.
