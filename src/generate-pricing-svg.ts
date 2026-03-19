@@ -17,7 +17,7 @@ const LOGO_C_PATH = `M1036.26,1002.28h237.87l-.93,19.09c-8.38,110.32-49.81,198.3
 const ACTIVE_CPU_MODELS = ['active_cpu', 'active_cpu_per_10ms'];
 
 /** Default assumed CPU utilization for I/O-bound workloads */
-const ESTIMATED_CPU_UTILIZATION = 0.25;
+const ESTIMATED_CPU_UTILIZATION = 0.10;
 
 interface PricingProvider {
   id: string;
@@ -42,7 +42,7 @@ interface PricingProvider {
 }
 
 /**
- * Compute the estimated cost at 25% CPU utilization for active-CPU providers.
+ * Compute the estimated cost at 10% CPU utilization for active-CPU providers.
  * For wall-clock providers, returns null (not applicable).
  *
  * Formula: (cpu_rate * utilization) + (memory_rate * 2 GB)
@@ -203,7 +203,7 @@ function loadLiveBenchmarkScores(): Map<string, { score: number; successRate: st
 function generatePricingSVG(data: PricingData): string {
   const sponsorImages = loadSponsorImages();
 
-  // Sort providers by value score (highest first), null scores last
+  // Sort providers by effective cost (cheapest first)
   const providers = data.providers.map(p => {
     const effCost = getEffectiveCost(p);
     return {
@@ -214,12 +214,7 @@ function generatePricingSVG(data: PricingData): string {
     };
   });
 
-  providers.sort((a, b) => {
-    if (a.valueScore === null && b.valueScore === null) return 0;
-    if (a.valueScore === null) return 1;
-    if (b.valueScore === null) return -1;
-    return b.valueScore - a.valueScore;
-  });
+  providers.sort((a, b) => a.effectiveCost - b.effectiveCost);
 
   const rowHeight = 44;
   const headerHeight = 110;
@@ -233,17 +228,16 @@ function generatePricingSVG(data: PricingData): string {
 
   // Column positions
   const cols = {
-    rank: 40,
-    provider: 80,
-    cost: 260,
-    benchmark: 460,
-    billing: 660,
-    value: 840,
-    confidence: 1000,
+    provider: 40,
+    cost: 200,
+    benchmark: 380,
+    billing: 580,
+    value: 740,
+    confidence: 920,
   };
 
   const title = 'Pricing Comparison';
-  const subtitle = `Normalized to ${data.meta.normalization_basis} — sorted by value score`;
+  const subtitle = `Normalized to ${data.meta.normalization_basis} — sorted by effective cost`;
 
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
   <defs>
@@ -258,10 +252,6 @@ function generatePricingSVG(data: PricingData): string {
     .table-header-bg { fill: #f6f8fa; }
     .table-header { font: 600 12px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #57606a; text-transform: uppercase; letter-spacing: 0.5px; }
     .row { font: 14px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #24292f; }
-    .rank { font-weight: 700; fill: #57606a; }
-    .rank-1 { fill: #d4a000; }
-    .rank-2 { fill: #8a8a8a; }
-    .rank-3 { fill: #a0522d; }
     .provider { font-weight: 600; fill: #0969da; }
     .cost { font-weight: 700; font-size: 15px; }
     .value { font-weight: 700; font-size: 15px; }
@@ -310,7 +300,6 @@ ${sponsorImages.length > 0 ? (() => {
   <rect class="table-header-bg" y="${tableTop}" width="${width}" height="${tableHeaderHeight}"/>
 
   <!-- Table header text -->
-  <text class="table-header" x="${cols.rank}" y="${tableTop + 28}">#</text>
   <text class="table-header" x="${cols.provider}" y="${tableTop + 28}">Provider</text>
   <text class="table-header" x="${cols.cost}" y="${tableTop + 28}">Eff. Cost / hr</text>
   <text class="table-header" x="${cols.benchmark}" y="${tableTop + 28}">Benchmark</text>
@@ -321,7 +310,6 @@ ${sponsorImages.length > 0 ? (() => {
 
   providers.forEach((p, i) => {
     const y = tableTop + tableHeaderHeight + (i * rowHeight) + 30;
-    const rank = i + 1;
 
     const cost = p.effectiveCost;
     const benchScore = p.benchmark.score !== null ? p.benchmark.score.toFixed(1) : '--';
@@ -332,20 +320,13 @@ ${sponsorImages.length > 0 ? (() => {
     // Cost display: add ~ prefix for active-CPU estimated costs
     const costDisplay = p.isActiveCpu ? `~${formatCost(cost)}` : formatCost(cost);
 
-    // Rank styling
-    let rankClass = 'rank';
-    if (rank === 1) rankClass = 'rank rank-1';
-    else if (rank === 2) rankClass = 'rank rank-2';
-    else if (rank === 3) rankClass = 'rank rank-3';
-
     // Confidence styling
     let confidenceClass = 'status';
     if (confidence === 'exact') confidenceClass = 'confidence-exact';
     else if (confidence === 'estimated') confidenceClass = 'confidence-estimated';
 
     svg += `
-  <!-- Row ${rank}: ${p.id} -->
-  <text class="${rankClass}" x="${cols.rank}" y="${y}">${rank}</text>
+  <!-- ${p.id} -->
   <text class="row provider" x="${cols.provider}" y="${y}">${formatProviderName(p.id)}</text>
   <text class="row cost ${costColorClass(cost)}" x="${cols.cost}" y="${y}">${costDisplay}</text>
   <text class="row" x="${cols.benchmark}" y="${y}">${benchScore} (${p.benchmark.success_rate})</text>
@@ -372,7 +353,7 @@ ${sponsorImages.length > 0 ? (() => {
   <text class="timestamp" x="${width - padding}" y="${height - 38}" text-anchor="end">Last updated: ${date}</text>
 
   <!-- Footnotes -->
-  <text class="timestamp" x="${padding}" y="${height - 38}">Eff. Cost = effective cost for 1 vCPU + 2 GB RAM / hr. Active-CPU providers (~) estimated at 25% utilization. Value Score = sqrt(benchmark x cost efficiency).</text>
+  <text class="timestamp" x="${padding}" y="${height - 38}">Eff. Cost = effective cost for 1 vCPU + 2 GB RAM / hr. Active-CPU providers (~) estimated at 10% utilization. Value Score = sqrt(benchmark x cost efficiency).</text>
   <text class="timestamp" x="${padding}" y="${height - 24}">Active-CPU billing (Vercel, Cloudflare): CPU charged only during execution, memory always wall-clock. Wall-clock providers: full rate shown.</text>
   <text class="timestamp" x="${padding}" y="${height - 10}">Confidence: exact = official pricing page, estimated = back-calculated from bundled tier.</text>
 
