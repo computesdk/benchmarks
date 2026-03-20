@@ -11,6 +11,7 @@ import { namespace } from '@computesdk/namespace';
 import { cloudflare } from '@computesdk/cloudflare';
 import { sprites } from '@computesdk/sprites';
 import { compute } from 'computesdk';
+import { secureExecProvider } from './custom-providers/secure-exec.js';
 import type { ProviderConfig } from './types.js';
 
 /**
@@ -20,6 +21,8 @@ import type { ProviderConfig } from './types.js';
  * Automatic mode providers route through the ComputeSDK gateway (requires COMPUTESDK_API_KEY).
  */
 export const providers: ProviderConfig[] = [
+  // --- Custom providers ---
+  secureExecProvider,
   // --- Direct mode (provider SDK packages) ---
   {
     name: 'e2b',

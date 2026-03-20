@@ -43,7 +43,7 @@ export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkRes
     };
   }
 
-  const compute = config.createCompute();
+  const compute = await config.createCompute();
   const results: TimingResult[] = [];
 
   console.log(`\n--- Benchmarking: ${name} (${iterations} iterations) ---`);

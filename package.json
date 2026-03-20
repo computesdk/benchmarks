@@ -20,6 +20,7 @@
     "bench:runloop": "tsx src/run.ts --provider runloop",
     "bench:vercel": "tsx src/run.ts --provider vercel",
     "bench:just-bash": "tsx src/run.ts --provider just-bash",
+    "bench:secure-exec": "tsx src/run.ts --provider secure-exec",
     "bench:sprites": "tsx src/run.ts --provider sprites",
     "update-readme": "tsx src/update-readme.ts",
     "generate-svg": "tsx src/generate-svg.ts",
@@ -42,7 +43,8 @@
     "@computesdk/sprites": "^0.1.1",
     "@computesdk/vercel": "^1.7.13",
     "computesdk": "^2.2.1",
-    "dotenv": "^17.2.1"
+    "dotenv": "^17.2.1",
+    "secure-exec": "0.1.1-rc.3"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
