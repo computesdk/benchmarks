@@ -69,7 +69,8 @@ Sponsors enable independent benchmark infrastructure.
 <p align="center">
   <a href="https://dub.sh/CwsSQul"><img src="./sponsors/tier-1/archil-logo.svg" alt="Archil Logo" height="40"></a>&nbsp;&nbsp;&nbsp;
   <a href="https://dub.sh/zqttNSR"><img src="./sponsors/tier-1/latitude-logo.svg" alt="Latitude.sh Logo" height="40"></a>&nbsp;&nbsp;&nbsp;
-  <a href="https://dub.sh/RuX0uKg"><img src="./sponsors/tier-2/tigris-logo.svg" alt="Tigris Logo" height="40"></a>
+  <a href="https://dub.sh/RuX0uKg"><img src="./sponsors/tier-2/tigris-logo.svg" alt="Tigris Logo" height="40"></a>&nbsp;&nbsp;&nbsp;
+  <a href="https://dub.sh/sD1N8hG"><img src="./sponsors/tier-2/browserbase-logo.svg" alt="Browserbase Logo" height="40"></a>
 </p>
 
 [Learn more →](./SPONSORSHIP.md)
