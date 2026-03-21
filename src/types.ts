@@ -11,6 +11,8 @@ export interface ProviderConfig {
   createCompute: () => any;
   /** Options passed to sandbox.create() (e.g. { image: 'node:20' }) */
   sandboxOptions?: Record<string, any>;
+  /** Command to run as the TTI probe (default: 'node -v') */
+  probeCommand?: string;
 }
 
 export interface TimingResult {

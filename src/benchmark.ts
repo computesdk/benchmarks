@@ -29,7 +29,7 @@ export function computeStats(values: number[], trimPercent: number = 0.05): Stat
 }
 
 export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkResult> {
-  const { name, iterations = 100, timeout = 120_000, requiredEnvVars, sandboxOptions } = config;
+  const { name, iterations = 100, timeout = 120_000, requiredEnvVars, sandboxOptions, probeCommand } = config;
 
   // Check if all required credentials are available
   const missingVars = requiredEnvVars.filter(v => !process.env[v]);
@@ -43,7 +43,7 @@ export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkRes
     };
   }
 
-  const compute = config.createCompute();
+  const compute = await config.createCompute();
   const results: TimingResult[] = [];
 
   console.log(`\n--- Benchmarking: ${name} (${iterations} iterations) ---`);
@@ -52,7 +52,7 @@ export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkRes
     console.log(`  Iteration ${i + 1}/${iterations}...`);
 
     try {
-      const iterationResult = await runIteration(compute, timeout, sandboxOptions);
+      const iterationResult = await runIteration(compute, timeout, sandboxOptions, probeCommand);
       results.push(iterationResult);
       console.log(`    TTI: ${(iterationResult.ttiMs / 1000).toFixed(2)}s`);
     } catch (err) {
@@ -84,7 +84,7 @@ export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkRes
   };
 }
 
-export async function runIteration(compute: any, timeout: number, sandboxOptions?: Record<string, any>): Promise<TimingResult> {
+export async function runIteration(compute: any, timeout: number, sandboxOptions?: Record<string, any>, probeCommand?: string): Promise<TimingResult> {
   let sandbox: any = null;
 
   try {
@@ -93,7 +93,7 @@ export async function runIteration(compute: any, timeout: number, sandboxOptions
     sandbox = await withTimeout(compute.sandbox.create(sandboxOptions), timeout, 'Sandbox creation timed out');
 
     const result = await withTimeout(
-      sandbox.runCommand('node -v'),
+      sandbox.runCommand(probeCommand ?? 'node -v'),
       30_000,
       'First command execution timed out'
     ) as { exitCode: number; stderr?: string };
