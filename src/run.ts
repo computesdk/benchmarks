@@ -2,7 +2,7 @@ import fs from 'fs';
 import { config } from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { runBenchmark } from './benchmark.js';
+import { runBenchmark, cleanupAllSandboxes } from './benchmark.js';
 import { runConcurrentBenchmark } from './concurrent.js';
 import { runStaggeredBenchmark } from './staggered.js';
 import { printResultsTable, writeResultsJson } from './table.js';
@@ -61,6 +61,8 @@ async function runMode(mode: BenchmarkMode, toRun: typeof providers): Promise<vo
   const results: BenchmarkResult[] = [];
 
   for (const providerConfig of toRun) {
+    const compute = providerConfig.createCompute();
+
     switch (mode) {
       case 'sequential': {
         const result = await runBenchmark({ ...providerConfig, iterations });
@@ -83,6 +85,9 @@ async function runMode(mode: BenchmarkMode, toRun: typeof providers): Promise<vo
         break;
       }
     }
+
+    // Sweep-cleanup: destroy any sandboxes still alive after the benchmark
+    await cleanupAllSandboxes(compute, providerConfig.name);
   }
 
   // Compute composite scores
