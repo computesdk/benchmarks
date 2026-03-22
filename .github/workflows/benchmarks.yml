@@ -51,6 +51,7 @@ jobs:
           - runloop
           - namespace
           - cloudflare
+          - freestyle
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -78,6 +79,7 @@ jobs:
           RUNLOOP_API_KEY: ${{ secrets.RUNLOOP_API_KEY }}
           CLOUDFLARE_SANDBOX_URL: ${{ secrets.CLOUDFLARE_SANDBOX_URL }}
           CLOUDFLARE_SANDBOX_SECRET: ${{ secrets.CLOUDFLARE_SANDBOX_SECRET }}
+          FREESTYLE_API_KEY: ${{ secrets.FREESTYLE_API_KEY }}
         run: |
           MODE_FLAG=""
           if [ -n "${{ github.event.inputs.mode }}" ]; then
