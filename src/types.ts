@@ -11,6 +11,8 @@ export interface ProviderConfig {
   createCompute: () => any;
   /** Options passed to sandbox.create() (e.g. { image: 'node:20' }) */
   sandboxOptions?: Record<string, any>;
+  /** Timeout for sandbox.destroy() in ms (default: 15000) */
+  destroyTimeoutMs?: number;
 }
 
 export interface TimingResult {

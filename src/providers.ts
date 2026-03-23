@@ -61,6 +61,7 @@ export const providers: ProviderConfig[] = [
     name: 'codesandbox',
     requiredEnvVars: ['CSB_API_KEY'],
     createCompute: () => codesandbox({ apiKey: process.env.CSB_API_KEY! }),
+    destroyTimeoutMs: 1_000,
   },
   {
     name: 'runloop',
