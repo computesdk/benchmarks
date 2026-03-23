@@ -40,6 +40,7 @@ jobs:
       fail-fast: false
       matrix:
         provider:
+          - secure-exec
           - e2b
           - daytona
           - blaxel

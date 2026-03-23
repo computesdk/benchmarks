@@ -11,6 +11,7 @@ import { namespace } from '@computesdk/namespace';
 import { cloudflare } from '@computesdk/cloudflare';
 import { sprites } from '@computesdk/sprites';
 import { compute } from 'computesdk';
+import { secureExec } from '@computesdk/secure-exec';
 import type { ProviderConfig } from './types.js';
 
 /**
@@ -21,6 +22,12 @@ import type { ProviderConfig } from './types.js';
  */
 export const providers: ProviderConfig[] = [
   // --- Direct mode (provider SDK packages) ---
+  {
+    name: 'secure-exec',
+    requiredEnvVars: [],
+    createCompute: () => secureExec(),
+    probeCommand: 'module.exports = process.version;',
+  },
   {
     name: 'e2b',
     requiredEnvVars: ['E2B_API_KEY'],
