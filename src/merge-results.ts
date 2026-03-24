@@ -11,8 +11,10 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { computeCompositeScores } from './scoring.js';
+import { computeStorageCompositeScores, sortStorageByCompositeScore } from './storage/scoring.js';
 import { printResultsTable, writeResultsJson } from './table.js';
 import type { BenchmarkResult } from './types.js';
+import type { StorageBenchmarkResult } from './storage/types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -24,8 +26,9 @@ function getArgValue(flag: string): string | undefined {
 }
 
 const inputDir = getArgValue('--input');
+const mergeMode = getArgValue('--mode');
 if (!inputDir) {
-  console.error('Usage: tsx src/merge-results.ts --input <artifacts-dir>');
+  console.error('Usage: tsx src/merge-results.ts --input <artifacts-dir> [--mode storage]');
   process.exit(1);
 }
 
@@ -35,6 +38,14 @@ interface ResultFile {
   environment: Record<string, any>;
   config: Record<string, any>;
   results: BenchmarkResult[];
+}
+
+interface StorageResultFile {
+  version: string;
+  timestamp: string;
+  environment: Record<string, any>;
+  config: Record<string, any>;
+  results: StorageBenchmarkResult[];
 }
 
 /** Map mode to results subdirectory name, matching run.ts logic */
@@ -138,7 +149,123 @@ async function main() {
   }
 }
 
-main().catch(err => {
+/**
+ * Print a storage results table to stdout.
+ */
+function printStorageResultsTable(results: StorageBenchmarkResult[], fileSize: string): void {
+  const sorted = sortStorageByCompositeScore(results);
+
+  console.log(`\n${'='.repeat(95)}`);
+  console.log(`  STORAGE BENCHMARK RESULTS - ${fileSize.toUpperCase()}`);
+  console.log('='.repeat(95));
+  console.log(
+    ['Provider', 'Score', 'Download', 'Throughput', 'Upload', 'Status']
+      .map((h, i) => h.padEnd([14, 8, 14, 14, 14, 10][i]))
+      .join(' | ')
+  );
+  console.log(
+    [14, 8, 14, 14, 14, 10].map(w => '-'.repeat(w)).join('-+-')
+  );
+
+  for (const r of sorted) {
+    if (r.skipped) {
+      console.log([r.provider.padEnd(14), '--'.padEnd(8), '--'.padEnd(14), '--'.padEnd(14), '--'.padEnd(14), 'SKIPPED'.padEnd(10)].join(' | '));
+      continue;
+    }
+    const ok = r.iterations.filter(i => !i.error).length;
+    const total = r.iterations.length;
+    if (ok === 0 && total > 0) {
+      console.log([r.provider.padEnd(14), '--'.padEnd(8), '--'.padEnd(14), '--'.padEnd(14), '--'.padEnd(14), 'FAILED'.padEnd(10)].join(' | '));
+      continue;
+    }
+    const score = r.compositeScore !== undefined ? r.compositeScore.toFixed(1) : '--';
+    const dl = (r.summary.downloadMs.median / 1000).toFixed(2) + 's';
+    const tp = r.summary.throughputMbps.median.toFixed(1) + ' Mbps';
+    const ul = (r.summary.uploadMs.median / 1000).toFixed(2) + 's';
+    console.log([r.provider.padEnd(14), score.padEnd(8), dl.padEnd(14), tp.padEnd(14), ul.padEnd(14), `${ok}/${total} OK`.padEnd(10)].join(' | '));
+  }
+  console.log('='.repeat(95));
+}
+
+/**
+ * Merge storage benchmark results, grouped by file size.
+ */
+async function mainStorage() {
+  const jsonFiles: string[] = [];
+  function walk(dir: string) {
+    if (!fs.existsSync(dir)) return;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name === 'latest.json') jsonFiles.push(full);
+    }
+  }
+  walk(inputDir!);
+
+  if (jsonFiles.length === 0) {
+    console.error(`No latest.json files found in ${inputDir}`);
+    process.exit(1);
+  }
+
+  console.log(`Found ${jsonFiles.length} result files`);
+
+  // Group results by file size (e.g. "1mb", "10mb", "100mb")
+  const bySize: Record<string, { results: { result: StorageBenchmarkResult; fromSingleProvider: boolean }[] }> = {};
+
+  for (const file of jsonFiles) {
+    const raw: StorageResultFile = JSON.parse(fs.readFileSync(file, 'utf-8'));
+    const fromSingleProvider = raw.results.length === 1;
+    for (const result of raw.results) {
+      // Infer file size from the directory name (e.g. artifacts/storage-results-aws-s3/storage/10mb/latest.json)
+      const dirName = path.basename(path.dirname(file));
+      const fileSize = dirName.toLowerCase();
+
+      if (!bySize[fileSize]) {
+        bySize[fileSize] = { results: [] };
+      }
+      bySize[fileSize].results.push({ result, fromSingleProvider });
+    }
+  }
+
+  for (const [fileSize, { results }] of Object.entries(bySize)) {
+    // Deduplicate by provider, preferring single-provider files
+    const seen = new Map<string, { result: StorageBenchmarkResult; fromSingleProvider: boolean }>();
+    for (const entry of results) {
+      const existing = seen.get(entry.result.provider);
+      if (!existing || (entry.fromSingleProvider && !existing.fromSingleProvider)) {
+        seen.set(entry.result.provider, entry);
+      }
+    }
+    const deduped = Array.from(seen.values()).map(e => e.result);
+
+    if (deduped.length !== results.length) {
+      console.log(`\nMerging ${deduped.length} provider results for storage/${fileSize} (deduplicated from ${results.length})`);
+    } else {
+      console.log(`\nMerging ${deduped.length} provider results for storage/${fileSize}`);
+    }
+
+    // Compute storage-specific composite scores
+    computeStorageCompositeScores(deduped);
+
+    // Print storage table
+    printStorageResultsTable(deduped, fileSize);
+
+    // Write combined results
+    const timestamp = new Date().toISOString().slice(0, 10);
+    const { writeStorageResultsJson } = await import('./storage/benchmark.js');
+    const resultsDir = path.resolve(ROOT, `results/storage/${fileSize}`);
+    fs.mkdirSync(resultsDir, { recursive: true });
+
+    const outPath = path.join(resultsDir, `${timestamp}.json`);
+    await writeStorageResultsJson(deduped, outPath);
+
+    const latestPath = path.join(resultsDir, 'latest.json');
+    fs.copyFileSync(outPath, latestPath);
+    console.log(`Copied latest: ${latestPath}`);
+  }
+}
+
+(mergeMode === 'storage' ? mainStorage() : main()).catch(err => {
   console.error('Merge failed:', err);
   process.exit(1);
 });
