@@ -44,6 +44,9 @@ function computeTimingScore(
   stats: Stats,
   weights: ScoringWeights = DEFAULT_WEIGHTS,
 ): number {
+  if (!stats || stats.median === undefined || stats.p95 === undefined || stats.p99 === undefined) {
+    return 0;
+  }
   return (
     weights.median * scoreMetric(stats.median) +
     weights.p95 * scoreMetric(stats.p95) +
