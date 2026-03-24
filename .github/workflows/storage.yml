@@ -1,0 +1,195 @@
+name: Storage Benchmark
+
+on:
+  pull_request:
+  schedule:
+    - cron: '0 0 * * *' # Daily at midnight UTC
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: 'Iterations per provider'
+        required: false
+        default: '100'
+      file_size:
+        description: 'File size to test (leave empty to run all)'
+        required: false
+        default: ''
+        type: choice
+        options:
+          - ''
+          - 1MB
+          - 10MB
+          - 100MB
+
+concurrency:
+  group: storage-benchmarks
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bench:
+    name: Bench ${{ matrix.provider }}
+    runs-on: namespace-profile-default
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        provider:
+          - aws-s3
+          - cloudflare-r2
+          - tigris
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - run: npm ci
+      - name: Clear stale results from checkout
+        run: rm -rf results/storage/
+      - name: Run storage benchmark
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          S3_BUCKET: ${{ secrets.S3_BUCKET }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          TIGRIS_STORAGE_ACCESS_KEY_ID: ${{ secrets.TIGRIS_STORAGE_ACCESS_KEY_ID }}
+          TIGRIS_STORAGE_SECRET_ACCESS_KEY: ${{ secrets.TIGRIS_STORAGE_SECRET_ACCESS_KEY }}
+          TIGRIS_STORAGE_BUCKET: ${{ secrets.TIGRIS_STORAGE_BUCKET }}
+        run: |
+          FILE_SIZE_FLAG=""
+          if [ -n "${{ github.event.inputs.file_size }}" ]; then
+            FILE_SIZE_FLAG="--file-size ${{ github.event.inputs.file_size }}"
+          fi
+          npm run bench -- \
+            --mode storage \
+            --provider ${{ matrix.provider }} \
+            --iterations ${{ github.event.inputs.iterations || (github.event_name == 'pull_request' && '10') || '100' }} \
+            $FILE_SIZE_FLAG
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: storage-results-${{ matrix.provider }}
+          path: results/storage/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  collect:
+    name: Collect Results
+    runs-on: namespace-profile-default
+    needs: bench
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - run: npm ci
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+          pattern: storage-results-*
+      - name: Merge results
+        run: npx tsx src/merge-results.ts --input artifacts --mode storage
+      - run: npm run generate-storage-svg
+      - name: Upload SVGs as artifacts
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: storage-benchmark-svgs
+          path: storage_*.svg
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Post results to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const sizes = ['1mb', '10mb', '100mb'];
+            let body = '## Storage Benchmark Results\n\n';
+            let hasResults = false;
+
+            for (const size of sizes) {
+              const latestPath = path.join('results', 'storage', size, 'latest.json');
+              if (!fs.existsSync(latestPath)) continue;
+
+              const data = JSON.parse(fs.readFileSync(latestPath, 'utf-8'));
+              const results = data.results
+                .filter(r => !r.skipped)
+                .sort((a, b) => (b.compositeScore || 0) - (a.compositeScore || 0));
+
+              if (results.length === 0) continue;
+              hasResults = true;
+
+              body += `### ${size.toUpperCase()} Files\n\n`;
+              body += '| # | Provider | Score | Download | Throughput | Upload | Status |\n';
+              body += '|---|----------|-------|----------|------------|--------|--------|\n';
+
+              results.forEach((r, i) => {
+                const name = r.provider === 'aws-s3' ? 'AWS S3' : r.provider === 'cloudflare-r2' ? 'Cloudflare R2' : r.provider.charAt(0).toUpperCase() + r.provider.slice(1);
+                const score = r.compositeScore !== undefined ? r.compositeScore.toFixed(1) : '--';
+                const dl = (r.summary.downloadMs.median / 1000).toFixed(2) + 's';
+                const tp = r.summary.throughputMbps.median.toFixed(1) + ' Mbps';
+                const ul = (r.summary.uploadMs.median / 1000).toFixed(2) + 's';
+                const ok = r.iterations.filter(it => !it.error).length;
+                const total = r.iterations.length;
+                body += `| ${i + 1} | ${name} | ${score} | ${dl} | ${tp} | ${ul} | ${ok}/${total} |\n`;
+              });
+
+              body += '\n';
+            }
+
+            if (!hasResults) {
+              body += '> No storage benchmark results were generated.\n\n';
+            }
+
+            body += `---\n*[View full run](${runUrl}) · SVGs available as [build artifacts](${runUrl}#artifacts)*`;
+
+            // Find and update existing comment or create new one
+            const marker = '## Storage Benchmark Results';
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.body.startsWith(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+      - name: Commit and push
+        if: github.event_name != 'pull_request'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add storage_*.svg results/storage/
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore: update storage benchmark results [skip ci]"
+          git push
