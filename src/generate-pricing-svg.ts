@@ -8,7 +8,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const PRICING_PATH = path.join(ROOT, 'pricing.json');
 const RESULTS_DIR = path.join(ROOT, 'results');
-const SPONSORS_DIR = path.join(ROOT, 'sponsors');
+const SPONSORS_DIR_TIER1 = path.join(ROOT, 'sponsors', 'tier-1');
+const SPONSORS_DIR_TIER2 = path.join(ROOT, 'sponsors', 'tier-2');
 
 // ComputeSDK logo - the "C" path (same as generate-svg.ts)
 const LOGO_C_PATH = `M1036.26,1002.28h237.87l-.93,19.09c-8.38,110.32-49.81,198.3-123.82,262.07-73.09,63.31-170.84,95.43-290.48,95.43-130.81,0-235.55-44.69-311.43-133.6-74.48-87.98-112.65-209.48-112.65-361.23v-60.51c0-96.83,17.7-183.41,51.68-257.43,34.91-74.95,85.19-133.61,149.89-173.63,64.7-40.04,140.12-60.52,225.3-60.52,117.77,0,214.13,32.12,286.29,95.9,72.62,63.3,114.98,153.61,126.15,267.67l1.86,19.08h-238.34l-.93-15.83c-4.65-59.11-20.95-101.94-47.95-127.08-27-25.6-69.83-38.17-127.08-38.17-61.91,0-107.06,20.95-137.33,65.17-31.65,45.15-47.94,117.77-48.87,215.53v74.48c0,102.41,15.36,177.83,45.62,223.91,28.86,44.22,74.01,65.63,137.79,65.63,58.19,0,101.48-12.57,128.95-38.17,26.99-25.14,43.29-66.1,47.48-121.5l.93-16.3Z`;
@@ -17,7 +18,7 @@ const LOGO_C_PATH = `M1036.26,1002.28h237.87l-.93,19.09c-8.38,110.32-49.81,198.3
 const ACTIVE_CPU_MODELS = ['active_cpu', 'active_cpu_per_10ms'];
 
 /** Default assumed CPU utilization for I/O-bound workloads */
-const ESTIMATED_CPU_UTILIZATION = 0.25;
+const ESTIMATED_CPU_UTILIZATION = 0.10;
 
 interface PricingProvider {
   id: string;
@@ -42,7 +43,7 @@ interface PricingProvider {
 }
 
 /**
- * Compute the estimated cost at 25% CPU utilization for active-CPU providers.
+ * Compute the estimated cost at 10% CPU utilization for active-CPU providers.
  * For wall-clock providers, returns null (not applicable).
  *
  * Formula: (cpu_rate * utilization) + (memory_rate * 2 GB)
@@ -75,17 +76,11 @@ interface PricingData {
 }
 
 /**
- * Load all sponsor logos from the sponsors/ directory.
+ * Load all sponsor logos from both tier-1 and tier-2 directories.
  */
 function loadSponsorImages(): { dataUri: string; name: string }[] {
-  if (!fs.existsSync(SPONSORS_DIR)) return [];
-
-  const files = fs.readdirSync(SPONSORS_DIR)
-    .filter(f => /\.(png|jpe?g|svg)$/i.test(f))
-    .sort();
-
-  if (files.length === 0) return [];
-
+  const allSponsors: { dataUri: string; name: string }[] = [];
+  
   const mimeTypes: Record<string, string> = {
     '.png': 'image/png',
     '.jpg': 'image/jpeg',
@@ -93,14 +88,29 @@ function loadSponsorImages(): { dataUri: string; name: string }[] {
     '.svg': 'image/svg+xml',
   };
 
-  return files.map(file => {
-    const ext = path.extname(file).toLowerCase();
-    const mime = mimeTypes[ext] || 'image/png';
-    const raw = fs.readFileSync(path.join(SPONSORS_DIR, file));
-    const b64 = raw.toString('base64');
-    const name = path.basename(file, ext);
-    return { dataUri: `data:${mime};base64,${b64}`, name };
-  });
+  // Helper to load sponsors from a directory
+  const loadFromDir = (dir: string) => {
+    if (!fs.existsSync(dir)) return;
+    
+    const files = fs.readdirSync(dir)
+      .filter(f => /\.(png|jpe?g|svg)$/i.test(f))
+      .sort();
+
+    for (const file of files) {
+      const ext = path.extname(file).toLowerCase();
+      const mime = mimeTypes[ext] || 'image/png';
+      const raw = fs.readFileSync(path.join(dir, file));
+      const b64 = raw.toString('base64');
+      const name = path.basename(file, ext);
+      allSponsors.push({ dataUri: `data:${mime};base64,${b64}`, name });
+    }
+  };
+
+  // Load from both tiers
+  loadFromDir(SPONSORS_DIR_TIER1);
+  loadFromDir(SPONSORS_DIR_TIER2);
+
+  return allSponsors;
 }
 
 function formatProviderName(s: string): string {
@@ -118,7 +128,7 @@ function formatBillingModel(model: string): string {
     'per_minute': 'Per-minute',
     'active_cpu': 'Active CPU',
     'active_cpu_per_10ms': 'Active CPU',
-    'per_hour_credits': 'Per-hour',
+    'per_hour_credits': 'Credits',
   };
   return labels[model] || model;
 }
@@ -176,9 +186,8 @@ function loadLiveBenchmarkScores(): Map<string, { score: number; successRate: st
     const data = JSON.parse(raw);
     const results: BenchmarkResult[] = data.results;
 
-    // Compute composite scores if not already present
-    const hasScores = results.some(r => r.compositeScore !== undefined);
-    if (!hasScores) {
+    // Compute scores if any are missing
+    if (!results.every(r => r.compositeScore !== undefined)) {
       computeCompositeScores(results);
     }
 
@@ -203,7 +212,7 @@ function loadLiveBenchmarkScores(): Map<string, { score: number; successRate: st
 function generatePricingSVG(data: PricingData): string {
   const sponsorImages = loadSponsorImages();
 
-  // Sort providers by value score (highest first), null scores last
+  // Sort providers by effective cost (cheapest first)
   const providers = data.providers.map(p => {
     const effCost = getEffectiveCost(p);
     return {
@@ -214,12 +223,7 @@ function generatePricingSVG(data: PricingData): string {
     };
   });
 
-  providers.sort((a, b) => {
-    if (a.valueScore === null && b.valueScore === null) return 0;
-    if (a.valueScore === null) return 1;
-    if (b.valueScore === null) return -1;
-    return b.valueScore - a.valueScore;
-  });
+  providers.sort((a, b) => a.effectiveCost - b.effectiveCost);
 
   const rowHeight = 44;
   const headerHeight = 110;
@@ -233,17 +237,16 @@ function generatePricingSVG(data: PricingData): string {
 
   // Column positions
   const cols = {
-    rank: 40,
-    provider: 80,
-    cost: 260,
-    benchmark: 460,
-    billing: 660,
-    value: 840,
-    confidence: 1000,
+    provider: 40,
+    cost: 200,
+    benchmark: 380,
+    billing: 580,
+    value: 740,
+    confidence: 920,
   };
 
   const title = 'Pricing Comparison';
-  const subtitle = `Normalized to ${data.meta.normalization_basis} — sorted by value score`;
+  const subtitle = `Normalized to ${data.meta.normalization_basis} — sorted by effective cost`;
 
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
   <defs>
@@ -258,10 +261,6 @@ function generatePricingSVG(data: PricingData): string {
     .table-header-bg { fill: #f6f8fa; }
     .table-header { font: 600 12px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #57606a; text-transform: uppercase; letter-spacing: 0.5px; }
     .row { font: 14px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #24292f; }
-    .rank { font-weight: 700; fill: #57606a; }
-    .rank-1 { fill: #d4a000; }
-    .rank-2 { fill: #8a8a8a; }
-    .rank-3 { fill: #a0522d; }
     .provider { font-weight: 600; fill: #0969da; }
     .cost { font-weight: 700; font-size: 15px; }
     .value { font-weight: 700; font-size: 15px; }
@@ -310,7 +309,6 @@ ${sponsorImages.length > 0 ? (() => {
   <rect class="table-header-bg" y="${tableTop}" width="${width}" height="${tableHeaderHeight}"/>
 
   <!-- Table header text -->
-  <text class="table-header" x="${cols.rank}" y="${tableTop + 28}">#</text>
   <text class="table-header" x="${cols.provider}" y="${tableTop + 28}">Provider</text>
   <text class="table-header" x="${cols.cost}" y="${tableTop + 28}">Eff. Cost / hr</text>
   <text class="table-header" x="${cols.benchmark}" y="${tableTop + 28}">Benchmark</text>
@@ -321,7 +319,6 @@ ${sponsorImages.length > 0 ? (() => {
 
   providers.forEach((p, i) => {
     const y = tableTop + tableHeaderHeight + (i * rowHeight) + 30;
-    const rank = i + 1;
 
     const cost = p.effectiveCost;
     const benchScore = p.benchmark.score !== null ? p.benchmark.score.toFixed(1) : '--';
@@ -332,20 +329,13 @@ ${sponsorImages.length > 0 ? (() => {
     // Cost display: add ~ prefix for active-CPU estimated costs
     const costDisplay = p.isActiveCpu ? `~${formatCost(cost)}` : formatCost(cost);
 
-    // Rank styling
-    let rankClass = 'rank';
-    if (rank === 1) rankClass = 'rank rank-1';
-    else if (rank === 2) rankClass = 'rank rank-2';
-    else if (rank === 3) rankClass = 'rank rank-3';
-
     // Confidence styling
     let confidenceClass = 'status';
     if (confidence === 'exact') confidenceClass = 'confidence-exact';
     else if (confidence === 'estimated') confidenceClass = 'confidence-estimated';
 
     svg += `
-  <!-- Row ${rank}: ${p.id} -->
-  <text class="${rankClass}" x="${cols.rank}" y="${y}">${rank}</text>
+  <!-- ${p.id} -->
   <text class="row provider" x="${cols.provider}" y="${y}">${formatProviderName(p.id)}</text>
   <text class="row cost ${costColorClass(cost)}" x="${cols.cost}" y="${y}">${costDisplay}</text>
   <text class="row" x="${cols.benchmark}" y="${y}">${benchScore} (${p.benchmark.success_rate})</text>
@@ -372,7 +362,7 @@ ${sponsorImages.length > 0 ? (() => {
   <text class="timestamp" x="${width - padding}" y="${height - 38}" text-anchor="end">Last updated: ${date}</text>
 
   <!-- Footnotes -->
-  <text class="timestamp" x="${padding}" y="${height - 38}">Eff. Cost = effective cost for 1 vCPU + 2 GB RAM / hr. Active-CPU providers (~) estimated at 25% utilization. Value Score = sqrt(benchmark x cost efficiency).</text>
+  <text class="timestamp" x="${padding}" y="${height - 38}">Eff. Cost = effective cost for 1 vCPU + 2 GB RAM / hr. Active-CPU providers (~) estimated at 10% utilization. Value Score = sqrt(benchmark x cost efficiency).</text>
   <text class="timestamp" x="${padding}" y="${height - 24}">Active-CPU billing (Vercel, Cloudflare): CPU charged only during execution, memory always wall-clock. Wall-clock providers: full rate shown.</text>
   <text class="timestamp" x="${padding}" y="${height - 10}">Confidence: exact = official pricing page, estimated = back-calculated from bundled tier.</text>
 

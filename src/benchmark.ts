@@ -127,7 +127,7 @@ export async function runIteration(compute: any, timeout: number, sandboxOptions
 export function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout>;
   return Promise.race([
-    promise.then(v => { clearTimeout(timer); return v; }),
+    promise.finally(() => clearTimeout(timer)),
     new Promise<T>((_, reject) => {
       timer = setTimeout(() => reject(new Error(message)), ms);
     }),

@@ -42,9 +42,8 @@ function isConcurrent(r: BenchmarkResult): r is ConcurrentBenchmarkResult {
 }
 
 function buildTable(results: BenchmarkResult[]): string {
-  // Compute scores if not already attached (backward compat with old JSON files)
-  const hasScores = results.some(r => r.compositeScore !== undefined);
-  if (!hasScores) {
+  // Compute scores if any are missing (backward compat with old JSON files)
+  if (!results.every(r => r.compositeScore !== undefined)) {
     computeCompositeScores(results);
   }
 

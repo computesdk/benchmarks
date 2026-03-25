@@ -1,8 +1,16 @@
+### [Sequential TTI](#sequential-tti)
+
 ![Sequential TTI](./sequential_tti.svg)
+
+### [Staggered TTI](#staggered-tti)
 
 ![Staggered TTI](./staggered_tti.svg)
 
+### [Burst TTI](#burst-tti)
+
 ![Burst TTI](./burst_tti.svg)
+
+### [Pricing Comparison](#pricing-comparison)
 
 ![Pricing Comparison](./pricing.svg)
 
@@ -64,10 +72,14 @@ All tests run on GitHub Actions at 00:00 UTC daily. Providers are tested using C
 
 ## Sponsors
 
-Sponsors enable independent benchmark infrastructure. **Sponsors cannot influence methodology or results.**
+Sponsors enable independent benchmark infrastructure.
 
-<a href="https://dub.sh/CwsSQul"><img src="./sponsors/archil-logo.png" alt="Archil Logo" height="40"></a>&nbsp;&nbsp;&nbsp;
-<a href="https://dub.sh/RuX0uKg"><img src="./sponsors/tigris-logo.svg" alt="Tigris Logo" height="40"></a>
+<p align="center">
+  <a href="https://dub.sh/CwsSQul"><img src="./sponsors/tier-1/archil-logo.svg" alt="Archil Logo" height="40"></a>&nbsp;&nbsp;&nbsp;
+  <a href="https://dub.sh/zqttNSR"><img src="./sponsors/tier-1/latitude-logo.svg" alt="Latitude.sh Logo" height="40"></a>&nbsp;&nbsp;&nbsp;
+  <a href="https://dub.sh/RuX0uKg"><img src="./sponsors/tier-2/tigris-logo.svg" alt="Tigris Logo" height="40"></a>&nbsp;&nbsp;&nbsp;
+  <a href="https://dub.sh/sD1N8hG"><img src="./sponsors/tier-2/browserbase-logo.svg" alt="Browserbase Logo" height="40"></a>
+</p>
 
 [Learn more →](./SPONSORSHIP.md)
 

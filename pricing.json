@@ -463,16 +463,22 @@
           "rate": null,
           "unit": null,
           "bundled_with_memory": true,
-          "confidence": "estimated",
-          "notes": "VM-hour pricing bundles CPU and memory. 1 credit = $0.015. On-demand: $0.1486/hr."
+          "confidence": "exact",
+          "notes": "VM-hour pricing bundles CPU and memory. 1 credit = $0.015. On-demand: $0.1486/hr (Nano). Pico tier: $0.0743/hr."
         },
         "memory": {
           "rate": null,
           "unit": null,
           "bundled_with_cpu": true,
-          "confidence": "estimated"
+          "confidence": "exact"
         },
         "vm_tiers": [
+          {
+            "name": "pico",
+            "vcpu": 2,
+            "ram_gb": 1,
+            "rate_per_hr": 0.0743
+          },
           {
             "name": "nano",
             "vcpu": 2,
@@ -522,11 +528,11 @@
           "confidence": "unknown"
         },
         "normalized": {
-          "cpu_per_vcpu_hr": 0.075,
-          "memory_per_gib_hr": 0.037,
-          "total_1vcpu_2gb_hr": 0.1486,
+          "cpu_per_vcpu_hr": 0.0372,
+          "memory_per_gib_hr": 0.0372,
+          "total_1vcpu_2gb_hr": 0.0743,
           "confidence": "estimated",
-          "notes": "No 1 vCPU + 2 GB tier. Using Nano (2 vCPU + 4 GB) as closest match at $0.1486/hr. Actual 1vCPU+2GB cost would be ~$0.074 if offered."
+          "notes": "No 1 vCPU + 2 GB tier. Using Pico (2 vCPU + 1 GB) at $0.0743/hr as smallest tier. Linear scaling assumed."
         }
       },
       "plans": [
@@ -535,19 +541,28 @@
           "base_fee_per_month": 0,
           "vm_credits_hr_per_month": 40,
           "max_members": 5,
-          "max_concurrent_vms": 10
-        },
-        {
-          "name": "pro",
-          "base_fee_per_month": 9,
-          "vm_credits_hr_per_month": 60,
-          "max_members": 20
+          "max_concurrent_vms": 10,
+          "max_sdk_sandboxes_per_hr": 20,
+          "max_vm_spec": "4 vCPU + 8 GB"
         },
         {
           "name": "scale",
           "base_fee_per_month": 170,
           "vm_credits_hr_per_month": 160,
-          "max_concurrent_vms": 250
+          "max_members": 20,
+          "max_concurrent_vms": 250,
+          "max_sdk_sandboxes_per_hr": 1000,
+          "on_demand_rate_per_hr": 0.1486,
+          "max_vm_spec": "16 vCPU + 32 GB"
+        },
+        {
+          "name": "enterprise",
+          "base_fee_per_month": null,
+          "vm_credits_hr_per_month": null,
+          "max_members": null,
+          "max_concurrent_vms": null,
+          "max_vm_spec": "64 vCPU + 128 GB",
+          "notes": "Up to 50% off bulk VM credits. SOC 2 Type II."
         }
       ],
       "free_credits": null,
