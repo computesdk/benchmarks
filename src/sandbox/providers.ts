@@ -9,6 +9,7 @@ import { runloop } from '@computesdk/runloop';
 import { namespace } from '@computesdk/namespace';
 import { cloudflare } from '@computesdk/cloudflare';
 import { sprites } from '@computesdk/sprites';
+import { upstash } from '@computesdk/upstash';
 import { compute } from 'computesdk';
 import type { ProviderConfig } from './types.js';
 
@@ -79,6 +80,11 @@ export const providers: ProviderConfig[] = [
     createCompute: () => vercel({ token: process.env.VERCEL_TOKEN!, teamId: process.env.VERCEL_TEAM_ID!, projectId: process.env.VERCEL_PROJECT_ID! }),
   },
   //
+  {
+    name: 'upstash',
+    requiredEnvVars: ['UPSTASH_BOX_API_KEY'],
+    createCompute: () => upstash({ apiKey: process.env.UPSTASH_BOX_API_KEY! }),
+  },
   // --- Automatic mode (via ComputeSDK gateway) ---
   // {
   //   name: 'railway',
