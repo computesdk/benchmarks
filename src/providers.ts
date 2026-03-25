@@ -10,6 +10,7 @@ import { runloop } from '@computesdk/runloop';
 import { namespace } from '@computesdk/namespace';
 import { cloudflare } from '@computesdk/cloudflare';
 import { sprites } from '@computesdk/sprites';
+import { agentuity } from '@computesdk/agentuity';
 import { compute } from 'computesdk';
 import type { ProviderConfig } from './types.js';
 
@@ -82,6 +83,11 @@ export const providers: ProviderConfig[] = [
     name: 'sprites',
     requiredEnvVars: ['SPRITES_TOKEN'],
     createCompute: () => sprites({ apiKey: process.env.SPRITES_TOKEN! }),
+  },
+  {
+    name: 'agentuity',
+    requiredEnvVars: ['AGENTUITY_SDK_KEY'],
+    createCompute: () => agentuity({ apiKey: process.env.AGENTUITY_SDK_KEY! }),
   },
   // --- Automatic mode (via ComputeSDK gateway) ---
   // {
