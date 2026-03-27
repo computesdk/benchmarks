@@ -3,7 +3,7 @@ import { computeStats } from '../util/stats.js';
 import { withTimeout } from '../util/timeout.js';
 
 export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkResult> {
-  const { name, iterations = 100, timeout = 120_000, requiredEnvVars, sandboxOptions } = config;
+  const { name, iterations = 100, timeout = 120_000, requiredEnvVars, sandboxOptions, destroyTimeoutMs } = config;
 
   // Check if all required credentials are available
   const missingVars = requiredEnvVars.filter(v => !process.env[v]);
@@ -26,7 +26,7 @@ export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkRes
     console.log(`  Iteration ${i + 1}/${iterations}...`);
 
     try {
-      const iterationResult = await runIteration(compute, timeout, sandboxOptions);
+      const iterationResult = await runIteration(compute, timeout, sandboxOptions, destroyTimeoutMs);
       results.push(iterationResult);
       console.log(`    TTI: ${(iterationResult.ttiMs / 1000).toFixed(2)}s`);
     } catch (err) {
@@ -58,7 +58,7 @@ export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkRes
   };
 }
 
-export async function runIteration(compute: any, timeout: number, sandboxOptions?: Record<string, any>): Promise<TimingResult> {
+export async function runIteration(compute: any, timeout: number, sandboxOptions?: Record<string, any>, destroyTimeoutMs: number = 15_000): Promise<TimingResult> {
   let sandbox: any = null;
 
   try {
@@ -86,7 +86,7 @@ export async function runIteration(compute: any, timeout: number, sandboxOptions
         await Promise.race([
           sandbox.destroy(),
           new Promise((_, reject) => {
-            timer = setTimeout(() => reject(new Error('Destroy timeout')), 15_000);
+            timer = setTimeout(() => reject(new Error('Destroy timeout')), destroyTimeoutMs);
           }),
         ]);
       } catch (err) {

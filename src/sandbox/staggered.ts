@@ -8,7 +8,7 @@ interface StaggeredConfig extends ProviderConfig {
 }
 
 export async function runStaggeredBenchmark(config: StaggeredConfig): Promise<StaggeredBenchmarkResult> {
-  const { name, concurrency, staggerDelayMs, timeout = 120_000, requiredEnvVars, sandboxOptions } = config;
+  const { name, concurrency, staggerDelayMs, timeout = 120_000, requiredEnvVars, sandboxOptions, destroyTimeoutMs } = config;
 
   // Check if all required credentials are available
   const missingVars = requiredEnvVars.filter(v => !process.env[v]);
@@ -39,7 +39,7 @@ export async function runStaggeredBenchmark(config: StaggeredConfig): Promise<St
   for (let i = 0; i < concurrency; i++) {
     const launchedAt = performance.now() - wallStart;
 
-    const p = runIteration(compute, timeout, sandboxOptions)
+    const p = runIteration(compute, timeout, sandboxOptions, destroyTimeoutMs)
       .then(result => {
         const readyAt = performance.now() - wallStart;
         rampProfile.push({ launchedAt, readyAt, ttiMs: result.ttiMs });
