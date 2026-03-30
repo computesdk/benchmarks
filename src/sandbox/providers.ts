@@ -31,7 +31,7 @@ export const providers: ProviderConfig[] = [
     requiredEnvVars: ['DAYTONA_API_KEY'],
     createCompute: () => daytona({ apiKey: process.env.DAYTONA_API_KEY! }),
     sandboxOptions: { ephemeral: true, autoStopInterval: 5 },
-    destroyTimeoutMs: 60_000,  // 60s instead of default 15s
+    // destroyTimeoutMs: 60_000,  // 60s instead of default 15s
   },
   {
     name: 'blaxel',
