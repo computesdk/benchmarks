@@ -31,6 +31,7 @@ on:
           - codesandbox
           - hopx
           - vercel
+          - cloudflare
           - all
       timeout_minutes:
         description: 'Timeout per provider'
@@ -77,7 +78,7 @@ jobs:
               echo "matrix={\"provider\":[\"e2b\",\"daytona\",\"modal\"]}" >> $GITHUB_OUTPUT
             else
               echo "Testing all providers"
-              echo "matrix={\"provider\":[\"e2b\",\"daytona\",\"modal\",\"blaxel\",\"runloop\",\"namespace\",\"codesandbox\",\"hopx\",\"vercel\"]}" >> $GITHUB_OUTPUT
+              echo "matrix={\"provider\":[\"e2b\",\"daytona\",\"modal\",\"blaxel\",\"runloop\",\"namespace\",\"codesandbox\",\"hopx\",\"vercel\",\"cloudflare\"]}" >> $GITHUB_OUTPUT
             fi
           else
             echo "matrix={\"provider\":[\"$PROVIDER\"]}" >> $GITHUB_OUTPUT
@@ -177,6 +178,10 @@ jobs:
 - VERCEL_TEAM_ID: Vercel team ID
 - VERCEL_PROJECT_ID: Vercel project ID" >> $GITHUB_OUTPUT
               ;;
+            cloudflare)
+              echo "list=- CLOUDFLARE_API_TOKEN: Cloudflare API token (workers scripts edit permission)
+- CLOUDFLARE_ACCOUNT_ID: Cloudflare account ID" >> $GITHUB_OUTPUT
+              ;;
           esac
       
       # Run the self-setup test
@@ -196,6 +201,8 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         run: |
           # Prepare prompt

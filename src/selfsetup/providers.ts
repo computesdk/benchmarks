@@ -169,6 +169,29 @@ export const selfSetupProviders: ProviderSelfSetupConfig[] = [
       'You may need to use preview deployments',
     ],
   },
+  {
+    name: 'cloudflare',
+    npmPackage: 'wrangler',
+    importPath: 'wrangler',
+    credentials: [
+      {
+        name: 'API Token',
+        envVar: 'CLOUDFLARE_API_TOKEN',
+        description: 'Your Cloudflare API token with Workers scripts edit permission',
+      },
+      {
+        name: 'Account ID',
+        envVar: 'CLOUDFLARE_ACCOUNT_ID',
+        description: 'Your Cloudflare account ID',
+      },
+    ],
+    hints: [
+      'Cloudflare Workers uses wrangler CLI, not a traditional sandbox SDK',
+      'Use wrangler dev for local testing or wrangler deploy to deploy',
+      'Workers run V8 isolates, not full containers',
+      'Consider using Workers AI for inference tasks',
+    ],
+  },
 ];
 
 export function getProviderConfig(name: string): ProviderSelfSetupConfig | undefined {
