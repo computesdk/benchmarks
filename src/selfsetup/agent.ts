@@ -6,13 +6,14 @@
  * - Timeout enforcement
  * - Session recording
  * - Error handling
- * - Cost tracking placeholder
+ * - Multiple AI provider support (OpenAI, Anthropic, Cloudflare)
  */
 
 import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
-import type { SelfSetupResult, SelfSetupStep } from './types.js';
+
+export type AIProvider = 'openai' | 'anthropic' | 'cloudflare';
 
 export interface AgentRunnerConfig {
   /** Provider to test */
@@ -27,6 +28,8 @@ export interface AgentRunnerConfig {
   recordSession?: boolean;
   /** Output file path */
   outputPath: string;
+  /** AI provider to use (default: openai) */
+  aiProvider?: AIProvider;
 }
 
 export interface AgentRunResult {
@@ -40,6 +43,8 @@ export interface AgentRunResult {
   error?: string;
   /** Duration in milliseconds */
   durationMs: number;
+  /** AI provider used */
+  aiProvider?: AIProvider;
 }
 
 /**
@@ -83,6 +88,39 @@ async function runCommand(
 }
 
 /**
+ * Get environment variables for specific AI provider
+ */
+function getAIProviderEnv(aiProvider: AIProvider): Record<string, string> {
+  const baseEnv: Record<string, string> = {
+    OPENCODE_API_KEY: process.env.OPENCODE_API_KEY || '',
+  };
+  
+  switch (aiProvider) {
+    case 'openai':
+      return {
+        ...baseEnv,
+        OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
+        OPENCODE_LLM_PROVIDER: 'openai',
+      };
+    case 'anthropic':
+      return {
+        ...baseEnv,
+        ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || '',
+        OPENCODE_LLM_PROVIDER: 'anthropic',
+      };
+    case 'cloudflare':
+      return {
+        ...baseEnv,
+        CLOUDFLARE_API_TOKEN: process.env.CLOUDFLARE_API_TOKEN || '',
+        CLOUDFLARE_ACCOUNT_ID: process.env.CLOUDFLARE_ACCOUNT_ID || '',
+        OPENCODE_LLM_PROVIDER: 'cloudflare',
+      };
+    default:
+      return baseEnv;
+  }
+}
+
+/**
  * Run agent with OpenCode
  */
 export async function runAgent(config: AgentRunnerConfig): Promise<AgentRunResult> {
@@ -91,6 +129,8 @@ export async function runAgent(config: AgentRunnerConfig): Promise<AgentRunResul
     ? path.join(config.workDir, 'session.log')
     : undefined;
   
+  const aiProvider = config.aiProvider || 'openai';
+  
   // Check OpenCode availability
   const available = await isOpenCodeAvailable();
   if (!available) {
@@ -98,6 +138,7 @@ export async function runAgent(config: AgentRunnerConfig): Promise<AgentRunResul
       completed: false,
       durationMs: Date.now() - startTime,
       error: 'OpenCode CLI not available. Please ensure opencode is installed and in PATH.',
+      aiProvider,
     };
   }
   
@@ -113,12 +154,15 @@ export async function runAgent(config: AgentRunnerConfig): Promise<AgentRunResul
     args.push('--record-session', recordingPath);
   }
   
+  // Add AI provider flag if OpenCode supports it
+  if (aiProvider !== 'openai') {
+    args.push('--llm-provider', aiProvider);
+  }
+  
   try {
     const result = await runCommand('opencode', args, {
       timeout: (config.timeoutSeconds || 900) * 1000 + 10000,
-      env: {
-        OPENCODE_API_KEY: process.env.OPENCODE_API_KEY || '',
-      },
+      env: getAIProviderEnv(aiProvider),
     });
     
     const durationMs = Date.now() - startTime;
@@ -128,6 +172,7 @@ export async function runAgent(config: AgentRunnerConfig): Promise<AgentRunResul
         completed: false,
         durationMs,
         error: `OpenCode exited with code ${result.exitCode}: ${result.stderr}`,
+        aiProvider,
       };
     }
     
@@ -137,6 +182,7 @@ export async function runAgent(config: AgentRunnerConfig): Promise<AgentRunResul
         completed: false,
         durationMs,
         error: 'OpenCode completed but no result file generated',
+        aiProvider,
       };
     }
     
@@ -145,12 +191,14 @@ export async function runAgent(config: AgentRunnerConfig): Promise<AgentRunResul
       resultPath: config.outputPath,
       recordingPath,
       durationMs,
+      aiProvider,
     };
   } catch (err) {
     return {
       completed: false,
       durationMs: Date.now() - startTime,
       error: err instanceof Error ? err.message : String(err),
+      aiProvider,
     };
   }
 }
@@ -164,9 +212,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const promptFile = args.find((_, i) => args[i - 1] === '--prompt-file');
   const outputPath = args.find((_, i) => args[i - 1] === '--output') || path.join(workDir, 'result.json');
   const timeoutSeconds = parseInt(args.find((_, i) => args[i - 1] === '--timeout') || '900', 10);
+  const aiProvider = (args.find((_, i) => args[i - 1] === '--ai-provider') || 'openai') as AIProvider;
   
   if (!provider || !promptFile) {
-    console.error('Usage: tsx src/selfsetup/agent.ts <provider> --prompt-file <path> --workdir <dir> [--output <path>] [--timeout <seconds>]');
+    console.error('Usage: tsx src/selfsetup/agent.ts <provider> --prompt-file <path> --workdir <dir> [--output <path>] [--timeout <seconds>] [--ai-provider <openai|anthropic|cloudflare>]');
     process.exit(1);
   }
   
@@ -178,6 +227,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     prompt,
     outputPath,
     timeoutSeconds,
+    aiProvider,
     recordSession: true,
   }).then(result => {
     console.log(JSON.stringify(result, null, 2));

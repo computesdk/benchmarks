@@ -31,7 +31,6 @@ on:
           - codesandbox
           - hopx
           - vercel
-          - cloudflare
           - all
       timeout_minutes:
         description: 'Timeout per provider'
@@ -43,6 +42,15 @@ on:
           - '15'
           - '20'
           - '30'
+      ai_provider:
+        description: 'AI provider for OpenCode agent'
+        required: false
+        default: 'openai'
+        type: choice
+        options:
+          - openai
+          - anthropic
+          - cloudflare
 
 concurrency:
   group: selfsetup-${{ github.event.inputs.provider || 'scheduled' }}-${{ github.run_id }}
@@ -78,7 +86,7 @@ jobs:
               echo "matrix={\"provider\":[\"e2b\",\"daytona\",\"modal\"]}" >> $GITHUB_OUTPUT
             else
               echo "Testing all providers"
-              echo "matrix={\"provider\":[\"e2b\",\"daytona\",\"modal\",\"blaxel\",\"runloop\",\"namespace\",\"codesandbox\",\"hopx\",\"vercel\",\"cloudflare\"]}" >> $GITHUB_OUTPUT
+              echo "matrix={\"provider\":[\"e2b\",\"daytona\",\"modal\",\"blaxel\",\"runloop\",\"namespace\",\"codesandbox\",\"hopx\",\"vercel\"]}" >> $GITHUB_OUTPUT
             fi
           else
             echo "matrix={\"provider\":[\"$PROVIDER\"]}" >> $GITHUB_OUTPUT
@@ -178,10 +186,6 @@ jobs:
 - VERCEL_TEAM_ID: Vercel team ID
 - VERCEL_PROJECT_ID: Vercel project ID" >> $GITHUB_OUTPUT
               ;;
-            cloudflare)
-              echo "list=- CLOUDFLARE_API_TOKEN: Cloudflare API token (workers scripts edit permission)
-- CLOUDFLARE_ACCOUNT_ID: Cloudflare account ID" >> $GITHUB_OUTPUT
-              ;;
           esac
       
       # Run the self-setup test
@@ -201,9 +205,12 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          # AI Provider credentials
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         run: |
           # Prepare prompt
           PROMPT_TEMPLATE=$(cat src/selfsetup/prompt.md)
@@ -217,6 +224,7 @@ jobs:
           # Run agent
           echo "Starting OpenCode agent for ${{ matrix.provider }}..."
           echo "Timeout: ${{ github.event.inputs.timeout_minutes || 15 }} minutes"
+          echo "AI Provider: ${{ github.event.inputs.ai_provider || 'openai' }}"
           
           npx tsx src/selfsetup/agent.ts \
             ${{ matrix.provider }} \
@@ -224,6 +232,7 @@ jobs:
             --workdir "$TEST_DIR" \
             --output "$TEST_DIR/result.json" \
             --timeout ${{ fromJson(github.event.inputs.timeout_minutes || 15) * 60 }} \
+            --ai-provider ${{ github.event.inputs.ai_provider || 'openai' }} \
             > "$TEST_DIR/agent-run.json" 2>&1 || true
           
           echo "Agent run completed:"

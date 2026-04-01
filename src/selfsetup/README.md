@@ -10,6 +10,10 @@ This directory contains the **AI Self-Setup Benchmark** implementation — testi
 
 - **OpenCode CLI** - Must be installed on the runner
 - **OPENCODE_API_KEY** - Set in GitHub Secrets
+- **AI Provider credentials** - One of:
+  - `OPENAI_API_KEY` (default)
+  - `ANTHROPIC_API_KEY` 
+  - `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`
 
 ## Quick Start
 
@@ -22,9 +26,11 @@ npm run selfsetup:list
 ### Run local test
 
 ```bash
+# Default (OpenAI)
 npm run selfsetup:e2b
-npm run selfsetup:daytona
-npm run selfsetup:modal
+
+# With Cloudflare Workers AI
+BACKEND=cloudflare npm run selfsetup:e2b
 ```
 
 ## How It Works
@@ -86,6 +92,17 @@ Weekly runs via `.github/workflows/self-setup.yml`:
 Via GitHub Actions UI:
 - **Provider**: Single or all providers
 - **Timeout**: 10/15/20/30 minutes
+- **AI Provider**: OpenAI (default), Anthropic, or Cloudflare Workers AI
+
+## AI Providers
+
+The benchmark supports multiple AI providers for the OpenCode agent:
+
+| Provider | Credentials | Notes |
+|----------|-------------|-------|
+| **OpenAI** (default) | `OPENAI_API_KEY` | GPT-4, GPT-4o - Best performance |
+| **Anthropic** | `ANTHROPIC_API_KEY` | Claude 3.5/3 Sonnet - Good for long context |
+| **Cloudflare** | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Llama, Mistral - Edge inference, cheaper |
 
 ## Provider Credentials
 
@@ -101,7 +118,10 @@ Reused from TTI tests (GitHub Secrets):
 - `VERCEL_TOKEN` + `VERCEL_TEAM_ID` + `VERCEL_PROJECT_ID`
 - `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`
 
-Plus:
+Plus AI provider credentials:
+- `OPENAI_API_KEY` (default)
+- `ANTHROPIC_API_KEY`
+- `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`
 - `OPENCODE_API_KEY`
 
 ## Local Development
