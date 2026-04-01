@@ -6,12 +6,12 @@ on:
   workflow_dispatch:
     inputs:
       provider:
-        description: 'Provider to test (leave empty for all)'
+        description: 'Provider to test (default: all)'
         required: false
-        default: ''
+        default: 'all'
         type: choice
         options:
-          - ''
+          - all
           - e2b
           - daytona
           - modal
@@ -23,7 +23,7 @@ on:
           - vercel
 
 concurrency:
-  group: selfsetup-${{ github.event.inputs.provider || 'all' }}
+  group: selfsetup-${{ github.event.inputs.provider || 'scheduled' }}
   cancel-in-progress: true
 
 permissions:
@@ -38,7 +38,7 @@ jobs:
     steps:
       - id: set-matrix
         run: |
-          if [ -n "${{ github.event.inputs.provider }}" ]; then
+          if [ "${{ github.event.inputs.provider }}" != "all" ]; then
             echo "matrix={\"provider\":[\"${{ github.event.inputs.provider }}\"]}" >> $GITHUB_OUTPUT
           else
             echo "matrix={\"provider\":[\"e2b\",\"daytona\",\"modal\",\"blaxel\",\"runloop\",\"namespace\",\"codesandbox\",\"hopx\",\"vercel\"]}" >> $GITHUB_OUTPUT
