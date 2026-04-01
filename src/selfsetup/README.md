@@ -2,9 +2,14 @@
 
 This directory contains the **AI Self-Setup Benchmark** implementation — testing whether AI agents can autonomously discover, install, configure, and integrate sandbox providers.
 
-> **Status**: Production-ready with multi-backend support (OpenCode, Aider, Mock)
+> **Status**: Production-ready with OpenCode integration
 > 
-> 📖 **[Production Guide →](./PRODUCTION.md)** - Cost controls, troubleshooting, deployment
+> 📖 **[Production Guide →](./PRODUCTION.md)** - Deployment guide and troubleshooting
+
+## Requirements
+
+- **OpenCode CLI** - Must be installed on the runner
+- **OPENCODE_API_KEY** - Set in GitHub Secrets
 
 ## Quick Start
 
@@ -14,35 +19,21 @@ This directory contains the **AI Self-Setup Benchmark** implementation — testi
 npm run selfsetup:list
 ```
 
-### Run local test (Mock mode - free)
+### Run local test
 
 ```bash
-npm run selfsetup:e2b      # Uses mock if OpenCode not installed
+npm run selfsetup:e2b
 npm run selfsetup:daytona
 npm run selfsetup:modal
 ```
 
-### Test specific backend
-
-```bash
-# OpenCode (requires CLI installation)
-BACKEND=opencode npm run selfsetup:e2b
-
-# Aider (pip install aider-chat)
-BACKEND=aider npm run selfsetup:e2b
-
-# Mock (simulation, no API costs)
-BACKEND=mock npm run selfsetup:e2b
-```
-
 ## How It Works
 
-1. **Environment Setup**: Creates fresh Node.js project in temp directory
-2. **Backend Detection**: Tries OpenCode → Aider → Mock (in that order)
-3. **Prompt Generation**: Loads template with provider-specific credentials
-4. **AI Execution**: Agent executes the 8-step protocol
-5. **Validation**: Result is scored (0-100) based on the benchmark spec
-6. **Reporting**: Results committed to `results/selfsetup/`
+1. **Environment Setup** - Creates fresh Node.js project in temp directory
+2. **Prompt Generation** - Loads template with provider-specific credentials
+3. **AI Execution** - OpenCode agent executes the 8-step protocol
+4. **Validation** - Result is scored (0-100) based on the benchmark spec
+5. **Reporting** - Results committed to `results/selfsetup/`
 
 ## The 8-Step Protocol
 
@@ -79,15 +70,14 @@ BACKEND=mock npm run selfsetup:e2b
 | `validate.ts` | Result validator with defaults |
 | `merge-results.ts` | Merge multiple provider results |
 | `summarize.ts` | Generate markdown summary |
-| `agent.ts` | **Multi-backend agent runner** |
-| `PRODUCTION.md` | **Production deployment guide** |
+| `agent.ts` | OpenCode agent runner |
+| `PRODUCTION.md` | Production deployment guide |
 
 ## CI/CD
 
 Weekly runs via `.github/workflows/self-setup.yml`:
 - **Schedule**: Sunday at midnight UTC
-- **Cost Control**: Max 3 providers per scheduled run (~$3-6)
-- **Backends**: OpenCode → Aider → Mock (auto-fallback)
+- **Cost Control**: Max 3 providers per scheduled run
 - **Artifacts**: Session recordings, result JSON (30-day retention)
 - **Reporting**: PR comments + committed results
 
@@ -95,18 +85,7 @@ Weekly runs via `.github/workflows/self-setup.yml`:
 
 Via GitHub Actions UI:
 - **Provider**: Single or all providers
-- **Backend**: auto / opencode / aider / mock
 - **Timeout**: 10/15/20/30 minutes
-
-## Agent Backends
-
-| Backend | Status | Cost/Run | Pros | Cons |
-|---------|--------|----------|------|------|
-| **OpenCode** | Requires install | $0.50-2.00 | Full computer use, browser | Not publicly available |
-| **Aider** | `pip install` | $0.10-0.50 | Open source, cheaper | No browser access |
-| **Mock** | Always ready | $0 | Fast, testing | Simulated results |
-
-See [PRODUCTION.md](./PRODUCTION.md) for installation and configuration.
 
 ## Provider Credentials
 
@@ -121,51 +100,35 @@ Reused from TTI tests (GitHub Secrets):
 - `CSB_API_KEY`
 - `VERCEL_TOKEN` + `VERCEL_TEAM_ID` + `VERCEL_PROJECT_ID`
 
-Plus API keys for backends:
+Plus:
 - `OPENCODE_API_KEY`
-- `OPENAI_API_KEY` (for Aider)
-- `ANTHROPIC_API_KEY` (for Aider)
 
 ## Local Development
 
-### Test the pipeline (free)
+Requires OpenCode CLI installation.
 
 ```bash
-# Uses mock backend - no API costs
+# Ensure opencode is in PATH
+which opencode
+
+# Run test
 npm run selfsetup:e2b
-```
-
-### With real OpenCode
-
-```bash
-# Install OpenCode CLI first (when available)
-# Then:
-npx tsx src/selfsetup/run.ts e2b
-```
-
-### With Aider
-
-```bash
-pip install aider-chat
-BACKEND=aider npx tsx src/selfsetup/run.ts e2b
 ```
 
 ## Cost Estimates
 
-| Run Type | Providers | Backend | Est. Cost |
-|----------|-----------|---------|-----------|
-| Scheduled (weekly) | 3 | OpenCode | ~$1.50-6.00 |
-| Full test | 9 | OpenCode | ~$4.50-18.00 |
-| Development | Any | Mock | $0 |
-| CI Testing | 1 | Aider | ~$0.10-0.50 |
+| Run Type | Providers | Est. Cost |
+|----------|-----------|-----------|
+| Scheduled (weekly) | 3 | ~$1.50-6.00 |
+| Full test | 9 | ~$4.50-18.00 |
+| Single provider | 1 | ~$0.50-2.00 |
 
-Monthly budget: ~$6-24 (weekly, 3 providers, OpenCode)
+Monthly budget: ~$6-24 (weekly, 3 providers)
 
 ## Troubleshooting
 
 See [PRODUCTION.md](./PRODUCTION.md) for:
-- Backend installation
-- Cost optimization
+- OpenCode CLI installation
 - Debugging session recordings
 - Common failures and solutions
 - Production checklist
