@@ -34,7 +34,18 @@
     "generate-svg:staggered": "tsx src/sandbox/generate-svg.ts --mode staggered",
     "generate-svg:burst": "tsx src/sandbox/generate-svg.ts --mode burst",
     "generate-storage-svg": "tsx src/storage/generate-svg.ts",
-    "generate-pricing-svg": "tsx src/sandbox/generate-pricing-svg.ts"
+    "generate-pricing-svg": "tsx src/sandbox/generate-pricing-svg.ts",
+    "selfsetup": "tsx src/selfsetup/run.ts",
+    "selfsetup:e2b": "tsx src/selfsetup/run.ts e2b",
+    "selfsetup:daytona": "tsx src/selfsetup/run.ts daytona",
+    "selfsetup:modal": "tsx src/selfsetup/run.ts modal",
+    "selfsetup:blaxel": "tsx src/selfsetup/run.ts blaxel",
+    "selfsetup:runloop": "tsx src/selfsetup/run.ts runloop",
+    "selfsetup:namespace": "tsx src/selfsetup/run.ts namespace",
+    "selfsetup:codesandbox": "tsx src/selfsetup/run.ts codesandbox",
+    "selfsetup:hopx": "tsx src/selfsetup/run.ts hopx",
+    "selfsetup:vercel": "tsx src/selfsetup/run.ts vercel",
+    "selfsetup:list": "tsx src/selfsetup/run.ts list"
   },
   "dependencies": {
     "@computesdk/blaxel": "^1.6.0",

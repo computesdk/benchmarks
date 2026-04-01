@@ -50,6 +50,24 @@ Each benchmark creates a fresh sandbox, runs `node -v`, and records wall-clock t
 
 For each provider we report min, max, median, P95, P99, and average TTI, plus a **composite score** (0–100) that combines weighted timing metrics with success rate. Providers must be both fast *and* reliable to score well.
 
+### AI Self-Setup Benchmark
+
+**Weekly:** Can an AI agent autonomously discover, install, configure, and integrate a provider with zero human intervention?
+
+We run OpenCode agents through an 8-step protocol:
+1. Discovery (find SDK/docs)
+2. Installation (`npm install`)
+3. Configuration (env vars)
+4. Integration (write code)
+5. Execution (run `node -v`)
+6. Verification (confirm success)
+7. Scoring (0-100)
+8. Cleanup
+
+Pass threshold: **≥90/100**. Tests true AI-first developer experience.
+
+[See results →](./results/selfsetup/)
+
 ### Composite Score
 
 Before computing timing statistics, the bottom 5% and top 5% of successful iterations are trimmed to reduce outlier influence from transient network issues or cold-start anomalies. Each timing metric is then scored against a fixed 10-second ceiling: `score = 100 × (1 − value / 10,000ms)`. A 200ms median scores 98; anything ≥10s scores 0. These individual scores are combined with weighted emphasis on median (60%), P95 (25%), and P99 (15%), then multiplied by the provider's success rate (0–1). A provider with 90% success has its score reduced by 10% — reliability is non-negotiable.
@@ -91,6 +109,7 @@ Sponsors enable independent benchmark infrastructure.
 - [x] Add P95 & P99
 - [x] TTI n=100 test
 - [x] TTI n=100 concurrency test (staggered + burst)
+- [x] **AI Self-Setup Benchmark** — Can AI agents autonomously integrate providers?
 - [ ] 10,000 concurrent sandbox stress test
 - [ ] Cold start vs warm start metrics
 - [ ] Multi-region testing
