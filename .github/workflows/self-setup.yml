@@ -1,6 +1,11 @@
 name: Self-Setup Benchmark
 
 on:
+  pull_request:
+    paths:
+      - 'src/selfsetup/**'
+      - 'package.json'
+      - 'package-lock.json'
   schedule:
     - cron: '0 0 * * 0'  # Weekly on Sunday at midnight UTC
   workflow_dispatch:
