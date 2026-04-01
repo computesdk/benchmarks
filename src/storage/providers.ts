@@ -42,5 +42,5 @@ export const storageProviders: StorageProviderConfig[] = [
     fileSizes: [1024 * 1024, 10 * 1024 * 1024],
   },
   // 
-  // add more providers above
+  // add providers above
 ];
