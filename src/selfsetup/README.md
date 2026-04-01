@@ -2,6 +2,10 @@
 
 This directory contains the **AI Self-Setup Benchmark** implementation — testing whether AI agents can autonomously discover, install, configure, and integrate sandbox providers.
 
+> **Status**: Production-ready with multi-backend support (OpenCode, Aider, Mock)
+> 
+> 📖 **[Production Guide →](./PRODUCTION.md)** - Cost controls, troubleshooting, deployment
+
 ## Quick Start
 
 ### List available providers
@@ -10,22 +14,35 @@ This directory contains the **AI Self-Setup Benchmark** implementation — testi
 npm run selfsetup:list
 ```
 
-### Run local test (creates environment, generates prompt)
+### Run local test (Mock mode - free)
 
 ```bash
-npm run selfsetup:e2b
+npm run selfsetup:e2b      # Uses mock if OpenCode not installed
 npm run selfsetup:daytona
 npm run selfsetup:modal
-# ... etc
+```
+
+### Test specific backend
+
+```bash
+# OpenCode (requires CLI installation)
+BACKEND=opencode npm run selfsetup:e2b
+
+# Aider (pip install aider-chat)
+BACKEND=aider npm run selfsetup:e2b
+
+# Mock (simulation, no API costs)
+BACKEND=mock npm run selfsetup:e2b
 ```
 
 ## How It Works
 
 1. **Environment Setup**: Creates fresh Node.js project in temp directory
-2. **Prompt Generation**: Loads template with provider-specific credentials
-3. **AI Execution**: OpenCode agent executes the 8-step protocol
-4. **Validation**: Result is scored (0-100) based on the benchmark spec
-5. **Reporting**: Results committed to `results/selfsetup/`
+2. **Backend Detection**: Tries OpenCode → Aider → Mock (in that order)
+3. **Prompt Generation**: Loads template with provider-specific credentials
+4. **AI Execution**: Agent executes the 8-step protocol
+5. **Validation**: Result is scored (0-100) based on the benchmark spec
+6. **Reporting**: Results committed to `results/selfsetup/`
 
 ## The 8-Step Protocol
 
@@ -52,26 +69,48 @@ npm run selfsetup:modal
 
 ## Files
 
-- `types.ts` — TypeScript interfaces
-- `providers.ts` — Provider configurations (reuses TTI credentials)
-- `prompt.md` — OpenCode prompt template
-- `score.ts` — Scoring algorithm (0-100)
-- `run.ts` — Test runner and CLI entry point
-- `validate.ts` — Result validator
-- `merge-results.ts` — Merge multiple provider results
-- `summarize.ts` — Generate markdown summary
+| File | Purpose |
+|------|---------|
+| `types.ts` | TypeScript interfaces |
+| `providers.ts` | Provider configurations (9 providers) |
+| `prompt.md` | AI agent prompt template |
+| `score.ts` | 0-100 scoring algorithm |
+| `run.ts` | Test runner and CLI |
+| `validate.ts` | Result validator with defaults |
+| `merge-results.ts` | Merge multiple provider results |
+| `summarize.ts` | Generate markdown summary |
+| `agent.ts` | **Multi-backend agent runner** |
+| `PRODUCTION.md` | **Production deployment guide** |
 
 ## CI/CD
 
 Weekly runs via `.github/workflows/self-setup.yml`:
-- Runs on Sunday at midnight UTC
-- Uses OpenCode agent with full tool access
-- Posts results to PR (if triggered by PR)
-- Commits results to repo (on schedule/manual)
+- **Schedule**: Sunday at midnight UTC
+- **Cost Control**: Max 3 providers per scheduled run (~$3-6)
+- **Backends**: OpenCode → Aider → Mock (auto-fallback)
+- **Artifacts**: Session recordings, result JSON (30-day retention)
+- **Reporting**: PR comments + committed results
+
+### Manual Triggers
+
+Via GitHub Actions UI:
+- **Provider**: Single or all providers
+- **Backend**: auto / opencode / aider / mock
+- **Timeout**: 10/15/20/30 minutes
+
+## Agent Backends
+
+| Backend | Status | Cost/Run | Pros | Cons |
+|---------|--------|----------|------|------|
+| **OpenCode** | Requires install | $0.50-2.00 | Full computer use, browser | Not publicly available |
+| **Aider** | `pip install` | $0.10-0.50 | Open source, cheaper | No browser access |
+| **Mock** | Always ready | $0 | Fast, testing | Simulated results |
+
+See [PRODUCTION.md](./PRODUCTION.md) for installation and configuration.
 
 ## Provider Credentials
 
-Credentials are reused from existing TTI tests (in GitHub Secrets):
+Reused from TTI tests (GitHub Secrets):
 - `E2B_API_KEY`
 - `DAYTONA_API_KEY`
 - `MODAL_TOKEN_ID` + `MODAL_TOKEN_SECRET`
@@ -82,11 +121,51 @@ Credentials are reused from existing TTI tests (in GitHub Secrets):
 - `CSB_API_KEY`
 - `VERCEL_TOKEN` + `VERCEL_TEAM_ID` + `VERCEL_PROJECT_ID`
 
+Plus API keys for backends:
+- `OPENCODE_API_KEY`
+- `OPENAI_API_KEY` (for Aider)
+- `ANTHROPIC_API_KEY` (for Aider)
+
 ## Local Development
 
-To test without OpenCode (setup only):
+### Test the pipeline (free)
 
 ```bash
+# Uses mock backend - no API costs
 npm run selfsetup:e2b
-# Then manually run the generated prompt with OpenCode
 ```
+
+### With real OpenCode
+
+```bash
+# Install OpenCode CLI first (when available)
+# Then:
+npx tsx src/selfsetup/run.ts e2b
+```
+
+### With Aider
+
+```bash
+pip install aider-chat
+BACKEND=aider npx tsx src/selfsetup/run.ts e2b
+```
+
+## Cost Estimates
+
+| Run Type | Providers | Backend | Est. Cost |
+|----------|-----------|---------|-----------|
+| Scheduled (weekly) | 3 | OpenCode | ~$1.50-6.00 |
+| Full test | 9 | OpenCode | ~$4.50-18.00 |
+| Development | Any | Mock | $0 |
+| CI Testing | 1 | Aider | ~$0.10-0.50 |
+
+Monthly budget: ~$6-24 (weekly, 3 providers, OpenCode)
+
+## Troubleshooting
+
+See [PRODUCTION.md](./PRODUCTION.md) for:
+- Backend installation
+- Cost optimization
+- Debugging session recordings
+- Common failures and solutions
+- Production checklist

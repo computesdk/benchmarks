@@ -1,5 +1,14 @@
 name: Self-Setup Benchmark
 
+# Production-grade workflow for AI Self-Setup Benchmark
+# 
+# Features:
+# - Multi-backend agent support (OpenCode → Aider → Mock)
+# - Cost controls and budget limits
+# - Comprehensive logging and session recording
+# - Graceful fallbacks and error handling
+# - Selective provider testing (cost-conscious)
+
 on:
   pull_request:
     paths:
@@ -11,50 +20,117 @@ on:
   workflow_dispatch:
     inputs:
       provider:
-        description: 'Provider to test (default: all)'
+        description: 'Provider to test (cost-conscious: start with 1-3 providers)'
         required: false
-        default: 'all'
+        default: 'e2b'
         type: choice
         options:
-          - all
-          - e2b
-          - daytona
-          - modal
-          - blaxel
-          - runloop
-          - namespace
-          - codesandbox
-          - hopx
-          - vercel
+          - e2b           # Fast, well-documented - good starter
+          - daytona       # Good docs, clean SDK
+          - modal         # Popular but complex - higher cost
+          - blaxel        # Newer provider
+          - runloop       # Dev-focused
+          - namespace     # K8s-based
+          - codesandbox   # Has SDK quirks
+          - hopx          # Smaller provider
+          - vercel        # Deployment-focused (not true sandbox)
+          - all           # All providers (expensive! ~$20-50/run)
+      backend:
+        description: 'Agent backend to use'
+        required: false
+        default: 'auto'
+        type: choice
+        options:
+          - auto          # Try OpenCode → Aider → Mock
+          - opencode      # OpenCode CLI (requires installation)
+          - aider         # Aider CLI (pip install aider-chat)
+          - mock          # Simulation mode (no API costs)
+      timeout_minutes:
+        description: 'Timeout per provider (lower = cheaper)'
+        required: false
+        default: '15'
+        type: choice
+        options:
+          - '10'          # Fast test (may fail for complex providers)
+          - '15'          # Standard (recommended)
+          - '20'          # Generous (for slow providers like Modal)
+          - '30'          # Maximum (expensive)
 
 concurrency:
-  group: selfsetup-${{ github.event.inputs.provider || 'scheduled' }}
-  cancel-in-progress: true
+  group: selfsetup-${{ github.event.inputs.provider || 'scheduled' }}-${{ github.run_id }}
+  cancel-in-progress: false  # Don't cancel - we want to capture partial results
 
 permissions:
   contents: write
   pull-requests: write
+  actions: read
+
+env:
+  # Cost tracking (approximate USD per run)
+  # OpenCode: ~$0.50-2.00 per 15-min session (depends on model)
+  # Aider: ~$0.10-0.50 per run (OpenAI API costs)
+  # Mock: $0
+  ESTIMATED_COST_PER_PROVIDER: '1.00'  # USD
+  MAX_PROVIDERS_PER_RUN: '3'  # Safety limit for scheduled runs
 
 jobs:
-  # Setup test matrix
+  # Setup and validation
   setup:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+      estimated_cost: ${{ steps.estimate-cost.outputs.cost }}
+      should_run: ${{ steps.check-cost.outputs.should_run }}
     steps:
       - id: set-matrix
         run: |
-          if [ "${{ github.event.inputs.provider }}" != "all" ]; then
-            echo "matrix={\"provider\":[\"${{ github.event.inputs.provider }}\"]}" >> $GITHUB_OUTPUT
+          PROVIDER="${{ github.event.inputs.provider || 'e2b' }}"
+          
+          if [ "$PROVIDER" = "all" ]; then
+            # Cost safety: limit providers for scheduled runs
+            if [ "${{ github.event_name }}" = "schedule" ]; then
+              echo "⚠️ Scheduled run limited to first $MAX_PROVIDERS_PER_RUN providers for cost control"
+              echo "matrix={\"provider\":[\"e2b\",\"daytona\",\"modal\"]}" >> $GITHUB_OUTPUT
+            else
+              # Manual runs can test all, but warn about cost
+              echo "⚠️ Testing ALL providers. Estimated cost: ~$${{ env.ESTIMATED_COST_PER_PROVIDER }} × 9 = ~$9.00"
+              echo "matrix={\"provider\":[\"e2b\",\"daytona\",\"modal\",\"blaxel\",\"runloop\",\"namespace\",\"codesandbox\",\"hopx\",\"vercel\"]}" >> $GITHUB_OUTPUT
+            fi
           else
-            echo "matrix={\"provider\":[\"e2b\",\"daytona\",\"modal\",\"blaxel\",\"runloop\",\"namespace\",\"codesandbox\",\"hopx\",\"vercel\"]}" >> $GITHUB_OUTPUT
+            echo "matrix={\"provider\":[\"$PROVIDER\"]}" >> $GITHUB_OUTPUT
+          fi
+      
+      - id: estimate-cost
+        run: |
+          # Calculate estimated cost
+          PROVIDER_COUNT=$(echo '${{ steps.set-matrix.outputs.matrix }}' | jq -r '.provider | length')
+          COST=$(echo "$PROVIDER_COUNT * ${{ env.ESTIMATED_COST_PER_PROVIDER }}" | bc)
+          echo "cost=$COST" >> $GITHUB_OUTPUT
+          echo "Estimated cost for this run: ~$${COST} USD"
+      
+      - id: check-cost
+        run: |
+          # Emergency cost cutoff: if estimated cost > $10, require explicit approval
+          COST='${{ steps.estimate-cost.outputs.cost }}'
+          if (( $(echo "$COST > 10" | bc -l) )); then
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo "should_run=true" >> $GITHUB_OUTPUT
+              echo "⚠️ High cost run approved: $${COST}"
+            else
+              echo "should_run=false" >> $GITHUB_OUTPUT
+              echo "❌ High cost run blocked: $${COST}. Use workflow_dispatch to approve."
+              exit 1
+            fi
+          else
+            echo "should_run=true" >> $GITHUB_OUTPUT
           fi
 
   # Run self-setup test for each provider
   selfsetup:
     needs: setup
+    if: needs.setup.outputs.should_run == 'true'
     runs-on: namespace-profile-default
-    timeout-minutes: 20
+    timeout-minutes: ${{ fromJson(github.event.inputs.timeout_minutes || 15) + 5 }}
     strategy:
       fail-fast: false
       matrix: ${{fromJson(needs.setup.outputs.matrix)}}
@@ -68,33 +144,119 @@ jobs:
       
       - run: npm ci
       
-      # Install OpenCode CLI (adjust when distribution method is known)
-      - name: Install OpenCode CLI
+      # Install Python (for Aider fallback)
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      # Install Aider as fallback
+      - name: Install Aider (fallback)
         run: |
-          # Placeholder - install OpenCode CLI when distribution is ready
-          # For now, check if it's available
+          pip install aider-chat
+          aider --version || echo "Aider installation failed - will use mock fallback"
+      
+      # Detect and log available backends
+      - name: Detect Agent Backends
+        id: detect-backends
+        run: |
+          echo "Detecting available agent backends..."
+          
+          # Check OpenCode
           if command -v opencode &> /dev/null; then
-            echo "OpenCode CLI is available"
-            opencode --version
+            echo "✅ OpenCode CLI available"
+            echo "opencode=$(opencode --version 2>/dev/null || echo 'unknown')" >> $GITHUB_OUTPUT
           else
-            echo "OpenCode CLI not available - this workflow requires it"
-            echo "Install step needed when distribution method confirmed"
+            echo "⚠️ OpenCode CLI not available"
+            echo "opencode=missing" >> $GITHUB_OUTPUT
           fi
+          
+          # Check Aider
+          if command -v aider &> /dev/null; then
+            echo "✅ Aider CLI available"
+            echo "aider=available" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Aider CLI not available"
+            echo "aider=missing" >> $GITHUB_OUTPUT
+          fi
+          
+          # Mock is always available
+          echo "✅ Mock backend available (for testing)"
       
       # Create test environment
-      - name: Setup test directory
+      - name: Setup Test Environment
         run: |
           export TEST_DIR="/tmp/selfsetup-${{ matrix.provider }}-$GITHUB_RUN_ID"
           mkdir -p "$TEST_DIR"
           cd "$TEST_DIR"
+          
+          # Initialize Node.js project
           npm init -y
           npm install typescript tsx @types/node
+          
+          # Create tsconfig
+          cat > tsconfig.json << 'EOF'
+          {
+            "compilerOptions": {
+              "target": "ES2022",
+              "module": "ESNext",
+              "moduleResolution": "node",
+              "esModuleInterop": true,
+              "strict": true,
+              "skipLibCheck": true
+            }
+          }
+          EOF
+          
           echo "TEST_DIR=$TEST_DIR" >> $GITHUB_ENV
+          echo "Test environment ready at: $TEST_DIR"
       
-      # Run OpenCode agent with the self-setup task
-      - name: Self-Setup Test with OpenCode
+      # Build credentials list for prompt
+      - name: Build Credentials List
+        id: credentials
+        run: |
+          case "${{ matrix.provider }}" in
+            e2b)
+              echo "list=- E2B_API_KEY: E2B API key (e2b.dev/dashboard)" >> $GITHUB_OUTPUT
+              ;;
+            daytona)
+              echo "list=- DAYTONA_API_KEY: Daytona API key" >> $GITHUB_OUTPUT
+              ;;
+            modal)
+              echo "list=- MODAL_TOKEN_ID: Modal token ID (modal.com/settings/tokens)
+- MODAL_TOKEN_SECRET: Modal token secret" >> $GITHUB_OUTPUT
+              ;;
+            blaxel)
+              echo "list=- BL_API_KEY: Blaxel API key
+- BL_WORKSPACE: Blaxel workspace" >> $GITHUB_OUTPUT
+              ;;
+            runloop)
+              echo "list=- RUNLOOP_API_KEY: RunLoop API key" >> $GITHUB_OUTPUT
+              ;;
+            namespace)
+              echo "list=- NSC_TOKEN: Namespace Cloud token" >> $GITHUB_OUTPUT
+              ;;
+            hopx)
+              echo "list=- HOPX_API_KEY: HopX API key" >> $GITHUB_OUTPUT
+              ;;
+            codesandbox)
+              echo "list=- CSB_API_KEY: CodeSandbox API key" >> $GITHUB_OUTPUT
+              ;;
+            vercel)
+              echo "list=- VERCEL_TOKEN: Vercel token
+- VERCEL_TEAM_ID: Vercel team ID
+- VERCEL_PROJECT_ID: Vercel project ID" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "list=See provider documentation for required credentials" >> $GITHUB_OUTPUT
+              ;;
+          esac
+      
+      # Run the self-setup test using agent runner
+      - name: Run Self-Setup Test
+        id: run-test
         env:
-          # Provider credentials (same as TTI tests)
+          # Provider credentials
           E2B_API_KEY: ${{ secrets.E2B_API_KEY }}
           DAYTONA_API_KEY: ${{ secrets.DAYTONA_API_KEY }}
           MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
@@ -108,84 +270,82 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          
-          # OpenCode configuration
+          # API keys for agent backends
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          # Load prompt template
-          PROMPT=$(cat src/selfsetup/prompt.md)
-          
-          # Build credentials list based on provider
-          case "${{ matrix.provider }}" in
-            e2b)
-              CREDENTIALS_LIST="- E2B_API_KEY: Your E2B API key from e2b.dev/dashboard"
-              ;;
-            daytona)
-              CREDENTIALS_LIST="- DAYTONA_API_KEY: Your Daytona API key"
-              ;;
-            modal)
-              CREDENTIALS_LIST="- MODAL_TOKEN_ID: Your Modal token ID from modal.com/settings/tokens
-- MODAL_TOKEN_SECRET: Your Modal token secret"
-              ;;
-            blaxel)
-              CREDENTIALS_LIST="- BL_API_KEY: Your Blaxel API key
-- BL_WORKSPACE: Your Blaxel workspace name"
-              ;;
-            runloop)
-              CREDENTIALS_LIST="- RUNLOOP_API_KEY: Your RunLoop API key"
-              ;;
-            namespace)
-              CREDENTIALS_LIST="- NSC_TOKEN: Your Namespace Cloud token"
-              ;;
-            hopx)
-              CREDENTIALS_LIST="- HOPX_API_KEY: Your HopX API key"
-              ;;
-            codesandbox)
-              CREDENTIALS_LIST="- CSB_API_KEY: Your CodeSandbox API key"
-              ;;
-            vercel)
-              CREDENTIALS_LIST="- VERCEL_TOKEN: Your Vercel token
-- VERCEL_TEAM_ID: Your Vercel team ID
-- VERCEL_PROJECT_ID: Your Vercel project ID"
-              ;;
-            *)
-              CREDENTIALS_LIST="All provider credentials are available in environment variables"
-              ;;
-          esac
-          
-          # Replace placeholders
-          PROMPT="${PROMPT//\{\{PROVIDER_NAME\}\}/${{ matrix.provider }}}"
+          # Prepare prompt
+          PROMPT_TEMPLATE=$(cat src/selfsetup/prompt.md)
+          PROMPT="${PROMPT_TEMPLATE//\{\{PROVIDER_NAME\}\}/${{ matrix.provider }}}"
           PROMPT="${PROMPT//\{\{WORK_DIR\}\}/$TEST_DIR}"
+          CREDENTIALS_LIST='${{ steps.credentials.outputs.list }}'
           PROMPT="${PROMPT//\{\{CREDENTIALS_LIST\}\}/$CREDENTIALS_LIST}"
           
-          # Run OpenCode agent
-          if command -v opencode &> /dev/null; then
-            opencode run \
-              --workdir "$TEST_DIR" \
-              --timeout 900 \
-              --prompt "$PROMPT" \
-              --output result.json \
-              --record-session || true
-          else
-            echo "OpenCode CLI not available, creating placeholder result"
-            echo "{\"provider\":\"${{ matrix.provider }}\",\"success\":false,\"error\":\"OpenCode CLI not available\",\"totalTimeMs\":0,\"humanInterventions\":0,\"docComplaints\":1,\"codeQuality\":\"failed\",\"steps\":[],\"errors\":[],\"filesCreated\":[]}" > "$TEST_DIR/result.json"
-          fi
+          # Save prompt to file
+          echo "$PROMPT" > "$TEST_DIR/prompt.txt"
+          
+          # Run agent
+          echo "Starting agent run for ${{ matrix.provider }}..."
+          echo "Backend: ${{ github.event.inputs.backend || 'auto' }}"
+          echo "Timeout: ${{ github.event.inputs.timeout_minutes || 15 }} minutes"
+          
+          npx tsx src/selfsetup/agent.ts \
+            ${{ matrix.provider }} \
+            --prompt-file "$TEST_DIR/prompt.txt" \
+            --workdir "$TEST_DIR" \
+            --output "$TEST_DIR/result.json" \
+            --backend ${{ github.event.inputs.backend || 'auto' }} \
+            > "$TEST_DIR/agent-run.json" 2>&1 || true
+          
+          echo "Agent run completed. Result:"
+          cat "$TEST_DIR/agent-run.json"
         continue-on-error: true
       
-      # Validate and score result
-      - name: Score result
+      # Validate and score the result
+      - name: Validate and Score Result
+        id: validate
         run: |
           mkdir -p results/selfsetup
+          
           if [ -f "$TEST_DIR/result.json" ]; then
-            npx tsx src/selfsetup/validate.ts "$TEST_DIR/result.json" "results/selfsetup/${{ matrix.provider }}.json"
+            echo "✅ Result file found, validating..."
+            npx tsx src/selfsetup/validate.ts \
+              "$TEST_DIR/result.json" \
+              "results/selfsetup/${{ matrix.provider }}.json"
           else
-            # Create a failure result if no output was generated
-            echo "{\"provider\":\"${{ matrix.provider }}\",\"success\":false,\"error\":\"No result generated\",\"totalTimeMs\":0,\"humanInterventions\":0,\"docComplaints\":0,\"codeQuality\":\"failed\",\"steps\":[],\"errors\":[{\"message\":\"No result file generated\",\"step\":\"execution\",\"handled\":false,\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}],\"filesCreated\":[]}" > "$TEST_DIR/result.json"
-            npx tsx src/selfsetup/validate.ts "$TEST_DIR/result.json" "results/selfsetup/${{ matrix.provider }}.json"
+            echo "❌ No result file generated, creating failure record"
+            echo '{
+              "provider": "${{ matrix.provider }}",
+              "success": false,
+              "error": "No result generated by agent",
+              "totalTimeMs": 0,
+              "humanInterventions": 0,
+              "docComplaints": 0,
+              "codeQuality": "failed",
+              "steps": [],
+              "errors": [{
+                "message": "Agent failed to produce result",
+                "step": "execution",
+                "handled": false,
+                "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+              }],
+              "filesCreated": []
+            }' > "$TEST_DIR/result.json"
+            
+            npx tsx src/selfsetup/validate.ts \
+              "$TEST_DIR/result.json" \
+              "results/selfsetup/${{ matrix.provider }}.json"
           fi
+          
+          # Display score
+          SCORE=$(jq -r '.score.total // 0' results/selfsetup/${{ matrix.provider }}.json)
+          PASSED=$(jq -r '.passed // false' results/selfsetup/${{ matrix.provider }}.json)
+          echo "Score: $SCORE/100"
+          echo "Passed: $PASSED"
       
       # Upload artifacts
-      - name: Upload result
+      - name: Upload Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -194,10 +354,11 @@ jobs:
             results/selfsetup/${{ matrix.provider }}.json
             /tmp/selfsetup-${{ matrix.provider }}-*/
           retention-days: 30
+          if-no-files-found: warn
 
-  # Collect and summarize results
+  # Collect and report results
   collect:
-    needs: selfsetup
+    needs: [setup, selfsetup]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -211,43 +372,53 @@ jobs:
       - run: npm ci
       
       # Download all artifacts
-      - name: Download results
+      - name: Download Results
         uses: actions/download-artifact@v4
         with:
           path: artifacts/
           pattern: selfsetup-*
+          merge-multiple: false
       
-      # Merge and generate summary
-      - name: Merge results
+      # List what we got
+      - name: List Artifacts
+        run: |
+          echo "Downloaded artifacts:"
+          find artifacts/ -type f -name "*.json" 2>/dev/null || echo "No JSON files found"
+      
+      # Merge results
+      - name: Merge Results
         run: npx tsx src/selfsetup/merge-results.ts artifacts results/selfsetup
       
-      # Generate summary (summarize.ts creates the full README)
-      - name: Generate summary
-        run: npx tsx src/selfsetup/summarize.ts results/selfsetup > results/selfsetup/README.md
+      # Generate summary
+      - name: Generate Summary
+        run: |
+          npx tsx src/selfsetup/summarize.ts results/selfsetup > results/selfsetup/README.md
+          echo "Summary generated:"
+          head -50 results/selfsetup/README.md
       
-      # Post results to PR (if triggered by PR)
-      - name: Post results to PR
+      # Post to PR if applicable
+      - name: Post Results to PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            const path = require('path');
-            
             const summaryPath = 'results/selfsetup/README.md';
-            if (!fs.existsSync(summaryPath)) return;
+            if (!fs.existsSync(summaryPath)) {
+              console.log('No summary to post');
+              return;
+            }
             
             const body = fs.readFileSync(summaryPath, 'utf-8');
-            
-            // Find or create comment
             const marker = '## Self-Setup Benchmark Results';
+            
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
             
-            const existing = comments.find(c => c.body.includes(marker));
+            const existing = comments.find(c => c.body?.includes(marker));
             
             if (existing) {
               await github.rest.issues.updateComment({
@@ -266,7 +437,7 @@ jobs:
             }
       
       # Commit results (on schedule/manual run)
-      - name: Commit results
+      - name: Commit Results
         if: github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
