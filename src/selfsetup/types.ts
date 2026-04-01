@@ -5,8 +5,8 @@
  */
 
 export interface SelfSetupStep {
-  /** Step name */
-  name: 'discovery' | 'installation' | 'configuration' | 'integration' | 'execution';
+  /** Step name - matches the 8-step protocol */
+  name: 'discovery' | 'installation' | 'configuration' | 'integration' | 'execution' | 'verification' | 'cleanup';
   /** Whether the step completed successfully */
   completed: boolean;
   /** Time taken in milliseconds */

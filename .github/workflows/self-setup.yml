@@ -33,6 +33,7 @@ concurrency:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   # Setup test matrix
@@ -66,6 +67,19 @@ jobs:
           cache: 'npm'
       
       - run: npm ci
+      
+      # Install OpenCode CLI (adjust when distribution method is known)
+      - name: Install OpenCode CLI
+        run: |
+          # Placeholder - install OpenCode CLI when distribution is ready
+          # For now, check if it's available
+          if command -v opencode &> /dev/null; then
+            echo "OpenCode CLI is available"
+            opencode --version
+          else
+            echo "OpenCode CLI not available - this workflow requires it"
+            echo "Install step needed when distribution method confirmed"
+          fi
       
       # Create test environment
       - name: Setup test directory
@@ -101,28 +115,73 @@ jobs:
           # Load prompt template
           PROMPT=$(cat src/selfsetup/prompt.md)
           
+          # Build credentials list based on provider
+          case "${{ matrix.provider }}" in
+            e2b)
+              CREDENTIALS_LIST="- E2B_API_KEY: Your E2B API key from e2b.dev/dashboard"
+              ;;
+            daytona)
+              CREDENTIALS_LIST="- DAYTONA_API_KEY: Your Daytona API key"
+              ;;
+            modal)
+              CREDENTIALS_LIST="- MODAL_TOKEN_ID: Your Modal token ID from modal.com/settings/tokens
+- MODAL_TOKEN_SECRET: Your Modal token secret"
+              ;;
+            blaxel)
+              CREDENTIALS_LIST="- BL_API_KEY: Your Blaxel API key
+- BL_WORKSPACE: Your Blaxel workspace name"
+              ;;
+            runloop)
+              CREDENTIALS_LIST="- RUNLOOP_API_KEY: Your RunLoop API key"
+              ;;
+            namespace)
+              CREDENTIALS_LIST="- NSC_TOKEN: Your Namespace Cloud token"
+              ;;
+            hopx)
+              CREDENTIALS_LIST="- HOPX_API_KEY: Your HopX API key"
+              ;;
+            codesandbox)
+              CREDENTIALS_LIST="- CSB_API_KEY: Your CodeSandbox API key"
+              ;;
+            vercel)
+              CREDENTIALS_LIST="- VERCEL_TOKEN: Your Vercel token
+- VERCEL_TEAM_ID: Your Vercel team ID
+- VERCEL_PROJECT_ID: Your Vercel project ID"
+              ;;
+            *)
+              CREDENTIALS_LIST="All provider credentials are available in environment variables"
+              ;;
+          esac
+          
           # Replace placeholders
           PROMPT="${PROMPT//\{\{PROVIDER_NAME\}\}/${{ matrix.provider }}}"
           PROMPT="${PROMPT//\{\{WORK_DIR\}\}/$TEST_DIR}"
+          PROMPT="${PROMPT//\{\{CREDENTIALS_LIST\}\}/$CREDENTIALS_LIST}"
           
           # Run OpenCode agent
-          # Note: This assumes OpenCode CLI is available in the runner
-          # Adjust command based on actual OpenCode CLI interface
-          opencode run \
-            --workdir "$TEST_DIR" \
-            --timeout 900 \
-            --prompt "$PROMPT" \
-            --output result.json \
-            --record-session
+          if command -v opencode &> /dev/null; then
+            opencode run \
+              --workdir "$TEST_DIR" \
+              --timeout 900 \
+              --prompt "$PROMPT" \
+              --output result.json \
+              --record-session || true
+          else
+            echo "OpenCode CLI not available, creating placeholder result"
+            echo "{\"provider\":\"${{ matrix.provider }}\",\"success\":false,\"error\":\"OpenCode CLI not available\",\"totalTimeMs\":0,\"humanInterventions\":0,\"docComplaints\":1,\"codeQuality\":\"failed\",\"steps\":[],\"errors\":[],\"filesCreated\":[]}" > "$TEST_DIR/result.json"
+          fi
         continue-on-error: true
       
       # Validate and score result
       - name: Score result
         run: |
+          mkdir -p results/selfsetup
           if [ -f "$TEST_DIR/result.json" ]; then
             npx tsx src/selfsetup/validate.ts "$TEST_DIR/result.json" "results/selfsetup/${{ matrix.provider }}.json"
           else
-            echo "{\"provider\":\"${{ matrix.provider }}\",\"success\":false,\"error\":\"No result generated\"}" > "results/selfsetup/${{ matrix.provider }}.json"
+            # Create a failure result if no output was generated
+            echo "{\"provider\":\"${{ matrix.provider }}\",\"success\":false,\"error\":\"No result generated\",\"totalTimeMs\":0,\"humanInterventions\":0,\"docComplaints\":0,\"codeQuality\":\"failed\",\"steps\":[],\"errors\":[{\"message\":\"No result file generated\",\"step\":\"execution\",\"handled\":false,\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}],\"filesCreated\":[]}" > "$TEST_DIR/result.json"
+            npx tsx src/selfsetup/validate.ts "$TEST_DIR/result.json" "results/selfsetup/${{ matrix.provider }}.json"
           fi
       
       # Upload artifacts
@@ -162,21 +221,9 @@ jobs:
       - name: Merge results
         run: npx tsx src/selfsetup/merge-results.ts artifacts results/selfsetup
       
-      # Generate summary table
+      # Generate summary (summarize.ts creates the full README)
       - name: Generate summary
-        run: |
-          cat > results/selfsetup/README.md << 'EOF'
-          # Self-Setup Benchmark Results
-          
-          **Last run:** $(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          
-          ## Scoring
-          
-          | Provider | Score | Status | Time | Autonomy | Quality | Docs |
-          |----------|-------|--------|------|----------|---------|------|
-          EOF
-          
-          npx tsx src/selfsetup/summarize.ts results/selfsetup >> results/selfsetup/README.md
+        run: npx tsx src/selfsetup/summarize.ts results/selfsetup > results/selfsetup/README.md
       
       # Post results to PR (if triggered by PR)
       - name: Post results to PR

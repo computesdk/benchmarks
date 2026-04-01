@@ -202,7 +202,11 @@ export function listProviders(): string[] {
 }
 
 // CLI entry point
-if (import.meta.url === `file://${process.argv[1]}`) {
+const isMainModule = import.meta.url === `file://${process.argv[1]}` || 
+                     import.meta.url === `file://${require.resolve(process.argv[1])}` ||
+                     process.argv[1]?.endsWith('run.ts');
+
+if (isMainModule) {
   const args = process.argv.slice(2);
   const provider = args.find(a => !a.startsWith('--'));
   

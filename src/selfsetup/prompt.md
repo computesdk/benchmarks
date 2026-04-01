@@ -69,41 +69,66 @@ When done (success or failure), write a JSON summary to {{WORK_DIR}}/result.json
 ```json
 {
   "provider": "{{PROVIDER_NAME}}",
-  "success": true/false,
+  "success": true,
   "timestamp": "2026-03-31T12:00:00Z",
   "totalTimeMs": 187000,
-  "steps": {
-    "discovery": {
+  "steps": [
+    {
+      "name": "discovery",
       "completed": true,
       "timeMs": 45000,
-      "urlFound": "https://docs.example.com",
-      "packageName": "@example/sdk"
+      "metadata": {
+        "urlFound": "https://docs.example.com",
+        "packageName": "@example/sdk"
+      }
     },
-    "installation": {
+    {
+      "name": "installation",
       "completed": true,
       "timeMs": 23000,
-      "packageName": "@example/sdk",
-      "version": "1.2.3"
+      "metadata": {
+        "packageName": "@example/sdk",
+        "version": "1.2.3"
+      }
     },
-    "configuration": {
+    {
+      "name": "configuration",
       "completed": true,
       "timeMs": 12000,
-      "method": "env-var",
-      "issues": []
+      "metadata": {
+        "method": "env-var",
+        "issues": []
+      }
     },
-    "integration": {
+    {
+      "name": "integration",
       "completed": true,
       "timeMs": 67000,
-      "filesCreated": ["test-example.ts"],
-      "linesOfCode": 12
+      "metadata": {
+        "filesCreated": ["test-example.ts"],
+        "linesOfCode": 12
+      }
     },
-    "execution": {
+    {
+      "name": "execution",
       "completed": true,
       "timeMs": 40000,
-      "output": "v20.11.0",
-      "exitCode": 0
+      "metadata": {
+        "output": "v20.11.0",
+        "exitCode": 0
+      }
+    },
+    {
+      "name": "verification",
+      "completed": true,
+      "timeMs": 5000
+    },
+    {
+      "name": "cleanup",
+      "completed": true,
+      "timeMs": 3000
     }
-  },
+  ],
   "errors": [
     {
       "message": "...",

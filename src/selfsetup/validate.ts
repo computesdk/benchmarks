@@ -23,18 +23,38 @@ if (!fs.existsSync(inputPath)) {
   process.exit(1);
 }
 
-// Read raw result (produced by OpenCode agent)
-const raw = JSON.parse(fs.readFileSync(inputPath, 'utf-8'));
+// Read raw result (produced by OpenCode agent or fallback)
+let raw: Record<string, unknown>;
+try {
+  raw = JSON.parse(fs.readFileSync(inputPath, 'utf-8'));
+} catch (err) {
+  console.error(`Failed to parse ${inputPath}:`, err);
+  process.exit(1);
+}
+
+// Apply defaults for missing fields
+const result: SelfSetupResult = {
+  provider: (raw.provider as string) || 'unknown',
+  timestamp: (raw.timestamp as string) || new Date().toISOString(),
+  success: (raw.success as boolean) ?? false,
+  totalTimeMs: (raw.totalTimeMs as number) || 0,
+  steps: (raw.steps as SelfSetupResult['steps']) || [],
+  errors: (raw.errors as SelfSetupResult['errors']) || [],
+  humanInterventions: (raw.humanInterventions as number) || 0,
+  docComplaints: (raw.docComplaints as number) || 0,
+  codeQuality: (raw.codeQuality as SelfSetupResult['codeQuality']) || 'failed',
+  filesCreated: (raw.filesCreated as string[]) || [],
+  executionOutput: raw.executionOutput as string | undefined,
+  recordingPath: raw.recordingPath as string | undefined,
+  
+  // Compute score and passed status
+  score: { total: 0, autonomy: 0, time: 0, quality: 0, recovery: 0, docs: 0 },
+  passed: false,
+};
 
 // Compute score
-const score = computeScore(raw);
-
-// Build final result
-const result: SelfSetupResult = {
-  ...raw,
-  score,
-  passed: didPass(score.total),
-};
+result.score = computeScore(result);
+result.passed = didPass(result.score.total);
 
 // Ensure output directory exists
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
@@ -43,5 +63,5 @@ fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 fs.writeFileSync(outputPath, JSON.stringify(result, null, 2));
 
 console.log(`Validated: ${inputPath}`);
-console.log(`Scored: ${score.total}/100 (${result.passed ? 'PASS' : 'FAIL'})`);
+console.log(`Scored: ${result.score.total}/100 (${result.passed ? 'PASS' : 'FAIL'})`);
 console.log(`Output: ${outputPath}`);
