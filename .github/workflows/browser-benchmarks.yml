@@ -1,0 +1,152 @@
+name: Browser Benchmark
+
+on:
+  pull_request:
+    paths:
+      - 'src/browser/**'
+      - 'src/util/**'
+      - 'src/run.ts'
+      - 'src/merge-results.ts'
+      - 'package.json'
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: 'Iterations per provider'
+        required: false
+        default: '10'
+
+concurrency:
+  group: browser-benchmarks
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  bench:
+    name: Bench ${{ matrix.provider }}
+    runs-on: namespace-profile-default
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        provider:
+          - browserbase
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - run: npm ci
+      - name: Clear stale results from checkout
+        run: rm -rf results/browser/
+      - name: Run browser benchmark
+        env:
+          BROWSERBASE_API_KEY: ${{ secrets.BROWSERBASE_API_KEY }}
+          BROWSERBASE_PROJECT_ID: ${{ secrets.BROWSERBASE_PROJECT_ID }}
+        run: |
+          npm run bench -- \
+            --mode browser \
+            --provider ${{ matrix.provider }} \
+            --iterations ${{ github.event.inputs.iterations || '10' }}
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-results-${{ matrix.provider }}
+          path: results/browser/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  collect:
+    name: Collect Results
+    runs-on: namespace-profile-default
+    needs: bench
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - run: npm ci
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+          pattern: browser-results-*
+      - name: Merge results
+        run: npx tsx src/merge-results.ts --input artifacts --mode browser
+      - name: Post results to PR
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const latestPath = path.join('results', 'browser', 'latest.json');
+
+            let body = '## Browser Benchmark Results\n\n';
+
+            if (!fs.existsSync(latestPath)) {
+              body += '> No browser benchmark results were generated.\n\n';
+            } else {
+              const data = JSON.parse(fs.readFileSync(latestPath, 'utf-8'));
+              const results = data.results
+                .filter(r => !r.skipped)
+                .sort((a, b) => (b.compositeScore || 0) - (a.compositeScore || 0));
+
+              if (results.length === 0) {
+                body += '> No browser benchmark results were generated.\n\n';
+              } else {
+                body += '| # | Provider | Score | Create | Connect | Navigate | Release | Total | Status |\n';
+                body += '|---|----------|-------|--------|---------|----------|---------|-------|--------|\n';
+
+                results.forEach((r, i) => {
+                  const name = r.provider.charAt(0).toUpperCase() + r.provider.slice(1);
+                  const score = r.compositeScore !== undefined ? r.compositeScore.toFixed(1) : '--';
+                  const create = (r.summary.createMs.median / 1000).toFixed(2) + 's';
+                  const connect = (r.summary.connectMs.median / 1000).toFixed(2) + 's';
+                  const navigate = (r.summary.navigateMs.median / 1000).toFixed(2) + 's';
+                  const release = (r.summary.releaseMs.median / 1000).toFixed(2) + 's';
+                  const total = (r.summary.totalMs.median / 1000).toFixed(2) + 's';
+                  const ok = r.iterations.filter(it => !it.error).length;
+                  const count = r.iterations.length;
+                  body += `| ${i + 1} | ${name} | ${score} | ${create} | ${connect} | ${navigate} | ${release} | ${total} | ${ok}/${count} |\n`;
+                });
+
+                body += '\n';
+              }
+            }
+
+            body += `---\n*[View full run](${runUrl})*`;
+
+            const marker = '## Browser Benchmark Results';
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.body.startsWith(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }

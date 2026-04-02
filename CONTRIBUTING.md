@@ -75,10 +75,10 @@ cp env.example .env
 ### Running Tests Locally
 
 ```bash
-# Run all three test modes (sequential → staggered → burst)
+# Run all three sandbox test modes (sequential → staggered → burst)
 npm run bench
 
-# Run individual test modes
+# Run individual sandbox test modes
 npm run bench -- --mode sequential --iterations 10
 npm run bench -- --mode staggered --concurrency 10 --stagger-delay 200
 npm run bench -- --mode burst --concurrency 10
@@ -88,6 +88,15 @@ npm run bench -- --provider e2b
 
 # Combine flags
 npm run bench -- --provider e2b --mode sequential --iterations 5
+
+# Run browser benchmarks
+npm run bench -- --mode browser
+npm run bench -- --mode browser --provider browserbase
+
+# Run storage benchmarks
+npm run bench -- --mode storage
+npm run bench -- --mode storage --provider aws-s3
+npm run bench -- --mode storage --file-size 100MB
 ```
 
 ### Code Style

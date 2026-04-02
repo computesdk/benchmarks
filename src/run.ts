@@ -6,13 +6,17 @@ import { runBenchmark } from './sandbox/benchmark.js';
 import { runConcurrentBenchmark } from './sandbox/concurrent.js';
 import { runStaggeredBenchmark } from './sandbox/staggered.js';
 import { runStorageBenchmark, writeStorageResultsJson } from './storage/benchmark.js';
+import { runBrowserBenchmark, writeBrowserResultsJson } from './browser/benchmark.js';
 import { printResultsTable, writeResultsJson } from './sandbox/table.js';
 import { providers } from './sandbox/providers.js';
 import { storageProviders } from './storage/providers.js';
+import { browserProviders } from './browser/providers.js';
 import { computeCompositeScores } from './sandbox/scoring.js';
 import { computeStorageCompositeScores } from './storage/scoring.js';
+import { computeBrowserCompositeScores } from './browser/scoring.js';
 import type { BenchmarkResult, BenchmarkMode } from './sandbox/types.js';
 import type { StorageBenchmarkResult } from './storage/types.js';
+import type { BrowserBenchmarkResult } from './browser/types.js';
 
 // Load .env from the benchmarking root
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -33,9 +37,10 @@ function getArgValue(args: string[], flag: string): string | undefined {
 }
 
 /** Resolve which modes to run */
-function getModesToRun(): BenchmarkMode[] | ['storage'] {
+function getModesToRun(): BenchmarkMode[] | ['storage'] | ['browser'] {
   if (!rawMode) return ['sequential', 'staggered', 'burst'];
   if (rawMode === 'storage') return ['storage'];
+  if (rawMode === 'browser') return ['browser'];
   const m = rawMode === 'concurrent' ? 'burst' : rawMode as BenchmarkMode;
   return [m];
 }
@@ -165,8 +170,75 @@ async function runStorage(toRun: typeof storageProviders, fileSizeLabel: string)
   console.log(`Copied latest: ${latestPath}`);
 }
 
+async function runBrowser(toRun: typeof browserProviders): Promise<void> {
+  console.log('\n' + '='.repeat(70));
+  console.log('  MODE: BROWSER');
+  console.log(`  Iterations per provider: ${iterations}`);
+  console.log('='.repeat(70));
+
+  const results: BrowserBenchmarkResult[] = [];
+
+  for (const providerConfig of toRun) {
+    const result = await runBrowserBenchmark({ ...providerConfig, iterations });
+    results.push(result);
+  }
+
+  // Compute composite scores
+  computeBrowserCompositeScores(results);
+
+  // Print summary
+  console.log('\n--- Browser Benchmark Results ---');
+  for (const r of results) {
+    if (r.skipped) {
+      console.log(`${r.provider}: SKIPPED (${r.skipReason})`);
+      continue;
+    }
+    console.log(`${r.provider}:`);
+    console.log(`  Total: ${(r.summary.totalMs.median / 1000).toFixed(2)}s (median) — create ${(r.summary.createMs.median / 1000).toFixed(2)}s + connect ${(r.summary.connectMs.median / 1000).toFixed(2)}s + navigate ${(r.summary.navigateMs.median / 1000).toFixed(2)}s + release ${(r.summary.releaseMs.median / 1000).toFixed(2)}s`);
+    console.log(`  Score: ${r.compositeScore?.toFixed(1) || '--'}`);
+  }
+
+  // Write JSON results to browser subdirectory
+  const timestamp = new Date().toISOString().slice(0, 10);
+  const resultsDir = path.resolve(__dirname, '../results/browser');
+  fs.mkdirSync(resultsDir, { recursive: true });
+
+  const outPath = path.join(resultsDir, `${timestamp}.json`);
+  await writeBrowserResultsJson(results, outPath);
+
+  // Copy results to latest.json
+  const latestPath = path.join(resultsDir, 'latest.json');
+  fs.copyFileSync(outPath, latestPath);
+  console.log(`Copied latest: ${latestPath}`);
+}
+
 async function main() {
   const modes = getModesToRun();
+
+  // Handle browser mode separately
+  if (modes[0] === 'browser') {
+    console.log('ComputeSDK Browser Provider Benchmarks');
+    console.log(`Date: ${new Date().toISOString()}\n`);
+
+    // Filter browser providers
+    const toRun = providerFilter
+      ? browserProviders.filter(p => p.name === providerFilter)
+      : browserProviders;
+
+    if (toRun.length === 0) {
+      if (providerFilter) {
+        console.error(`Unknown browser provider: ${providerFilter}`);
+        console.error(`Available: ${browserProviders.map(p => p.name).join(', ')}`);
+      } else {
+        console.error('No browser providers configured. Add entries to src/browser/providers.ts.');
+      }
+      process.exit(1);
+    }
+
+    await runBrowser(toRun);
+    console.log('\nAll browser tests complete.');
+    return;
+  }
 
   // Handle storage mode separately
   if (modes[0] === 'storage') {
