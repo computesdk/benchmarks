@@ -36,8 +36,31 @@ permissions:
   pull-requests: write
 
 jobs:
+  update-deps:
+    name: Check for npm updates
+    if: github.event_name == 'schedule'
+    runs-on: namespace-profile-default
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - name: Update npm packages
+        run: npm update
+      - name: Commit updated dependencies
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git diff --cached --quiet && echo "No dependency updates" && exit 0
+          git commit -m "chore: update npm dependencies [skip ci]"
+          git push
+
   bench:
     name: Bench ${{ matrix.provider }}
+    needs: [update-deps]
+    if: always() && (needs.update-deps.result == 'success' || needs.update-deps.result == 'skipped')
     runs-on: namespace-profile-default
     timeout-minutes: 60
     strategy:
