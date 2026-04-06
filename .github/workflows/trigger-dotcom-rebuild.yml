@@ -2,6 +2,8 @@ name: Trigger Dotcom Rebuild
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 1 * * *'
   push:
     branches:
       - master
