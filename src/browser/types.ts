@@ -9,6 +9,8 @@ export interface BrowserProviderConfig {
   requiredEnvVars: string[];
   /** Creates a browser provider instance */
   createBrowserProvider: () => any;
+  /** Use the provider's pre-warmed default context and page instead of creating new ones (default: false) */
+  useDefaultContext?: boolean;
 }
 
 export interface BrowserTimingResult {
