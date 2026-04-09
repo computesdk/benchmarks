@@ -1,3 +1,4 @@
+import { beam } from '@computesdk/beam'
 import { e2b } from '@computesdk/e2b';
 import { daytona } from '@computesdk/daytona';
 import { blaxel } from '@computesdk/blaxel';
@@ -20,6 +21,11 @@ import type { ProviderConfig } from './types.js';
  */
 export const providers: ProviderConfig[] = [
   // --- Direct mode (provider SDK packages) ---
+  {
+    name: 'beam',
+    requiredEnvVars: ['BEAM_TOKEN', 'BEAM_WORKSPACE_ID'],
+    createCompute: () => beam({ token: process.env.BEAM_TOKEN!, workspaceId: process.env.BEAM_WORKSPACE_ID! }),
+  },
   {
     name: 'blaxel',
     requiredEnvVars: ['BL_API_KEY', 'BL_WORKSPACE'],
