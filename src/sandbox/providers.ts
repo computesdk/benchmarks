@@ -42,11 +42,11 @@ export const providers: ProviderConfig[] = [
     requiredEnvVars: ['BEAM_TOKEN', 'BEAM_WORKSPACE_ID'],
     createCompute: () => beam({ token: process.env.BEAM_TOKEN!, workspaceId: process.env.BEAM_WORKSPACE_ID! }),
   },
-  {
-    name: 'just-bash',
-    requiredEnvVars: [],
-    createCompute: () => justBash({ files: {} }),
-  },
+  // {
+  //   name: 'just-bash',
+  //   requiredEnvVars: [],
+  //   createCompute: () => justBash({ files: {} }),
+  // },
   {
     name: 'modal',
     requiredEnvVars: ['MODAL_TOKEN_ID', 'MODAL_TOKEN_SECRET'],
