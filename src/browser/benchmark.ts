@@ -44,7 +44,7 @@ async function runBrowserIteration(
     // 1. Create session
     const createStart = performance.now();
     const session = await withTimeout(
-      provider.session.create(),
+      provider.session.create({ region: 'us-east-1' }),
       timeout,
       'Session creation timed out',
     ) as { sessionId: string; connectUrl: string };
