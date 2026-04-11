@@ -56,6 +56,7 @@ jobs:
           - e2b
           - hopx
           - modal
+          - prime
           - namespace
           - runloop
           - vercel
@@ -89,6 +90,9 @@ jobs:
           HOPX_API_KEY: ${{ secrets.HOPX_API_KEY }}
           MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
           MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+          PRIME_API_KEY: ${{ secrets.PRIME_API_KEY }}
+          PRIME_TEAM_ID: ${{ secrets.PRIME_TEAM_ID }}
+          PRIME_API_BASE_URL: ${{ secrets.PRIME_API_BASE_URL }}
           NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
           RUNLOOP_API_KEY: ${{ secrets.RUNLOOP_API_KEY }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}

@@ -10,6 +10,7 @@ import { namespace } from '@computesdk/namespace';
 import { cloudflare } from '@computesdk/cloudflare';
 import { sprites } from '@computesdk/sprites';
 import { compute } from 'computesdk';
+import { createPrimeCompute } from './prime.js';
 import type { ProviderConfig } from './types.js';
 
 /**
@@ -56,6 +57,15 @@ export const providers: ProviderConfig[] = [
     name: 'modal',
     requiredEnvVars: ['MODAL_TOKEN_ID', 'MODAL_TOKEN_SECRET'],
     createCompute: () => modal({ tokenId: process.env.MODAL_TOKEN_ID!, tokenSecret: process.env.MODAL_TOKEN_SECRET! }),
+  },
+  {
+    name: 'prime',
+    requiredEnvVars: ['PRIME_API_KEY'],
+    createCompute: () => createPrimeCompute({
+      apiKey: process.env.PRIME_API_KEY!,
+      baseUrl: process.env.PRIME_API_BASE_URL,
+      teamId: process.env.PRIME_TEAM_ID,
+    }),
   },
   {
     name: 'namespace',
