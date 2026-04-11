@@ -1,41 +1,62 @@
 {
   "version": "1.1",
-  "timestamp": "2026-04-11T20:14:00.404Z",
+  "timestamp": "2026-04-11T20:38:41.099Z",
   "environment": {
     "node": "v24.12.0",
     "platform": "darwin",
     "arch": "arm64"
   },
   "config": {
-    "iterations": 3,
+    "iterations": 10,
     "timeoutMs": 120000
   },
   "results": [
     {
       "provider": "prime",
       "mode": "concurrent",
-      "concurrency": 3,
-      "wallClockMs": 13297.64,
-      "timeToFirstReadyMs": 10088.85,
+      "concurrency": 10,
+      "wallClockMs": 9582.49,
+      "timeToFirstReadyMs": 6425.61,
       "iterations": [
         {
-          "ttiMs": 11475.65
+          "ttiMs": 6496.45
         },
         {
-          "ttiMs": 12812.64
+          "ttiMs": 7908.07
         },
         {
-          "ttiMs": 10088.85
+          "ttiMs": 8034.86
+        },
+        {
+          "ttiMs": 9063.25
+        },
+        {
+          "ttiMs": 6425.61
+        },
+        {
+          "ttiMs": 7715.46
+        },
+        {
+          "ttiMs": 8018.05
+        },
+        {
+          "ttiMs": 7689.58
+        },
+        {
+          "ttiMs": 6702.67
+        },
+        {
+          "ttiMs": 7734.67
         }
       ],
       "summary": {
         "ttiMs": {
-          "median": 11475.65,
-          "p95": 12812.64,
-          "p99": 12812.64
+          "median": 7725.06,
+          "p95": 9063.25,
+          "p99": 9063.25
         }
       },
-      "compositeScore": 0,
+      "compositeScore": 17.4,
       "successRate": 1
     }
   ]

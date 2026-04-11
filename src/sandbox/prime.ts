@@ -133,28 +133,28 @@ async function runCommandWithRetry(
   let attempt = 0;
 
   while (Date.now() < deadline) {
-    const sandbox = await fetchJson<PrimeSandboxResponse>(`${baseUrl}/api/v1/sandbox/${sandboxId}`, {
-      method: 'GET',
-      headers: apiHeaders(apiKey),
-    });
-
-    if (FAILED_STATUSES.has(sandbox.status)) {
-      throw new Error(formatSandboxError(sandbox));
+    try {
+      return await execPrimeCommand(baseUrl, apiKey, sandboxId, command, {
+        cwd: options.cwd,
+        env: options.env,
+        timeoutSeconds: Math.max(1, Math.ceil((deadline - Date.now()) / 1000)),
+      });
+    } catch (error) {
+      lastError = error;
     }
 
-    if (sandbox.status === 'RUNNING') {
-      try {
-        return await execPrimeCommand(baseUrl, apiKey, sandboxId, command, {
-          cwd: options.cwd,
-          env: options.env,
-          timeoutSeconds: Math.max(1, Math.ceil((deadline - Date.now()) / 1000)),
-        });
-      } catch (error) {
-        lastError = error;
+    if (attempt < 5 || attempt % 4 === 0) {
+      const sandbox = await fetchJson<PrimeSandboxResponse>(`${baseUrl}/api/v1/sandbox/${sandboxId}`, {
+        method: 'GET',
+        headers: apiHeaders(apiKey),
+      });
+
+      if (FAILED_STATUSES.has(sandbox.status)) {
+        throw new Error(formatSandboxError(sandbox));
       }
     }
 
-    await sleep(attempt < 5 ? 1000 : 2000);
+    await sleep(attempt < 10 ? 100 : 250);
     attempt += 1;
   }
 

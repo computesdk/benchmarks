@@ -1,59 +1,115 @@
 {
   "version": "1.1",
-  "timestamp": "2026-04-11T20:13:59.937Z",
+  "timestamp": "2026-04-11T20:38:31.511Z",
   "environment": {
     "node": "v24.12.0",
     "platform": "darwin",
     "arch": "arm64"
   },
   "config": {
-    "iterations": 3,
+    "iterations": 10,
     "timeoutMs": 120000
   },
   "results": [
     {
       "provider": "prime",
       "mode": "staggered",
-      "concurrency": 3,
+      "concurrency": 10,
       "staggerDelayMs": 200,
-      "wallClockMs": 12830.84,
-      "timeToFirstReadyMs": 9471.98,
+      "wallClockMs": 10683.14,
+      "timeToFirstReadyMs": 6704.96,
       "rampProfile": [
         {
           "launchedAt": 0,
-          "readyAt": 9992.79,
-          "ttiMs": 9471.98
+          "readyAt": 8510.01,
+          "ttiMs": 7995.84
         },
         {
-          "launchedAt": 203.89,
-          "readyAt": 10178.81,
-          "ttiMs": 9504.5
+          "launchedAt": 201.9,
+          "readyAt": 7525.14,
+          "ttiMs": 6927.03
         },
         {
-          "launchedAt": 405.44,
-          "readyAt": 12830.64,
-          "ttiMs": 11943.36
+          "launchedAt": 402.86,
+          "readyAt": 8974.99,
+          "ttiMs": 8071.45
+        },
+        {
+          "launchedAt": 605,
+          "readyAt": 7793.13,
+          "ttiMs": 6704.96
+        },
+        {
+          "launchedAt": 807.51,
+          "readyAt": 9025.5,
+          "ttiMs": 7729.8
+        },
+        {
+          "launchedAt": 1008.83,
+          "readyAt": 9253.1,
+          "ttiMs": 7726.09
+        },
+        {
+          "launchedAt": 1210.64,
+          "readyAt": 10683.04,
+          "ttiMs": 9063
+        },
+        {
+          "launchedAt": 1412.16,
+          "readyAt": 9403.47,
+          "ttiMs": 7569.83
+        },
+        {
+          "launchedAt": 1614.07,
+          "readyAt": 9541.27,
+          "ttiMs": 7421.19
+        },
+        {
+          "launchedAt": 1816.42,
+          "readyAt": 10032.25,
+          "ttiMs": 7779.97
         }
       ],
       "iterations": [
         {
-          "ttiMs": 9471.98
+          "ttiMs": 7995.84
         },
         {
-          "ttiMs": 9504.5
+          "ttiMs": 6927.03
         },
         {
-          "ttiMs": 11943.36
+          "ttiMs": 8071.45
+        },
+        {
+          "ttiMs": 6704.96
+        },
+        {
+          "ttiMs": 7729.8
+        },
+        {
+          "ttiMs": 7726.09
+        },
+        {
+          "ttiMs": 9063
+        },
+        {
+          "ttiMs": 7569.83
+        },
+        {
+          "ttiMs": 7421.19
+        },
+        {
+          "ttiMs": 7779.97
         }
       ],
       "summary": {
         "ttiMs": {
-          "median": 9504.5,
-          "p95": 11943.36,
-          "p99": 11943.36
+          "median": 7727.94,
+          "p95": 9063,
+          "p99": 9063
         }
       },
-      "compositeScore": 2.97,
+      "compositeScore": 17.38,
       "successRate": 1
     }
   ]
