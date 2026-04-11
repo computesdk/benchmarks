@@ -75,7 +75,7 @@ export function createPrimeCompute(config: PrimeComputeConfig): PrimeCompute {
             gpu_count: 0,
             vm: false,
             network_access: true,
-            timeout_minutes: parsePositiveInt(process.env.PRIME_SANDBOX_TIMEOUT_MINUTES) || 15,
+            timeout_minutes: parsePositiveInt(process.env.PRIME_SANDBOX_TIMEOUT_MINUTES) || 5,
             team_id: teamId,
           }),
         });

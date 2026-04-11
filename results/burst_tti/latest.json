@@ -1,6 +1,6 @@
 {
   "version": "1.1",
-  "timestamp": "2026-04-11T20:38:41.099Z",
+  "timestamp": "2026-04-11T21:05:38.077Z",
   "environment": {
     "node": "v24.12.0",
     "platform": "darwin",
@@ -15,48 +15,48 @@
       "provider": "prime",
       "mode": "concurrent",
       "concurrency": 10,
-      "wallClockMs": 9582.49,
-      "timeToFirstReadyMs": 6425.61,
+      "wallClockMs": 9060,
+      "timeToFirstReadyMs": 6735.67,
       "iterations": [
         {
-          "ttiMs": 6496.45
+          "ttiMs": 8484.44
         },
         {
-          "ttiMs": 7908.07
+          "ttiMs": 7060.92
         },
         {
-          "ttiMs": 8034.86
+          "ttiMs": 7079.76
         },
         {
-          "ttiMs": 9063.25
+          "ttiMs": 7749.58
         },
         {
-          "ttiMs": 6425.61
+          "ttiMs": 6797.3
         },
         {
-          "ttiMs": 7715.46
+          "ttiMs": 6745.77
         },
         {
-          "ttiMs": 8018.05
+          "ttiMs": 6735.67
         },
         {
-          "ttiMs": 7689.58
+          "ttiMs": 6889.59
         },
         {
-          "ttiMs": 6702.67
+          "ttiMs": 7844.44
         },
         {
-          "ttiMs": 7734.67
+          "ttiMs": 7016.47
         }
       ],
       "summary": {
         "ttiMs": {
-          "median": 7725.06,
-          "p95": 9063.25,
-          "p99": 9063.25
+          "median": 7038.69,
+          "p95": 8484.44,
+          "p99": 8484.44
         }
       },
-      "compositeScore": 17.4,
+      "compositeScore": 23.83,
       "successRate": 1
     }
   ]
