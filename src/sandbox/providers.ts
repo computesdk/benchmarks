@@ -11,6 +11,7 @@ import { cloudflare } from '@computesdk/cloudflare';
 import { sprites } from '@computesdk/sprites';
 import { compute } from 'computesdk';
 import type { ProviderConfig } from './types.js';
+import { createUpstashBoxCompute } from './upstash-box.js';
 
 /**
  * All provider benchmark configurations.
@@ -72,6 +73,12 @@ export const providers: ProviderConfig[] = [
     name: 'sprites',
     requiredEnvVars: ['SPRITES_TOKEN'],
     createCompute: () => sprites({ apiKey: process.env.SPRITES_TOKEN! }),
+  },
+  {
+    name: 'upstash-box',
+    requiredEnvVars: ['UPSTASH_BOX_API_KEY'],
+    createCompute: () => createUpstashBoxCompute({ apiKey: process.env.UPSTASH_BOX_API_KEY! }),
+    sandboxOptions: { runtime: 'node', ttl: 300 },
   },
   {
     name: 'vercel',
