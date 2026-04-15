@@ -24,8 +24,9 @@ on:
         options:
           - ''
           - 1MB
+          - 4MB
           - 10MB
-          - 100MB
+          - 16MB
 
 concurrency:
   group: storage-benchmarks
@@ -138,7 +139,7 @@ jobs:
             const path = require('path');
 
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const sizes = ['1mb', '10mb', '100mb'];
+            const sizes = ['1mb', '4mb', '10mb', '16mb'];
             let body = '## Storage Benchmark Results\n\n';
             let hasResults = false;
 
