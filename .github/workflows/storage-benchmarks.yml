@@ -38,7 +38,7 @@ permissions:
 
 jobs:
   bench:
-    name: Bench ${{ matrix.provider }}
+    name: Bench ${{ matrix.provider }} ${{ matrix.file_size }}
     runs-on: namespace-profile-default
     timeout-minutes: 60
     strategy:
@@ -48,6 +48,7 @@ jobs:
           - aws-s3
           - cloudflare-r2
           - tigris
+        file_size: ['1MB', '4MB', '10MB', '16MB']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -77,20 +78,22 @@ jobs:
           TIGRIS_STORAGE_SECRET_ACCESS_KEY: ${{ secrets.TIGRIS_STORAGE_SECRET_ACCESS_KEY }}
           TIGRIS_STORAGE_BUCKET: ${{ secrets.TIGRIS_STORAGE_BUCKET }}
         run: |
-          FILE_SIZE_FLAG=""
+          # Determine file size: use input for manual runs, matrix for PRs/schedules
           if [ -n "${{ github.event.inputs.file_size }}" ]; then
-            FILE_SIZE_FLAG="--file-size ${{ github.event.inputs.file_size }}"
+            FILE_SIZE="${{ github.event.inputs.file_size }}"
+          else
+            FILE_SIZE="${{ matrix.file_size }}"
           fi
           npm run bench -- \
             --mode storage \
             --provider ${{ matrix.provider }} \
-            --iterations ${{ github.event.inputs.iterations || (github.event_name == 'pull_request' && '10') || '100' }} \
-            $FILE_SIZE_FLAG
+            --file-size $FILE_SIZE \
+            --iterations ${{ github.event.inputs.iterations || (github.event_name == 'pull_request' && '10') || '100' }}
       - name: Upload results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: storage-results-${{ matrix.provider }}
+          name: storage-results-${{ matrix.provider }}-${{ matrix.file_size }}
           path: results/storage/
           if-no-files-found: ignore
           retention-days: 7
