@@ -33,7 +33,7 @@ export function printComputePerfResultsTable(results: ComputePerfBenchmarkResult
     .join('-+-');
 
   console.log('\n' + '='.repeat(separator.length));
-  console.log('  COMPUTE PERFORMANCE RESULTS - LINUX KERNEL BUILD');
+  console.log('  COMPUTE PERFORMANCE RESULTS - LKB (Linux Kernel Build)');
   console.log('='.repeat(separator.length));
   console.log(header);
   console.log(separator);
@@ -81,6 +81,8 @@ export async function writeComputePerfResultsJson(results: ComputePerfBenchmarkR
   const cleanResults = results.map(r => ({
     provider: r.provider,
     mode: r.mode,
+    workload: r.workload,
+    workloadAcronym: r.workloadAcronym,
     kernelVersion: r.kernelVersion,
     iterations: r.iterations.map(i => ({
       totalMs: round(i.totalMs),
@@ -109,6 +111,8 @@ export async function writeComputePerfResultsJson(results: ComputePerfBenchmarkR
     config: {
       iterations: results[0]?.iterations.length || 0,
       mode: 'compute-perf',
+      workload: 'linux-kernel-build',
+      workloadAcronym: 'LKB',
     },
     results: cleanResults,
   };

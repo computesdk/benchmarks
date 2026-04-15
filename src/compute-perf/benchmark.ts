@@ -1,7 +1,7 @@
 import { computeStats } from '../util/stats.js';
 import { withTimeout } from '../util/timeout.js';
 import type { ComputePerfBenchmarkResult, ComputePerfProviderConfig, ComputePerfTimingResult } from './types.js';
-import { KERNEL_VERSION } from './types.js';
+import { KERNEL_VERSION, WORKLOAD, WORKLOAD_ACRONYM } from './types.js';
 
 const KERNEL_TARBALL = `linux-${KERNEL_VERSION}.tar.xz`;
 const KERNEL_URL = `https://cdn.kernel.org/pub/linux/kernel/v6.x/${KERNEL_TARBALL}`;
@@ -137,6 +137,8 @@ export async function runComputePerfBenchmark(config: ComputePerfProviderConfig)
     return {
       provider: name,
       mode: 'compute-perf',
+      workload: WORKLOAD,
+      workloadAcronym: WORKLOAD_ACRONYM,
       kernelVersion: KERNEL_VERSION,
       iterations: [],
       summary: {
@@ -151,7 +153,7 @@ export async function runComputePerfBenchmark(config: ComputePerfProviderConfig)
   const compute = config.createCompute();
   const results: ComputePerfTimingResult[] = [];
 
-  console.log(`\n--- Compute Perf: ${name} (${iterations} iterations, linux-${KERNEL_VERSION}) ---`);
+  console.log(`\n--- Compute Perf (${WORKLOAD_ACRONYM}): ${name} (${iterations} iterations, linux-${KERNEL_VERSION}) ---`);
 
   for (let i = 0; i < iterations; i++) {
     console.log(`  Iteration ${i + 1}/${iterations}...`);
@@ -180,6 +182,8 @@ export async function runComputePerfBenchmark(config: ComputePerfProviderConfig)
   return {
     provider: name,
     mode: 'compute-perf',
+    workload: WORKLOAD,
+    workloadAcronym: WORKLOAD_ACRONYM,
     kernelVersion: KERNEL_VERSION,
     iterations: results,
     summary: {

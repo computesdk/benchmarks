@@ -68,7 +68,7 @@ async function runComputePerf(toRun: typeof computePerfProviders): Promise<void>
   console.log('\n' + '='.repeat(70));
   console.log('  MODE: COMPUTE-PERF');
   console.log(`  Iterations per provider: ${iterations}`);
-  console.log('  Workload: linux kernel build (defconfig + bzImage)');
+  console.log('  Workload: LKB (Linux Kernel Build) - defconfig + bzImage');
   console.log('='.repeat(70));
 
   const results: ComputePerfBenchmarkResult[] = [];
