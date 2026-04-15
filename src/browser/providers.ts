@@ -1,4 +1,5 @@
 import { browserbase } from '@computesdk/browserbase';
+import { kernel } from '@computesdk/kernel';
 import type { BrowserProviderConfig } from './types.js';
 
 /**
