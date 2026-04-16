@@ -14,7 +14,7 @@ import { compute } from 'computesdk';
 import type { ProviderConfig } from './types.js';
 
 /**
- * All provider benchmark configurations.
+ * All provider benchmark configurations. Good to go.
  *
  * Direct mode providers use ComputeSDK's open source package directly (no ComputeSDK API key).
  * Automatic mode providers route through the ComputeSDK gateway (requires COMPUTESDK_API_KEY).
