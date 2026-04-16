@@ -48,7 +48,7 @@ jobs:
       fail-fast: false
       matrix:
         provider:
-          # - archil
+          - archil
           - beam
           - blaxel
           - cloudflare
@@ -78,8 +78,8 @@ jobs:
       - name: Run benchmark
         env:
           COMPUTESDK_API_KEY: ${{ secrets.COMPUTESDK_API_KEY }}
-          #  ARCHIL_API_KEY: ${{ secrets.ARCHIL_API_KEY }}
-          #  ARCHIL_REGION: ${{ secrets.ARCHIL_REGION }}
+          ARCHIL_API_KEY: ${{ secrets.ARCHIL_API_KEY }}
+          ARCHIL_REGION: ${{ secrets.ARCHIL_REGION }}
           BEAM_TOKEN: ${{ secrets.BEAM_TOKEN }}
           BEAM_WORKSPACE_ID: ${{ secrets.BEAM_WORKSPACE_ID }}
           BL_API_KEY: ${{ secrets.BL_API_KEY }}
