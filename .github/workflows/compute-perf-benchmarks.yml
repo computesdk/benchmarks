@@ -1,0 +1,69 @@
+name: Compute Perf Benchmark
+
+on:
+  pull_request:
+    paths:
+      - 'src/compute-perf/**'
+      - 'src/util/**'
+      - 'src/run.ts'
+      - 'package.json'
+      - '.github/workflows/compute-perf-benchmarks.yml'
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: 'Iterations per provider'
+        required: false
+        default: '1'
+
+concurrency:
+  group: compute-perf-benchmarks
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  bench:
+    name: Compute Perf ${{ matrix.provider }}
+    runs-on: namespace-profile-default
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        provider:
+          - blaxel
+          - daytona
+          - e2b
+          - hopx
+          - namespace
+          - runloop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run compute-perf benchmark (LKB)
+        env:
+          BL_API_KEY: ${{ secrets.BL_API_KEY }}
+          BL_WORKSPACE: ${{ secrets.BL_WORKSPACE }}
+          DAYTONA_API_KEY: ${{ secrets.DAYTONA_API_KEY }}
+          E2B_API_KEY: ${{ secrets.E2B_API_KEY }}
+          HOPX_API_KEY: ${{ secrets.HOPX_API_KEY }}
+          NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
+          RUNLOOP_API_KEY: ${{ secrets.RUNLOOP_API_KEY }}
+        run: |
+          npm run bench -- \
+            --mode compute-perf \
+            --provider ${{ matrix.provider }} \
+            --iterations ${{ github.event.inputs.iterations || '1' }}
+      - name: Upload compute-perf artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compute-perf-${{ matrix.provider }}
+          path: results/compute_perf/
+          if-no-files-found: ignore
+          retention-days: 7
