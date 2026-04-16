@@ -88,7 +88,7 @@ jobs:
             --mode storage \
             --provider ${{ matrix.provider }} \
             --file-size $FILE_SIZE \
-            --iterations ${{ (github.event_name == 'schedule' && '250000') || github.event.inputs.iterations || (github.event_name == 'pull_request' && '1000') || '100' }}
+            --iterations ${{ (github.event_name == 'schedule' && '1000') || github.event.inputs.iterations || (github.event_name == 'pull_request' && '1000') || '100' }}
       - name: Upload results
         if: always()
         uses: actions/upload-artifact@v4
