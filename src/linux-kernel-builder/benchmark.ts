@@ -5,7 +5,7 @@ import { KERNEL_VERSION, WORKLOAD, WORKLOAD_ACRONYM, WORKLOAD_LABEL } from './ty
 
 const KERNEL_TARBALL = `linux-${KERNEL_VERSION}.tar.xz`;
 const KERNEL_URL = `https://cdn.kernel.org/pub/linux/kernel/v6.x/${KERNEL_TARBALL}`;
-const KERNEL_SHA256 = '335aeec4f6af045d958e2dabaf55222349933e396df17b5cd31798f5ec7f8c35';
+const KERNEL_SHA256 = '643142c1b5991560dd12f950825cc19e4497b95b82641918ecff1177f4130c1d';
 
 function parseResultLine(output: string): { buildMs: number; cpuCount?: number; memTotalKb?: number } | null {
   const markerLine = output

@@ -128,22 +128,26 @@ jobs:
               const results = Array.from(byProvider.values())
                 .sort((a, b) => (b.compositeScore || 0) - (a.compositeScore || 0));
 
-              body += '| # | Provider | Score | Build Median | Build P95 | Build P99 | Status |\n';
-              body += '|---|----------|-------|--------------|-----------|-----------|--------|\n';
+              body += '| # | Provider | Score | Build Median | Build P95 | Build P99 | Status | Sample Failure |\n';
+              body += '|---|----------|-------|--------------|-----------|-----------|--------|----------------|\n';
 
               results.forEach((r, i) => {
                 if (r.skipped) {
-                  body += `| ${i + 1} | ${r.provider} | -- | -- | -- | -- | SKIPPED |\n`;
+                  const reason = (r.skipReason || '').replace(/\n/g, ' ').slice(0, 120);
+                  body += `| ${i + 1} | ${r.provider} | -- | -- | -- | -- | SKIPPED | ${reason || '--'} |\n`;
                   return;
                 }
 
                 const score = r.compositeScore !== undefined ? r.compositeScore.toFixed(1) : '--';
-                const med = r.summary?.buildMs ? `${(r.summary.buildMs.median / 1000).toFixed(2)}s` : '--';
-                const p95 = r.summary?.buildMs ? `${(r.summary.buildMs.p95 / 1000).toFixed(2)}s` : '--';
-                const p99 = r.summary?.buildMs ? `${(r.summary.buildMs.p99 / 1000).toFixed(2)}s` : '--';
                 const ok = (r.iterations || []).filter(it => !it.error).length;
                 const total = (r.iterations || []).length;
-                body += `| ${i + 1} | ${r.provider} | ${score} | ${med} | ${p95} | ${p99} | ${ok}/${total} |\n`;
+                const hasSuccess = ok > 0;
+                const med = hasSuccess && r.summary?.buildMs ? `${(r.summary.buildMs.median / 1000).toFixed(2)}s` : '--';
+                const p95 = hasSuccess && r.summary?.buildMs ? `${(r.summary.buildMs.p95 / 1000).toFixed(2)}s` : '--';
+                const p99 = hasSuccess && r.summary?.buildMs ? `${(r.summary.buildMs.p99 / 1000).toFixed(2)}s` : '--';
+                const firstError = (r.iterations || []).find(it => it.error)?.error || '';
+                const compactError = firstError.replace(/\n/g, ' ').slice(0, 120);
+                body += `| ${i + 1} | ${r.provider} | ${score} | ${med} | ${p95} | ${p99} | ${ok}/${total} | ${compactError || '--'} |\n`;
               });
 
               body += '\n';
