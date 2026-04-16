@@ -40,6 +40,7 @@
     "generate-pricing-svg": "tsx src/sandbox/generate-pricing-svg.ts"
   },
   "dependencies": {
+    "@computesdk/archil": "^0.3.0",
     "@computesdk/beam": "^0.1.1",
     "@computesdk/blaxel": "^1.6.7",
     "@computesdk/browserbase": "^0.3.0",
@@ -57,6 +58,7 @@
     "@computesdk/s3": "^1.1.1",
     "@computesdk/sprites": "^0.1.5",
     "@computesdk/tigris": "^1.1.1",
+    "@computesdk/upstash": "^0.2.0",
     "@computesdk/vercel": "^1.7.22",
     "computesdk": "^2.5.4",
     "dotenv": "^17.4.0",

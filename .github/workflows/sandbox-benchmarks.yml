@@ -48,7 +48,8 @@ jobs:
       fail-fast: false
       matrix:
         provider:
-          - beam
+          - archil
+          # - beam
           - blaxel
           - cloudflare
           - codesandbox
@@ -58,6 +59,7 @@ jobs:
           - modal
           - namespace
           - runloop
+          # - upstash
           - vercel
     steps:
       - uses: actions/checkout@v4
@@ -77,8 +79,11 @@ jobs:
       - name: Run benchmark
         env:
           COMPUTESDK_API_KEY: ${{ secrets.COMPUTESDK_API_KEY }}
-          BEAM_TOKEN: ${{ secrets.BEAM_TOKEN }}
-          BEAM_WORKSPACE_ID: ${{ secrets.BEAM_WORKSPACE_ID }}
+          ARCHIL_API_KEY: ${{ secrets.ARCHIL_API_KEY }}
+          ARCHIL_REGION: ${{ secrets.ARCHIL_REGION }}
+          ARCHIL_DISK_ID: ${{ secrets.ARCHIL_DISK_ID }}
+          # BEAM_TOKEN: ${{ secrets.BEAM_TOKEN }}
+          # BEAM_WORKSPACE_ID: ${{ secrets.BEAM_WORKSPACE_ID }}
           BL_API_KEY: ${{ secrets.BL_API_KEY }}
           BL_WORKSPACE: ${{ secrets.BL_WORKSPACE }}
           CLOUDFLARE_SANDBOX_URL: ${{ secrets.CLOUDFLARE_SANDBOX_URL }}
@@ -91,6 +96,7 @@ jobs:
           MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
           NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
           RUNLOOP_API_KEY: ${{ secrets.RUNLOOP_API_KEY }}
+          # UPSTASH_BOX_API_KEY: ${{ secrets.UPSTASH_API_KEY }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
