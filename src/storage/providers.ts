@@ -18,7 +18,7 @@ export const storageProviders: StorageProviderConfig[] = [
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
       region: process.env.AWS_REGION || 'us-east-1',
     }),
-    fileSizes: [1024 * 1024, 10 * 1024 * 1024, 100 * 1024 * 1024], // 1MB, 10MB, 100MB
+    fileSizes: [1 * 1024 * 1024, 4 * 1024 * 1024, 10 * 1024 * 1024, 16 * 1024 * 1024], // 1MB, 4MB, 10MB, 16MB
   },
   {
     name: 'cloudflare-r2',
@@ -29,7 +29,7 @@ export const storageProviders: StorageProviderConfig[] = [
       secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
       accountId: process.env.R2_ACCOUNT_ID!,
     }),
-    fileSizes: [1024 * 1024, 10 * 1024 * 1024],
+    fileSizes: [1 * 1024 * 1024, 4 * 1024 * 1024, 10 * 1024 * 1024, 16 * 1024 * 1024],
   },
   {
     name: 'tigris',
@@ -39,7 +39,7 @@ export const storageProviders: StorageProviderConfig[] = [
       accessKeyId: process.env.TIGRIS_STORAGE_ACCESS_KEY_ID!,
       secretAccessKey: process.env.TIGRIS_STORAGE_SECRET_ACCESS_KEY!,
     }),
-    fileSizes: [1024 * 1024, 10 * 1024 * 1024],
+    fileSizes: [1 * 1024 * 1024, 4 * 1024 * 1024, 10 * 1024 * 1024, 16 * 1024 * 1024],
   },
   // 
   // add providers above

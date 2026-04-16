@@ -5,6 +5,8 @@ export interface StorageProviderConfig {
   iterations?: number;
   /** Timeout per operation in ms (default: 30000) */
   timeout?: number;
+  /** Number of parallel storage iterations to run (default: 1) */
+  concurrency?: number;
   /** Environment variables that must all be set to run this benchmark */
   requiredEnvVars: string[];
   /** Creates a storage instance */
@@ -49,10 +51,11 @@ export interface StorageBenchmarkResult {
   skipReason?: string;
 }
 
-export type StorageFileSize = '1MB' | '10MB' | '100MB';
+export type StorageFileSize = '1MB' | '4MB' | '10MB' | '16MB';
 
 export const FILE_SIZE_BYTES: Record<StorageFileSize, number> = {
-  '1MB': 1024 * 1024,
+  '1MB': 1 * 1024 * 1024,
+  '4MB': 4 * 1024 * 1024,
   '10MB': 10 * 1024 * 1024,
-  '100MB': 100 * 1024 * 1024,
+  '16MB': 16 * 1024 * 1024,
 };

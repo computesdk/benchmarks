@@ -9,13 +9,17 @@ on:
       - 'src/merge-results.ts'
       - 'package.json'
   schedule:
-    - cron: '0 0 * * *' # Daily at midnight UTC
+    - cron: '0 0 * * 0' # Weekly on Sunday at midnight UTC
   workflow_dispatch:
     inputs:
       iterations:
         description: 'Iterations per provider'
         required: false
         default: '100'
+      storage_concurrency:
+        description: 'Parallel storage iterations per job'
+        required: false
+        default: '1'
       file_size:
         description: 'File size to test (leave empty to run all)'
         required: false
@@ -24,8 +28,9 @@ on:
         options:
           - ''
           - 1MB
+          - 4MB
           - 10MB
-          - 100MB
+          - 16MB
 
 concurrency:
   group: storage-benchmarks
@@ -37,9 +42,9 @@ permissions:
 
 jobs:
   bench:
-    name: Bench ${{ matrix.provider }}
+    name: Bench ${{ matrix.provider }} ${{ matrix.file_size }}
     runs-on: namespace-profile-default
-    timeout-minutes: 60
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -47,6 +52,7 @@ jobs:
           - aws-s3
           - cloudflare-r2
           - tigris
+        file_size: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.file_size != '' && fromJson(format('["{0}"]', github.event.inputs.file_size))) || fromJson('["1MB","4MB","10MB","16MB"]') }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -76,20 +82,18 @@ jobs:
           TIGRIS_STORAGE_SECRET_ACCESS_KEY: ${{ secrets.TIGRIS_STORAGE_SECRET_ACCESS_KEY }}
           TIGRIS_STORAGE_BUCKET: ${{ secrets.TIGRIS_STORAGE_BUCKET }}
         run: |
-          FILE_SIZE_FLAG=""
-          if [ -n "${{ github.event.inputs.file_size }}" ]; then
-            FILE_SIZE_FLAG="--file-size ${{ github.event.inputs.file_size }}"
-          fi
+          FILE_SIZE="${{ matrix.file_size }}"
           npm run bench -- \
             --mode storage \
             --provider ${{ matrix.provider }} \
-            --iterations ${{ github.event.inputs.iterations || (github.event_name == 'pull_request' && '10') || '100' }} \
-            $FILE_SIZE_FLAG
+            --file-size $FILE_SIZE \
+            --storage-concurrency ${{ (github.event_name == 'schedule' && '16') || (github.event_name == 'pull_request' && '8') || github.event.inputs.storage_concurrency || '1' }} \
+            --iterations ${{ (github.event_name == 'schedule' && '10000') || github.event.inputs.iterations || (github.event_name == 'pull_request' && '1000') || '100' }}
       - name: Upload results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: storage-results-${{ matrix.provider }}
+          name: storage-results-${{ matrix.provider }}-${{ matrix.file_size }}
           path: results/storage/
           if-no-files-found: ignore
           retention-days: 7
@@ -138,7 +142,7 @@ jobs:
             const path = require('path');
 
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const sizes = ['1mb', '10mb', '100mb'];
+            const sizes = ['1mb', '4mb', '10mb', '16mb'];
             let body = '## Storage Benchmark Results\n\n';
             let hasResults = false;
 
