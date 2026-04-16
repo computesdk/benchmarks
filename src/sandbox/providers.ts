@@ -23,8 +23,9 @@ export const providers: ProviderConfig[] = [
   // --- Direct mode (provider SDK packages) ---
   {
     name: 'archil',
-    requiredEnvVars: ['ARCHIL_API_KEY', 'ARCHIL_REGION'],
+    requiredEnvVars: ['ARCHIL_API_KEY', 'ARCHIL_REGION', 'ARCHIL_DISK_ID'],
     createCompute: () => archil({ apiKey: process.env.ARCHIL_API_KEY!, region: process.env.ARCHIL_REGION! }),
+    sandboxOptions: { metadata: { diskId: process.env.ARCHIL_DISK_ID! } }
   },
   {
     name: 'blaxel',
