@@ -4,7 +4,7 @@ import { blaxel } from '@computesdk/blaxel';
 import { hopx } from '@computesdk/hopx';
 import { namespace } from '@computesdk/namespace';
 import { runloop } from '@computesdk/runloop';
-import type { ComputePerfProviderConfig } from './types.js';
+import type { LinuxKernelBuilderProviderConfig } from './types.js';
 
 /**
  * Providers that participate in sustained compute benchmark runs.
@@ -12,7 +12,7 @@ import type { ComputePerfProviderConfig } from './types.js';
  * Keep this list intentionally narrow to providers that position around
  * runner-style or general-purpose compute performance.
  */
-export const computePerfProviders: ComputePerfProviderConfig[] = [
+export const linuxKernelBuilderProviders: LinuxKernelBuilderProviderConfig[] = [
   {
     name: 'blaxel',
     requiredEnvVars: ['BL_API_KEY', 'BL_WORKSPACE'],

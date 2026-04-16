@@ -1,5 +1,5 @@
-import type { ComputePerfBenchmarkResult } from './types.js';
-import { sortComputePerfByCompositeScore } from './scoring.js';
+import type { LinuxKernelBuilderBenchmarkResult } from './types.js';
+import { sortLinuxKernelBuilderByCompositeScore } from './scoring.js';
 import { WORKLOAD, WORKLOAD_ACRONYM, WORKLOAD_LABEL } from './types.js';
 
 function pad(str: string, width: number): string {
@@ -18,7 +18,7 @@ function roundStats(s: { median: number; p95: number; p99: number }) {
   return { median: round(s.median), p95: round(s.p95), p99: round(s.p99) };
 }
 
-export function printComputePerfResultsTable(results: ComputePerfBenchmarkResult[]): void {
+export function printLinuxKernelBuilderResultsTable(results: LinuxKernelBuilderBenchmarkResult[]): void {
   const header = [
     pad('Provider', 12),
     pad('Score', 8),
@@ -39,7 +39,7 @@ export function printComputePerfResultsTable(results: ComputePerfBenchmarkResult
   console.log(header);
   console.log(separator);
 
-  const sorted = sortComputePerfByCompositeScore(results);
+  const sorted = sortLinuxKernelBuilderByCompositeScore(results);
 
   for (const result of sorted) {
     const successful = result.iterations.filter(i => !i.error).length;
@@ -75,7 +75,7 @@ export function printComputePerfResultsTable(results: ComputePerfBenchmarkResult
   console.log('='.repeat(separator.length));
 }
 
-export async function writeComputePerfResultsJson(results: ComputePerfBenchmarkResult[], outPath: string): Promise<void> {
+export async function writeLinuxKernelBuilderResultsJson(results: LinuxKernelBuilderBenchmarkResult[], outPath: string): Promise<void> {
   const fs = await import('fs');
   const os = await import('os');
 
@@ -111,7 +111,7 @@ export async function writeComputePerfResultsJson(results: ComputePerfBenchmarkR
     },
     config: {
       iterations: results[0]?.iterations.length || 0,
-      mode: 'compute-perf',
+      mode: 'linux-kernel-builder',
       workload: WORKLOAD,
       workloadAcronym: WORKLOAD_ACRONYM,
     },

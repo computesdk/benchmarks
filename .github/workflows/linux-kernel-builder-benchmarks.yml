@@ -3,14 +3,14 @@ name: Linux Kernel Builder Benchmark
 on:
   push:
     paths:
-      - 'src/compute-perf/**'
+      - 'src/linux-kernel-builder/**'
       - 'src/util/**'
       - 'src/run.ts'
       - 'package.json'
       - '.github/workflows/linux-kernel-builder-benchmarks.yml'
   pull_request:
     paths:
-      - 'src/compute-perf/**'
+      - 'src/linux-kernel-builder/**'
       - 'src/util/**'
       - 'src/run.ts'
       - 'package.json'
@@ -23,7 +23,7 @@ on:
         default: '1'
 
 concurrency:
-  group: compute-perf-benchmarks
+  group: linux-kernel-builder-benchmarks
   cancel-in-progress: true
 
 permissions:
@@ -31,7 +31,7 @@ permissions:
 
 jobs:
   bench:
-    name: Compute Perf ${{ matrix.provider }}
+    name: LKB ${{ matrix.provider }}
     runs-on: namespace-profile-default
     timeout-minutes: 90
     strategy:
@@ -63,14 +63,14 @@ jobs:
           RUNLOOP_API_KEY: ${{ secrets.RUNLOOP_API_KEY }}
         run: |
           npm run bench -- \
-            --mode compute-perf \
+            --mode linux-kernel-builder \
             --provider ${{ matrix.provider }} \
             --iterations ${{ github.event.inputs.iterations || '1' }}
-      - name: Upload compute-perf artifacts
+      - name: Upload Linux Kernel Builder artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: compute-perf-${{ matrix.provider }}
-          path: results/compute_perf/
+          name: linux-kernel-builder-${{ matrix.provider }}
+          path: results/linux_kernel_builder/
           if-no-files-found: ignore
           retention-days: 7

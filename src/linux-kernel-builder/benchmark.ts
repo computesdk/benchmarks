@@ -1,6 +1,6 @@
 import { computeStats } from '../util/stats.js';
 import { withTimeout } from '../util/timeout.js';
-import type { ComputePerfBenchmarkResult, ComputePerfProviderConfig, ComputePerfTimingResult } from './types.js';
+import type { LinuxKernelBuilderBenchmarkResult, LinuxKernelBuilderProviderConfig, LinuxKernelBuilderTimingResult } from './types.js';
 import { KERNEL_VERSION, WORKLOAD, WORKLOAD_ACRONYM, WORKLOAD_LABEL } from './types.js';
 
 const KERNEL_TARBALL = `linux-${KERNEL_VERSION}.tar.xz`;
@@ -10,7 +10,7 @@ const KERNEL_SHA256 = '335aeec4f6af045d958e2dabaf55222349933e396df17b5cd31798f5e
 function parseResultLine(output: string): { buildMs: number; cpuCount?: number; memTotalKb?: number } | null {
   const markerLine = output
     .split('\n')
-    .find(line => line.startsWith('__COMPUTE_PERF_RESULT__'));
+    .find(line => line.startsWith('__LKB_RESULT__'));
 
   if (!markerLine) return null;
 
@@ -30,7 +30,7 @@ function parseResultLine(output: string): { buildMs: number; cpuCount?: number; 
 function getKernelBuildScript(): string {
   return [
     'set -euo pipefail',
-    'WORKDIR=/tmp/compute-perf-linux',
+    'WORKDIR=/tmp/lkb-linux',
     'rm -rf "$WORKDIR"',
     'mkdir -p "$WORKDIR"',
     'cd "$WORKDIR"',
@@ -50,21 +50,21 @@ function getKernelBuildScript(): string {
     'done',
     'make defconfig >/dev/null',
     'START_NS=$(date +%s%N)',
-    'make -j"$(nproc)" bzImage >/tmp/compute-perf-build.log 2>&1',
+    'make -j"$(nproc)" bzImage >/tmp/lkb-build.log 2>&1',
     'END_NS=$(date +%s%N)',
     'BUILD_MS=$(( (END_NS - START_NS) / 1000000 ))',
     'CPU_COUNT=$(nproc)',
     "MEM_TOTAL_KB=$(awk '/MemTotal:/ { print $2 }' /proc/meminfo)",
-    'echo "__COMPUTE_PERF_RESULT__ buildMs=${BUILD_MS} cpu=${CPU_COUNT} memKb=${MEM_TOTAL_KB}"',
+    'echo "__LKB_RESULT__ buildMs=${BUILD_MS} cpu=${CPU_COUNT} memKb=${MEM_TOTAL_KB}"',
   ].join('\n');
 }
 
-async function runComputePerfIteration(
+async function runLinuxKernelBuilderIteration(
   compute: any,
   timeout: number,
   sandboxOptions?: Record<string, any>,
   destroyTimeoutMs: number = 15_000,
-): Promise<ComputePerfTimingResult> {
+): Promise<LinuxKernelBuilderTimingResult> {
   let sandbox: any = null;
 
   try {
@@ -76,10 +76,10 @@ async function runComputePerfIteration(
 
     const iterationStart = performance.now();
     const command = [
-      "cat <<'__COMPUTE_PERF_SCRIPT__' >/tmp/compute-perf.sh",
+      "cat <<'__LKB_SCRIPT__' >/tmp/lkb.sh",
       getKernelBuildScript(),
-      '__COMPUTE_PERF_SCRIPT__',
-      'bash /tmp/compute-perf.sh',
+      '__LKB_SCRIPT__',
+      'bash /tmp/lkb.sh',
     ].join('\n');
 
     const result = await withTimeout(
@@ -127,7 +127,7 @@ async function runComputePerfIteration(
   }
 }
 
-export async function runComputePerfBenchmark(config: ComputePerfProviderConfig): Promise<ComputePerfBenchmarkResult> {
+export async function runLinuxKernelBuilderBenchmark(config: LinuxKernelBuilderProviderConfig): Promise<LinuxKernelBuilderBenchmarkResult> {
   const {
     name,
     iterations = 5,
@@ -141,7 +141,7 @@ export async function runComputePerfBenchmark(config: ComputePerfProviderConfig)
   if (missingVars.length > 0) {
     return {
       provider: name,
-      mode: 'compute-perf',
+      mode: 'linux-kernel-builder',
       workload: WORKLOAD,
       workloadAcronym: WORKLOAD_ACRONYM,
       kernelVersion: KERNEL_VERSION,
@@ -156,7 +156,7 @@ export async function runComputePerfBenchmark(config: ComputePerfProviderConfig)
   }
 
   const compute = config.createCompute();
-  const results: ComputePerfTimingResult[] = [];
+  const results: LinuxKernelBuilderTimingResult[] = [];
 
   console.log(`\n--- ${WORKLOAD_LABEL} (${WORKLOAD_ACRONYM}): ${name} (${iterations} iterations, linux-${KERNEL_VERSION}) ---`);
 
@@ -164,7 +164,7 @@ export async function runComputePerfBenchmark(config: ComputePerfProviderConfig)
     console.log(`  Iteration ${i + 1}/${iterations}...`);
 
     try {
-      const iterationResult = await runComputePerfIteration(
+      const iterationResult = await runLinuxKernelBuilderIteration(
         compute,
         timeout,
         sandboxOptions,
@@ -186,7 +186,7 @@ export async function runComputePerfBenchmark(config: ComputePerfProviderConfig)
 
   return {
     provider: name,
-    mode: 'compute-perf',
+    mode: 'linux-kernel-builder',
     workload: WORKLOAD,
     workloadAcronym: WORKLOAD_ACRONYM,
     kernelVersion: KERNEL_VERSION,

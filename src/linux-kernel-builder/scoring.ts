@@ -1,12 +1,12 @@
-import type { ComputePerfBenchmarkResult, ComputePerfStats } from './types.js';
+import type { LinuxKernelBuilderBenchmarkResult, LinuxKernelBuilderStats } from './types.js';
 
-export interface ComputePerfScoringWeights {
+export interface LinuxKernelBuilderScoringWeights {
   median: number;
   p95: number;
   p99: number;
 }
 
-export const DEFAULT_COMPUTE_PERF_WEIGHTS: ComputePerfScoringWeights = {
+export const DEFAULT_LKB_WEIGHTS: LinuxKernelBuilderScoringWeights = {
   median: 0.60,
   p95: 0.25,
   p99: 0.15,
@@ -22,15 +22,15 @@ function scoreMetric(valueMs: number): number {
   return Math.max(0, 100 * (1 - valueMs / BUILD_CEILING_MS));
 }
 
-export function computeComputePerfSuccessRate(result: ComputePerfBenchmarkResult): number {
+export function computeLinuxKernelBuilderSuccessRate(result: LinuxKernelBuilderBenchmarkResult): number {
   if (result.skipped || result.iterations.length === 0) return 0;
   const successful = result.iterations.filter(i => !i.error).length;
   return successful / result.iterations.length;
 }
 
 function computeBuildScore(
-  stats: ComputePerfStats,
-  weights: ComputePerfScoringWeights = DEFAULT_COMPUTE_PERF_WEIGHTS,
+  stats: LinuxKernelBuilderStats,
+  weights: LinuxKernelBuilderScoringWeights = DEFAULT_LKB_WEIGHTS,
 ): number {
   return (
     weights.median * scoreMetric(stats.median) +
@@ -39,12 +39,12 @@ function computeBuildScore(
   );
 }
 
-export function computeComputePerfCompositeScores(
-  results: ComputePerfBenchmarkResult[],
-  weights: ComputePerfScoringWeights = DEFAULT_COMPUTE_PERF_WEIGHTS,
+export function computeLinuxKernelBuilderCompositeScores(
+  results: LinuxKernelBuilderBenchmarkResult[],
+  weights: LinuxKernelBuilderScoringWeights = DEFAULT_LKB_WEIGHTS,
 ): void {
   for (const result of results) {
-    const successRate = computeComputePerfSuccessRate(result);
+    const successRate = computeLinuxKernelBuilderSuccessRate(result);
     result.successRate = successRate;
 
     if (result.skipped || successRate === 0) {
@@ -57,7 +57,7 @@ export function computeComputePerfCompositeScores(
   }
 }
 
-export function sortComputePerfByCompositeScore(results: ComputePerfBenchmarkResult[]): ComputePerfBenchmarkResult[] {
+export function sortLinuxKernelBuilderByCompositeScore(results: LinuxKernelBuilderBenchmarkResult[]): LinuxKernelBuilderBenchmarkResult[] {
   return [...results].sort((a, b) => {
     if (a.skipped && !b.skipped) return 1;
     if (!a.skipped && b.skipped) return -1;

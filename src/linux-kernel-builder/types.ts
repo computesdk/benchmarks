@@ -1,4 +1,4 @@
-export interface ComputePerfProviderConfig {
+export interface LinuxKernelBuilderProviderConfig {
   /** Provider name */
   name: string;
   /** Number of iterations (default: 5) */
@@ -15,7 +15,7 @@ export interface ComputePerfProviderConfig {
   destroyTimeoutMs?: number;
 }
 
-export interface ComputePerfTimingResult {
+export interface LinuxKernelBuilderTimingResult {
   /** End-to-end workload time inside sandbox command execution */
   totalMs: number;
   /** Linux kernel compile time captured in-sandbox */
@@ -28,22 +28,22 @@ export interface ComputePerfTimingResult {
   error?: string;
 }
 
-export interface ComputePerfStats {
+export interface LinuxKernelBuilderStats {
   median: number;
   p95: number;
   p99: number;
 }
 
-export interface ComputePerfBenchmarkResult {
+export interface LinuxKernelBuilderBenchmarkResult {
   provider: string;
-  mode: 'compute-perf';
+  mode: 'linux-kernel-builder';
   workload: 'linux-kernel-builder';
   workloadAcronym: 'LKB';
   kernelVersion: string;
-  iterations: ComputePerfTimingResult[];
+  iterations: LinuxKernelBuilderTimingResult[];
   summary: {
-    buildMs: ComputePerfStats;
-    totalMs: ComputePerfStats;
+    buildMs: LinuxKernelBuilderStats;
+    totalMs: LinuxKernelBuilderStats;
   };
   /** Composite weighted score (0-100, higher = better). Computed post-benchmark. */
   compositeScore?: number;
