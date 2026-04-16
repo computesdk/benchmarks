@@ -1,5 +1,6 @@
 import type { ComputePerfBenchmarkResult } from './types.js';
 import { sortComputePerfByCompositeScore } from './scoring.js';
+import { WORKLOAD, WORKLOAD_ACRONYM, WORKLOAD_LABEL } from './types.js';
 
 function pad(str: string, width: number): string {
   return str.padEnd(width);
@@ -33,7 +34,7 @@ export function printComputePerfResultsTable(results: ComputePerfBenchmarkResult
     .join('-+-');
 
   console.log('\n' + '='.repeat(separator.length));
-  console.log('  COMPUTE PERFORMANCE RESULTS - LKB (Linux Kernel Build)');
+  console.log(`  COMPUTE PERFORMANCE RESULTS - ${WORKLOAD_ACRONYM} (${WORKLOAD_LABEL})`);
   console.log('='.repeat(separator.length));
   console.log(header);
   console.log(separator);
@@ -111,8 +112,8 @@ export async function writeComputePerfResultsJson(results: ComputePerfBenchmarkR
     config: {
       iterations: results[0]?.iterations.length || 0,
       mode: 'compute-perf',
-      workload: 'linux-kernel-build',
-      workloadAcronym: 'LKB',
+      workload: WORKLOAD,
+      workloadAcronym: WORKLOAD_ACRONYM,
     },
     results: cleanResults,
   };

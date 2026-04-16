@@ -37,7 +37,7 @@ export interface ComputePerfStats {
 export interface ComputePerfBenchmarkResult {
   provider: string;
   mode: 'compute-perf';
-  workload: 'linux-kernel-build';
+  workload: 'linux-kernel-builder';
   workloadAcronym: 'LKB';
   kernelVersion: string;
   iterations: ComputePerfTimingResult[];
@@ -54,5 +54,6 @@ export interface ComputePerfBenchmarkResult {
 }
 
 export const KERNEL_VERSION = '6.12.24';
-export const WORKLOAD = 'linux-kernel-build';
+export const WORKLOAD = 'linux-kernel-builder';
 export const WORKLOAD_ACRONYM = 'LKB';
+export const WORKLOAD_LABEL = 'Linux Kernel Builder';

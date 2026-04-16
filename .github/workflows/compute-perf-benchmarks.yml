@@ -1,4 +1,4 @@
-name: Compute Perf Benchmark
+name: Linux Kernel Builder Benchmark
 
 on:
   push:
@@ -52,7 +52,7 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
-      - name: Run compute-perf benchmark (LKB)
+      - name: Run Linux Kernel Builder benchmark (LKB)
         env:
           BL_API_KEY: ${{ secrets.BL_API_KEY }}
           BL_WORKSPACE: ${{ secrets.BL_WORKSPACE }}
