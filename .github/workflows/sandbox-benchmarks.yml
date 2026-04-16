@@ -49,7 +49,7 @@ jobs:
       matrix:
         provider:
           # - archil
-          - beam
+          # - beam
           - blaxel
           - cloudflare
           - codesandbox
@@ -81,8 +81,8 @@ jobs:
           COMPUTESDK_API_KEY: ${{ secrets.COMPUTESDK_API_KEY }}
           #  ARCHIL_API_KEY: ${{ secrets.ARCHIL_API_KEY }}
           #  ARCHIL_REGION: ${{ secrets.ARCHIL_REGION }}
-          BEAM_TOKEN: ${{ secrets.BEAM_TOKEN }}
-          BEAM_WORKSPACE_ID: ${{ secrets.BEAM_WORKSPACE_ID }}
+          # BEAM_TOKEN: ${{ secrets.BEAM_TOKEN }}
+          # BEAM_WORKSPACE_ID: ${{ secrets.BEAM_WORKSPACE_ID }}
           BL_API_KEY: ${{ secrets.BL_API_KEY }}
           BL_WORKSPACE: ${{ secrets.BL_WORKSPACE }}
           CLOUDFLARE_SANDBOX_URL: ${{ secrets.CLOUDFLARE_SANDBOX_URL }}

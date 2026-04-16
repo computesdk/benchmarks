@@ -30,9 +30,9 @@ jobs:
     timeout-minutes: 60
     strategy:
       fail-fast: false
-      matrix:
-        provider:
-          - browserbase
+      # matrix:
+        #provider:
+          # - browserbase
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -43,9 +43,9 @@ jobs:
       - name: Clear stale results from checkout
         run: rm -rf results/browser/
       - name: Run browser benchmark
-        env:
-          BROWSERBASE_API_KEY: ${{ secrets.BROWSERBASE_API_KEY }}
-          BROWSERBASE_PROJECT_ID: ${{ secrets.BROWSERBASE_PROJECT_ID }}
+        # env:
+          # BROWSERBASE_API_KEY: ${{ secrets.BROWSERBASE_API_KEY }}
+          # BROWSERBASE_PROJECT_ID: ${{ secrets.BROWSERBASE_PROJECT_ID }}
         run: |
           npm run bench -- \
             --mode browser \
