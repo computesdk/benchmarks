@@ -48,7 +48,7 @@ jobs:
           - aws-s3
           - cloudflare-r2
           - tigris
-        file_size: ['1MB', '4MB', '10MB', '16MB']
+        file_size: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.file_size != '' && fromJson(format('["{0}"]', github.event.inputs.file_size))) || fromJson('["1MB","4MB","10MB","16MB"]') }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -78,12 +78,7 @@ jobs:
           TIGRIS_STORAGE_SECRET_ACCESS_KEY: ${{ secrets.TIGRIS_STORAGE_SECRET_ACCESS_KEY }}
           TIGRIS_STORAGE_BUCKET: ${{ secrets.TIGRIS_STORAGE_BUCKET }}
         run: |
-          # Determine file size: use input for manual runs, matrix for PRs/schedules
-          if [ -n "${{ github.event.inputs.file_size }}" ]; then
-            FILE_SIZE="${{ github.event.inputs.file_size }}"
-          else
-            FILE_SIZE="${{ matrix.file_size }}"
-          fi
+          FILE_SIZE="${{ matrix.file_size }}"
           npm run bench -- \
             --mode storage \
             --provider ${{ matrix.provider }} \
