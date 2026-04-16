@@ -95,7 +95,7 @@ async function runStorageIteration(
 }
 
 export async function runStorageBenchmark(config: StorageProviderConfig, fileSizeBytes: number): Promise<StorageBenchmarkResult> {
-  const { name, iterations = 100, timeout = 30000, requiredEnvVars, createStorage, bucket } = config;
+  const { name, iterations = 100, timeout = 30000, concurrency = 1, requiredEnvVars, createStorage, bucket } = config;
 
   // Check if all required credentials are available
   const missingVars = requiredEnvVars.filter(v => !process.env[v]);
@@ -121,26 +121,49 @@ export async function runStorageBenchmark(config: StorageProviderConfig, fileSiz
   const fileSizeLabel = `${(fileSizeBytes / 1024 / 1024).toFixed(0)}MB`;
   const testData = crypto.randomBytes(fileSizeBytes);
 
-  console.log(`\n--- Storage Benchmarking: ${name} (${fileSizeLabel}, ${iterations} iterations) ---`);
+  const workerCount = Math.max(1, Math.min(concurrency, iterations));
+  console.log(`\n--- Storage Benchmarking: ${name} (${fileSizeLabel}, ${iterations} iterations, concurrency ${workerCount}) ---`);
 
-  for (let i = 0; i < iterations; i++) {
-    console.log(`  Iteration ${i + 1}/${iterations}...`);
+  let nextIndex = 0;
+  let completed = 0;
+  const logEvery = workerCount > 1 ? Math.max(1, Math.floor(iterations / 20)) : 1;
 
-    try {
-      const iterationResult = await runStorageIteration(storage, bucket, testData, timeout);
-      results.push(iterationResult);
+  async function worker(): Promise<void> {
+    while (true) {
+      const iterationIndex = nextIndex++;
+      if (iterationIndex >= iterations) return;
 
-      if (iterationResult.error) {
-        console.log(`    FAILED: ${iterationResult.error}`);
-      } else {
-        console.log(`    Upload: ${(iterationResult.uploadMs / 1000).toFixed(2)}s, Download: ${(iterationResult.downloadMs / 1000).toFixed(2)}s, Throughput: ${iterationResult.throughputMbps.toFixed(2)} Mbps`);
+      if (workerCount === 1) {
+        console.log(`  Iteration ${iterationIndex + 1}/${iterations}...`);
       }
-    } catch (err) {
-      const error = err instanceof Error ? err.message : String(err);
-      console.log(`    FAILED: ${error}`);
-      results.push({ uploadMs: 0, downloadMs: 0, throughputMbps: 0, fileSizeBytes, error });
+
+      try {
+        const iterationResult = await runStorageIteration(storage, bucket, testData, timeout);
+        results[iterationIndex] = iterationResult;
+
+        if (workerCount === 1) {
+          if (iterationResult.error) {
+            console.log(`    FAILED: ${iterationResult.error}`);
+          } else {
+            console.log(`    Upload: ${(iterationResult.uploadMs / 1000).toFixed(2)}s, Download: ${(iterationResult.downloadMs / 1000).toFixed(2)}s, Throughput: ${iterationResult.throughputMbps.toFixed(2)} Mbps`);
+          }
+        } else if (iterationResult.error) {
+          console.log(`  Iteration ${iterationIndex + 1}/${iterations} FAILED: ${iterationResult.error}`);
+        }
+      } catch (err) {
+        const error = err instanceof Error ? err.message : String(err);
+        results[iterationIndex] = { uploadMs: 0, downloadMs: 0, throughputMbps: 0, fileSizeBytes, error };
+        console.log(`  Iteration ${iterationIndex + 1}/${iterations} FAILED: ${error}`);
+      } finally {
+        completed++;
+        if (workerCount > 1 && (completed % logEvery === 0 || completed === iterations)) {
+          console.log(`  Progress: ${completed}/${iterations}`);
+        }
+      }
     }
   }
+
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
 
   const successful = results.filter(r => !r.error);
 

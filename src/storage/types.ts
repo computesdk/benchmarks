@@ -5,6 +5,8 @@ export interface StorageProviderConfig {
   iterations?: number;
   /** Timeout per operation in ms (default: 30000) */
   timeout?: number;
+  /** Number of parallel storage iterations to run (default: 1) */
+  concurrency?: number;
   /** Environment variables that must all be set to run this benchmark */
   requiredEnvVars: string[];
   /** Creates a storage instance */

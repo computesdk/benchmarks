@@ -16,6 +16,10 @@ on:
         description: 'Iterations per provider'
         required: false
         default: '100'
+      storage_concurrency:
+        description: 'Parallel storage iterations per job'
+        required: false
+        default: '1'
       file_size:
         description: 'File size to test (leave empty to run all)'
         required: false
@@ -83,6 +87,7 @@ jobs:
             --mode storage \
             --provider ${{ matrix.provider }} \
             --file-size $FILE_SIZE \
+            --storage-concurrency ${{ (github.event_name == 'schedule' && '16') || (github.event_name == 'pull_request' && '8') || github.event.inputs.storage_concurrency || '1' }} \
             --iterations ${{ (github.event_name == 'schedule' && '10000') || github.event.inputs.iterations || (github.event_name == 'pull_request' && '1000') || '100' }}
       - name: Upload results
         if: always()
