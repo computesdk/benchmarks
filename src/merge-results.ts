@@ -1,7 +1,7 @@
 /**
  * Merge per-provider benchmark results into combined result files.
  *
- * Usage: tsx src/merge-results.ts --input <artifacts-dir> [--mode storage|browser]
+ * Usage: tsx src/merge-results.ts --input <artifacts-dir> [--mode storage|browser|ai-gateway]
  *
  * By default, merges sandbox benchmark results: reads latest.json files from
  * the input directory, groups by mode (sequential/staggered/burst), computes
@@ -14,6 +14,10 @@
  * With --mode browser, merges browser benchmark results: deduplicates by
  * provider, computes browser-specific composite scores, and writes combined
  * files to results/browser/latest.json.
+ *
+ * With --mode ai-gateway, merges AI gateway benchmark results grouped by
+ * scenario, computes gateway-specific composite scores, and writes combined
+ * files to results/ai_gateway/<scenario>/latest.json.
  */
 import fs from 'fs';
 import path from 'path';
@@ -21,10 +25,12 @@ import { fileURLToPath } from 'url';
 import { computeCompositeScores } from './sandbox/scoring.js';
 import { computeStorageCompositeScores, sortStorageByCompositeScore } from './storage/scoring.js';
 import { computeBrowserCompositeScores, sortBrowserByCompositeScore } from './browser/scoring.js';
+import { computeAIGatewayCompositeScores, sortAIGatewayByCompositeScore } from './ai-gateway/scoring.js';
 import { printResultsTable, writeResultsJson } from './sandbox/table.js';
 import type { BenchmarkResult } from './sandbox/types.js';
 import type { StorageBenchmarkResult } from './storage/types.js';
 import type { BrowserBenchmarkResult } from './browser/types.js';
+import type { AIGatewayBenchmarkResult } from './ai-gateway/types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -38,7 +44,7 @@ function getArgValue(flag: string): string | undefined {
 const inputDir = getArgValue('--input');
 const mergeMode = getArgValue('--mode');
 if (!inputDir) {
-  console.error('Usage: tsx src/merge-results.ts --input <artifacts-dir> [--mode storage|browser]');
+  console.error('Usage: tsx src/merge-results.ts --input <artifacts-dir> [--mode storage|browser|ai-gateway]');
   process.exit(1);
 }
 
@@ -307,6 +313,35 @@ function printBrowserResultsTable(results: BrowserBenchmarkResult[]): void {
   console.log('='.repeat(110));
 }
 
+function printAIGatewayResultsTable(results: AIGatewayBenchmarkResult[], scenario: string): void {
+  const sorted = sortAIGatewayByCompositeScore(results);
+
+  console.log(`\n${'='.repeat(108)}`);
+  console.log(`  AI GATEWAY BENCHMARK RESULTS - ${scenario.toUpperCase()}`);
+  console.log('='.repeat(108));
+  console.log(
+    ['Provider', 'Score', 'First Token', 'Total', 'Tok/sec', 'Status']
+      .map((h, i) => h.padEnd([24, 8, 14, 14, 14, 12][i]))
+      .join(' | ')
+  );
+  console.log([24, 8, 14, 14, 14, 12].map(w => '-'.repeat(w)).join('-+-'));
+
+  for (const r of sorted) {
+    if (r.skipped) {
+      console.log([r.provider.padEnd(24), '--'.padEnd(8), '--'.padEnd(14), '--'.padEnd(14), '--'.padEnd(14), 'SKIPPED'.padEnd(12)].join(' | '));
+      continue;
+    }
+    const ok = r.iterations.filter(i => !i.error).length;
+    const total = r.iterations.length;
+    const score = r.compositeScore !== undefined ? r.compositeScore.toFixed(1) : '--';
+    const first = (r.summary.firstTokenMs.median / 1000).toFixed(2) + 's';
+    const tot = (r.summary.totalMs.median / 1000).toFixed(2) + 's';
+    const tps = r.summary.outputTokensPerSec.median.toFixed(1);
+    console.log([r.provider.padEnd(24), score.padEnd(8), first.padEnd(14), tot.padEnd(14), tps.padEnd(14), `${ok}/${total} OK`.padEnd(12)].join(' | '));
+  }
+  console.log('='.repeat(108));
+}
+
 /**
  * Merge browser benchmark results.
  */
@@ -366,7 +401,74 @@ async function mainBrowser() {
   console.log(`Copied latest: ${latestPath}`);
 }
 
-const runner = mergeMode === 'storage' ? mainStorage : mergeMode === 'browser' ? mainBrowser : main;
+async function mainAIGateway() {
+  const jsonFiles: string[] = [];
+  function walk(dir: string) {
+    if (!fs.existsSync(dir)) return;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name === 'latest.json') jsonFiles.push(full);
+    }
+  }
+  walk(inputDir!);
+
+  if (jsonFiles.length === 0) {
+    console.error(`No latest.json files found in ${inputDir}`);
+    process.exit(1);
+  }
+
+  console.log(`Found ${jsonFiles.length} result files`);
+
+  const byScenario: Record<string, { results: { result: AIGatewayBenchmarkResult; fromSingleProvider: boolean }[] }> = {};
+
+  for (const file of jsonFiles) {
+    const raw = JSON.parse(fs.readFileSync(file, 'utf-8')) as { results: AIGatewayBenchmarkResult[] };
+    const fromSingleProvider = raw.results.length === 1;
+    const scenario = path.basename(path.dirname(file));
+
+    if (!byScenario[scenario]) byScenario[scenario] = { results: [] };
+    for (const result of raw.results) {
+      byScenario[scenario].results.push({ result, fromSingleProvider });
+    }
+  }
+
+  for (const [scenario, { results }] of Object.entries(byScenario)) {
+    const seen = new Map<string, { result: AIGatewayBenchmarkResult; fromSingleProvider: boolean }>();
+    for (const entry of results) {
+      const existing = seen.get(entry.result.provider);
+      if (!existing || (entry.fromSingleProvider && !existing.fromSingleProvider)) {
+        seen.set(entry.result.provider, entry);
+      }
+    }
+
+    const deduped = Array.from(seen.values()).map(e => e.result);
+    console.log(`\nMerging ${deduped.length} provider results for mode: ai-gateway/${scenario}`);
+
+    computeAIGatewayCompositeScores(deduped);
+    printAIGatewayResultsTable(deduped, scenario);
+
+    const { writeAIGatewayResultsJson } = await import('./ai-gateway/benchmark.js');
+    const timestamp = new Date().toISOString().slice(0, 10);
+    const resultsDir = path.resolve(ROOT, `results/ai_gateway/${scenario}`);
+    fs.mkdirSync(resultsDir, { recursive: true });
+
+    const outPath = path.join(resultsDir, `${timestamp}.json`);
+    await writeAIGatewayResultsJson(deduped, outPath);
+
+    const latestPath = path.join(resultsDir, 'latest.json');
+    fs.copyFileSync(outPath, latestPath);
+    console.log(`Copied latest: ${latestPath}`);
+  }
+}
+
+const runner = mergeMode === 'storage'
+  ? mainStorage
+  : mergeMode === 'browser'
+    ? mainBrowser
+    : mergeMode === 'ai-gateway'
+      ? mainAIGateway
+      : main;
 runner().catch(err => {
   console.error('Merge failed:', err);
   process.exit(1);
