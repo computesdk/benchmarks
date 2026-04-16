@@ -7,14 +7,14 @@ on:
       - 'src/util/**'
       - 'src/run.ts'
       - 'package.json'
-      - '.github/workflows/compute-perf-benchmarks.yml'
+      - '.github/workflows/linux-kernel-builder-benchmarks.yml'
   pull_request:
     paths:
       - 'src/compute-perf/**'
       - 'src/util/**'
       - 'src/run.ts'
       - 'package.json'
-      - '.github/workflows/compute-perf-benchmarks.yml'
+      - '.github/workflows/linux-kernel-builder-benchmarks.yml'
   workflow_dispatch:
     inputs:
       iterations:
