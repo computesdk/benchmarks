@@ -161,7 +161,7 @@ npm run bench:burst                    # Burst only
 
 ### Provider Integration
 
-**ComputeSDK**: Uses ComputeSDK for consistency and ease-of-use (e2b, daytona, blaxel, modal, vercel, hopx, codesandbox, runloop, namespace)
+**ComputeSDK and direct SDK adapters**: Uses ComputeSDK where available and thin direct adapters otherwise for consistency and ease-of-use (e2b, daytona, blaxel, modal, vercel, hopx, codesandbox, runloop, namespace, upstash-box)
 
 ### Provider Execution Order
 
