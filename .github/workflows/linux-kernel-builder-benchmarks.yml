@@ -1,0 +1,180 @@
+name: Linux Kernel Builder Benchmark
+
+on:
+  push:
+    paths:
+      - 'src/linux-kernel-builder/**'
+      - 'src/util/**'
+      - 'src/run.ts'
+      - 'package.json'
+      - '.github/workflows/linux-kernel-builder-benchmarks.yml'
+  pull_request:
+    paths:
+      - 'src/linux-kernel-builder/**'
+      - 'src/util/**'
+      - 'src/run.ts'
+      - 'package.json'
+      - '.github/workflows/linux-kernel-builder-benchmarks.yml'
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: 'Iterations per provider'
+        required: false
+        default: '1'
+
+concurrency:
+  group: linux-kernel-builder-benchmarks
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  bench:
+    name: LKB ${{ matrix.provider }}
+    runs-on: namespace-profile-default
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        provider:
+          - blaxel
+          - daytona
+          - e2b
+          - hopx
+          - namespace
+          - runloop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run Linux Kernel Builder benchmark (LKB)
+        env:
+          BL_API_KEY: ${{ secrets.BL_API_KEY }}
+          BL_WORKSPACE: ${{ secrets.BL_WORKSPACE }}
+          DAYTONA_API_KEY: ${{ secrets.DAYTONA_API_KEY }}
+          E2B_API_KEY: ${{ secrets.E2B_API_KEY }}
+          HOPX_API_KEY: ${{ secrets.HOPX_API_KEY }}
+          NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
+          RUNLOOP_API_KEY: ${{ secrets.RUNLOOP_API_KEY }}
+        run: |
+          npm run bench -- \
+            --mode linux-kernel-builder \
+            --provider ${{ matrix.provider }} \
+            --iterations ${{ github.event.inputs.iterations || '1' }}
+      - name: Upload Linux Kernel Builder artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-kernel-builder-${{ matrix.provider }}
+          path: results/linux_kernel_builder/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  collect:
+    name: Collect LKB Results
+    runs-on: namespace-profile-default
+    needs: bench
+    if: always() && github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download all LKB artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+          pattern: linux-kernel-builder-*
+      - name: Post results to PR
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            function walk(dir, out) {
+              if (!fs.existsSync(dir)) return;
+              for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+                const full = path.join(dir, entry.name);
+                if (entry.isDirectory()) walk(full, out);
+                else if (entry.name === 'latest.json') out.push(full);
+              }
+            }
+
+            const latestFiles = [];
+            walk('artifacts', latestFiles);
+
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const marker = '## Linux Kernel Builder Benchmark Results';
+
+            let body = `${marker}\n\n`;
+
+            if (latestFiles.length === 0) {
+              body += '> No Linux Kernel Builder results were generated.\n\n';
+            } else {
+              const byProvider = new Map();
+
+              for (const file of latestFiles) {
+                const raw = JSON.parse(fs.readFileSync(file, 'utf-8'));
+                for (const r of raw.results || []) {
+                  byProvider.set(r.provider, r);
+                }
+              }
+
+              const results = Array.from(byProvider.values())
+                .sort((a, b) => (b.compositeScore || 0) - (a.compositeScore || 0));
+
+              body += '| # | Provider | Score | Build Median | Build P95 | Build P99 | Status | Sample Failure |\n';
+              body += '|---|----------|-------|--------------|-----------|-----------|--------|----------------|\n';
+
+              results.forEach((r, i) => {
+                if (r.skipped) {
+                  const reason = (r.skipReason || '').replace(/\n/g, ' ').slice(0, 120);
+                  body += `| ${i + 1} | ${r.provider} | -- | -- | -- | -- | SKIPPED | ${reason || '--'} |\n`;
+                  return;
+                }
+
+                const score = r.compositeScore !== undefined ? r.compositeScore.toFixed(1) : '--';
+                const ok = (r.iterations || []).filter(it => !it.error).length;
+                const total = (r.iterations || []).length;
+                const hasSuccess = ok > 0;
+                const med = hasSuccess && r.summary?.buildMs ? `${(r.summary.buildMs.median / 1000).toFixed(2)}s` : '--';
+                const p95 = hasSuccess && r.summary?.buildMs ? `${(r.summary.buildMs.p95 / 1000).toFixed(2)}s` : '--';
+                const p99 = hasSuccess && r.summary?.buildMs ? `${(r.summary.buildMs.p99 / 1000).toFixed(2)}s` : '--';
+                const firstError = (r.iterations || []).find(it => it.error)?.error || '';
+                const compactError = firstError.replace(/\n/g, ' ').slice(0, 120);
+                body += `| ${i + 1} | ${r.provider} | ${score} | ${med} | ${p95} | ${p99} | ${ok}/${total} | ${compactError || '--'} |\n`;
+              });
+
+              body += '\n';
+            }
+
+            body += `---\n*[View full run](${runUrl}) · JSON artifacts available in the run artifacts*`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.body.startsWith(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
