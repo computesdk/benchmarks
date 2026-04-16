@@ -28,6 +28,7 @@ concurrency:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   bench:
@@ -74,3 +75,102 @@ jobs:
           path: results/linux_kernel_builder/
           if-no-files-found: ignore
           retention-days: 7
+
+  collect:
+    name: Collect LKB Results
+    runs-on: namespace-profile-default
+    needs: bench
+    if: always() && github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download all LKB artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+          pattern: linux-kernel-builder-*
+      - name: Post results to PR
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            function walk(dir, out) {
+              if (!fs.existsSync(dir)) return;
+              for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+                const full = path.join(dir, entry.name);
+                if (entry.isDirectory()) walk(full, out);
+                else if (entry.name === 'latest.json') out.push(full);
+              }
+            }
+
+            const latestFiles = [];
+            walk('artifacts', latestFiles);
+
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const marker = '## Linux Kernel Builder Benchmark Results';
+
+            let body = `${marker}\n\n`;
+
+            if (latestFiles.length === 0) {
+              body += '> No Linux Kernel Builder results were generated.\n\n';
+            } else {
+              const byProvider = new Map();
+
+              for (const file of latestFiles) {
+                const raw = JSON.parse(fs.readFileSync(file, 'utf-8'));
+                for (const r of raw.results || []) {
+                  byProvider.set(r.provider, r);
+                }
+              }
+
+              const results = Array.from(byProvider.values())
+                .sort((a, b) => (b.compositeScore || 0) - (a.compositeScore || 0));
+
+              body += '| # | Provider | Score | Build Median | Build P95 | Build P99 | Status |\n';
+              body += '|---|----------|-------|--------------|-----------|-----------|--------|\n';
+
+              results.forEach((r, i) => {
+                if (r.skipped) {
+                  body += `| ${i + 1} | ${r.provider} | -- | -- | -- | -- | SKIPPED |\n`;
+                  return;
+                }
+
+                const score = r.compositeScore !== undefined ? r.compositeScore.toFixed(1) : '--';
+                const med = r.summary?.buildMs ? `${(r.summary.buildMs.median / 1000).toFixed(2)}s` : '--';
+                const p95 = r.summary?.buildMs ? `${(r.summary.buildMs.p95 / 1000).toFixed(2)}s` : '--';
+                const p99 = r.summary?.buildMs ? `${(r.summary.buildMs.p99 / 1000).toFixed(2)}s` : '--';
+                const ok = (r.iterations || []).filter(it => !it.error).length;
+                const total = (r.iterations || []).length;
+                body += `| ${i + 1} | ${r.provider} | ${score} | ${med} | ${p95} | ${p99} | ${ok}/${total} |\n`;
+              });
+
+              body += '\n';
+            }
+
+            body += `---\n*[View full run](${runUrl}) · JSON artifacts available in the run artifacts*`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.body.startsWith(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
