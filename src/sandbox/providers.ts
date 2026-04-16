@@ -1,5 +1,6 @@
 import { e2b } from '@computesdk/e2b';
 import { daytona } from '@computesdk/daytona';
+import { archil } from '@computesdk/archil';
 import { blaxel } from '@computesdk/blaxel';
 import { modal } from '@computesdk/modal';
 import { vercel } from '@computesdk/vercel';
@@ -20,6 +21,11 @@ import type { ProviderConfig } from './types.js';
  */
 export const providers: ProviderConfig[] = [
   // --- Direct mode (provider SDK packages) ---
+  {
+    name: 'archil',
+    requiredEnvVars: ['ARCHIL_API_KEY', 'ARCHIL_REGION'],
+    createCompute: () => archil(),
+  },
   {
     name: 'blaxel',
     requiredEnvVars: ['BL_API_KEY', 'BL_WORKSPACE'],

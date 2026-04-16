@@ -9,6 +9,7 @@
     "bench:staggered": "tsx src/run.ts --mode staggered",
     "bench:burst": "tsx src/run.ts --mode burst",
     "bench:blaxel": "tsx src/run.ts --provider blaxel",
+    "bench:archil": "tsx src/run.ts --provider archil",
     "bench:codesandbox": "tsx src/run.ts --provider codesandbox",
     "bench:daytona": "tsx src/run.ts --provider daytona",
     "bench:e2b": "tsx src/run.ts --provider e2b",
@@ -39,6 +40,7 @@
     "generate-pricing-svg": "tsx src/sandbox/generate-pricing-svg.ts"
   },
   "dependencies": {
+    "@computesdk/archil": "^0.2.0",
     "@computesdk/beam": "^0.1.1",
     "@computesdk/blaxel": "^1.6.7",
     "@computesdk/browserbase": "^0.3.0",
