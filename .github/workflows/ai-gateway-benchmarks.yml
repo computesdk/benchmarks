@@ -126,7 +126,7 @@ jobs:
                 const score = r.compositeScore !== undefined ? r.compositeScore.toFixed(1) : '--';
                 const first = (r.summary.firstTokenMs.median / 1000).toFixed(2) + 's';
                 const total = (r.summary.totalMs.median / 1000).toFixed(2) + 's';
-                const tps = r.summary.outputTokensPerSec.median.toFixed(1);
+                const tps = r.throughputAvailable ? r.summary.outputTokensPerSec.median.toFixed(1) : '--';
                 const ok = r.iterations.filter(it => !it.error).length;
                 const count = r.iterations.length;
                 body += `| ${i + 1} | ${r.provider} | ${score} | ${first} | ${total} | ${tps} | ${ok}/${count} |\n`;

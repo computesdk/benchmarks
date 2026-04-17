@@ -15,7 +15,7 @@ export interface AIGatewayTimingResult {
   firstTokenMs: number;
   totalMs: number;
   outputTokens: number;
-  outputTokensPerSec: number;
+  outputTokensPerSec?: number;
   statusCode?: number;
   error?: string;
 }
@@ -33,6 +33,7 @@ export interface AIGatewayBenchmarkResult {
   model: string;
   iterations: AIGatewayTimingResult[];
   summary: AIGatewayStats;
+  throughputAvailable?: boolean;
   compositeScore?: number;
   successRate?: number;
   skipped?: boolean;

@@ -336,7 +336,7 @@ function printAIGatewayResultsTable(results: AIGatewayBenchmarkResult[], scenari
     const score = r.compositeScore !== undefined ? r.compositeScore.toFixed(1) : '--';
     const first = (r.summary.firstTokenMs.median / 1000).toFixed(2) + 's';
     const tot = (r.summary.totalMs.median / 1000).toFixed(2) + 's';
-    const tps = r.summary.outputTokensPerSec.median.toFixed(1);
+    const tps = r.throughputAvailable ? r.summary.outputTokensPerSec.median.toFixed(1) : '--';
     console.log([r.provider.padEnd(24), score.padEnd(8), first.padEnd(14), tot.padEnd(14), tps.padEnd(14), `${ok}/${total} OK`.padEnd(12)].join(' | '));
   }
   console.log('='.repeat(108));

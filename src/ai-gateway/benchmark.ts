@@ -47,6 +47,10 @@ function buildCompletionBody(
     max_completion_tokens: request.maxTokens,
   };
 
+  if (request.stream) {
+    body.stream_options = { include_usage: true };
+  }
+
   return body;
 }
 
@@ -78,7 +82,7 @@ async function runNonStreamingIteration(
         firstTokenMs: 0,
         totalMs,
         outputTokens: 0,
-        outputTokensPerSec: 0,
+        outputTokensPerSec: undefined,
         statusCode,
         error: `HTTP ${statusCode}: ${bodyText.slice(0, 200)}`,
       };
@@ -92,7 +96,7 @@ async function runNonStreamingIteration(
       firstTokenMs: totalMs,
       totalMs,
       outputTokens,
-      outputTokensPerSec: outputTokens > 0 ? outputTokens / seconds : 0,
+      outputTokensPerSec: outputTokens > 0 ? outputTokens / seconds : undefined,
       statusCode,
     };
   } catch (err) {
@@ -100,7 +104,7 @@ async function runNonStreamingIteration(
       firstTokenMs: 0,
       totalMs: performance.now() - start,
       outputTokens: 0,
-      outputTokensPerSec: 0,
+      outputTokensPerSec: undefined,
       error: err instanceof Error ? err.message : String(err),
     };
   }
@@ -132,7 +136,7 @@ async function runStreamingIteration(
         firstTokenMs: 0,
         totalMs: performance.now() - start,
         outputTokens: 0,
-        outputTokensPerSec: 0,
+        outputTokensPerSec: undefined,
         statusCode,
         error: `HTTP ${statusCode}: ${errorText.slice(0, 200)}`,
       };
@@ -141,7 +145,7 @@ async function runStreamingIteration(
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let firstTokenMs = 0;
-    let outputTokens = 0;
+    let outputTokens: number | undefined;
     let done = false;
 
     while (!done) {
@@ -150,19 +154,20 @@ async function runStreamingIteration(
       if (done) break;
       const chunk = decoder.decode(readResult.value, { stream: true });
 
-      if (chunk.includes('data:') && firstTokenMs === 0) {
-        firstTokenMs = performance.now() - start;
-      }
-
       const lines = chunk.split('\n').filter(line => line.startsWith('data: '));
       for (const line of lines) {
         const data = line.slice(6).trim();
         if (!data || data === '[DONE]') continue;
         try {
           const payload = JSON.parse(data);
+          const usageTokens = extractCompletionTokens(payload);
+          if (usageTokens > 0) {
+            outputTokens = usageTokens;
+          }
+
           const tokenText = payload?.choices?.[0]?.delta?.content;
-          if (typeof tokenText === 'string' && tokenText.length > 0) {
-            outputTokens += 1;
+          if (firstTokenMs === 0 && typeof tokenText === 'string' && tokenText.length > 0) {
+            firstTokenMs = performance.now() - start;
           }
         } catch {
           // Ignore malformed partial SSE chunks.
@@ -177,8 +182,8 @@ async function runStreamingIteration(
     return {
       firstTokenMs: effectiveStart,
       totalMs,
-      outputTokens,
-      outputTokensPerSec: outputTokens > 0 ? outputTokens / generationSeconds : 0,
+      outputTokens: outputTokens ?? 0,
+      outputTokensPerSec: outputTokens && outputTokens > 0 ? outputTokens / generationSeconds : undefined,
       statusCode,
     };
   } catch (err) {
@@ -186,7 +191,7 @@ async function runStreamingIteration(
       firstTokenMs: 0,
       totalMs: performance.now() - start,
       outputTokens: 0,
-      outputTokensPerSec: 0,
+      outputTokensPerSec: undefined,
       error: err instanceof Error ? err.message : String(err),
     };
   }
@@ -210,6 +215,7 @@ export async function runAIGatewayBenchmark(
         totalMs: { median: 0, p95: 0, p99: 0 },
         outputTokensPerSec: { median: 0, p95: 0, p99: 0 },
       },
+      throughputAvailable: false,
       skipped: true,
       skipReason: `Missing: ${missingVars.join(', ')}`,
     };
@@ -238,6 +244,10 @@ export async function runAIGatewayBenchmark(
   }
 
   const successful = results.filter(r => !r.error);
+  const throughputValues = successful
+    .map(r => r.outputTokensPerSec)
+    .filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
+
   return {
     provider: name,
     mode: 'ai-gateway',
@@ -247,8 +257,9 @@ export async function runAIGatewayBenchmark(
     summary: {
       firstTokenMs: computeStats(successful.map(r => r.firstTokenMs).filter(v => v > 0)),
       totalMs: computeStats(successful.map(r => r.totalMs)),
-      outputTokensPerSec: computeStats(successful.map(r => r.outputTokensPerSec)),
+      outputTokensPerSec: computeStats(throughputValues),
     },
+    throughputAvailable: throughputValues.length > 0,
   };
 }
 
@@ -269,7 +280,7 @@ export async function writeAIGatewayResultsJson(results: AIGatewayBenchmarkResul
       firstTokenMs: round(i.firstTokenMs),
       totalMs: round(i.totalMs),
       outputTokens: i.outputTokens,
-      outputTokensPerSec: round(i.outputTokensPerSec),
+      ...(i.outputTokensPerSec !== undefined ? { outputTokensPerSec: round(i.outputTokensPerSec) } : {}),
       ...(i.statusCode !== undefined ? { statusCode: i.statusCode } : {}),
       ...(i.error ? { error: i.error } : {}),
     })),
@@ -278,6 +289,7 @@ export async function writeAIGatewayResultsJson(results: AIGatewayBenchmarkResul
       totalMs: roundStats(r.summary.totalMs),
       outputTokensPerSec: roundStats(r.summary.outputTokensPerSec),
     },
+    ...(r.throughputAvailable !== undefined ? { throughputAvailable: r.throughputAvailable } : {}),
     ...(r.compositeScore !== undefined ? { compositeScore: round(r.compositeScore) } : {}),
     ...(r.successRate !== undefined ? { successRate: round(r.successRate) } : {}),
     ...(r.skipped ? { skipped: r.skipped, skipReason: r.skipReason } : {}),
