@@ -35,6 +35,26 @@ function normalizeBaseUrl(baseUrl: string): string {
   return baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
 }
 
+function buildCompletionBody(
+  provider: AIGatewayProviderConfig,
+  request: { prompt: string; maxTokens: number; stream: boolean },
+) {
+  const body: Record<string, unknown> = {
+    model: provider.model,
+    messages: [{ role: 'user', content: request.prompt }],
+    temperature: 0,
+    stream: request.stream,
+  };
+
+  if (provider.name === 'cloudflare-ai-gateway') {
+    body.max_completion_tokens = request.maxTokens;
+  } else {
+    body.max_tokens = request.maxTokens;
+  }
+
+  return body;
+}
+
 async function runNonStreamingIteration(
   provider: AIGatewayProviderConfig,
   timeout: number,
@@ -51,13 +71,7 @@ async function runNonStreamingIteration(
         authorization: `Bearer ${provider.apiKey}`,
         ...provider.defaultHeaders,
       },
-      body: JSON.stringify({
-        model: provider.model,
-        messages: [{ role: 'user', content: request.prompt }],
-        temperature: 0,
-        max_tokens: request.maxTokens,
-        stream: false,
-      }),
+      body: JSON.stringify(buildCompletionBody(provider, { ...request, stream: false })),
     }), timeout, 'Gateway request timed out');
 
     const totalMs = performance.now() - start;
@@ -113,13 +127,7 @@ async function runStreamingIteration(
         authorization: `Bearer ${provider.apiKey}`,
         ...provider.defaultHeaders,
       },
-      body: JSON.stringify({
-        model: provider.model,
-        messages: [{ role: 'user', content: request.prompt }],
-        temperature: 0,
-        max_tokens: request.maxTokens,
-        stream: true,
-      }),
+      body: JSON.stringify(buildCompletionBody(provider, { ...request, stream: true })),
     }), timeout, 'Gateway request timed out');
 
     const statusCode = response.status;
