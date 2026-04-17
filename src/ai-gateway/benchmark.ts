@@ -44,13 +44,8 @@ function buildCompletionBody(
     messages: [{ role: 'user', content: request.prompt }],
     temperature: 0,
     stream: request.stream,
+    max_completion_tokens: request.maxTokens,
   };
-
-  if (provider.name === 'cloudflare-ai-gateway') {
-    body.max_completion_tokens = request.maxTokens;
-  } else {
-    body.max_tokens = request.maxTokens;
-  }
 
   return body;
 }
