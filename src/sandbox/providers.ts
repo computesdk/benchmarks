@@ -82,6 +82,12 @@ export const providers: ProviderConfig[] = [
     createCompute: () => sprites({ apiKey: process.env.SPRITES_TOKEN! }),
   },
   {
+    name: 'upstash',
+    requiredEnvVars: ['UPSTASH_BOX_API_KEY'],
+    createCompute: () => upstash({ apiKey: process.env.UPSTASH_BOX_API_KEY! }),
+    sandboxOptions: { ephemeral: true },
+  },
+  {
     name: 'vercel',
     requiredEnvVars: ['VERCEL_TOKEN', 'VERCEL_TEAM_ID', 'VERCEL_PROJECT_ID'],
     createCompute: () => vercel({ token: process.env.VERCEL_TOKEN!, teamId: process.env.VERCEL_TEAM_ID!, projectId: process.env.VERCEL_PROJECT_ID! }),
