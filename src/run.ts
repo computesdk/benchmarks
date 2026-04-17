@@ -244,7 +244,12 @@ async function runAIGateway(
 
   computeAIGatewayCompositeScores(results);
 
+  const models = Array.from(new Set(results.map(r => r.model).filter(Boolean)));
+
   console.log('\n--- AI Gateway Benchmark Results ---');
+  if (models.length > 0) {
+    console.log(`Model${models.length > 1 ? 's' : ''}: ${models.join(', ')}`);
+  }
   for (const r of results) {
     if (r.skipped) {
       console.log(`${r.provider}: SKIPPED (${r.skipReason})`);
