@@ -16,7 +16,7 @@ on:
         default: '50'
 
 concurrency:
-  group: ai-gateway-benchmarks
+  group: ai-gateway-benchmarks-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
