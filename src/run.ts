@@ -9,16 +9,20 @@ import { runConcurrentBenchmark } from './sandbox/concurrent.js';
 import { runStaggeredBenchmark } from './sandbox/staggered.js';
 import { runStorageBenchmark, writeStorageResultsJson } from './storage/benchmark.js';
 import { runBrowserBenchmark, writeBrowserResultsJson } from './browser/benchmark.js';
+import { runAIGatewayBenchmark, writeAIGatewayResultsJson } from './ai-gateway/benchmark.js';
 import { printResultsTable, writeResultsJson } from './sandbox/table.js';
 import { providers } from './sandbox/providers.js';
 import { storageProviders } from './storage/providers.js';
 import { browserProviders } from './browser/providers.js';
+import { aiGatewayProviders } from './ai-gateway/providers.js';
 import { computeCompositeScores } from './sandbox/scoring.js';
 import { computeStorageCompositeScores } from './storage/scoring.js';
 import { computeBrowserCompositeScores } from './browser/scoring.js';
+import { computeAIGatewayCompositeScores } from './ai-gateway/scoring.js';
 import type { BenchmarkResult, BenchmarkMode } from './sandbox/types.js';
 import type { StorageBenchmarkResult } from './storage/types.js';
 import type { BrowserBenchmarkResult } from './browser/types.js';
+import type { AIGatewayBenchmarkResult, AIGatewayScenario } from './ai-gateway/types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -31,6 +35,7 @@ const concurrency = parseInt(getArgValue(args, '--concurrency') || '100', 10);
 const storageConcurrency = parseInt(getArgValue(args, '--storage-concurrency') || '1', 10);
 const staggerDelay = parseInt(getArgValue(args, '--stagger-delay') || '200', 10);
 const fileSizeArg = getArgValue(args, '--file-size') || '10MB';
+const aiGatewayScenario = (getArgValue(args, '--ai-gateway-scenario') || 'short-nonstream') as AIGatewayScenario;
 
 function getArgValue(args: string[], flag: string): string | undefined {
   const idx = args.indexOf(flag);
@@ -38,22 +43,24 @@ function getArgValue(args: string[], flag: string): string | undefined {
 }
 
 /** Resolve which modes to run */
-function getModesToRun(): BenchmarkMode[] | ['storage'] | ['browser'] {
+function getModesToRun(): BenchmarkMode[] | ['storage'] | ['browser'] | ['ai-gateway'] {
   if (!rawMode) return ['sequential', 'staggered', 'burst'];
   if (rawMode === 'storage') return ['storage'];
   if (rawMode === 'browser') return ['browser'];
+  if (rawMode === 'ai-gateway') return ['ai-gateway'];
   const m = rawMode === 'concurrent' ? 'burst' : rawMode as BenchmarkMode;
   return [m];
 }
 
 /** Map mode to results subdirectory name */
-function modeToDir(m: BenchmarkMode | 'storage'): string {
+function modeToDir(m: BenchmarkMode | 'storage' | 'ai-gateway'): string {
   switch (m) {
     case 'sequential': return 'sequential_tti';
     case 'staggered': return 'staggered_tti';
     case 'burst':
     case 'concurrent': return 'burst_tti';
     case 'storage': return 'storage';
+    case 'ai-gateway': return 'ai_gateway';
     default: return `${m}_tti`;
   }
 }
@@ -218,6 +225,56 @@ async function runBrowser(toRun: typeof browserProviders): Promise<void> {
   console.log(`Copied latest: ${latestPath}`);
 }
 
+async function runAIGateway(
+  toRun: typeof aiGatewayProviders,
+  scenario: AIGatewayScenario,
+): Promise<void> {
+  console.log('\n' + '='.repeat(70));
+  console.log('  MODE: AI GATEWAY');
+  console.log(`  Scenario: ${scenario}`);
+  console.log(`  Iterations per provider: ${iterations}`);
+  console.log('='.repeat(70));
+
+  const results: AIGatewayBenchmarkResult[] = [];
+
+  for (const providerConfig of toRun) {
+    const result = await runAIGatewayBenchmark({ ...providerConfig, iterations }, scenario);
+    results.push(result);
+  }
+
+  computeAIGatewayCompositeScores(results);
+
+  const models = Array.from(new Set(results.map(r => r.model).filter(Boolean)));
+
+  console.log('\n--- AI Gateway Benchmark Results ---');
+  if (models.length > 0) {
+    console.log(`Model${models.length > 1 ? 's' : ''}: ${models.join(', ')}`);
+  }
+  for (const r of results) {
+    if (r.skipped) {
+      console.log(`${r.provider}: SKIPPED (${r.skipReason})`);
+      continue;
+    }
+    const ok = r.iterations.filter(i => !i.error).length;
+    const total = r.iterations.length;
+    console.log(`${r.provider}:`);
+    console.log(`  Total: ${(r.summary.totalMs.median / 1000).toFixed(2)}s (median), First token: ${(r.summary.firstTokenMs.median / 1000).toFixed(2)}s`);
+    console.log(`  Score: ${r.compositeScore?.toFixed(1) || '--'} (${ok}/${total} OK)`);
+  }
+
+  const timestamp = new Date().toISOString().slice(0, 10);
+  const subDir = modeToDir('ai-gateway');
+  const scenarioDir = path.resolve(__dirname, `../results/${subDir}/${scenario.replace(/-/g, '_')}`);
+  fs.mkdirSync(scenarioDir, { recursive: true });
+
+  const outPath = path.join(scenarioDir, `${timestamp}.json`);
+  await writeAIGatewayResultsJson(results, outPath);
+
+  const latestPath = path.join(scenarioDir, 'latest.json');
+  fs.copyFileSync(outPath, latestPath);
+  console.log(`Copied latest: ${latestPath}`);
+}
+
 async function main() {
   const modes = getModesToRun();
 
@@ -243,6 +300,31 @@ async function main() {
 
     await runBrowser(toRun);
     console.log('\nAll browser tests complete.');
+    return;
+  }
+
+  // Handle AI gateway mode separately
+  if (modes[0] === 'ai-gateway') {
+    console.log('ComputeSDK AI Gateway Benchmarks');
+    console.log(`Scenario: ${aiGatewayScenario}`);
+    console.log(`Date: ${new Date().toISOString()}\n`);
+
+    const toRun = providerFilter
+      ? aiGatewayProviders.filter(p => p.name === providerFilter)
+      : aiGatewayProviders;
+
+    if (toRun.length === 0) {
+      if (providerFilter) {
+        console.error(`Unknown AI gateway provider: ${providerFilter}`);
+        console.error(`Available: ${aiGatewayProviders.map(p => p.name).join(', ')}`);
+      } else {
+        console.error('No AI gateway providers configured. Add entries to src/ai-gateway/providers.ts.');
+      }
+      process.exit(1);
+    }
+
+    await runAIGateway(toRun, aiGatewayScenario);
+    console.log('\nAll AI gateway tests complete.');
     return;
   }
 

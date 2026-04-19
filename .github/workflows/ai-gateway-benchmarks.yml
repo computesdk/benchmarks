@@ -1,0 +1,172 @@
+name: AI Gateway Benchmark
+
+on:
+  pull_request:
+    paths:
+      - 'src/ai-gateway/**'
+      - 'src/util/**'
+      - 'src/run.ts'
+      - 'src/merge-results.ts'
+      - 'package.json'
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: 'Iterations per provider'
+        required: false
+        default: '50'
+
+concurrency:
+  group: ai-gateway-benchmarks-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  bench:
+    name: Bench ${{ matrix.provider }} ${{ matrix.scenario }}
+    runs-on: namespace-profile-default
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        provider:
+          - openrouter
+          - vercel-ai-gateway
+          - cloudflare-ai-gateway
+        scenario:
+          - short-nonstream
+          - short-stream
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - run: npm ci
+      - name: Clear stale results from checkout
+        run: rm -rf results/ai_gateway/
+      - name: Run AI gateway benchmark
+        env:
+          AI_GATEWAY_MODEL: ${{ secrets.AI_GATEWAY_MODEL }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_BASE_URL: ${{ secrets.OPENROUTER_BASE_URL }}
+          OPENROUTER_HTTP_REFERER: ${{ secrets.OPENROUTER_HTTP_REFERER }}
+          OPENROUTER_X_TITLE: ${{ secrets.OPENROUTER_X_TITLE }}
+          VERCEL_AI_GATEWAY_BASE_URL: ${{ secrets.VERCEL_AI_GATEWAY_BASE_URL }}
+          VERCEL_AI_GATEWAY_API_KEY: ${{ secrets.VERCEL_AI_GATEWAY_API_KEY }}
+          CLOUDFLARE_AI_GATEWAY_BASE_URL: ${{ secrets.CLOUDFLARE_AI_GATEWAY_BASE_URL }}
+          CLOUDFLARE_AI_GATEWAY_API_KEY: ${{ secrets.CLOUDFLARE_AI_GATEWAY_API_KEY }}
+        run: |
+          npm run bench -- \
+            --mode ai-gateway \
+            --provider ${{ matrix.provider }} \
+            --ai-gateway-scenario ${{ matrix.scenario }} \
+            --iterations ${{ github.event.inputs.iterations || '50' }}
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-gateway-results-${{ matrix.provider }}-${{ matrix.scenario }}
+          path: results/ai_gateway/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  collect:
+    name: Collect Results
+    runs-on: namespace-profile-default
+    needs: bench
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - run: npm ci
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+          pattern: ai-gateway-results-*
+      - name: Merge results
+        run: npx tsx src/merge-results.ts --input artifacts --mode ai-gateway
+      - name: Post results to PR
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const scenarios = ['short_nonstream', 'short_stream'];
+            let body = '## AI Gateway Benchmark Results\n\n';
+
+            let hasResults = false;
+            for (const scenario of scenarios) {
+              const latestPath = path.join('results', 'ai_gateway', scenario, 'latest.json');
+              if (!fs.existsSync(latestPath)) continue;
+
+              const data = JSON.parse(fs.readFileSync(latestPath, 'utf-8'));
+              const results = data.results
+                .filter(r => !r.skipped)
+                .sort((a, b) => (b.compositeScore || 0) - (a.compositeScore || 0));
+
+              if (results.length === 0) continue;
+              hasResults = true;
+
+              const models = [...new Set(results.map(r => r.model).filter(Boolean))];
+
+              body += `### ${scenario.replace('_', ' ').toUpperCase()}\n\n`;
+              if (models.length > 0) {
+                body += `Model${models.length > 1 ? 's' : ''}: ${models.map(m => `\`${m}\``).join(', ')}\n\n`;
+              }
+              body += '| # | Provider | Score | First Token | Total | Tok/sec | Status |\n';
+              body += '|---|----------|-------|-------------|-------|---------|--------|\n';
+
+              results.forEach((r, i) => {
+                const score = r.compositeScore !== undefined ? r.compositeScore.toFixed(1) : '--';
+                const first = (r.summary.firstTokenMs.median / 1000).toFixed(2) + 's';
+                const total = (r.summary.totalMs.median / 1000).toFixed(2) + 's';
+                const tps = r.throughputAvailable ? r.summary.outputTokensPerSec.median.toFixed(1) : '--';
+                const ok = r.iterations.filter(it => !it.error).length;
+                const count = r.iterations.length;
+                body += `| ${i + 1} | ${r.provider} | ${score} | ${first} | ${total} | ${tps} | ${ok}/${count} |\n`;
+              });
+
+              body += '\n';
+            }
+
+            if (!hasResults) {
+              body += '> No AI gateway benchmark results were generated.\n\n';
+            }
+
+            body += `---\n*[View full run](${runUrl})*`;
+
+            const marker = '## AI Gateway Benchmark Results';
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.body.startsWith(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
