@@ -123,6 +123,13 @@ jobs:
           pattern: storage-results-*
       - name: Merge results
         run: npx tsx src/merge-results.ts --input artifacts --mode storage
+      - name: Ingest results to platform
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        env:
+          INGEST_URL: ${{ secrets.INGEST_URL }}
+          INGEST_SECRET: ${{ secrets.INGEST_SECRET }}
+        run: npx tsx src/ingest.ts --type storage
       - run: npm run generate-storage-svg
       - name: Upload SVGs as artifacts
         if: github.event_name == 'pull_request'

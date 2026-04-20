@@ -79,6 +79,13 @@ jobs:
           pattern: browser-results-*
       - name: Merge results
         run: npx tsx src/merge-results.ts --input artifacts --mode browser
+      - name: Ingest results to platform
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        env:
+          INGEST_URL: ${{ secrets.INGEST_URL }}
+          INGEST_SECRET: ${{ secrets.INGEST_SECRET }}
+        run: npx tsx src/ingest.ts --type browser
       - name: Post results to PR
         if: github.event_name == 'pull_request'
         continue-on-error: true

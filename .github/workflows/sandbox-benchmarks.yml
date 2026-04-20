@@ -150,7 +150,7 @@ jobs:
         env:
           INGEST_URL: ${{ secrets.INGEST_URL }}
           INGEST_SECRET: ${{ secrets.INGEST_SECRET }}
-        run: npx tsx src/ingest.ts
+        run: npx tsx src/ingest.ts --type sandbox
       - run: npm run generate-svg
       - run: npm run generate-pricing-svg
       - name: Upload SVGs as artifacts
