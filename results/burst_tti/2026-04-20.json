@@ -1,6 +1,6 @@
 {
   "version": "1.1",
-  "timestamp": "2026-04-20T00:10:58.041Z",
+  "timestamp": "2026-04-20T00:50:38.292Z",
   "environment": {
     "node": "v24.15.0",
     "platform": "linux",
@@ -15,586 +15,576 @@
       "provider": "archil",
       "mode": "concurrent",
       "concurrency": 10,
-      "wallClockMs": 142.9,
-      "timeToFirstReadyMs": 103.84,
+      "wallClockMs": 245.09,
+      "timeToFirstReadyMs": 91.35,
       "iterations": [
         {
-          "ttiMs": 106.37
+          "ttiMs": 124.96
         },
         {
-          "ttiMs": 103.84
+          "ttiMs": 117.87
         },
         {
-          "ttiMs": 137.63
+          "ttiMs": 244.22
         },
         {
-          "ttiMs": 141.8
+          "ttiMs": 125.35
         },
         {
-          "ttiMs": 111.58
+          "ttiMs": 110.99
         },
         {
-          "ttiMs": 110.89
+          "ttiMs": 91.35
         },
         {
-          "ttiMs": 129.54
+          "ttiMs": 93.4
         },
         {
-          "ttiMs": 114.54
+          "ttiMs": 122.77
         },
         {
-          "ttiMs": 109.92
+          "ttiMs": 107.77
         },
         {
-          "ttiMs": 107.1
+          "ttiMs": 108.46
         }
       ],
       "summary": {
         "ttiMs": {
-          "median": 111.24,
-          "p95": 141.8,
-          "p99": 141.8
+          "median": 114.43,
+          "p95": 244.22,
+          "p99": 244.22
         }
       },
-      "compositeScore": 98.77,
+      "compositeScore": 98.34,
       "successRate": 1
     },
     {
       "provider": "blaxel",
       "mode": "concurrent",
       "concurrency": 10,
-      "wallClockMs": 2739.45,
-      "timeToFirstReadyMs": 485.83,
+      "wallClockMs": 2636.73,
+      "timeToFirstReadyMs": 495.13,
       "iterations": [
         {
-          "ttiMs": 523.75
+          "ttiMs": 539.19
         },
         {
-          "ttiMs": 485.83
+          "ttiMs": 554.78
         },
         {
-          "ttiMs": 496.53
+          "ttiMs": 536.83
         },
         {
-          "ttiMs": 510.11
+          "ttiMs": 582.1
         },
         {
-          "ttiMs": 532.85
+          "ttiMs": 585.01
         },
         {
-          "ttiMs": 534.64
+          "ttiMs": 542.32
         },
         {
-          "ttiMs": 579.99
+          "ttiMs": 495.13
         },
         {
-          "ttiMs": 505.94
+          "ttiMs": 625.64
         },
         {
-          "ttiMs": 520.73
+          "ttiMs": 577.61
         },
         {
-          "ttiMs": 638.61
+          "ttiMs": 581.19
         }
       ],
       "summary": {
         "ttiMs": {
-          "median": 522.24,
-          "p95": 638.61,
-          "p99": 638.61
+          "median": 566.19,
+          "p95": 625.64,
+          "p99": 625.64
         }
       },
-      "compositeScore": 94.31,
+      "compositeScore": 94.1,
       "successRate": 1
     },
     {
       "provider": "cloudflare",
       "mode": "concurrent",
       "concurrency": 10,
-      "wallClockMs": 4216.29,
-      "timeToFirstReadyMs": 1369.98,
+      "wallClockMs": 3683.18,
+      "timeToFirstReadyMs": 1402.53,
       "iterations": [
         {
-          "ttiMs": 1842.08
+          "ttiMs": 2256.84
         },
         {
-          "ttiMs": 1792.04
+          "ttiMs": 1731.44
         },
         {
-          "ttiMs": 1369.98
+          "ttiMs": 3390.62
         },
         {
-          "ttiMs": 1465.95
+          "ttiMs": 1794.09
         },
         {
-          "ttiMs": 2532.84
+          "ttiMs": 1768.54
         },
         {
-          "ttiMs": 1424.1
+          "ttiMs": 1713.95
         },
         {
-          "ttiMs": 2498.92
+          "ttiMs": 1911.32
         },
         {
-          "ttiMs": 2935.8
+          "ttiMs": 1819.1
         },
         {
-          "ttiMs": 3607.87
+          "ttiMs": 2436
         },
         {
-          "ttiMs": 2199.63
+          "ttiMs": 1402.53
         }
       ],
       "summary": {
         "ttiMs": {
-          "median": 2020.86,
-          "p95": 3607.87,
-          "p99": 3607.87
+          "median": 1806.59,
+          "p95": 3390.62,
+          "p99": 3390.62
         }
       },
-      "compositeScore": 73.44,
+      "compositeScore": 75.6,
       "successRate": 1
     },
     {
       "provider": "codesandbox",
       "mode": "concurrent",
       "concurrency": 10,
-      "wallClockMs": 5704.09,
-      "timeToFirstReadyMs": 2315.56,
+      "wallClockMs": 5761.3,
+      "timeToFirstReadyMs": 2406.43,
       "iterations": [
         {
-          "ttiMs": 4624.6
+          "ttiMs": 4345.9
         },
         {
-          "ttiMs": 2315.56
+          "ttiMs": 3801.72
         },
         {
-          "ttiMs": 3337.91
+          "ttiMs": 4223.33
         },
         {
-          "ttiMs": 4053.67
+          "ttiMs": 4760.72
         },
         {
-          "ttiMs": 4617.02
+          "ttiMs": 2720.69
         },
         {
-          "ttiMs": 4704.1
+          "ttiMs": 2406.43
         },
         {
-          "ttiMs": 4045.06
+          "ttiMs": 3388.31
         },
         {
-          "ttiMs": 2996.96
+          "ttiMs": 4573.29
         },
         {
-          "ttiMs": 3115.68
+          "ttiMs": 2900.61
         },
         {
-          "ttiMs": 2560.82
+          "ttiMs": 3121.43
         }
       ],
       "summary": {
         "ttiMs": {
-          "median": 3691.49,
-          "p95": 4704.1,
-          "p99": 4704.1
+          "median": 3595.01,
+          "p95": 4760.72,
+          "p99": 4760.72
         }
       },
-      "compositeScore": 59.03,
+      "compositeScore": 59.39,
       "successRate": 1
     },
     {
       "provider": "daytona",
       "mode": "concurrent",
       "concurrency": 10,
-      "wallClockMs": 332.65,
-      "timeToFirstReadyMs": 94.04,
+      "wallClockMs": 246.64,
+      "timeToFirstReadyMs": 93.21,
       "iterations": [
         {
-          "ttiMs": 124.78
+          "ttiMs": 135.31
         },
         {
-          "ttiMs": 94.04
+          "ttiMs": 123.85
         },
         {
-          "ttiMs": 123.74
+          "ttiMs": 105.99
         },
         {
-          "ttiMs": 156.25
+          "ttiMs": 107.06
         },
         {
-          "ttiMs": 110.38
+          "ttiMs": 132.52
         },
         {
-          "ttiMs": 181.79
+          "ttiMs": 132.05
         },
         {
-          "ttiMs": 111.14
+          "ttiMs": 127.34
         },
         {
-          "ttiMs": 100.54
+          "ttiMs": 96.37
         },
         {
-          "ttiMs": 292.9
+          "ttiMs": 93.21
         },
         {
-          "ttiMs": 101.86
+          "ttiMs": 144.07
         }
       ],
       "summary": {
         "ttiMs": {
-          "median": 117.44,
-          "p95": 292.9,
-          "p99": 292.9
+          "median": 125.59,
+          "p95": 144.07,
+          "p99": 144.07
         }
       },
-      "compositeScore": 98.12,
+      "compositeScore": 98.67,
       "successRate": 1
     },
     {
       "provider": "e2b",
       "mode": "concurrent",
       "concurrency": 10,
-      "wallClockMs": 885.41,
-      "timeToFirstReadyMs": 348.16,
+      "wallClockMs": 775.09,
+      "timeToFirstReadyMs": 286.13,
       "iterations": [
         {
-          "ttiMs": 367.83
+          "ttiMs": 353.76
         },
         {
-          "ttiMs": 689.87
+          "ttiMs": 541.75
         },
         {
-          "ttiMs": 410.56
+          "ttiMs": 286.13
         },
         {
-          "ttiMs": 439.15
+          "ttiMs": 578.02
         },
         {
-          "ttiMs": 418.92
+          "ttiMs": 319.11
         },
         {
-          "ttiMs": 410.64
+          "ttiMs": 305.18
         },
         {
-          "ttiMs": 348.16
+          "ttiMs": 396.69
         },
         {
-          "ttiMs": 391.34
+          "ttiMs": 304.38
         },
         {
-          "ttiMs": 352.69
+          "ttiMs": 318.24
         },
         {
-          "ttiMs": 395.47
+          "ttiMs": 289.52
         }
       ],
       "summary": {
         "ttiMs": {
-          "median": 403.02,
-          "p95": 689.87,
-          "p99": 689.87
+          "median": 318.68,
+          "p95": 578.02,
+          "p99": 578.02
         }
       },
-      "compositeScore": 94.82,
+      "compositeScore": 95.78,
       "successRate": 1
     },
     {
       "provider": "hopx",
       "mode": "concurrent",
       "concurrency": 10,
-      "wallClockMs": 401.01,
-      "timeToFirstReadyMs": 0,
+      "wallClockMs": 3868.54,
+      "timeToFirstReadyMs": 1246,
       "iterations": [
         {
-          "ttiMs": 0,
-          "error": "Failed to create HopX sandbox: insufficient balance: have $0.00, need at least $1.00"
+          "ttiMs": 1246
         },
         {
-          "ttiMs": 0,
-          "error": "Failed to create HopX sandbox: insufficient balance: have $0.00, need at least $1.00"
+          "ttiMs": 1954.9
         },
         {
-          "ttiMs": 0,
-          "error": "Failed to create HopX sandbox: insufficient balance: have $0.00, need at least $1.00"
+          "ttiMs": 1694.97
         },
         {
-          "ttiMs": 0,
-          "error": "Failed to create HopX sandbox: insufficient balance: have $0.00, need at least $1.00"
+          "ttiMs": 1720.82
         },
         {
-          "ttiMs": 0,
-          "error": "Failed to create HopX sandbox: insufficient balance: have $0.00, need at least $1.00"
+          "ttiMs": 1732.97
         },
         {
-          "ttiMs": 0,
-          "error": "Failed to create HopX sandbox: insufficient balance: have $0.00, need at least $1.00"
+          "ttiMs": 1761.27
         },
         {
-          "ttiMs": 0,
-          "error": "Failed to create HopX sandbox: insufficient balance: have $0.00, need at least $1.00"
+          "ttiMs": 1743.2
         },
         {
-          "ttiMs": 0,
-          "error": "Failed to create HopX sandbox: insufficient balance: have $0.00, need at least $1.00"
+          "ttiMs": 2086.29
         },
         {
-          "ttiMs": 0,
-          "error": "Failed to create HopX sandbox: insufficient balance: have $0.00, need at least $1.00"
+          "ttiMs": 1733.67
         },
         {
-          "ttiMs": 0,
-          "error": "Failed to create HopX sandbox: insufficient balance: have $0.00, need at least $1.00"
+          "ttiMs": 1717.4
         }
       ],
       "summary": {
         "ttiMs": {
-          "median": 0,
-          "p95": 0,
-          "p99": 0
+          "median": 1733.32,
+          "p95": 2086.29,
+          "p99": 2086.29
         }
       },
-      "compositeScore": 0,
-      "successRate": 0
+      "compositeScore": 81.25,
+      "successRate": 1
     },
     {
       "provider": "modal",
       "mode": "concurrent",
       "concurrency": 10,
-      "wallClockMs": 1875.11,
-      "timeToFirstReadyMs": 1037.53,
+      "wallClockMs": 2992.14,
+      "timeToFirstReadyMs": 1169.54,
       "iterations": [
         {
-          "ttiMs": 1606.2
+          "ttiMs": 1344.6
         },
         {
-          "ttiMs": 1103.63
+          "ttiMs": 1467.73
         },
         {
-          "ttiMs": 1765.92
+          "ttiMs": 2953.86
         },
         {
-          "ttiMs": 1663.8
+          "ttiMs": 1169.54
         },
         {
-          "ttiMs": 1832.69
+          "ttiMs": 1447.2
         },
         {
-          "ttiMs": 1426.18
+          "ttiMs": 1597.7
         },
         {
-          "ttiMs": 1037.53
+          "ttiMs": 1416.25
         },
         {
-          "ttiMs": 1191.68
+          "ttiMs": 1675.71
         },
         {
-          "ttiMs": 1102.2
+          "ttiMs": 2165.66
         },
         {
-          "ttiMs": 1304.6
+          "ttiMs": 1598.08
         }
       ],
       "summary": {
         "ttiMs": {
-          "median": 1365.39,
-          "p95": 1832.69,
-          "p99": 1832.69
+          "median": 1532.71,
+          "p95": 2953.86,
+          "p99": 2953.86
         }
       },
-      "compositeScore": 84.48,
+      "compositeScore": 78.99,
       "successRate": 1
     },
     {
       "provider": "namespace",
       "mode": "concurrent",
       "concurrency": 10,
-      "wallClockMs": 2219.04,
-      "timeToFirstReadyMs": 1674.17,
+      "wallClockMs": 1898.71,
+      "timeToFirstReadyMs": 1706.48,
       "iterations": [
         {
-          "ttiMs": 1857.71
+          "ttiMs": 1760.05
         },
         {
-          "ttiMs": 1674.17
+          "ttiMs": 1706.48
         },
         {
-          "ttiMs": 1814.58
+          "ttiMs": 1749.15
         },
         {
-          "ttiMs": 2107.71
+          "ttiMs": 1813.28
         },
         {
-          "ttiMs": 1746.36
+          "ttiMs": 1730.83
         },
         {
-          "ttiMs": 2209.23
+          "ttiMs": 1889.44
         },
         {
-          "ttiMs": 1904.37
+          "ttiMs": 1713.93
         },
         {
-          "ttiMs": 1920.66
+          "ttiMs": 1864.33
         },
         {
-          "ttiMs": 1924.95
+          "ttiMs": 1891.88
         },
         {
-          "ttiMs": 2017.24
+          "ttiMs": 1816.99
         }
       ],
       "summary": {
         "ttiMs": {
-          "median": 1912.51,
-          "p95": 2209.23,
-          "p99": 2209.23
+          "median": 1786.66,
+          "p95": 1891.88,
+          "p99": 1891.88
         }
       },
-      "compositeScore": 79.69,
+      "compositeScore": 81.71,
       "successRate": 1
     },
     {
       "provider": "runloop",
       "mode": "concurrent",
       "concurrency": 10,
-      "wallClockMs": 4739.59,
-      "timeToFirstReadyMs": 2287.24,
+      "wallClockMs": 4099.64,
+      "timeToFirstReadyMs": 1233.82,
       "iterations": [
         {
-          "ttiMs": 4108.71
+          "ttiMs": 1233.82
         },
         {
-          "ttiMs": 3986.76
+          "ttiMs": 3619.9
         },
         {
-          "ttiMs": 4329.83
+          "ttiMs": 4057.86
         },
         {
-          "ttiMs": 4694.79
+          "ttiMs": 3442
         },
         {
-          "ttiMs": 3362.24
+          "ttiMs": 4070.53
         },
         {
-          "ttiMs": 4359.84
+          "ttiMs": 2496.57
         },
         {
-          "ttiMs": 4310.46
+          "ttiMs": 4012.35
         },
         {
-          "ttiMs": 2287.24
+          "ttiMs": 3803.5
         },
         {
-          "ttiMs": 4300.98
+          "ttiMs": 3562.94
         },
         {
-          "ttiMs": 4142.55
+          "ttiMs": 3802.35
         }
       ],
       "summary": {
         "ttiMs": {
-          "median": 4221.76,
-          "p95": 4694.79,
-          "p99": 4694.79
+          "median": 3711.13,
+          "p95": 4070.53,
+          "p99": 4070.53
         }
       },
-      "compositeScore": 55.89,
+      "compositeScore": 61.45,
       "successRate": 1
     },
     {
       "provider": "upstash",
       "mode": "concurrent",
       "concurrency": 10,
-      "wallClockMs": 587.19,
-      "timeToFirstReadyMs": 325.25,
+      "wallClockMs": 582.9,
+      "timeToFirstReadyMs": 303.85,
       "iterations": [
         {
-          "ttiMs": 351.8
+          "ttiMs": 304.54
         },
         {
-          "ttiMs": 334.86
+          "ttiMs": 329.65
         },
         {
-          "ttiMs": 333.02
+          "ttiMs": 303.85
         },
         {
-          "ttiMs": 347.22
+          "ttiMs": 366.89
         },
         {
-          "ttiMs": 331.93
+          "ttiMs": 330.06
         },
         {
-          "ttiMs": 341.51
+          "ttiMs": 312.6
         },
         {
-          "ttiMs": 326.44
+          "ttiMs": 331.26
         },
         {
-          "ttiMs": 326.42
+          "ttiMs": 362.88
         },
         {
-          "ttiMs": 333.21
+          "ttiMs": 338.72
         },
         {
-          "ttiMs": 325.25
+          "ttiMs": 344.92
         }
       ],
       "summary": {
         "ttiMs": {
-          "median": 333.11,
-          "p95": 351.8,
-          "p99": 351.8
+          "median": 330.66,
+          "p95": 366.89,
+          "p99": 366.89
         }
       },
-      "compositeScore": 96.59,
+      "compositeScore": 96.55,
       "successRate": 1
     },
     {
       "provider": "vercel",
       "mode": "concurrent",
       "concurrency": 10,
-      "wallClockMs": 743.32,
-      "timeToFirstReadyMs": 309.07,
+      "wallClockMs": 695.33,
+      "timeToFirstReadyMs": 340.77,
       "iterations": [
         {
-          "ttiMs": 309.07
+          "ttiMs": 360.14
         },
         {
-          "ttiMs": 526.6
+          "ttiMs": 358.74
         },
         {
-          "ttiMs": 360.79
+          "ttiMs": 465.27
         },
         {
-          "ttiMs": 349.98
+          "ttiMs": 396.69
         },
         {
-          "ttiMs": 363.67
+          "ttiMs": 437.89
         },
         {
-          "ttiMs": 354.21
+          "ttiMs": 340.77
         },
         {
-          "ttiMs": 376.72
+          "ttiMs": 430.85
         },
         {
-          "ttiMs": 368.41
+          "ttiMs": 364.16
         },
         {
-          "ttiMs": 332.52
+          "ttiMs": 355.22
         },
         {
-          "ttiMs": 339.13
+          "ttiMs": 439.53
         }
       ],
       "summary": {
         "ttiMs": {
-          "median": 357.5,
-          "p95": 526.6,
-          "p99": 526.6
+          "median": 380.42,
+          "p95": 465.27,
+          "p99": 465.27
         }
       },
-      "compositeScore": 95.75,
+      "compositeScore": 95.86,
       "successRate": 1
     }
   ]
