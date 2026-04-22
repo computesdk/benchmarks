@@ -1,6 +1,7 @@
 import { archil } from '@computesdk/archil';
 import { e2b } from '@computesdk/e2b';
 import { daytona } from '@computesdk/daytona';
+import { declaw } from '@computesdk/declaw';
 import { blaxel } from '@computesdk/blaxel';
 import { modal } from '@computesdk/modal';
 import { vercel } from '@computesdk/vercel';
@@ -49,6 +50,11 @@ export const providers: ProviderConfig[] = [
     requiredEnvVars: ['DAYTONA_API_KEY'],
     createCompute: () => daytona({ apiKey: process.env.DAYTONA_API_KEY! }),
     sandboxOptions: { autoStopInterval: 15, autoDeleteInterval: 0 },
+  },
+  {
+    name: 'declaw',
+    requiredEnvVars: ['DECLAW_API_KEY'],
+    createCompute: () => declaw({ apiKey: process.env.DECLAW_API_KEY! }),
   },
   {
     name: 'e2b',

@@ -54,7 +54,7 @@ jobs:
           - cloudflare
           - codesandbox
           - daytona
-          # - declaw
+          - declaw
           - e2b
           - hopx
           - modal
@@ -91,7 +91,7 @@ jobs:
           CLOUDFLARE_SANDBOX_SECRET: ${{ secrets.CLOUDFLARE_SANDBOX_SECRET }}
           CSB_API_KEY: ${{ secrets.CSB_API_KEY }}
           DAYTONA_API_KEY: ${{ secrets.DAYTONA_API_KEY }}
-          # DECLAW_API_KEY: ${{ secrets.DECLAW_API_KEY }}
+          DECLAW_API_KEY: ${{ secrets.DECLAW_API_KEY }}
           E2B_API_KEY: ${{ secrets.E2B_API_KEY }}
           HOPX_API_KEY: ${{ secrets.HOPX_API_KEY }}
           MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
