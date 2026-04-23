@@ -16,6 +16,13 @@ export const browserProviders: BrowserProviderConfig[] = [
       projectId: process.env.BROWSERBASE_PROJECT_ID!,
     }),
   },
+  {
+    name: 'kernel',
+    requiredEnvVars: ['KERNEL_API_KEY'],
+    createBrowserProvider: () => kernel({
+      apiKey: process.env.KERNEL_API_KEY!
+    }),
+  },
   //
   // add browser providers above
 ];
