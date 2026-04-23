@@ -14,6 +14,7 @@ export const browserProviders: BrowserProviderConfig[] = [
     createBrowserProvider: () => browserbase({
       apiKey: process.env.BROWSERBASE_API_KEY!,
       projectId: process.env.BROWSERBASE_PROJECT_ID!,
+    }),
   },
   {
     name: 'kernel',
