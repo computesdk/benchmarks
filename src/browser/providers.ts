@@ -9,6 +9,13 @@ import type { BrowserProviderConfig } from './types.js';
  */
 export const browserProviders: BrowserProviderConfig[] = [
   {
+    name: 'browserbase',
+    requiredEnvVars: ['BROWSERBASE_API_KEY', 'BROWSERBASE_PROJECT_ID'],
+    createBrowserProvider: () => browserbase({
+      apiKey: process.env.BROWSERBASE_API_KEY!,
+      projectId: process.env.BROWSERBASE_PROJECT_ID!,
+  },
+  {
     name: 'kernel',
     requiredEnvVars: ['KERNEL_API_KEY'],
     createBrowserProvider: () => kernel({
