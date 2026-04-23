@@ -23,6 +23,5 @@ export const browserProviders: BrowserProviderConfig[] = [
       apiKey: process.env.KERNEL_API_KEY!
     }),
   },
-  //
   // add browser providers above
 ];
