@@ -19,7 +19,7 @@ export const DEFAULT_BROWSER_WEIGHTS: BrowserScoringWeights = {
 };
 
 /** Absolute ceiling for latency in ms. Anything at or above this scores 0. */
-const LATENCY_CEILING_MS = 60000; // 60 seconds
+const LATENCY_CEILING_MS = 10000; // 10 seconds
 
 /**
  * Score a latency value (lower is better).
