@@ -2,20 +2,26 @@ import type { StorageBenchmarkResult } from './types.js';
 
 /**
  * Weight configuration for storage composite scoring.
- * For storage, we weight download speed highest since it's most common operation.
+ * Both upload and download speed matter for a complete storage benchmark.
  */
 export interface StorageScoringWeights {
   downloadMedian: number;
   downloadP95: number;
   downloadP99: number;
+  uploadMedian: number;
+  uploadP95: number;
+  uploadP99: number;
   throughput: number;
 }
 
 export const DEFAULT_STORAGE_WEIGHTS: StorageScoringWeights = {
-  downloadMedian: 0.50,  // 50% - most important for typical usage
-  downloadP95: 0.20,     // 20% - tail latency matters
-  downloadP99: 0.10,     // 10% - worst case
-  throughput: 0.20,      // 20% - raw speed for large files
+  downloadMedian: 0.35,  // 35% - most important for typical usage
+  downloadP95: 0.15,     // 15% - tail latency matters
+  downloadP99: 0.05,     // 5% - worst case
+  uploadMedian: 0.25,    // 25% - write performance
+  uploadP95: 0.10,       // 10% - upload tail latency
+  uploadP99: 0.05,       // 5% - upload worst case
+  throughput: 0.05,      // 5% - raw speed for large files
 };
 
 /** Absolute ceiling for latency in ms. Anything at or above this scores 0. */
@@ -66,9 +72,14 @@ function computeStorageScore(
     weights.downloadP95 * scoreLatency(result.summary.downloadMs.p95) +
     weights.downloadP99 * scoreLatency(result.summary.downloadMs.p99);
 
+  const uploadScore =
+    weights.uploadMedian * scoreLatency(result.summary.uploadMs.median) +
+    weights.uploadP95 * scoreLatency(result.summary.uploadMs.p95) +
+    weights.uploadP99 * scoreLatency(result.summary.uploadMs.p99);
+
   const throughputScore = weights.throughput * scoreThroughput(result.summary.throughputMbps.median);
 
-  return downloadScore + throughputScore;
+  return downloadScore + uploadScore + throughputScore;
 }
 
 /**
@@ -76,7 +87,7 @@ function computeStorageScore(
  *
  * Formula: compositeScore = storageScore × successRate
  *
- * Lower download latency and higher throughput = better score.
+ * Lower latency (both upload and download) and higher throughput = better score.
  * successRate (0-1) acts as a linear multiplier.
  */
 export function computeStorageCompositeScores(

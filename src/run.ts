@@ -1,5 +1,7 @@
+// Load .env before any other imports so env vars are available at module evaluation time
+import './env.js';
+
 import fs from 'fs';
-import { config } from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { runBenchmark } from './sandbox/benchmark.js';
@@ -18,9 +20,7 @@ import type { BenchmarkResult, BenchmarkMode } from './sandbox/types.js';
 import type { StorageBenchmarkResult } from './storage/types.js';
 import type { BrowserBenchmarkResult } from './browser/types.js';
 
-// Load .env from the benchmarking root
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-config({ path: path.resolve(__dirname, '../.env') });
 
 // Parse CLI args
 const args = process.argv.slice(2);
@@ -28,6 +28,7 @@ const providerFilter = getArgValue(args, '--provider');
 const iterations = parseInt(getArgValue(args, '--iterations') || '100', 10);
 const rawMode = getArgValue(args, '--mode');
 const concurrency = parseInt(getArgValue(args, '--concurrency') || '100', 10);
+const storageConcurrency = parseInt(getArgValue(args, '--storage-concurrency') || '1', 10);
 const staggerDelay = parseInt(getArgValue(args, '--stagger-delay') || '200', 10);
 const fileSizeArg = getArgValue(args, '--file-size') || '10MB';
 
@@ -131,12 +132,13 @@ async function runStorage(toRun: typeof storageProviders, fileSizeLabel: string)
   console.log('  MODE: STORAGE');
   console.log(`  File size: ${fileSizeLabel}`);
   console.log(`  Iterations per provider: ${iterations}`);
+  console.log(`  Concurrency per provider: ${storageConcurrency}`);
   console.log('='.repeat(70));
 
   const results: StorageBenchmarkResult[] = [];
 
   for (const providerConfig of toRun) {
-    const result = await runStorageBenchmark({ ...providerConfig, iterations }, fileSizeBytes);
+    const result = await runStorageBenchmark({ ...providerConfig, iterations, concurrency: storageConcurrency }, fileSizeBytes);
     results.push(result);
   }
 

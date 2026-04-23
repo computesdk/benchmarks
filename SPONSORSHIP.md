@@ -50,7 +50,7 @@ Your customers care about infrastructure performance. So do the developers choos
 
 ### Tier 1
 - [Archil](https://archil.com/)
-- [Latitude](https://latitude.so/)
+- [Latitude](https://latitude.sh/)
 
 ### Tier 2
 - [Tigris](https://www.tigrisdata.com/)

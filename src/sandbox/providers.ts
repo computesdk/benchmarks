@@ -1,5 +1,7 @@
+import { archil } from '@computesdk/archil';
 import { e2b } from '@computesdk/e2b';
 import { daytona } from '@computesdk/daytona';
+import { declaw } from '@computesdk/declaw';
 import { blaxel } from '@computesdk/blaxel';
 import { modal } from '@computesdk/modal';
 import { vercel } from '@computesdk/vercel';
@@ -9,6 +11,7 @@ import { runloop } from '@computesdk/runloop';
 import { namespace } from '@computesdk/namespace';
 import { cloudflare } from '@computesdk/cloudflare';
 import { sprites } from '@computesdk/sprites';
+import { upstash } from '@computesdk/upstash';
 import { compute } from 'computesdk';
 import type { ProviderConfig } from './types.js';
 
@@ -20,6 +23,12 @@ import type { ProviderConfig } from './types.js';
  */
 export const providers: ProviderConfig[] = [
   // --- Direct mode (provider SDK packages) ---
+  {
+    name: 'archil',
+    requiredEnvVars: ['ARCHIL_API_KEY', 'ARCHIL_REGION', 'ARCHIL_DISK_ID'],
+    createCompute: () => archil({ apiKey: process.env.ARCHIL_API_KEY!, region: process.env.ARCHIL_REGION! }),
+    sandboxOptions: { metadata: { diskId: process.env.ARCHIL_DISK_ID! } }
+  },
   {
     name: 'blaxel',
     requiredEnvVars: ['BL_API_KEY', 'BL_WORKSPACE'],
@@ -41,6 +50,11 @@ export const providers: ProviderConfig[] = [
     requiredEnvVars: ['DAYTONA_API_KEY'],
     createCompute: () => daytona({ apiKey: process.env.DAYTONA_API_KEY! }),
     sandboxOptions: { autoStopInterval: 15, autoDeleteInterval: 0 },
+  },
+  {
+    name: 'declaw',
+    requiredEnvVars: ['DECLAW_API_KEY'],
+    createCompute: () => declaw({ apiKey: process.env.DECLAW_API_KEY! }),
   },
   {
     name: 'e2b',
@@ -72,6 +86,12 @@ export const providers: ProviderConfig[] = [
     name: 'sprites',
     requiredEnvVars: ['SPRITES_TOKEN'],
     createCompute: () => sprites({ apiKey: process.env.SPRITES_TOKEN! }),
+  },
+  {
+    name: 'upstash',
+    requiredEnvVars: ['UPSTASH_BOX_API_KEY'],
+    createCompute: () => upstash({ apiKey: process.env.UPSTASH_BOX_API_KEY! }),
+    sandboxOptions: { ephemeral: true },
   },
   {
     name: 'vercel',

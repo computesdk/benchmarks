@@ -271,7 +271,7 @@ function main() {
     }
   } else {
     // Generate SVGs for all available file sizes
-    const sizes = ['1MB', '10MB', '100MB'];
+    const sizes = ['1MB', '4MB', '10MB', '16MB'];
     let generated = 0;
     for (const size of sizes) {
       if (generateForFileSize(size)) {

@@ -16,5 +16,5 @@ export const browserProviders: BrowserProviderConfig[] = [
     }),
   },
   //
-  // add more browser providers above
+  // add browser providers above
 ];
