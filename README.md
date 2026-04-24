@@ -14,6 +14,14 @@
 
 ![Pricing Comparison](./pricing.svg)
 
+### [Browser Sessions](#browser-sessions)
+
+![Browser Sessions](./browser.svg)
+
+### [Object Storage](#object-storage)
+
+![Object Storage — 10MB](./storage_10mb.svg)
+
 [![Benchmarks](https://github.com/computesdk/benchmarks/actions/workflows/benchmarks.yml/badge.svg)](https://github.com/computesdk/benchmarks/actions/workflows/benchmarks.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
