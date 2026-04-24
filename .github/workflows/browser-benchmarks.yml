@@ -8,6 +8,8 @@ on:
       - 'src/run.ts'
       - 'src/merge-results.ts'
       - 'package.json'
+  schedule:
+    - cron: '0 0 * * *' # Daily at midnight UTC
   workflow_dispatch:
     inputs:
       iterations:
@@ -20,7 +22,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 
 jobs:
@@ -152,3 +154,12 @@ jobs:
                 body,
               });
             }
+      - name: Commit and push
+        if: github.event_name != 'pull_request'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add results/browser/
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore: update browser benchmark results [skip ci]"
+          git push
