@@ -37,6 +37,7 @@
     "generate-svg:staggered": "tsx src/sandbox/generate-svg.ts --mode staggered",
     "generate-svg:burst": "tsx src/sandbox/generate-svg.ts --mode burst",
     "generate-storage-svg": "tsx src/storage/generate-svg.ts",
+    "generate-browser-svg": "tsx src/browser/generate-svg.ts",
     "generate-pricing-svg": "tsx src/sandbox/generate-pricing-svg.ts"
   },
   "dependencies": {

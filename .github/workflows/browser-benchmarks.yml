@@ -42,7 +42,13 @@ jobs:
         with:
           node-version: 24
           cache: 'npm'
-      - run: npm ci
+      - name: Install dependencies
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            npm update
+          else
+            npm ci
+          fi
       - name: Clear stale results from checkout
         run: rm -rf results/browser/
       - name: Run browser benchmark
@@ -75,7 +81,13 @@ jobs:
         with:
           node-version: 24
           cache: 'npm'
-      - run: npm ci
+      - name: Install dependencies
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            npm update
+          else
+            npm ci
+          fi
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
@@ -83,6 +95,15 @@ jobs:
           pattern: browser-results-*
       - name: Merge results
         run: npx tsx src/merge-results.ts --input artifacts --mode browser
+      - run: npm run generate-browser-svg
+      - name: Upload SVG as artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-benchmark-svg
+          path: browser.svg
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Post results to PR
         if: github.event_name == 'pull_request'
         continue-on-error: true
@@ -128,7 +149,7 @@ jobs:
               }
             }
 
-            body += `---\n*[View full run](${runUrl})*`;
+            body += `---\n*[View full run](${runUrl}) · SVG available as [build artifact](${runUrl}#artifacts)*`;
 
             const marker = '## Browser Benchmark Results';
             const { data: comments } = await github.rest.issues.listComments({
@@ -159,7 +180,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add results/browser/
+          git add package.json package-lock.json browser.svg results/browser/
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "chore: update browser benchmark results [skip ci]"
           git push
