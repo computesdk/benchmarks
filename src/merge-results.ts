@@ -216,7 +216,7 @@ async function mainStorage() {
   console.log(`Found ${jsonFiles.length} result files`);
 
   // Group results by file size (e.g. "1mb", "10mb", "100mb")
-  const bySize: Record<string, { results: { result: StorageBenchmarkResult; fromSingleProvider: boolean }[] }> = {};
+  const bySize: Record<string, { results: { result: StorageBenchmarkResult; fromSingleProvider: boolean }[]; timeoutMs: number }> = {};
 
   for (const file of jsonFiles) {
     const raw: StorageResultFile = JSON.parse(fs.readFileSync(file, 'utf-8'));
@@ -227,7 +227,7 @@ async function mainStorage() {
       const fileSize = dirName.toLowerCase();
 
       if (!bySize[fileSize]) {
-        bySize[fileSize] = { results: [] };
+        bySize[fileSize] = { results: [], timeoutMs: raw.config.timeoutMs ?? 30000 };
       }
       bySize[fileSize].results.push({ result, fromSingleProvider });
     }
@@ -263,7 +263,7 @@ async function mainStorage() {
     fs.mkdirSync(resultsDir, { recursive: true });
 
     const outPath = path.join(resultsDir, `${timestamp}.json`);
-    await writeStorageResultsJson(deduped, outPath);
+    await writeStorageResultsJson(deduped, outPath, bySize[fileSize].timeoutMs);
 
     const latestPath = path.join(resultsDir, 'latest.json');
     fs.copyFileSync(outPath, latestPath);
@@ -331,9 +331,11 @@ async function mainBrowser() {
 
   // Collect all results, deduplicating by provider
   const seen = new Map<string, { result: BrowserBenchmarkResult; fromSingleProvider: boolean }>();
+  let timeoutMs = 120_000;
 
   for (const file of jsonFiles) {
-    const raw = JSON.parse(fs.readFileSync(file, 'utf-8')) as { results: BrowserBenchmarkResult[] };
+    const raw = JSON.parse(fs.readFileSync(file, 'utf-8')) as { config?: { timeoutMs?: number }; results: BrowserBenchmarkResult[] };
+    if (raw.config?.timeoutMs !== undefined) timeoutMs = raw.config.timeoutMs;
     const fromSingleProvider = raw.results.length === 1;
     for (const result of raw.results) {
       const existing = seen.get(result.provider);
@@ -359,7 +361,7 @@ async function mainBrowser() {
   fs.mkdirSync(resultsDir, { recursive: true });
 
   const outPath = path.join(resultsDir, `${timestamp}.json`);
-  await writeBrowserResultsJson(deduped, outPath);
+  await writeBrowserResultsJson(deduped, outPath, timeoutMs);
 
   const latestPath = path.join(resultsDir, 'latest.json');
   fs.copyFileSync(outPath, latestPath);

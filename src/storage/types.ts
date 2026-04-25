@@ -13,8 +13,6 @@ export interface StorageProviderConfig {
   createStorage: () => any;
   /** Bucket name for testing */
   bucket: string;
-  /** Test file sizes in bytes */
-  fileSizes: number[];
 }
 
 export interface StorageTimingResult {

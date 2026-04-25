@@ -1,36 +1,7 @@
 import crypto from 'crypto';
 import { withTimeout } from '../util/timeout.js';
+import { round, computeStats } from '../util/stats.js';
 import type { StorageProviderConfig, StorageBenchmarkResult, StorageTimingResult } from './types.js';
-
-function round(n: number): number {
-  return Math.round(n * 100) / 100;
-}
-
-function percentile(sorted: number[], p: number): number {
-  const idx = Math.ceil((p / 100) * sorted.length) - 1;
-  return sorted[Math.min(idx, sorted.length - 1)];
-}
-
-function computeStorageStats(values: number[]): { median: number; p95: number; p99: number } {
-  if (values.length === 0) return { median: 0, p95: 0, p99: 0 };
-
-  const sorted = [...values].sort((a, b) => a - b);
-  const trimCount = Math.floor(sorted.length * 0.05);
-  const trimmed = trimCount > 0 && sorted.length - 2 * trimCount > 0
-    ? sorted.slice(trimCount, sorted.length - trimCount)
-    : sorted;
-
-  const mid = Math.floor(trimmed.length / 2);
-  const median = trimmed.length % 2 === 0
-    ? (trimmed[mid - 1] + trimmed[mid]) / 2
-    : trimmed[mid];
-
-  return {
-    median,
-    p95: percentile(trimmed, 95),
-    p99: percentile(trimmed, 99),
-  };
-}
 
 function randomId(): string {
   return Math.random().toString(36).substring(2, 15);
@@ -45,6 +16,7 @@ async function runStorageIteration(
 ): Promise<StorageTimingResult> {
   const fileSizeBytes = testData.length;
   const key = `benchmark-${Date.now()}-${randomId()}`;
+  let uploadMs = 0;
 
   try {
     // Upload timing
@@ -54,7 +26,7 @@ async function runStorageIteration(
       timeout,
       'Upload timed out'
     );
-    const uploadMs = performance.now() - uploadStart;
+    uploadMs = performance.now() - uploadStart;
 
     // Download timing
     const downloadStart = performance.now();
@@ -65,7 +37,6 @@ async function runStorageIteration(
     );
     const downloadMs = performance.now() - downloadStart;
 
-    // Calculate throughput (Mbps)
     const throughputMbps = (fileSizeBytes * 8) / (downloadMs / 1000) / 1_000_000;
 
     // Cleanup
@@ -82,7 +53,7 @@ async function runStorageIteration(
     return { uploadMs, downloadMs, throughputMbps, fileSizeBytes };
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
-    
+
     // Attempt cleanup even on failure
     try {
       await withTimeout(storage.delete(bucket, key), 10000, 'Delete timed out');
@@ -90,7 +61,7 @@ async function runStorageIteration(
       // Ignore cleanup errors
     }
 
-    return { uploadMs: 0, downloadMs: 0, throughputMbps: 0, fileSizeBytes, error };
+    return { uploadMs, downloadMs: 0, throughputMbps: 0, fileSizeBytes, error };
   }
 }
 
@@ -178,9 +149,9 @@ export async function runStorageBenchmark(config: StorageProviderConfig, fileSiz
     fileSizeBytes,
     iterations: results,
     summary: {
-      uploadMs: computeStorageStats(uploadTimes),
-      downloadMs: computeStorageStats(downloadTimes),
-      throughputMbps: computeStorageStats(throughputs),
+      uploadMs: computeStats(uploadTimes),
+      downloadMs: computeStats(downloadTimes),
+      throughputMbps: computeStats(throughputs),
     },
   };
 }
@@ -189,7 +160,7 @@ function roundStats(s: { median: number; p95: number; p99: number }) {
   return { median: round(s.median), p95: round(s.p95), p99: round(s.p99) };
 }
 
-export async function writeStorageResultsJson(results: StorageBenchmarkResult[], outPath: string): Promise<void> {
+export async function writeStorageResultsJson(results: StorageBenchmarkResult[], outPath: string, timeoutMs: number): Promise<void> {
   const fs = await import('fs');
   const os = await import('os');
 
@@ -225,7 +196,7 @@ export async function writeStorageResultsJson(results: StorageBenchmarkResult[],
     },
     config: {
       iterations: results[0]?.iterations.length || 0,
-      timeoutMs: 30000,
+      timeoutMs,
     },
     results: cleanResults,
   };

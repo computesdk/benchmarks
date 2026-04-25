@@ -1,3 +1,7 @@
+export function round(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
 export function percentile(sorted: number[], p: number): number {
   if (sorted.length === 0) return 0;
   const idx = Math.max(0, Math.ceil((p / 100) * sorted.length) - 1);
@@ -9,7 +13,6 @@ export function computeStats(values: number[], trimPercent: number = 0.05): { me
 
   const sorted = [...values].sort((a, b) => a - b);
 
-  // Trim outliers from both ends
   const trimCount = Math.floor(sorted.length * trimPercent);
   const trimmed = trimCount > 0 && sorted.length - 2 * trimCount > 0
     ? sorted.slice(trimCount, sorted.length - trimCount)

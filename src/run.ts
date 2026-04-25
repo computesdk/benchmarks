@@ -166,7 +166,8 @@ async function runStorage(toRun: typeof storageProviders, fileSizeLabel: string)
   fs.mkdirSync(sizeDir, { recursive: true });
 
   const outPath = path.join(sizeDir, `${timestamp}.json`);
-  await writeStorageResultsJson(results, outPath);
+  const timeoutMs = toRun[0]?.timeout ?? 30000;
+  await writeStorageResultsJson(results, outPath, timeoutMs);
 
   // Copy results to latest.json
   const latestPath = path.join(sizeDir, 'latest.json');
@@ -210,7 +211,8 @@ async function runBrowser(toRun: typeof browserProviders): Promise<void> {
   fs.mkdirSync(resultsDir, { recursive: true });
 
   const outPath = path.join(resultsDir, `${timestamp}.json`);
-  await writeBrowserResultsJson(results, outPath);
+  const timeoutMs = toRun[0]?.timeout ?? 120_000;
+  await writeBrowserResultsJson(results, outPath, timeoutMs);
 
   // Copy results to latest.json
   const latestPath = path.join(resultsDir, 'latest.json');

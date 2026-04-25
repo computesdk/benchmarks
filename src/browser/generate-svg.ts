@@ -3,47 +3,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import type { BrowserBenchmarkResult } from './types.js';
 import { sortBrowserByCompositeScore, computeBrowserCompositeScores } from './scoring.js';
+import { LOGO_C_PATH, loadSponsorImages } from '../util/svg.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '../..');
 const RESULTS_DIR = path.join(ROOT, 'results', 'browser');
-const SPONSORS_DIR_TIER1 = path.join(ROOT, 'sponsors', 'tier-1');
-const SPONSORS_DIR_TIER2 = path.join(ROOT, 'sponsors', 'tier-2');
-
-function loadSponsorImages(): { dataUri: string; name: string }[] {
-  const allSponsors: { dataUri: string; name: string }[] = [];
-
-  const mimeTypes: Record<string, string> = {
-    '.png': 'image/png',
-    '.jpg': 'image/jpeg',
-    '.jpeg': 'image/jpeg',
-    '.svg': 'image/svg+xml',
-  };
-
-  const loadFromDir = (dir: string) => {
-    if (!fs.existsSync(dir)) return;
-
-    const files = fs.readdirSync(dir)
-      .filter(f => /\.(png|jpe?g|svg)$/i.test(f))
-      .sort();
-
-    for (const file of files) {
-      const ext = path.extname(file).toLowerCase();
-      const mime = mimeTypes[ext] || 'image/png';
-      const raw = fs.readFileSync(path.join(dir, file));
-      const b64 = raw.toString('base64');
-      const name = path.basename(file, ext);
-      allSponsors.push({ dataUri: `data:${mime};base64,${b64}`, name });
-    }
-  };
-
-  loadFromDir(SPONSORS_DIR_TIER1);
-  loadFromDir(SPONSORS_DIR_TIER2);
-
-  return allSponsors;
-}
-
-const LOGO_C_PATH = `M1036.26,1002.28h237.87l-.93,19.09c-8.38,110.32-49.81,198.3-123.82,262.07-73.09,63.31-170.84,95.43-290.48,95.43-130.81,0-235.55-44.69-311.43-133.6-74.48-87.98-112.65-209.48-112.65-361.23v-60.51c0-96.83,17.7-183.41,51.68-257.43,34.91-74.95,85.19-133.61,149.89-173.63,64.7-40.04,140.12-60.52,225.3-60.52,117.77,0,214.13,32.12,286.29,95.9,72.62,63.3,114.98,153.61,126.15,267.67l1.86,19.08h-238.34l-.93-15.83c-4.65-59.11-20.95-101.94-47.95-127.08-27-25.6-69.83-38.17-127.08-38.17-61.91,0-107.06,20.95-137.33,65.17-31.65,45.15-47.94,117.77-48.87,215.53v74.48c0,102.41,15.36,177.83,45.62,223.91,28.86,44.22,74.01,65.63,137.79,65.63,58.19,0,101.48-12.57,128.95-38.17,26.99-25.14,43.29-66.1,47.48-121.5l.93-16.3Z`;
 
 interface ResultFile {
   timestamp: string;
@@ -58,7 +22,10 @@ function formatSeconds(ms: number): string {
   return (ms / 1000).toFixed(2) + 's';
 }
 
-const sponsorImages = loadSponsorImages();
+const sponsorImages = loadSponsorImages(
+  path.join(ROOT, 'sponsors', 'tier-1'),
+  path.join(ROOT, 'sponsors', 'tier-2'),
+);
 
 function generateSVG(results: BrowserBenchmarkResult[], timestamp: string): string {
   if (!results.every(r => r.compositeScore !== undefined)) {

@@ -1,41 +1,11 @@
 import { chromium } from 'playwright-core';
 import { withTimeout } from '../util/timeout.js';
+import { round, computeStats } from '../util/stats.js';
 import type { BrowserProviderConfig, BrowserBenchmarkResult, BrowserTimingResult } from './types.js';
-
-function round(n: number): number {
-  return Math.round(n * 100) / 100;
-}
-
-function percentile(sorted: number[], p: number): number {
-  const idx = Math.ceil((p / 100) * sorted.length) - 1;
-  return sorted[Math.min(idx, sorted.length - 1)];
-}
-
-function computeBrowserStats(values: number[]): { median: number; p95: number; p99: number } {
-  if (values.length === 0) return { median: 0, p95: 0, p99: 0 };
-
-  const sorted = [...values].sort((a, b) => a - b);
-  const trimCount = Math.floor(sorted.length * 0.05);
-  const trimmed = trimCount > 0 && sorted.length - 2 * trimCount > 0
-    ? sorted.slice(trimCount, sorted.length - trimCount)
-    : sorted;
-
-  const mid = Math.floor(trimmed.length / 2);
-  const median = trimmed.length % 2 === 0
-    ? (trimmed[mid - 1] + trimmed[mid]) / 2
-    : trimmed[mid];
-
-  return {
-    median,
-    p95: percentile(trimmed, 95),
-    p99: percentile(trimmed, 99),
-  };
-}
 
 async function runBrowserIteration(
   provider: any,
   timeout: number,
-  useDefaultContext?: boolean,
 ): Promise<BrowserTimingResult> {
   const timings = { createMs: 0, connectMs: 0, navigateMs: 0, releaseMs: 0, totalMs: 0 };
   const totalStart = performance.now();
@@ -149,11 +119,11 @@ export async function runBrowserBenchmark(config: BrowserProviderConfig): Promis
     mode: 'browser',
     iterations: results,
     summary: {
-      createMs: computeBrowserStats(successful.map(r => r.createMs)),
-      connectMs: computeBrowserStats(successful.map(r => r.connectMs)),
-      navigateMs: computeBrowserStats(successful.map(r => r.navigateMs)),
-      releaseMs: computeBrowserStats(successful.map(r => r.releaseMs)),
-      totalMs: computeBrowserStats(successful.map(r => r.totalMs)),
+      createMs: computeStats(successful.map(r => r.createMs)),
+      connectMs: computeStats(successful.map(r => r.connectMs)),
+      navigateMs: computeStats(successful.map(r => r.navigateMs)),
+      releaseMs: computeStats(successful.map(r => r.releaseMs)),
+      totalMs: computeStats(successful.map(r => r.totalMs)),
     },
   };
 }
@@ -162,7 +132,7 @@ function roundStats(s: { median: number; p95: number; p99: number }) {
   return { median: round(s.median), p95: round(s.p95), p99: round(s.p99) };
 }
 
-export async function writeBrowserResultsJson(results: BrowserBenchmarkResult[], outPath: string): Promise<void> {
+export async function writeBrowserResultsJson(results: BrowserBenchmarkResult[], outPath: string, timeoutMs: number): Promise<void> {
   const fs = await import('fs');
   const os = await import('os');
 
@@ -199,7 +169,7 @@ export async function writeBrowserResultsJson(results: BrowserBenchmarkResult[],
     },
     config: {
       iterations: results[0]?.iterations.length || 0,
-      timeoutMs: 120000,
+      timeoutMs,
     },
     results: cleanResults,
   };
