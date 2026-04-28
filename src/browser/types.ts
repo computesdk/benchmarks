@@ -9,6 +9,8 @@ export interface BrowserProviderConfig {
   requiredEnvVars: string[];
   /** Creates a browser provider instance */
   createBrowserProvider: () => any;
+  /** Options passed to provider.session.create() */
+  sessionCreateOptions?: Record<string, unknown>;
 }
 
 export interface BrowserTimingResult {

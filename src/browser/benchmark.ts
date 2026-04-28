@@ -35,6 +35,7 @@ function computeBrowserStats(values: number[]): { median: number; p95: number; p
 async function runBrowserIteration(
   provider: any,
   timeout: number,
+  sessionCreateOptions: Record<string, unknown>,
   useDefaultContext?: boolean,
 ): Promise<BrowserTimingResult> {
   const timings = { createMs: 0, connectMs: 0, navigateMs: 0, releaseMs: 0, totalMs: 0 };
@@ -44,7 +45,7 @@ async function runBrowserIteration(
     // 1. Create session
     const createStart = performance.now();
     const session = await withTimeout(
-      provider.session.create({ region: 'us-east-1' }),
+      provider.session.create(sessionCreateOptions),
       timeout,
       'Session creation timed out',
     ) as { sessionId: string; connectUrl: string };
@@ -103,7 +104,7 @@ async function runBrowserIteration(
 }
 
 export async function runBrowserBenchmark(config: BrowserProviderConfig): Promise<BrowserBenchmarkResult> {
-  const { name, iterations = 25, timeout = 120_000, requiredEnvVars } = config;
+  const { name, iterations = 25, timeout = 120_000, requiredEnvVars, sessionCreateOptions = {} } = config;
 
   // Check if all required credentials are available
   const missingVars = requiredEnvVars.filter(v => !process.env[v]);
@@ -132,7 +133,7 @@ export async function runBrowserBenchmark(config: BrowserProviderConfig): Promis
   console.log('───  ───────  ───────  ──────── ───────  ───────  ──────');
 
   for (let i = 0; i < iterations; i++) {
-    const result = await runBrowserIteration(provider, timeout);
+    const result = await runBrowserIteration(provider, timeout, sessionCreateOptions);
     results.push(result);
 
     const pad = (n: number) => `${Math.round(n)}ms`.padStart(7);

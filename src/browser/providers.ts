@@ -1,4 +1,5 @@
 import { browserbase } from '@computesdk/browserbase';
+import { hyperbrowser } from '@computesdk/hyperbrowser';
 import { kernel } from '@computesdk/kernel';
 import type { BrowserProviderConfig } from './types.js';
 
@@ -15,6 +16,15 @@ export const browserProviders: BrowserProviderConfig[] = [
       apiKey: process.env.BROWSERBASE_API_KEY!,
       projectId: process.env.BROWSERBASE_PROJECT_ID!,
     }),
+    sessionCreateOptions: { region: 'us-east-1' },
+  },
+  {
+    name: 'hyperbrowser',
+    requiredEnvVars: ['HYPERBROWSER_API_KEY'],
+    createBrowserProvider: () => hyperbrowser({
+      apiKey: process.env.HYPERBROWSER_API_KEY!
+    }),
+    sessionCreateOptions: { region: 'us-east' },
   },
   {
     name: 'kernel',
