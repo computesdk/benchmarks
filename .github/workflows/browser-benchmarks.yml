@@ -35,6 +35,7 @@ jobs:
       matrix:
         provider:
           - browserbase
+          # - hyperbrowser
           - kernel
     steps:
       - uses: actions/checkout@v4
@@ -55,6 +56,7 @@ jobs:
         env:
           BROWSERBASE_API_KEY: ${{ secrets.BROWSERBASE_API_KEY }}
           BROWSERBASE_PROJECT_ID: ${{ secrets.BROWSERBASE_PROJECT_ID }}
+          # HYPERBROWSER_API_KEY: ${{ secrets.HYPERBROWSER_API_KEY }}
           KERNEL_API_KEY: ${{ secrets.KERNEL_API_KEY }}
         run: |
           npm run bench -- \
