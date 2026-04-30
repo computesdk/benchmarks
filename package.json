@@ -25,6 +25,9 @@
     "bench:browser:browserbase": "tsx src/run.ts --mode browser --provider browserbase",
     "bench:browser:hyperbrowser": "tsx src/run.ts --mode browser --provider hyperbrowser",
     "bench:browser:kernel": "tsx src/run.ts --mode browser --provider kernel",
+    "bench:browser:steel": "tsx src/run.ts --mode browser --provider steel",
+    "bench:browser:browseruse": "tsx src/run.ts --mode browser --provider browseruse",
+    "bench:browser:anchorbrowser": "tsx src/run.ts --mode browser --provider anchorbrowser",
     "bench:storage": "tsx src/run.ts --mode storage",
     "bench:storage:s3": "tsx src/run.ts --mode storage --provider aws-s3",
     "bench:storage:r2": "tsx src/run.ts --mode storage --provider cloudflare-r2",
@@ -43,6 +46,7 @@
     "generate-pricing-svg": "tsx src/sandbox/generate-pricing-svg.ts"
   },
   "dependencies": {
+    "@computesdk/anchorbrowser": "^0.2.0",
     "@computesdk/archil": "^0.3.0",
     "@computesdk/beam": "^0.1.1",
     "@computesdk/blaxel": "^1.6.7",
