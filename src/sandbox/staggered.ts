@@ -31,13 +31,14 @@ export async function runStaggeredBenchmark(config: StaggeredConfig): Promise<St
   console.log(`\n--- Staggered Benchmark: ${name} (${concurrency} sandboxes, ${staggerDelayMs}ms apart) ---`);
 
   const wallStart = performance.now();
+  const seenSandboxFingerprints = new Set<string>();
   const promises: Promise<TimingResult>[] = [];
   const rampProfile: { launchedAt: number; readyAt: number; ttiMs: number }[] = [];
 
   for (let i = 0; i < concurrency; i++) {
     const launchedAt = performance.now() - wallStart;
 
-    const p = runIteration(config.createCompute(), timeout, sandboxOptions, destroyTimeoutMs)
+    const p = runIteration(config.createCompute(), timeout, sandboxOptions, destroyTimeoutMs, seenSandboxFingerprints)
       .then(result => {
         const readyAt = performance.now() - wallStart;
         rampProfile.push({ launchedAt, readyAt, ttiMs: result.ttiMs });
