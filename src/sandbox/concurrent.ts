@@ -1,6 +1,7 @@
 import type { ProviderConfig, TimingResult, ConcurrentBenchmarkResult } from './types.js';
 import { runIteration } from './benchmark.js';
 import { computeStats } from '../util/stats.js';
+import { randomUUID } from 'node:crypto';
 
 interface ConcurrentConfig extends ProviderConfig {
   concurrency: number;
@@ -29,11 +30,14 @@ export async function runConcurrentBenchmark(config: ConcurrentConfig): Promise<
   console.log(`\n--- Concurrent Benchmark: ${name} (${concurrency} sandboxes) ---`);
 
   const wallStart = performance.now();
-  const seenSandboxFingerprints = new Set<string>();
+  const reuseDetector = {
+    runNonce: randomUUID(),
+    seenSignals: new Map<string, Set<string>>(),
+  };
 
   // Fire all sandbox creations simultaneously — no awaiting between launches
   const promises = Array.from({ length: concurrency }, (_, i) =>
-    runIteration(compute, timeout, sandboxOptions, destroyTimeoutMs, seenSandboxFingerprints)
+    runIteration(compute, timeout, sandboxOptions, destroyTimeoutMs, reuseDetector)
       .then(result => {
         console.log(`  Sandbox ${i + 1}/${concurrency}: TTI ${(result.ttiMs / 1000).toFixed(2)}s`);
         return result;
