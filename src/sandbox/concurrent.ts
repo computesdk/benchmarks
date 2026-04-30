@@ -25,15 +25,13 @@ export async function runConcurrentBenchmark(config: ConcurrentConfig): Promise<
     };
   }
 
-  const compute = config.createCompute();
-
   console.log(`\n--- Concurrent Benchmark: ${name} (${concurrency} sandboxes) ---`);
 
   const wallStart = performance.now();
 
   // Fire all sandbox creations simultaneously — no awaiting between launches
   const promises = Array.from({ length: concurrency }, (_, i) =>
-    runIteration(compute, timeout, sandboxOptions, destroyTimeoutMs)
+    runIteration(config.createCompute(), timeout, sandboxOptions, destroyTimeoutMs)
       .then(result => {
         console.log(`  Sandbox ${i + 1}/${concurrency}: TTI ${(result.ttiMs / 1000).toFixed(2)}s`);
         return result;

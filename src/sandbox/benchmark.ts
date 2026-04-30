@@ -17,7 +17,6 @@ export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkRes
     };
   }
 
-  const compute = config.createCompute();
   const results: TimingResult[] = [];
 
   console.log(`\n--- Benchmarking: ${name} (${iterations} iterations) ---`);
@@ -26,7 +25,7 @@ export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkRes
     console.log(`  Iteration ${i + 1}/${iterations}...`);
 
     try {
-      const iterationResult = await runIteration(compute, timeout, sandboxOptions, destroyTimeoutMs);
+      const iterationResult = await runIteration(config.createCompute(), timeout, sandboxOptions, destroyTimeoutMs);
       results.push(iterationResult);
       console.log(`    TTI: ${(iterationResult.ttiMs / 1000).toFixed(2)}s`);
     } catch (err) {
@@ -88,4 +87,3 @@ export async function runIteration(compute: any, timeout: number, sandboxOptions
     }
   }
 }
-
