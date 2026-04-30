@@ -17,6 +17,7 @@ export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkRes
     };
   }
 
+  const compute = config.createCompute();
   const results: TimingResult[] = [];
   const seenSandboxFingerprints = new Set<string>();
 
@@ -27,7 +28,7 @@ export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkRes
 
     try {
       const iterationResult = await runIteration(
-        config.createCompute(),
+        compute,
         timeout,
         sandboxOptions,
         destroyTimeoutMs,
