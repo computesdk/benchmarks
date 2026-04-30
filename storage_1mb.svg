@@ -40,7 +40,7 @@
 
   <!-- Title -->
   <text class="title" x="100" y="55">Object Storage Benchmarks</text>
-  <text class="subtitle" x="100" y="78">Download performance - 10MB files</text>
+  <text class="subtitle" x="100" y="78">Download performance - 1MB files</text>
 
   <!-- Sponsors -->
   <text font-size="11" font-family="Inter, SF Pro Display, sans-serif" fill="#8c959f" x="958" y="36" text-anchor="middle" letter-spacing="1">SPONSORED BY</text>
@@ -62,31 +62,31 @@
 
   <!-- Row 1 -->
   <text class="rank rank-1" x="40" y="208">1</text>
-  <text class="row provider" x="80" y="208">Cloudflare R2</text>
-  <text class="row download" x="280" y="208">94.1</text>
-  <text class="row download fast" x="420" y="208">0.34s</text>
-  <text class="row" x="600" y="208">248.2 Mbps</text>
-  <text class="row" x="780" y="208">0.81s</text>
+  <text class="row provider" x="80" y="208">AWS S3</text>
+  <text class="row download" x="280" y="208">94.9</text>
+  <text class="row download fast" x="420" y="208">0.12s</text>
+  <text class="row" x="600" y="208">68.0 Mbps</text>
+  <text class="row" x="780" y="208">0.06s</text>
   <text class="row status" x="960" y="208">100/100</text>
   <line class="divider" x1="24" y1="222" x2="1176" y2="222"/>
 
   <!-- Row 2 -->
   <text class="rank rank-2" x="40" y="252">2</text>
-  <text class="row provider" x="80" y="252">AWS S3</text>
-  <text class="row download" x="280" y="252">93.2</text>
-  <text class="row download fast" x="420" y="252">0.60s</text>
-  <text class="row" x="600" y="252">139.9 Mbps</text>
-  <text class="row" x="780" y="252">0.41s</text>
+  <text class="row provider" x="80" y="252">Cloudflare R2</text>
+  <text class="row download" x="280" y="252">94.8</text>
+  <text class="row download fast" x="420" y="252">0.12s</text>
+  <text class="row" x="600" y="252">71.2 Mbps</text>
+  <text class="row" x="780" y="252">0.21s</text>
   <text class="row status" x="960" y="252">100/100</text>
   <line class="divider" x1="24" y1="266" x2="1176" y2="266"/>
 
   <!-- Row 3 -->
   <text class="rank rank-3" x="40" y="296">3</text>
   <text class="row provider" x="80" y="296">Tigris</text>
-  <text class="row download" x="280" y="296">90.0</text>
-  <text class="row download fast" x="420" y="296">1.24s</text>
-  <text class="row" x="600" y="296">67.7 Mbps</text>
-  <text class="row" x="780" y="296">1.18s</text>
+  <text class="row download" x="280" y="296">94.4</text>
+  <text class="row download fast" x="420" y="296">0.21s</text>
+  <text class="row" x="600" y="296">40.6 Mbps</text>
+  <text class="row" x="780" y="296">0.15s</text>
   <text class="row status" x="960" y="296">100/100</text>
 
   <!-- Timestamp -->

@@ -1,0 +1,1896 @@
+{
+  "version": "1.1",
+  "timestamp": "2026-04-30T15:58:52.452Z",
+  "environment": {
+    "node": "v24.15.0",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "config": {
+    "iterations": 100,
+    "timeoutMs": 30000
+  },
+  "results": [
+    {
+      "provider": "aws-s3",
+      "mode": "storage",
+      "bucket": "s3-benchmark-computesdk",
+      "fileSizeBytes": 1048576,
+      "iterations": [
+        {
+          "uploadMs": 341.11,
+          "downloadMs": 104.09,
+          "throughputMbps": 80.59,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 122.03,
+          "downloadMs": 50.88,
+          "throughputMbps": 164.86,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 100.33,
+          "downloadMs": 45.96,
+          "throughputMbps": 182.53,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 80.88,
+          "downloadMs": 44.11,
+          "throughputMbps": 190.19,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 79.82,
+          "downloadMs": 43.51,
+          "throughputMbps": 192.8,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 70.94,
+          "downloadMs": 40.82,
+          "throughputMbps": 205.48,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 81,
+          "downloadMs": 40.66,
+          "throughputMbps": 206.32,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 71.72,
+          "downloadMs": 44.81,
+          "throughputMbps": 187.19,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 95.04,
+          "downloadMs": 38.76,
+          "throughputMbps": 216.41,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 65.78,
+          "downloadMs": 41.89,
+          "throughputMbps": 200.27,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 70.64,
+          "downloadMs": 56.16,
+          "throughputMbps": 149.37,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 64.05,
+          "downloadMs": 48.43,
+          "throughputMbps": 173.21,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 65.59,
+          "downloadMs": 46.89,
+          "throughputMbps": 178.91,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 71.2,
+          "downloadMs": 39.99,
+          "throughputMbps": 209.79,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 65.54,
+          "downloadMs": 37.75,
+          "throughputMbps": 222.2,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 84.73,
+          "downloadMs": 47.54,
+          "throughputMbps": 176.45,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 64.13,
+          "downloadMs": 67.05,
+          "throughputMbps": 125.11,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 65.35,
+          "downloadMs": 41.66,
+          "throughputMbps": 201.36,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 64.53,
+          "downloadMs": 42.34,
+          "throughputMbps": 198.13,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 63.74,
+          "downloadMs": 37.24,
+          "throughputMbps": 225.24,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 87.47,
+          "downloadMs": 57.46,
+          "throughputMbps": 146,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 72.07,
+          "downloadMs": 140.73,
+          "throughputMbps": 59.61,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 65.27,
+          "downloadMs": 105.89,
+          "throughputMbps": 79.22,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 63.52,
+          "downloadMs": 123.61,
+          "throughputMbps": 67.87,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 64.37,
+          "downloadMs": 90.49,
+          "throughputMbps": 92.7,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 80.91,
+          "downloadMs": 95.18,
+          "throughputMbps": 88.14,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 62.38,
+          "downloadMs": 103.41,
+          "throughputMbps": 81.12,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 65.03,
+          "downloadMs": 100.21,
+          "throughputMbps": 83.71,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 78.7,
+          "downloadMs": 134.33,
+          "throughputMbps": 62.45,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 72.6,
+          "downloadMs": 158.98,
+          "throughputMbps": 52.76,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 72.93,
+          "downloadMs": 209.51,
+          "throughputMbps": 40.04,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 61.32,
+          "downloadMs": 253.56,
+          "throughputMbps": 33.08,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 68.19,
+          "downloadMs": 222.03,
+          "throughputMbps": 37.78,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 61.6,
+          "downloadMs": 178.42,
+          "throughputMbps": 47.02,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 218.33,
+          "downloadMs": 102.13,
+          "throughputMbps": 82.14,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 121.81,
+          "downloadMs": 133.78,
+          "throughputMbps": 62.7,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 91.62,
+          "downloadMs": 143.67,
+          "throughputMbps": 58.39,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 80.78,
+          "downloadMs": 177.79,
+          "throughputMbps": 47.18,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 72.62,
+          "downloadMs": 173.78,
+          "throughputMbps": 48.27,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 70.37,
+          "downloadMs": 202.68,
+          "throughputMbps": 41.39,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 65.55,
+          "downloadMs": 186.38,
+          "throughputMbps": 45.01,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 60.37,
+          "downloadMs": 169.37,
+          "throughputMbps": 49.53,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 61.33,
+          "downloadMs": 173.68,
+          "throughputMbps": 48.3,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 66.63,
+          "downloadMs": 209.81,
+          "throughputMbps": 39.98,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 62.99,
+          "downloadMs": 183.99,
+          "throughputMbps": 45.59,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 59.48,
+          "downloadMs": 168.76,
+          "throughputMbps": 49.71,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 62.28,
+          "downloadMs": 157.4,
+          "throughputMbps": 53.3,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 62.55,
+          "downloadMs": 162.12,
+          "throughputMbps": 51.74,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 62.84,
+          "downloadMs": 151,
+          "throughputMbps": 55.55,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 62.48,
+          "downloadMs": 152,
+          "throughputMbps": 55.19,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 60.42,
+          "downloadMs": 135.6,
+          "throughputMbps": 61.86,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 58.41,
+          "downloadMs": 133.23,
+          "throughputMbps": 62.97,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 63.75,
+          "downloadMs": 131.79,
+          "throughputMbps": 63.65,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 62.3,
+          "downloadMs": 131.93,
+          "throughputMbps": 63.59,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 55.67,
+          "downloadMs": 112.43,
+          "throughputMbps": 74.61,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 59.69,
+          "downloadMs": 123.14,
+          "throughputMbps": 68.12,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 79.69,
+          "downloadMs": 123.54,
+          "throughputMbps": 67.9,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 60.78,
+          "downloadMs": 121.14,
+          "throughputMbps": 69.25,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 58.66,
+          "downloadMs": 120.81,
+          "throughputMbps": 69.44,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 60.34,
+          "downloadMs": 111.95,
+          "throughputMbps": 74.93,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 59.61,
+          "downloadMs": 102.82,
+          "throughputMbps": 81.58,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 58.76,
+          "downloadMs": 108.96,
+          "throughputMbps": 76.99,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 61.64,
+          "downloadMs": 103.69,
+          "throughputMbps": 80.9,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 61.24,
+          "downloadMs": 107.06,
+          "throughputMbps": 78.35,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 62.44,
+          "downloadMs": 111.05,
+          "throughputMbps": 75.54,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 59.96,
+          "downloadMs": 105.97,
+          "throughputMbps": 79.16,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 57.82,
+          "downloadMs": 101.97,
+          "throughputMbps": 82.26,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 137.41,
+          "downloadMs": 105.86,
+          "throughputMbps": 79.25,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 55,
+          "downloadMs": 64.95,
+          "throughputMbps": 129.15,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 51.87,
+          "downloadMs": 83.3,
+          "throughputMbps": 100.71,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 61.66,
+          "downloadMs": 76.25,
+          "throughputMbps": 110.01,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 50.57,
+          "downloadMs": 77.31,
+          "throughputMbps": 108.5,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 60.27,
+          "downloadMs": 69.82,
+          "throughputMbps": 120.14,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 47.84,
+          "downloadMs": 86.48,
+          "throughputMbps": 97.01,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 48.38,
+          "downloadMs": 100.23,
+          "throughputMbps": 83.69,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 49.76,
+          "downloadMs": 102.61,
+          "throughputMbps": 81.75,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 56.2,
+          "downloadMs": 121.48,
+          "throughputMbps": 69.05,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 70.28,
+          "downloadMs": 106.84,
+          "throughputMbps": 78.51,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 46.25,
+          "downloadMs": 134.32,
+          "throughputMbps": 62.45,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 63.62,
+          "downloadMs": 140.08,
+          "throughputMbps": 59.88,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 49.48,
+          "downloadMs": 135.34,
+          "throughputMbps": 61.98,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 48.03,
+          "downloadMs": 161.41,
+          "throughputMbps": 51.97,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 48.64,
+          "downloadMs": 180.17,
+          "throughputMbps": 46.56,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 51.04,
+          "downloadMs": 158.43,
+          "throughputMbps": 52.95,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 51.42,
+          "downloadMs": 220.66,
+          "throughputMbps": 38.02,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 62.23,
+          "downloadMs": 313.89,
+          "throughputMbps": 26.72,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 69.11,
+          "downloadMs": 325.93,
+          "throughputMbps": 25.74,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 64.66,
+          "downloadMs": 258.93,
+          "throughputMbps": 32.4,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 89.92,
+          "downloadMs": 225.59,
+          "throughputMbps": 37.19,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 63.17,
+          "downloadMs": 359.31,
+          "throughputMbps": 23.35,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 63.96,
+          "downloadMs": 460.79,
+          "throughputMbps": 18.2,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 58.81,
+          "downloadMs": 282.71,
+          "throughputMbps": 29.67,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 59.8,
+          "downloadMs": 232.52,
+          "throughputMbps": 36.08,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 58.27,
+          "downloadMs": 202.98,
+          "throughputMbps": 41.33,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 59.2,
+          "downloadMs": 244.81,
+          "throughputMbps": 34.27,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 57.63,
+          "downloadMs": 214.01,
+          "throughputMbps": 39.2,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 59.29,
+          "downloadMs": 183.39,
+          "throughputMbps": 45.74,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 54.94,
+          "downloadMs": 172.52,
+          "throughputMbps": 48.62,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 55.34,
+          "downloadMs": 158.91,
+          "throughputMbps": 52.79,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 70.22,
+          "downloadMs": 148.38,
+          "throughputMbps": 56.53,
+          "fileSizeBytes": 1048576
+        }
+      ],
+      "summary": {
+        "uploadMs": {
+          "median": 63.08,
+          "p95": 87.47,
+          "p99": 100.33
+        },
+        "downloadMs": {
+          "median": 123.34,
+          "p95": 225.59,
+          "p99": 258.93
+        },
+        "throughputMbps": {
+          "median": 68.01,
+          "p95": 192.8,
+          "p99": 205.48
+        }
+      },
+      "compositeScore": 94.94,
+      "successRate": 1
+    },
+    {
+      "provider": "cloudflare-r2",
+      "mode": "storage",
+      "bucket": "r2-benchmark-computesdk",
+      "fileSizeBytes": 1048576,
+      "iterations": [
+        {
+          "uploadMs": 234.02,
+          "downloadMs": 132.81,
+          "throughputMbps": 63.16,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 212.21,
+          "downloadMs": 145.08,
+          "throughputMbps": 57.82,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 222.4,
+          "downloadMs": 195.46,
+          "throughputMbps": 42.92,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 203.64,
+          "downloadMs": 112.68,
+          "throughputMbps": 74.45,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 189.17,
+          "downloadMs": 120.78,
+          "throughputMbps": 69.45,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 178,
+          "downloadMs": 148.5,
+          "throughputMbps": 56.49,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 179.51,
+          "downloadMs": 113.26,
+          "throughputMbps": 74.06,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 353.9,
+          "downloadMs": 121.35,
+          "throughputMbps": 69.13,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 170.41,
+          "downloadMs": 100.65,
+          "throughputMbps": 83.35,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 220.77,
+          "downloadMs": 145.45,
+          "throughputMbps": 57.67,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 200.19,
+          "downloadMs": 113.9,
+          "throughputMbps": 73.65,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 186.42,
+          "downloadMs": 108.29,
+          "throughputMbps": 77.46,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 225.85,
+          "downloadMs": 94.59,
+          "throughputMbps": 88.68,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 231.02,
+          "downloadMs": 102.41,
+          "throughputMbps": 81.91,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 172.53,
+          "downloadMs": 103.68,
+          "throughputMbps": 80.91,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 209.93,
+          "downloadMs": 92.72,
+          "throughputMbps": 90.47,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 176.48,
+          "downloadMs": 105.99,
+          "throughputMbps": 79.15,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 165.6,
+          "downloadMs": 91.31,
+          "throughputMbps": 91.86,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 160.1,
+          "downloadMs": 208.83,
+          "throughputMbps": 40.17,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 157.06,
+          "downloadMs": 103.51,
+          "throughputMbps": 81.04,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 153.34,
+          "downloadMs": 90.39,
+          "throughputMbps": 92.8,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 149.25,
+          "downloadMs": 95.21,
+          "throughputMbps": 88.11,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 236.63,
+          "downloadMs": 173.13,
+          "throughputMbps": 48.45,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 171.42,
+          "downloadMs": 96.64,
+          "throughputMbps": 86.8,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 189.57,
+          "downloadMs": 121.09,
+          "throughputMbps": 69.28,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 193.16,
+          "downloadMs": 138.49,
+          "throughputMbps": 60.57,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 185.24,
+          "downloadMs": 139.82,
+          "throughputMbps": 60,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 175.45,
+          "downloadMs": 116.47,
+          "throughputMbps": 72.03,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 206.2,
+          "downloadMs": 165.57,
+          "throughputMbps": 50.66,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 167.4,
+          "downloadMs": 105.63,
+          "throughputMbps": 79.41,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 228.03,
+          "downloadMs": 160.48,
+          "throughputMbps": 52.27,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 266.85,
+          "downloadMs": 135.21,
+          "throughputMbps": 62.04,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 316.03,
+          "downloadMs": 160.46,
+          "throughputMbps": 52.28,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 251.28,
+          "downloadMs": 149.45,
+          "throughputMbps": 56.13,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 248.81,
+          "downloadMs": 133.56,
+          "throughputMbps": 62.81,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 239.96,
+          "downloadMs": 102.68,
+          "throughputMbps": 81.69,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 199.77,
+          "downloadMs": 206.31,
+          "throughputMbps": 40.66,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 161.9,
+          "downloadMs": 113.96,
+          "throughputMbps": 73.61,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 173.07,
+          "downloadMs": 173.71,
+          "throughputMbps": 48.29,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 337.87,
+          "downloadMs": 117.44,
+          "throughputMbps": 71.43,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 263.05,
+          "downloadMs": 193.7,
+          "throughputMbps": 43.31,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 1243.57,
+          "downloadMs": 254.48,
+          "throughputMbps": 32.96,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 246.13,
+          "downloadMs": 113.02,
+          "throughputMbps": 74.22,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 214.9,
+          "downloadMs": 207.75,
+          "throughputMbps": 40.38,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 198.48,
+          "downloadMs": 100.24,
+          "throughputMbps": 83.69,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 192.36,
+          "downloadMs": 117.07,
+          "throughputMbps": 71.66,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 235.13,
+          "downloadMs": 88.65,
+          "throughputMbps": 94.63,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 173,
+          "downloadMs": 127.42,
+          "throughputMbps": 65.83,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 184.01,
+          "downloadMs": 94.42,
+          "throughputMbps": 88.85,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 239.24,
+          "downloadMs": 166.29,
+          "throughputMbps": 50.45,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 348.92,
+          "downloadMs": 190.5,
+          "throughputMbps": 44.04,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 444.1,
+          "downloadMs": 250.62,
+          "throughputMbps": 33.47,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 376.61,
+          "downloadMs": 239.87,
+          "throughputMbps": 34.97,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 196.01,
+          "downloadMs": 113.36,
+          "throughputMbps": 74,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 229.49,
+          "downloadMs": 112.65,
+          "throughputMbps": 74.46,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 241.93,
+          "downloadMs": 146,
+          "throughputMbps": 57.46,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 331.62,
+          "downloadMs": 168.03,
+          "throughputMbps": 49.92,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 248.76,
+          "downloadMs": 131.49,
+          "throughputMbps": 63.8,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 234.84,
+          "downloadMs": 90.66,
+          "throughputMbps": 92.53,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 336.73,
+          "downloadMs": 135.89,
+          "throughputMbps": 61.73,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 209.17,
+          "downloadMs": 100.61,
+          "throughputMbps": 83.38,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 195.97,
+          "downloadMs": 101.04,
+          "throughputMbps": 83.02,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 210.52,
+          "downloadMs": 128.56,
+          "throughputMbps": 65.25,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 165.26,
+          "downloadMs": 135.81,
+          "throughputMbps": 61.77,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 175.07,
+          "downloadMs": 117.81,
+          "throughputMbps": 71.2,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 183.63,
+          "downloadMs": 90.88,
+          "throughputMbps": 92.3,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 164.51,
+          "downloadMs": 99.31,
+          "throughputMbps": 84.47,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 155.83,
+          "downloadMs": 100.69,
+          "throughputMbps": 83.31,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 237.06,
+          "downloadMs": 177.56,
+          "throughputMbps": 47.24,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 251.36,
+          "downloadMs": 117.21,
+          "throughputMbps": 71.57,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 270.43,
+          "downloadMs": 111.15,
+          "throughputMbps": 75.47,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 246.85,
+          "downloadMs": 264.89,
+          "throughputMbps": 31.67,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 216.5,
+          "downloadMs": 146.85,
+          "throughputMbps": 57.12,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 251.32,
+          "downloadMs": 126.06,
+          "throughputMbps": 66.55,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 188.45,
+          "downloadMs": 148.76,
+          "throughputMbps": 56.39,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 275.1,
+          "downloadMs": 115.3,
+          "throughputMbps": 72.76,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 201.35,
+          "downloadMs": 136.2,
+          "throughputMbps": 61.59,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 169.76,
+          "downloadMs": 100.52,
+          "throughputMbps": 83.45,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 167.19,
+          "downloadMs": 133.11,
+          "throughputMbps": 63.02,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 225.23,
+          "downloadMs": 137.16,
+          "throughputMbps": 61.16,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 223.41,
+          "downloadMs": 96.64,
+          "throughputMbps": 86.8,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 236.39,
+          "downloadMs": 117.96,
+          "throughputMbps": 71.11,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 185.72,
+          "downloadMs": 116.77,
+          "throughputMbps": 71.84,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 217.51,
+          "downloadMs": 111.72,
+          "throughputMbps": 75.08,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 246.85,
+          "downloadMs": 133.24,
+          "throughputMbps": 62.96,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 184.13,
+          "downloadMs": 117.39,
+          "throughputMbps": 71.46,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 271.79,
+          "downloadMs": 114.08,
+          "throughputMbps": 73.53,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 204.37,
+          "downloadMs": 131.18,
+          "throughputMbps": 63.95,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 145.79,
+          "downloadMs": 81.49,
+          "throughputMbps": 102.94,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 196.06,
+          "downloadMs": 165.07,
+          "throughputMbps": 50.82,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 189.79,
+          "downloadMs": 103.33,
+          "throughputMbps": 81.18,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 271.59,
+          "downloadMs": 102.71,
+          "throughputMbps": 81.67,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 184.06,
+          "downloadMs": 107.77,
+          "throughputMbps": 77.84,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 202.29,
+          "downloadMs": 120.55,
+          "throughputMbps": 69.59,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 203.5,
+          "downloadMs": 116.69,
+          "throughputMbps": 71.89,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 299.47,
+          "downloadMs": 118.7,
+          "throughputMbps": 70.67,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 214.12,
+          "downloadMs": 94.5,
+          "throughputMbps": 88.77,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 194.7,
+          "downloadMs": 122.98,
+          "throughputMbps": 68.21,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 196.41,
+          "downloadMs": 117.19,
+          "throughputMbps": 71.58,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 174.94,
+          "downloadMs": 118.37,
+          "throughputMbps": 70.87,
+          "fileSizeBytes": 1048576
+        }
+      ],
+      "summary": {
+        "uploadMs": {
+          "median": 205.29,
+          "p95": 299.47,
+          "p99": 337.87
+        },
+        "downloadMs": {
+          "median": 117.89,
+          "p95": 190.5,
+          "p99": 207.75
+        },
+        "throughputMbps": {
+          "median": 71.16,
+          "p95": 88.68,
+          "p99": 91.86
+        }
+      },
+      "compositeScore": 94.76,
+      "successRate": 1
+    },
+    {
+      "provider": "tigris",
+      "mode": "storage",
+      "bucket": "benchmark-computesdk",
+      "fileSizeBytes": 1048576,
+      "iterations": [
+        {
+          "uploadMs": 419.61,
+          "downloadMs": 182.03,
+          "throughputMbps": 46.08,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 91.71,
+          "downloadMs": 77.79,
+          "throughputMbps": 107.83,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 86.95,
+          "downloadMs": 127.98,
+          "throughputMbps": 65.55,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 691.5,
+          "downloadMs": 155.34,
+          "throughputMbps": 54,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 129.6,
+          "downloadMs": 123.17,
+          "throughputMbps": 68.11,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 74.3,
+          "downloadMs": 130.75,
+          "throughputMbps": 64.16,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 64.53,
+          "downloadMs": 130.75,
+          "throughputMbps": 64.16,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 239.36,
+          "downloadMs": 183.53,
+          "throughputMbps": 45.71,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 146.77,
+          "downloadMs": 211.61,
+          "throughputMbps": 39.64,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 109.37,
+          "downloadMs": 168.5,
+          "throughputMbps": 49.79,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 69.94,
+          "downloadMs": 166.25,
+          "throughputMbps": 50.46,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 189.17,
+          "downloadMs": 208.2,
+          "throughputMbps": 40.29,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 261.01,
+          "downloadMs": 208.99,
+          "throughputMbps": 40.14,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 256.22,
+          "downloadMs": 202.69,
+          "throughputMbps": 41.39,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 120.51,
+          "downloadMs": 213.41,
+          "throughputMbps": 39.31,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 184.63,
+          "downloadMs": 220.76,
+          "throughputMbps": 38,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 122.05,
+          "downloadMs": 223.9,
+          "throughputMbps": 37.47,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 576.49,
+          "downloadMs": 210.93,
+          "throughputMbps": 39.77,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 143.06,
+          "downloadMs": 178.16,
+          "throughputMbps": 47.09,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 163.76,
+          "downloadMs": 165.75,
+          "throughputMbps": 50.61,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 69.49,
+          "downloadMs": 185.94,
+          "throughputMbps": 45.12,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 138.46,
+          "downloadMs": 206.2,
+          "throughputMbps": 40.68,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 153.92,
+          "downloadMs": 203.21,
+          "throughputMbps": 41.28,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 95.52,
+          "downloadMs": 191.03,
+          "throughputMbps": 43.91,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 187.79,
+          "downloadMs": 243.49,
+          "throughputMbps": 34.45,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 319.56,
+          "downloadMs": 197.85,
+          "throughputMbps": 42.4,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 106.68,
+          "downloadMs": 184.8,
+          "throughputMbps": 45.39,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 140.37,
+          "downloadMs": 183.3,
+          "throughputMbps": 45.76,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 119.72,
+          "downloadMs": 165.31,
+          "throughputMbps": 50.75,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 316.65,
+          "downloadMs": 164.62,
+          "throughputMbps": 50.96,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 142.45,
+          "downloadMs": 145.93,
+          "throughputMbps": 57.48,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 113.24,
+          "downloadMs": 145.07,
+          "throughputMbps": 57.82,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 86,
+          "downloadMs": 149.15,
+          "throughputMbps": 56.24,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 147.87,
+          "downloadMs": 172.23,
+          "throughputMbps": 48.71,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 57.33,
+          "downloadMs": 184.72,
+          "throughputMbps": 45.41,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 711.04,
+          "downloadMs": 251.89,
+          "throughputMbps": 33.3,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 138.47,
+          "downloadMs": 206.9,
+          "throughputMbps": 40.54,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 64.37,
+          "downloadMs": 230.76,
+          "throughputMbps": 36.35,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 189.31,
+          "downloadMs": 244.74,
+          "throughputMbps": 34.28,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 200.15,
+          "downloadMs": 265.42,
+          "throughputMbps": 31.61,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 691.31,
+          "downloadMs": 369.31,
+          "throughputMbps": 22.71,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 124.83,
+          "downloadMs": 404.16,
+          "throughputMbps": 20.76,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 174.32,
+          "downloadMs": 360.11,
+          "throughputMbps": 23.29,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 85.35,
+          "downloadMs": 285.3,
+          "throughputMbps": 29.4,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 244.57,
+          "downloadMs": 383.88,
+          "throughputMbps": 21.85,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 151.92,
+          "downloadMs": 373.16,
+          "throughputMbps": 22.48,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 124.11,
+          "downloadMs": 265.61,
+          "throughputMbps": 31.58,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 275.15,
+          "downloadMs": 295.39,
+          "throughputMbps": 28.4,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 340.86,
+          "downloadMs": 294.28,
+          "throughputMbps": 28.51,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 124.4,
+          "downloadMs": 270.91,
+          "throughputMbps": 30.96,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 162.69,
+          "downloadMs": 323.99,
+          "throughputMbps": 25.89,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 64.37,
+          "downloadMs": 584.11,
+          "throughputMbps": 14.36,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 113.84,
+          "downloadMs": 422.63,
+          "throughputMbps": 19.85,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 359.01,
+          "downloadMs": 364.39,
+          "throughputMbps": 23.02,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 115.54,
+          "downloadMs": 414.7,
+          "throughputMbps": 20.23,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 364.72,
+          "downloadMs": 341.68,
+          "throughputMbps": 24.55,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 74.26,
+          "downloadMs": 283.87,
+          "throughputMbps": 29.55,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 112.13,
+          "downloadMs": 243.72,
+          "throughputMbps": 34.42,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 114.82,
+          "downloadMs": 238.96,
+          "throughputMbps": 35.1,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 60.74,
+          "downloadMs": 222.69,
+          "throughputMbps": 37.67,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 209.83,
+          "downloadMs": 215.94,
+          "throughputMbps": 38.85,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 187.71,
+          "downloadMs": 250.39,
+          "throughputMbps": 33.5,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 199.1,
+          "downloadMs": 227.02,
+          "throughputMbps": 36.95,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 132.63,
+          "downloadMs": 192.23,
+          "throughputMbps": 43.64,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 643.1,
+          "downloadMs": 211.53,
+          "throughputMbps": 39.66,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 204.25,
+          "downloadMs": 188.47,
+          "throughputMbps": 44.51,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 150.89,
+          "downloadMs": 174.71,
+          "throughputMbps": 48.01,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 129.78,
+          "downloadMs": 149.09,
+          "throughputMbps": 56.27,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 152.02,
+          "downloadMs": 147.64,
+          "throughputMbps": 56.82,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 360.98,
+          "downloadMs": 169.88,
+          "throughputMbps": 49.38,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 87.12,
+          "downloadMs": 198.44,
+          "throughputMbps": 42.27,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 335.66,
+          "downloadMs": 223.79,
+          "throughputMbps": 37.48,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 258.21,
+          "downloadMs": 184.26,
+          "throughputMbps": 45.53,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 160.19,
+          "downloadMs": 164.94,
+          "throughputMbps": 50.86,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 535.27,
+          "downloadMs": 240.61,
+          "throughputMbps": 34.86,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 441.97,
+          "downloadMs": 257.46,
+          "throughputMbps": 32.58,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 77.57,
+          "downloadMs": 246.3,
+          "throughputMbps": 34.06,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 108.48,
+          "downloadMs": 257.5,
+          "throughputMbps": 32.58,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 118.33,
+          "downloadMs": 266.81,
+          "throughputMbps": 31.44,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 192.12,
+          "downloadMs": 274.18,
+          "throughputMbps": 30.6,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 443.52,
+          "downloadMs": 307.47,
+          "throughputMbps": 27.28,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 145.91,
+          "downloadMs": 238.41,
+          "throughputMbps": 35.19,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 369.24,
+          "downloadMs": 234.75,
+          "throughputMbps": 35.73,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 110.16,
+          "downloadMs": 204.87,
+          "throughputMbps": 40.95,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 147.12,
+          "downloadMs": 227.76,
+          "throughputMbps": 36.83,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 83.89,
+          "downloadMs": 199.69,
+          "throughputMbps": 42.01,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 286.9,
+          "downloadMs": 191.87,
+          "throughputMbps": 43.72,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 139.06,
+          "downloadMs": 188.34,
+          "throughputMbps": 44.54,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 168.85,
+          "downloadMs": 226.05,
+          "throughputMbps": 37.11,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 107.62,
+          "downloadMs": 146.2,
+          "throughputMbps": 57.38,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 284.07,
+          "downloadMs": 205.51,
+          "throughputMbps": 40.82,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 96.14,
+          "downloadMs": 150.78,
+          "throughputMbps": 55.63,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 101.18,
+          "downloadMs": 168.18,
+          "throughputMbps": 49.88,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 79.46,
+          "downloadMs": 147.33,
+          "throughputMbps": 56.94,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 212.34,
+          "downloadMs": 175.73,
+          "throughputMbps": 47.74,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 286.67,
+          "downloadMs": 320.64,
+          "throughputMbps": 26.16,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 110.75,
+          "downloadMs": 142.81,
+          "throughputMbps": 58.74,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 93.55,
+          "downloadMs": 126.53,
+          "throughputMbps": 66.3,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 130.79,
+          "downloadMs": 147.3,
+          "throughputMbps": 56.95,
+          "fileSizeBytes": 1048576
+        },
+        {
+          "uploadMs": 146.74,
+          "downloadMs": 165.14,
+          "throughputMbps": 50.8,
+          "fileSizeBytes": 1048576
+        }
+      ],
+      "summary": {
+        "uploadMs": {
+          "median": 146.33,
+          "p95": 369.24,
+          "p99": 535.27
+        },
+        "downloadMs": {
+          "median": 206.55,
+          "p95": 341.68,
+          "p99": 373.16
+        },
+        "throughputMbps": {
+          "median": 40.61,
+          "p95": 57.38,
+          "p99": 64.16
+        }
+      },
+      "compositeScore": 94.39,
+      "successRate": 1
+    }
+  ]
+}
