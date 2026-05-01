@@ -48,7 +48,7 @@ Each benchmark creates a fresh sandbox, runs `node -v`, and records wall-clock t
 
 ## Methodology
 
-Each benchmark creates a fresh sandbox, runs `node -v`, and records wall-clock time. We run three test modes daily:
+Each benchmark creates a fresh sandbox, runs `node -v`, and records wall-clock time. We run three TTI test modes daily:
 
 **Sequential** — Sandboxes are created one at a time. Each is created, tested, and destroyed before the next begins. 100 iterations per provider. This is the baseline — isolated cold-start performance with no contention.
 
@@ -56,7 +56,9 @@ Each benchmark creates a fresh sandbox, runs `node -v`, and records wall-clock t
 
 **Burst** — 100 sandboxes are created simultaneously with no delay between launches. Tests how providers handle sudden spikes — provisioning queue depth, rate limiting, and failure rates under peak demand.
 
-For each provider we report min, max, median, P95, P99, and average TTI, plus a **composite score** (0–100) that combines weighted timing metrics with success rate. Providers must be both fast *and* reliable to score well.
+**Filesystem (FS)** — In-sandbox disk benchmarks that measure large-file read/write latency and throughput, plus many small-file and metadata-heavy operations. This captures local workspace IO performance after the sandbox is interactive.
+
+For each provider we report min, max, median, P95, P99, and average TTI, plus a **composite score** (0–100) that combines weighted timing metrics with success rate. Providers must be both fast *and* reliable to score well. FS mode uses the same reliability-weighted score approach across read/write and file-op metrics.
 
 ### Composite Score
 
