@@ -19,6 +19,7 @@ export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkRes
 
   const compute = config.createCompute();
   const results: TimingResult[] = [];
+  const seenSandboxFingerprints = new Set<string>();
 
   console.log(`\n--- Benchmarking: ${name} (${iterations} iterations) ---`);
 
@@ -26,7 +27,13 @@ export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkRes
     console.log(`  Iteration ${i + 1}/${iterations}...`);
 
     try {
-      const iterationResult = await runIteration(compute, timeout, sandboxOptions, destroyTimeoutMs);
+      const iterationResult = await runIteration(
+        compute,
+        timeout,
+        sandboxOptions,
+        destroyTimeoutMs,
+        seenSandboxFingerprints,
+      );
       results.push(iterationResult);
       console.log(`    TTI: ${(iterationResult.ttiMs / 1000).toFixed(2)}s`);
     } catch (err) {
@@ -49,13 +56,52 @@ export async function runBenchmark(config: ProviderConfig): Promise<BenchmarkRes
   };
 }
 
-export async function runIteration(compute: any, timeout: number, sandboxOptions?: Record<string, any>, destroyTimeoutMs: number = 15_000): Promise<TimingResult> {
+function getSandboxFingerprint(sandbox: any): string | null {
+  const candidateKeys = ['id', 'sandboxId', 'containerId', 'instanceId'];
+  for (const key of candidateKeys) {
+    const value = sandbox?.[key];
+    if (typeof value === 'string' && value.trim()) {
+      return `sandbox:${value}`;
+    }
+  }
+
+  return null;
+}
+
+export async function runIteration(
+  compute: any,
+  timeout: number,
+  sandboxOptions?: Record<string, any>,
+  destroyTimeoutMs: number = 15_000,
+  seenSandboxFingerprints?: Set<string>,
+): Promise<TimingResult> {
   let sandbox: any = null;
 
   try {
     const start = performance.now();
 
     sandbox = await withTimeout(compute.sandbox.create(sandboxOptions), timeout, 'Sandbox creation timed out');
+
+    const identityResult = await withTimeout(
+      sandbox.runCommand("sh -lc 'echo -n $(hostname)'"),
+      30_000,
+      'Sandbox identity check timed out'
+    ) as { exitCode: number; stdout?: string; stderr?: string };
+
+    if (identityResult.exitCode !== 0) {
+      throw new Error(`Sandbox identity check failed with exit code ${identityResult.exitCode}: ${identityResult.stderr || 'Unknown error'}`);
+    }
+
+    const runtimeIdentity = (identityResult.stdout || '').trim();
+    const sandboxFingerprint = getSandboxFingerprint(sandbox);
+    const fingerprint = sandboxFingerprint || (runtimeIdentity ? `runtime:${runtimeIdentity}` : null);
+
+    if (seenSandboxFingerprints && fingerprint) {
+      if (seenSandboxFingerprints.has(fingerprint)) {
+        throw new Error('Sandbox/container reuse detected across benchmark iterations');
+      }
+      seenSandboxFingerprints.add(fingerprint);
+    }
 
     const result = await withTimeout(
       sandbox.runCommand('node -v'),
@@ -88,4 +134,3 @@ export async function runIteration(compute: any, timeout: number, sandboxOptions
     }
   }
 }
-

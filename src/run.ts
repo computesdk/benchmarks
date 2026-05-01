@@ -9,16 +9,20 @@ import { runConcurrentBenchmark } from './sandbox/concurrent.js';
 import { runStaggeredBenchmark } from './sandbox/staggered.js';
 import { runStorageBenchmark, writeStorageResultsJson } from './storage/benchmark.js';
 import { runBrowserBenchmark, writeBrowserResultsJson } from './browser/benchmark.js';
+import { runFsBenchmark, writeFsResultsJson } from './fs/benchmark.js';
 import { printResultsTable, writeResultsJson } from './sandbox/table.js';
 import { providers } from './sandbox/providers.js';
 import { storageProviders } from './storage/providers.js';
 import { browserProviders } from './browser/providers.js';
+import { fsProviders } from './fs/providers.js';
 import { computeCompositeScores } from './sandbox/scoring.js';
 import { computeStorageCompositeScores } from './storage/scoring.js';
 import { computeBrowserCompositeScores } from './browser/scoring.js';
+import { computeFsCompositeScores } from './fs/scoring.js';
 import type { BenchmarkResult, BenchmarkMode } from './sandbox/types.js';
 import type { StorageBenchmarkResult } from './storage/types.js';
 import type { BrowserBenchmarkResult } from './browser/types.js';
+import type { FsBenchmarkResult } from './fs/types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -31,6 +35,8 @@ const concurrency = parseInt(getArgValue(args, '--concurrency') || '100', 10);
 const storageConcurrency = parseInt(getArgValue(args, '--storage-concurrency') || '1', 10);
 const staggerDelay = parseInt(getArgValue(args, '--stagger-delay') || '200', 10);
 const fileSizeArg = getArgValue(args, '--file-size') || '10MB';
+const fsFileSizeMb = parseInt(getArgValue(args, '--fs-file-size-mb') || '64', 10);
+const fsSmallFiles = parseInt(getArgValue(args, '--fs-small-files') || '1000', 10);
 
 function getArgValue(args: string[], flag: string): string | undefined {
   const idx = args.indexOf(flag);
@@ -38,24 +44,67 @@ function getArgValue(args: string[], flag: string): string | undefined {
 }
 
 /** Resolve which modes to run */
-function getModesToRun(): BenchmarkMode[] | ['storage'] | ['browser'] {
+function getModesToRun(): BenchmarkMode[] | ['storage'] | ['browser'] | ['fs'] {
   if (!rawMode) return ['sequential', 'staggered', 'burst'];
   if (rawMode === 'storage') return ['storage'];
   if (rawMode === 'browser') return ['browser'];
+  if (rawMode === 'fs') return ['fs'];
   const m = rawMode === 'concurrent' ? 'burst' : rawMode as BenchmarkMode;
   return [m];
 }
 
 /** Map mode to results subdirectory name */
-function modeToDir(m: BenchmarkMode | 'storage'): string {
+function modeToDir(m: BenchmarkMode | 'storage' | 'fs'): string {
   switch (m) {
     case 'sequential': return 'sequential_tti';
     case 'staggered': return 'staggered_tti';
     case 'burst':
     case 'concurrent': return 'burst_tti';
     case 'storage': return 'storage';
+    case 'fs': return 'fs';
     default: return `${m}_tti`;
   }
+}
+
+async function runFs(toRun: typeof fsProviders, fileSizeBytes: number, smallFilesCount: number): Promise<void> {
+  console.log('\n' + '='.repeat(70));
+  console.log('  MODE: FS');
+  console.log(`  Iterations per provider: ${iterations}`);
+  console.log(`  Large file size: ${Math.floor(fileSizeBytes / 1024 / 1024)}MB`);
+  console.log(`  Small files count: ${smallFilesCount}`);
+  console.log('='.repeat(70));
+
+  const results: FsBenchmarkResult[] = [];
+  for (const providerConfig of toRun) {
+    const result = await runFsBenchmark({ ...providerConfig, iterations }, fileSizeBytes, smallFilesCount);
+    results.push(result);
+  }
+
+  computeFsCompositeScores(results);
+
+  console.log('\n--- FS Benchmark Results ---');
+  for (const r of results) {
+    if (r.skipped) {
+      console.log(`${r.provider}: SKIPPED (${r.skipReason})`);
+      continue;
+    }
+    const ok = r.iterations.filter(i => !i.error).length;
+    const total = r.iterations.length;
+    console.log(`${r.provider}:`);
+    console.log(`  Read: ${(r.summary.readMs.median / 1000).toFixed(2)}s, Write: ${(r.summary.writeMs.median / 1000).toFixed(2)}s, Small-files: ${(r.summary.smallFileOpsMs.median / 1000).toFixed(2)}s`);
+    console.log(`  Score: ${r.compositeScore?.toFixed(1) || '--'} (${ok}/${total} OK)`);
+  }
+
+  const timestamp = new Date().toISOString().slice(0, 10);
+  const resultsDir = path.resolve(__dirname, `../results/${modeToDir('fs')}`);
+  fs.mkdirSync(resultsDir, { recursive: true });
+
+  const outPath = path.join(resultsDir, `${timestamp}.json`);
+  await writeFsResultsJson(results, outPath);
+
+  const latestPath = path.join(resultsDir, 'latest.json');
+  fs.copyFileSync(outPath, latestPath);
+  console.log(`Copied latest: ${latestPath}`);
 }
 
 async function runMode(mode: BenchmarkMode, toRun: typeof providers): Promise<void> {
@@ -243,6 +292,27 @@ async function main() {
 
     await runBrowser(toRun);
     console.log('\nAll browser tests complete.');
+    return;
+  }
+
+  if (modes[0] === 'fs') {
+    console.log('ComputeSDK Filesystem Benchmarks');
+    console.log(`Date: ${new Date().toISOString()}`);
+    console.log(`File size: ${fsFileSizeMb}MB`);
+    console.log(`Small files: ${fsSmallFiles}\n`);
+
+    const toRun = providerFilter
+      ? fsProviders.filter(p => p.name === providerFilter)
+      : fsProviders;
+
+    if (toRun.length === 0) {
+      console.error(`Unknown fs provider: ${providerFilter}`);
+      console.error(`Available: ${fsProviders.map(p => p.name).join(', ')}`);
+      process.exit(1);
+    }
+
+    await runFs(toRun, fsFileSizeMb * 1024 * 1024, fsSmallFiles);
+    console.log('\nAll fs tests complete.');
     return;
   }
 

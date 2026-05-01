@@ -133,9 +133,39 @@ Each sandbox still measures its own individual TTI. We also capture:
 
 **Why burst matters:** AI agents and orchestration tools often spin up many sandboxes at once. Burst testing reveals how providers handle sudden spikes — provisioning queue depth, rate limiting, and failure rates under peak demand.
 
+### Filesystem (FS)
+
+FS benchmarks run inside a freshly created sandbox to measure local workspace disk performance after startup. This mode is separate from TTI and object storage tests.
+
+```bash
+npm run bench:fs
+```
+
+| Parameter | Default |
+|-----------|---------|
+| Iterations per provider | 100 |
+| Large file size | 64MB |
+| Small files count | 1000 |
+| Timeout per iteration | 120 seconds |
+
+Each successful iteration runs four workload blocks in sequence:
+
+| Workload | Description |
+|----------|-------------|
+| **Large-file write** | Write a fixed-size buffer to disk and measure elapsed time |
+| **Large-file read** | Read the same file back and verify byte length |
+| **Small-file ops** | Create, read, and delete many small files |
+| **Metadata ops** | Repeated `stat` + `rename` operations to stress metadata paths |
+
+From these timings we derive:
+- Read and write latency stats (median, p95, p99)
+- Small-file and metadata latency stats (median, p95, p99)
+- Read and write throughput (Mbps)
+- Success rate and a reliability-weighted composite score
+
 ### Running All Tests
 
-By default, `npm run bench` runs all three tests in sequence:
+By default, `npm run bench` runs the three TTI tests in sequence:
 
 ```bash
 npm run bench                          # Runs sequential → staggered → burst
@@ -143,6 +173,7 @@ npm run bench -- --provider e2b        # All 3 tests, single provider
 npm run bench:sequential               # Sequential only
 npm run bench:staggered                # Staggered only
 npm run bench:burst                    # Burst only
+npm run bench:fs                       # Filesystem only
 ```
 
 ## Test Configuration
