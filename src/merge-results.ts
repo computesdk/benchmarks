@@ -1,7 +1,7 @@
 /**
  * Merge per-provider benchmark results into combined result files.
  *
- * Usage: tsx src/merge-results.ts --input <artifacts-dir> [--mode storage|browser]
+ * Usage: tsx src/merge-results.ts --input <artifacts-dir> [--mode storage|browser|fs]
  *
  * By default, merges sandbox benchmark results: reads latest.json files from
  * the input directory, groups by mode (sequential/staggered/burst), computes
@@ -14,6 +14,10 @@
  * With --mode browser, merges browser benchmark results: deduplicates by
  * provider, computes browser-specific composite scores, and writes combined
  * files to results/browser/latest.json.
+ *
+ * With --mode fs, merges filesystem benchmark results: deduplicates by
+ * provider, computes fs-specific composite scores, and writes combined files
+ * to results/fs/latest.json.
  */
 import fs from 'fs';
 import path from 'path';
@@ -21,10 +25,12 @@ import { fileURLToPath } from 'url';
 import { computeCompositeScores } from './sandbox/scoring.js';
 import { computeStorageCompositeScores, sortStorageByCompositeScore } from './storage/scoring.js';
 import { computeBrowserCompositeScores, sortBrowserByCompositeScore } from './browser/scoring.js';
+import { computeFsCompositeScores } from './fs/scoring.js';
 import { printResultsTable, writeResultsJson } from './sandbox/table.js';
 import type { BenchmarkResult } from './sandbox/types.js';
 import type { StorageBenchmarkResult } from './storage/types.js';
 import type { BrowserBenchmarkResult } from './browser/types.js';
+import type { FsBenchmarkResult } from './fs/types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -38,7 +44,7 @@ function getArgValue(flag: string): string | undefined {
 const inputDir = getArgValue('--input');
 const mergeMode = getArgValue('--mode');
 if (!inputDir) {
-  console.error('Usage: tsx src/merge-results.ts --input <artifacts-dir> [--mode storage|browser]');
+  console.error('Usage: tsx src/merge-results.ts --input <artifacts-dir> [--mode storage|browser|fs]');
   process.exit(1);
 }
 
@@ -366,7 +372,96 @@ async function mainBrowser() {
   console.log(`Copied latest: ${latestPath}`);
 }
 
-const runner = mergeMode === 'storage' ? mainStorage : mergeMode === 'browser' ? mainBrowser : main;
+async function mainFs() {
+  const jsonFiles: string[] = [];
+  function walk(dir: string) {
+    if (!fs.existsSync(dir)) return;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name === 'latest.json') jsonFiles.push(full);
+    }
+  }
+  walk(inputDir!);
+
+  if (jsonFiles.length === 0) {
+    console.error(`No latest.json files found in ${inputDir}`);
+    process.exit(1);
+  }
+
+  console.log(`Found ${jsonFiles.length} result files`);
+
+  const seen = new Map<string, { result: FsBenchmarkResult; fromSingleProvider: boolean }>();
+
+  for (const file of jsonFiles) {
+    const raw = JSON.parse(fs.readFileSync(file, 'utf-8')) as { results: FsBenchmarkResult[] };
+    const fromSingleProvider = raw.results.length === 1;
+    for (const result of raw.results) {
+      const existing = seen.get(result.provider);
+      if (!existing || (fromSingleProvider && !existing.fromSingleProvider)) {
+        seen.set(result.provider, { result, fromSingleProvider });
+      }
+    }
+  }
+
+  const deduped = Array.from(seen.values()).map((e) => e.result);
+  console.log(`\nMerging ${deduped.length} provider results for mode: fs`);
+
+  computeFsCompositeScores(deduped);
+
+  console.log(`\n${'='.repeat(110)}`);
+  console.log('  FILESYSTEM BENCHMARK RESULTS');
+  console.log('='.repeat(110));
+  console.log(
+    ['Provider', 'Score', 'Read', 'Write', 'Small Files', 'Metadata', 'Status']
+      .map((h, i) => h.padEnd([14, 8, 12, 12, 14, 12, 10][i]))
+      .join(' | ')
+  );
+  console.log([14, 8, 12, 12, 14, 12, 10].map((w) => '-'.repeat(w)).join('-+-'));
+
+  const sorted = [...deduped].sort((a, b) => {
+    if (a.skipped && !b.skipped) return 1;
+    if (!a.skipped && b.skipped) return -1;
+    if (a.skipped && b.skipped) return 0;
+    return (b.compositeScore ?? 0) - (a.compositeScore ?? 0);
+  });
+
+  for (const r of sorted) {
+    if (r.skipped) {
+      console.log([r.provider.padEnd(14), '--'.padEnd(8), '--'.padEnd(12), '--'.padEnd(12), '--'.padEnd(14), '--'.padEnd(12), 'SKIPPED'.padEnd(10)].join(' | '));
+      continue;
+    }
+    const ok = r.iterations.filter((i) => !i.error).length;
+    const total = r.iterations.length;
+    const score = r.compositeScore !== undefined ? r.compositeScore.toFixed(1) : '--';
+    const read = (r.summary.readMs.median / 1000).toFixed(2) + 's';
+    const write = (r.summary.writeMs.median / 1000).toFixed(2) + 's';
+    const small = (r.summary.smallFileOpsMs.median / 1000).toFixed(2) + 's';
+    const meta = (r.summary.metadataOpsMs.median / 1000).toFixed(2) + 's';
+    console.log([r.provider.padEnd(14), score.padEnd(8), read.padEnd(12), write.padEnd(12), small.padEnd(14), meta.padEnd(12), `${ok}/${total} OK`.padEnd(10)].join(' | '));
+  }
+  console.log('='.repeat(110));
+
+  const { writeFsResultsJson } = await import('./fs/benchmark.js');
+  const timestamp = new Date().toISOString().slice(0, 10);
+  const resultsDir = path.resolve(ROOT, 'results/fs');
+  fs.mkdirSync(resultsDir, { recursive: true });
+
+  const outPath = path.join(resultsDir, `${timestamp}.json`);
+  await writeFsResultsJson(deduped, outPath);
+
+  const latestPath = path.join(resultsDir, 'latest.json');
+  fs.copyFileSync(outPath, latestPath);
+  console.log(`Copied latest: ${latestPath}`);
+}
+
+const runner = mergeMode === 'storage'
+  ? mainStorage
+  : mergeMode === 'browser'
+    ? mainBrowser
+    : mergeMode === 'fs'
+      ? mainFs
+      : main;
 runner().catch(err => {
   console.error('Merge failed:', err);
   process.exit(1);

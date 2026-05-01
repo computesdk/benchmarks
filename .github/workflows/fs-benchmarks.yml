@@ -1,0 +1,215 @@
+name: Filesystem Benchmark
+
+on:
+  pull_request:
+    paths:
+      - 'src/fs/**'
+      - 'src/sandbox/**'
+      - 'src/util/**'
+      - 'src/run.ts'
+      - 'src/merge-results.ts'
+      - 'package.json'
+  schedule:
+    - cron: '0 3 * * *' # Daily at 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: 'Iterations per provider'
+        required: false
+        default: '100'
+      file_size_mb:
+        description: 'Large file size in MB'
+        required: false
+        default: '64'
+      small_files:
+        description: 'Number of small files in workload'
+        required: false
+        default: '1000'
+
+concurrency:
+  group: fs-benchmarks
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bench:
+    name: Bench ${{ matrix.provider }}
+    runs-on: namespace-profile-default
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        provider:
+          - archil
+          - blaxel
+          - cloudflare
+          - codesandbox
+          - daytona
+          - declaw
+          - e2b
+          - hopx
+          - modal
+          - namespace
+          - runloop
+          - upstash
+          - vercel
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - name: Install dependencies
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            npm update
+          else
+            npm ci
+          fi
+      - name: Clear stale results from checkout
+        run: rm -rf results/fs/
+      - name: Run filesystem benchmark
+        env:
+          COMPUTESDK_API_KEY: ${{ secrets.COMPUTESDK_API_KEY }}
+          ARCHIL_API_KEY: ${{ secrets.ARCHIL_API_KEY }}
+          ARCHIL_REGION: ${{ secrets.ARCHIL_REGION }}
+          ARCHIL_DISK_ID: ${{ secrets.ARCHIL_DISK_ID }}
+          BL_API_KEY: ${{ secrets.BL_API_KEY }}
+          BL_WORKSPACE: ${{ secrets.BL_WORKSPACE }}
+          CLOUDFLARE_SANDBOX_URL: ${{ secrets.CLOUDFLARE_SANDBOX_URL }}
+          CLOUDFLARE_SANDBOX_SECRET: ${{ secrets.CLOUDFLARE_SANDBOX_SECRET }}
+          CSB_API_KEY: ${{ secrets.CSB_API_KEY }}
+          DAYTONA_API_KEY: ${{ secrets.DAYTONA_API_KEY }}
+          DECLAW_API_KEY: ${{ secrets.DECLAW_API_KEY }}
+          E2B_API_KEY: ${{ secrets.E2B_API_KEY }}
+          HOPX_API_KEY: ${{ secrets.HOPX_API_KEY }}
+          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+          NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
+          RUNLOOP_API_KEY: ${{ secrets.RUNLOOP_API_KEY }}
+          UPSTASH_BOX_API_KEY: ${{ secrets.UPSTASH_BOX_API_KEY }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          npm run bench -- \
+            --mode fs \
+            --provider ${{ matrix.provider }} \
+            --fs-file-size-mb ${{ github.event.inputs.file_size_mb || '64' }} \
+            --fs-small-files ${{ github.event.inputs.small_files || '1000' }} \
+            --iterations ${{ github.event_name == 'pull_request' && '5' || github.event.inputs.iterations || '100' }}
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fs-results-${{ matrix.provider }}
+          path: results/fs/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  collect:
+    name: Collect Results
+    runs-on: namespace-profile-default
+    needs: bench
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - name: Install dependencies
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            npm update
+          else
+            npm ci
+          fi
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+          pattern: fs-results-*
+      - name: Merge results
+        run: npx tsx src/merge-results.ts --input artifacts --mode fs
+      - name: Post results to PR
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const latestPath = path.join('results', 'fs', 'latest.json');
+
+            let body = '## Filesystem Benchmark Results\n\n';
+
+            if (!fs.existsSync(latestPath)) {
+              body += '> No filesystem benchmark results were generated.\n\n';
+            } else {
+              const data = JSON.parse(fs.readFileSync(latestPath, 'utf-8'));
+              const results = data.results
+                .filter(r => !r.skipped)
+                .sort((a, b) => (b.compositeScore || 0) - (a.compositeScore || 0));
+
+              if (results.length === 0) {
+                body += '> No filesystem benchmark results were generated.\n\n';
+              } else {
+                body += '| # | Provider | Score | Read | Write | Small Files | Metadata | Status |\n';
+                body += '|---|----------|-------|------|-------|-------------|----------|--------|\n';
+
+                results.forEach((r, i) => {
+                  const score = r.compositeScore !== undefined ? r.compositeScore.toFixed(1) : '--';
+                  const read = (r.summary.readMs.median / 1000).toFixed(2) + 's';
+                  const write = (r.summary.writeMs.median / 1000).toFixed(2) + 's';
+                  const small = (r.summary.smallFileOpsMs.median / 1000).toFixed(2) + 's';
+                  const meta = (r.summary.metadataOpsMs.median / 1000).toFixed(2) + 's';
+                  const ok = r.iterations.filter(it => !it.error).length;
+                  const total = r.iterations.length;
+                  body += `| ${i + 1} | ${r.provider} | ${score} | ${read} | ${write} | ${small} | ${meta} | ${ok}/${total} |\n`;
+                });
+
+                body += '\n';
+              }
+            }
+
+            body += `---\n*[View full run](${runUrl})*`;
+
+            const marker = '## Filesystem Benchmark Results';
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.body.startsWith(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+      - name: Commit and push
+        if: github.event_name != 'pull_request'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json results/fs/
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore: update fs benchmark results [skip ci]"
+          git push
