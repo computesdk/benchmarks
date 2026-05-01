@@ -66,6 +66,8 @@ type ReuseDetector = {
   seenSignals: Map<string, Set<string>>;
 };
 
+const STRONG_SIGNAL_KEYS = ['ns_mnt', 'ns_pid', 'ns_uts', 'cgroup_hash', 'boot_id', 'pid1'] as const;
+
 function parseKeyValueOutput(stdout: string): Record<string, string> {
   const parsed: Record<string, string> = {};
   for (const line of stdout.split('\n')) {
@@ -80,10 +82,9 @@ function parseKeyValueOutput(stdout: string): Record<string, string> {
 }
 
 function countStrongSignalMatches(identity: Record<string, string>, detector: ReuseDetector): number {
-  const strongKeys = ['ns_mnt', 'ns_pid', 'ns_uts', 'cgroup_hash', 'boot_id', 'pid1'];
   let matches = 0;
 
-  for (const key of strongKeys) {
+  for (const key of STRONG_SIGNAL_KEYS) {
     const value = identity[key];
     if (!value || value === 'unknown') continue;
     const seen = detector.seenSignals.get(key);
@@ -94,7 +95,8 @@ function countStrongSignalMatches(identity: Record<string, string>, detector: Re
 }
 
 function rememberSignals(identity: Record<string, string>, detector: ReuseDetector): void {
-  for (const [key, value] of Object.entries(identity)) {
+  for (const key of STRONG_SIGNAL_KEYS) {
+    const value = identity[key];
     if (!value || value === 'unknown') continue;
     if (!detector.seenSignals.has(key)) detector.seenSignals.set(key, new Set<string>());
     detector.seenSignals.get(key)!.add(value);
@@ -122,8 +124,8 @@ export async function runIteration(
       : `${Date.now().toString(36)}:${Math.random().toString(36).slice(2, 10)}`;
 
     const identityProbeCommand = [
-      "marker_a='/tmp/.bench_ephemeral_check'",
-      "marker_b='/var/tmp/.bench_ephemeral_check'",
+      `marker_a='${markerA}'`,
+      `marker_b='${markerB}'`,
       "marker_path=''",
       "for p in \"$marker_a\" \"$marker_b\"; do if [ -f \"$p\" ]; then marker_path=$p; break; fi; done",
       "marker_value='unknown'",
@@ -150,7 +152,7 @@ export async function runIteration(
     ].join('; ');
 
     const identityResult = await withTimeout(
-      sandbox.runCommand(`sh -lc "${identityProbeCommand}"`),
+      sandbox.runCommand(identityProbeCommand),
       30_000,
       'Sandbox identity check timed out'
     ) as { exitCode: number; stdout?: string; stderr?: string };
