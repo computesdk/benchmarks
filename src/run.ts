@@ -9,16 +9,21 @@ import { runConcurrentBenchmark } from './sandbox/concurrent.js';
 import { runStaggeredBenchmark } from './sandbox/staggered.js';
 import { runStorageBenchmark, writeStorageResultsJson } from './storage/benchmark.js';
 import { runBrowserBenchmark, writeBrowserResultsJson } from './browser/benchmark.js';
+import { runLinuxKernelBuilderBenchmark } from './linux-kernel-builder/benchmark.js';
 import { printResultsTable, writeResultsJson } from './sandbox/table.js';
+import { printLinuxKernelBuilderResultsTable, writeLinuxKernelBuilderResultsJson } from './linux-kernel-builder/table.js';
 import { providers } from './sandbox/providers.js';
 import { storageProviders } from './storage/providers.js';
 import { browserProviders } from './browser/providers.js';
+import { linuxKernelBuilderProviders } from './linux-kernel-builder/providers.js';
 import { computeCompositeScores } from './sandbox/scoring.js';
 import { computeStorageCompositeScores } from './storage/scoring.js';
 import { computeBrowserCompositeScores } from './browser/scoring.js';
+import { computeLinuxKernelBuilderCompositeScores } from './linux-kernel-builder/scoring.js';
 import type { BenchmarkResult, BenchmarkMode } from './sandbox/types.js';
 import type { StorageBenchmarkResult } from './storage/types.js';
 import type { BrowserBenchmarkResult } from './browser/types.js';
+import type { LinuxKernelBuilderBenchmarkResult } from './linux-kernel-builder/types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -38,24 +43,55 @@ function getArgValue(args: string[], flag: string): string | undefined {
 }
 
 /** Resolve which modes to run */
-function getModesToRun(): BenchmarkMode[] | ['storage'] | ['browser'] {
+function getModesToRun(): BenchmarkMode[] | ['storage'] | ['browser'] | ['linux-kernel-builder'] {
   if (!rawMode) return ['sequential', 'staggered', 'burst'];
   if (rawMode === 'storage') return ['storage'];
   if (rawMode === 'browser') return ['browser'];
+  if (rawMode === 'linux-kernel-builder') return ['linux-kernel-builder'];
   const m = rawMode === 'concurrent' ? 'burst' : rawMode as BenchmarkMode;
   return [m];
 }
 
 /** Map mode to results subdirectory name */
-function modeToDir(m: BenchmarkMode | 'storage'): string {
+function modeToDir(m: BenchmarkMode | 'storage' | 'linux-kernel-builder'): string {
   switch (m) {
     case 'sequential': return 'sequential_tti';
     case 'staggered': return 'staggered_tti';
     case 'burst':
     case 'concurrent': return 'burst_tti';
     case 'storage': return 'storage';
+    case 'linux-kernel-builder': return 'linux_kernel_builder';
     default: return `${m}_tti`;
   }
+}
+
+async function runLinuxKernelBuilder(toRun: typeof linuxKernelBuilderProviders): Promise<void> {
+  console.log('\n' + '='.repeat(70));
+  console.log('  MODE: LINUX-KERNEL-BUILDER');
+  console.log(`  Iterations per provider: ${iterations}`);
+  console.log('  Workload: LKB (Linux Kernel Builder) - defconfig + bzImage');
+  console.log('='.repeat(70));
+
+  const results: LinuxKernelBuilderBenchmarkResult[] = [];
+
+  for (const providerConfig of toRun) {
+    const result = await runLinuxKernelBuilderBenchmark({ ...providerConfig, iterations });
+    results.push(result);
+  }
+
+  computeLinuxKernelBuilderCompositeScores(results);
+  printLinuxKernelBuilderResultsTable(results);
+
+  const timestamp = new Date().toISOString().slice(0, 10);
+  const resultsDir = path.resolve(__dirname, `../results/${modeToDir('linux-kernel-builder')}`);
+  fs.mkdirSync(resultsDir, { recursive: true });
+
+  const outPath = path.join(resultsDir, `${timestamp}.json`);
+  await writeLinuxKernelBuilderResultsJson(results, outPath);
+
+  const latestPath = path.join(resultsDir, 'latest.json');
+  fs.copyFileSync(outPath, latestPath);
+  console.log(`Copied latest: ${latestPath}`);
 }
 
 async function runMode(mode: BenchmarkMode, toRun: typeof providers): Promise<void> {
@@ -243,6 +279,29 @@ async function main() {
 
     await runBrowser(toRun);
     console.log('\nAll browser tests complete.');
+    return;
+  }
+
+  if (modes[0] === 'linux-kernel-builder') {
+    console.log('ComputeSDK Linux Kernel Builder Benchmarks');
+    console.log(`Date: ${new Date().toISOString()}\n`);
+
+    const toRun = providerFilter
+      ? linuxKernelBuilderProviders.filter(p => p.name === providerFilter)
+      : linuxKernelBuilderProviders;
+
+    if (toRun.length === 0) {
+      if (providerFilter) {
+        console.error(`Unknown linux-kernel-builder provider: ${providerFilter}`);
+        console.error(`Available: ${linuxKernelBuilderProviders.map(p => p.name).join(', ')}`);
+      } else {
+        console.error('No linux-kernel-builder providers configured. Add entries to src/linux-kernel-builder/providers.ts.');
+      }
+      process.exit(1);
+    }
+
+    await runLinuxKernelBuilder(toRun);
+    console.log('\nAll linux-kernel-builder tests complete.');
     return;
   }
 
