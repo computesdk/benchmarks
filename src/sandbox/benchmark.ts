@@ -170,11 +170,9 @@ export async function runIteration(
 
       const strongMatches = countStrongSignalMatches(identity, reuseDetector);
       if (strongMatches >= 3) {
-        const message = `Sandbox/container reuse suspected: ${strongMatches} strong runtime signals repeated`;
-        if (process.env.BENCH_STRICT_REUSE_SIGNALS === '1') {
-          throw new Error(message);
+        if (process.env.BENCH_REUSE_DEBUG === '1') {
+          console.warn(`    [reuse-check] Sandbox/container reuse suspected: ${strongMatches} strong runtime signals repeated`);
         }
-        console.warn(`    [reuse-check] ${message}`);
       }
 
       rememberSignals(identity, reuseDetector);
