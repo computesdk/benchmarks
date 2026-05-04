@@ -1,6 +1,7 @@
 import { browserbase } from '@computesdk/browserbase';
 import { hyperbrowser } from '@computesdk/hyperbrowser';
 import { kernel } from '@computesdk/kernel';
+import { notte } from '@computesdk/notte';
 import type { BrowserProviderConfig } from './types.js';
 
 /**
@@ -31,6 +32,13 @@ export const browserProviders: BrowserProviderConfig[] = [
     requiredEnvVars: ['KERNEL_API_KEY'],
     createBrowserProvider: () => kernel({
       apiKey: process.env.KERNEL_API_KEY!
+    }),
+  },
+  {
+    name: 'notte',
+    requiredEnvVars: ['NOTTE_API_KEY'],
+    createBrowserProvider: () => notte({
+      apiKey: process.env.NOTTE_API_KEY!
     }),
   },
   // add browser providers above
