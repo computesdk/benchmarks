@@ -38,6 +38,7 @@ jobs:
           # - browseruse
           - hyperbrowser
           - kernel
+          - steel
           # - steel
           # - anchorbrowser
     steps:
@@ -62,6 +63,7 @@ jobs:
           # BROWSER_USE_API_KEY: ${{ secrets.BROWSER_USE_API_KEY }}
           HYPERBROWSER_API_KEY: ${{ secrets.HYPERBROWSER_API_KEY }}
           KERNEL_API_KEY: ${{ secrets.KERNEL_API_KEY }}
+          STEEL_API_KEY: ${{ secrets.STEEL_API_KEY }}
           # NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
           # STEEL_API_KEY: ${{ secrets.STEEL_API_KEY }}
           # ANCHORBROWSER_API_KEY: ${{ secrets.ANCHORBROWSER_API_KEY }}
