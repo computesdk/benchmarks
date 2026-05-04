@@ -35,7 +35,7 @@ jobs:
       matrix:
         provider:
           - browserbase
-          # - browseruse
+          - browseruse
           - hyperbrowser
           - kernel
           # - steel
@@ -59,7 +59,7 @@ jobs:
         env:
           BROWSERBASE_API_KEY: ${{ secrets.BROWSERBASE_API_KEY }}
           BROWSERBASE_PROJECT_ID: ${{ secrets.BROWSERBASE_PROJECT_ID }}
-          # BROWSER_USE_API_KEY: ${{ secrets.BROWSER_USE_API_KEY }}
+          BROWSER_USE_API_KEY: ${{ secrets.BROWSER_USE_API_KEY }}
           HYPERBROWSER_API_KEY: ${{ secrets.HYPERBROWSER_API_KEY }}
           KERNEL_API_KEY: ${{ secrets.KERNEL_API_KEY }}
           # NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
