@@ -101,9 +101,15 @@ async function main() {
   for (const file of jsonFiles) {
     const raw: ResultFile = JSON.parse(fs.readFileSync(file, 'utf-8'));
     const fromSingleProvider = raw.results.length === 1;
+    const dirName = path.basename(path.dirname(file));
+    const isSandboxDir = dirName === 'sequential_tti' || dirName === 'staggered_tti' || dirName === 'burst_tti';
+
+    if (!isSandboxDir) {
+      continue;
+    }
+
     for (const result of raw.results) {
       // Determine mode from the directory name (e.g. sequential_tti, burst_tti)
-      const dirName = path.basename(path.dirname(file));
       let mode = normalizeMode(result.mode || 'sequential');
       // Infer from directory name if available
       if (dirName.includes('sequential')) mode = 'sequential';
