@@ -1,3 +1,4 @@
+import { anchorbrowser } from '@computesdk/anchorbrowser';
 import { browserbase } from '@computesdk/browserbase';
 import { hyperbrowser } from '@computesdk/hyperbrowser';
 import { kernel } from '@computesdk/kernel';
@@ -9,6 +10,13 @@ import type { BrowserProviderConfig } from './types.js';
  * All providers use ComputeSDK's browser packages directly (no ComputeSDK API key).
  */
 export const browserProviders: BrowserProviderConfig[] = [
+  {
+    name: 'anchorbrowser',
+    requiredEnvVars: ['ANCHORBROWSER_API_KEY'],
+    createBrowserProvider: () => anchorbrowser({
+      apiKey: process.env.ANCHORBROWSER_API_KEY!
+    }),
+  },
   {
     name: 'browserbase',
     requiredEnvVars: ['BROWSERBASE_API_KEY', 'BROWSERBASE_PROJECT_ID'],

@@ -34,12 +34,12 @@ jobs:
       fail-fast: false
       matrix:
         provider:
+          - anchorbrowser
           - browserbase
           # - browseruse
           - hyperbrowser
           - kernel
           # - steel
-          # - anchorbrowser
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -57,6 +57,7 @@ jobs:
         run: rm -rf results/browser/
       - name: Run browser benchmark
         env:
+          ANCHORBROWSER_API_KEY: ${{ secrets.ANCHORBROWSER_API_KEY }}
           BROWSERBASE_API_KEY: ${{ secrets.BROWSERBASE_API_KEY }}
           BROWSERBASE_PROJECT_ID: ${{ secrets.BROWSERBASE_PROJECT_ID }}
           # BROWSER_USE_API_KEY: ${{ secrets.BROWSER_USE_API_KEY }}
@@ -64,7 +65,6 @@ jobs:
           KERNEL_API_KEY: ${{ secrets.KERNEL_API_KEY }}
           # NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
           # STEEL_API_KEY: ${{ secrets.STEEL_API_KEY }}
-          # ANCHORBROWSER_API_KEY: ${{ secrets.ANCHORBROWSER_API_KEY }}
         run: |
           npm run bench -- \
             --mode browser \
