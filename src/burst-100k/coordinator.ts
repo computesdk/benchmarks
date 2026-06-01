@@ -6,8 +6,9 @@ import { getProvider } from './providers.js';
 import { log } from './logger.js';
 import { PostgresSink } from './sinks/postgres.js';
 import { TigrisSink } from './sinks/tigris.js';
+import { LocalSink } from './sinks/local.js';
 import { runBurst } from './runner.js';
-import type { ProgressStats, MetricsSample } from './types.js';
+import type { ProgressStats, MetricsSample, SandboxResult, FinalStats } from './types.js';
 
 // dotenv only matters for local invocation. In production the env is set by
 // launch.sh via `nsc ssh ... export VAR=...`.
@@ -15,18 +16,58 @@ loadDotenv();
 
 const HEARTBEAT_INTERVAL_MS = 30_000;
 
+type RunSink = {
+  connect(): Promise<void>;
+  bootstrap(
+    provider: string,
+    commit_sha: string,
+    instance_id: string,
+    artifact_prefix: string,
+    shard?: { group_id: string; shard_index: number; shard_count: number },
+  ): Promise<void>;
+  write(result: SandboxResult): Promise<void>;
+  heartbeat(stats: ProgressStats): Promise<void>;
+  flush(): Promise<void>;
+  complete(stats: FinalStats): Promise<void>;
+  fail(message: string): Promise<void>;
+  close(): Promise<void>;
+};
+
+type ArtifactSink = {
+  writeResult(result: SandboxResult): void;
+  writeHeartbeat(stats: ProgressStats & { ts: string }): Promise<void>;
+  writeMetrics(samples: ReadonlyArray<unknown>): Promise<void>;
+  writeMeta(meta: FinalStats & Record<string, unknown>): Promise<void>;
+  writeLog(content: string): Promise<void>;
+  close(): Promise<void>;
+};
+
 async function main() {
   const RUN_ID = required('RUN_ID');
   const PROVIDER = required('PROVIDER');
-  const PG_URL = required('PG_URL');
-  const TIGRIS_STORAGE_ENDPOINT = required('TIGRIS_STORAGE_ENDPOINT');
-  const TIGRIS_STORAGE_BUCKET = required('TIGRIS_STORAGE_BUCKET');
-  const TIGRIS_STORAGE_ACCESS_KEY_ID = required('TIGRIS_STORAGE_ACCESS_KEY_ID');
-  const TIGRIS_STORAGE_SECRET_ACCESS_KEY = required('TIGRIS_STORAGE_SECRET_ACCESS_KEY');
+  const PG_URL = process.env.PG_URL;
+  const SQLITE_PATH = process.env.SQLITE_PATH;
+  if (!PG_URL && !SQLITE_PATH) {
+    log.error('missing required env var: PG_URL or SQLITE_PATH');
+    process.exit(1);
+  }
+  const TIGRIS_STORAGE_ENDPOINT = process.env.TIGRIS_STORAGE_ENDPOINT;
+  const TIGRIS_STORAGE_BUCKET = process.env.TIGRIS_STORAGE_BUCKET;
+  const TIGRIS_STORAGE_ACCESS_KEY_ID = process.env.TIGRIS_STORAGE_ACCESS_KEY_ID;
+  const TIGRIS_STORAGE_SECRET_ACCESS_KEY = process.env.TIGRIS_STORAGE_SECRET_ACCESS_KEY;
+  const useTigris = Boolean(
+    TIGRIS_STORAGE_ENDPOINT &&
+    TIGRIS_STORAGE_BUCKET &&
+    TIGRIS_STORAGE_ACCESS_KEY_ID &&
+    TIGRIS_STORAGE_SECRET_ACCESS_KEY,
+  );
 
   const commit_sha = process.env.GITHUB_SHA ?? 'local';
   const instance_id = process.env.INSTANCE_ID ?? 'local';
-  const tigris_prefix = `s3://${TIGRIS_STORAGE_BUCKET}/${RUN_ID}/`;
+  const localOutputDir = process.env.BURST_100K_OUTPUT_DIR ?? `burst-100k-runs/${RUN_ID}`;
+  const artifact_prefix = useTigris
+    ? `s3://${TIGRIS_STORAGE_BUCKET}/${RUN_ID}/`
+    : `file://${localOutputDir}`;
 
   // Sharded-burst metadata. Set by scripts/burst-100k-launch-sharded.ts when
   // a logical burst is spread across multiple VMs. Unset for single-VM runs.
@@ -56,7 +97,7 @@ async function main() {
   log.info(`provider=${PROVIDER} (requires: ${provider.requiredEnvVars.join(', ') || 'none'})`);
   log.info(`concurrency=${provider.concurrencyTarget} timeout=${provider.perRequestTimeoutMs ?? 120_000}ms`);
   log.info(`commit_sha=${commit_sha} instance_id=${instance_id}`);
-  log.info(`tigris_prefix=${tigris_prefix}`);
+  log.info(`artifact_prefix=${artifact_prefix}`);
   if (override) log.info(`(CONCURRENCY_TARGET overridden via env)`);
   if (shard) {
     log.info(`shard ${shard.shard_index + 1}/${shard.shard_count} of group=${shard.group_id}`);
@@ -68,31 +109,34 @@ async function main() {
   if (missing.length > 0) {
     const msg = `Missing required env vars for ${PROVIDER}: ${missing.join(', ')}`;
     log.error(msg);
-    await tryRecordFailure(PG_URL, RUN_ID, msg);
+    await tryRecordFailure(PG_URL, SQLITE_PATH, RUN_ID, msg);
     process.exit(1);
   }
   log.ok(`all ${provider.requiredEnvVars.length} provider env var(s) present`);
 
   log.phase('opening sinks');
-  log.info('Postgres: connecting…');
-  const pg = new PostgresSink(PG_URL, RUN_ID);
-  await pg.connect();
-  log.ok('Postgres: connected');
-  log.info('Postgres: bootstrapping runs row (idempotent)');
-  await pg.bootstrap(PROVIDER, commit_sha, instance_id, tigris_prefix, shard);
-  log.ok('Postgres: runs row in place');
+  const runSink: RunSink = PG_URL
+    ? new PostgresSink(PG_URL, RUN_ID)
+    : await createSqliteSink(SQLITE_PATH!, RUN_ID);
+  log.info(PG_URL ? 'Postgres: connecting...' : `SQLite: opening ${SQLITE_PATH}`);
+  await runSink.connect();
+  log.ok(PG_URL ? 'Postgres: connected' : 'SQLite: connected');
+  log.info(`${PG_URL ? 'Postgres' : 'SQLite'}: bootstrapping runs row (idempotent)`);
+  await runSink.bootstrap(PROVIDER, commit_sha, instance_id, artifact_prefix, shard);
+  log.ok(`${PG_URL ? 'Postgres' : 'SQLite'}: runs row in place`);
 
-  log.info('Tigris: opening multipart upload for raw.jsonl');
-  const tigris = new TigrisSink(
-    {
-      endpoint: TIGRIS_STORAGE_ENDPOINT,
-      bucket: TIGRIS_STORAGE_BUCKET,
-      accessKeyId: TIGRIS_STORAGE_ACCESS_KEY_ID,
-      secretAccessKey: TIGRIS_STORAGE_SECRET_ACCESS_KEY,
-    },
-    RUN_ID,
-  );
-  log.ok('Tigris: sink ready');
+  const artifacts: ArtifactSink = useTigris
+    ? new TigrisSink(
+      {
+        endpoint: TIGRIS_STORAGE_ENDPOINT!,
+        bucket: TIGRIS_STORAGE_BUCKET!,
+        accessKeyId: TIGRIS_STORAGE_ACCESS_KEY_ID!,
+        secretAccessKey: TIGRIS_STORAGE_SECRET_ACCESS_KEY!,
+      },
+      RUN_ID,
+    )
+    : new LocalSink(localOutputDir);
+  log.ok(useTigris ? 'Tigris: sink ready' : `Local artifacts: writing to ${localOutputDir}`);
 
   let lastStats: ProgressStats = { done: 0, in_flight: 0, errors: 0 };
   // Track per-success-sandbox phase timings for the analytical outputs.
@@ -119,7 +163,7 @@ async function main() {
     if (!COORDINATOR_LOG_PATH) return;
     try {
       const content = await fs.promises.readFile(COORDINATOR_LOG_PATH, 'utf-8');
-      await tigris.writeLog(content);
+      await artifacts.writeLog(content);
     } catch (err: any) {
       log.warn(`log-upload failed: ${err?.message ?? err}`);
     }
@@ -185,11 +229,11 @@ async function main() {
 
   const heartbeat = setInterval(() => {
     const ts = new Date().toISOString();
-    pg.heartbeat(lastStats).catch(err => log.warn(`heartbeat:pg ${err.message}`));
-    tigris.writeHeartbeat({ ...lastStats, ts }).catch(err => log.warn(`heartbeat:tigris ${err.message}`));
+    runSink.heartbeat(lastStats).catch(err => log.warn(`heartbeat:run-sink ${err.message}`));
+    artifacts.writeHeartbeat({ ...lastStats, ts }).catch(err => log.warn(`heartbeat:artifacts ${err.message}`));
     uploadLog();
     if (metricsSamples.length > 0) {
-      tigris.writeMetrics(metricsSamples).catch(err => log.warn(`heartbeat:metrics ${err.message}`));
+      artifacts.writeMetrics(metricsSamples).catch(err => log.warn(`heartbeat:metrics ${err.message}`));
     }
     log.stat(`heartbeat done=${lastStats.done}/${provider.concurrencyTarget} in_flight=${lastStats.in_flight} errors=${lastStats.errors}`);
   }, HEARTBEAT_INTERVAL_MS);
@@ -202,12 +246,12 @@ async function main() {
     clearInterval(heartbeat);
     clearInterval(metricsInterval);
     try {
-      await pg.flush();
-      await tigris.close();
-      await pg.fail(`Process received ${signal} at done=${lastStats.done}/${provider.concurrencyTarget}`);
-      await pg.close();
+      await runSink.flush();
+      await artifacts.close();
+      await runSink.fail(`Process received ${signal} at done=${lastStats.done}/${provider.concurrencyTarget}`);
+      await runSink.close();
       await uploadLog();
-      if (metricsSamples.length > 0) await tigris.writeMetrics(metricsSamples);
+      if (metricsSamples.length > 0) await artifacts.writeMetrics(metricsSamples);
       log.ok('flushed all sinks');
     } catch (e: any) {
       log.error(`shutdown flush failed: ${e?.message ?? e}`);
@@ -239,8 +283,8 @@ async function main() {
           start: Date.parse(result.started_at),
           end: Date.parse(result.completed_at),
         });
-        tigris.writeResult(result);
-        await pg.write(result);
+        artifacts.writeResult(result);
+        await runSink.write(result);
       },
       onProgress(stats) {
         lastStats = stats;
@@ -414,14 +458,14 @@ async function main() {
     };
 
     log.phase('flushing sinks and writing summary');
-    log.info('Postgres: flushing remaining sandbox_results batch');
-    await pg.flush();
-    log.info('Tigris: closing multipart upload for raw.jsonl');
-    await tigris.close();
-    log.info('Tigris: writing metrics.jsonl');
-    await tigris.writeMetrics(metricsSamples);
-    log.info('Tigris: writing meta.json');
-    await tigris.writeMeta({
+    log.info('Run sink: flushing remaining sandbox_results batch');
+    await runSink.flush();
+    log.info('Artifacts: closing raw.jsonl');
+    await artifacts.close();
+    log.info('Artifacts: writing metrics.jsonl');
+    await artifacts.writeMetrics(metricsSamples);
+    log.info('Artifacts: writing meta.json');
+    await artifacts.writeMeta({
       ...final,
       latency_distribution,
       first_command_distribution,
@@ -437,9 +481,9 @@ async function main() {
       ended_at: new Date().toISOString(),
       ...(shard ? { group_id: shard.group_id, shard_index: shard.shard_index, shard_count: shard.shard_count } : {}),
     });
-    log.info('Postgres: marking run done with final stats');
-    await pg.complete(final);
-    await pg.close();
+    log.info('Run sink: marking run done with final stats');
+    await runSink.complete(final);
+    await runSink.close();
 
     log.phase('run complete');
     log.ok(`${final.sandboxes_succeeded}/${final.sandboxes_attempted} succeeded ` +
@@ -456,12 +500,12 @@ async function main() {
     clearInterval(metricsInterval);
     log.error(`run failed: ${err?.message ?? err}`);
     try {
-      await pg.flush();
-      await tigris.close();
-      await pg.fail(err?.message ?? String(err));
-      await pg.close();
+      await runSink.flush();
+      await artifacts.close();
+      await runSink.fail(err?.message ?? String(err));
+      await runSink.close();
       await uploadLog();
-      if (metricsSamples.length > 0) await tigris.writeMetrics(metricsSamples);
+      if (metricsSamples.length > 0) await artifacts.writeMetrics(metricsSamples);
     } catch (e: any) {
       log.error(`failed to record failure: ${e?.message ?? e}`);
     }
@@ -478,12 +522,27 @@ function required(name: string): string {
   return v;
 }
 
-async function tryRecordFailure(pgUrl: string, runId: string, message: string): Promise<void> {
+async function createSqliteSink(sqlitePath: string, runId: string): Promise<RunSink> {
+  const { SqliteSink } = await import('./sinks/sqlite.js');
+  return new SqliteSink(sqlitePath, runId);
+}
+
+async function tryRecordFailure(
+  pgUrl: string | undefined,
+  sqlitePath: string | undefined,
+  runId: string,
+  message: string,
+): Promise<void> {
   try {
-    const pg = new PostgresSink(pgUrl, runId);
-    await pg.connect();
-    await pg.fail(message);
-    await pg.close();
+    const sink = pgUrl
+      ? new PostgresSink(pgUrl, runId)
+      : sqlitePath
+        ? await createSqliteSink(sqlitePath, runId)
+        : null;
+    if (!sink) return;
+    await sink.connect();
+    await sink.fail(message);
+    await sink.close();
   } catch (e: any) {
     log.error(`could not write failure row: ${e?.message ?? e}`);
   }

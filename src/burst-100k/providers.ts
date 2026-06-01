@@ -1,11 +1,11 @@
 // import { daytona } from '@computesdk/daytona';
-import { declaw } from '@computesdk/declaw';
-import { e2b } from '@computesdk/e2b';
-import { modal } from '@computesdk/modal';
-import { runloop } from '@computesdk/runloop';
-import { tensorlake } from '@computesdk/tensorlake';
-import { vercel } from '@computesdk/vercel';
-import type { BurstProviderConfig } from './types.js';
+import { declaw } from "@computesdk/declaw";
+import { e2b } from "@computesdk/e2b";
+import { modal } from "@computesdk/modal";
+import { runloop } from "@computesdk/runloop";
+import { tensorlake } from "@computesdk/tensorlake";
+import { vercel } from "@computesdk/vercel";
+import type { BurstProviderConfig } from "./types.js";
 
 /**
  * Providers opted into the 100k burst benchmark.
@@ -35,56 +35,64 @@ const KEEP_ALIVE_MS = 30 * 60_000;
 
 export const providers: BurstProviderConfig[] = [
   {
-    name: 'e2b',
-    requiredEnvVars: ['E2B_API_KEY'],
+    name: "e2b",
+    requiredEnvVars: ["E2B_API_KEY"],
     createCompute: () => e2b({ apiKey: process.env.E2B_API_KEY! }),
     concurrencyTarget: 100_000,
     perRequestTimeoutMs: 120_000,
     sandboxOptions: { timeout: KEEP_ALIVE_MS },
   },
   {
-    name: 'modal',
-    requiredEnvVars: ['MODAL_TOKEN_ID', 'MODAL_TOKEN_SECRET'],
-    createCompute: () => modal({
-      tokenId: process.env.MODAL_TOKEN_ID!,
-      tokenSecret: process.env.MODAL_TOKEN_SECRET!,
-      scalableSandboxes: true,
-    }),
+    name: "modal",
+    requiredEnvVars: ["MODAL_TOKEN_ID", "MODAL_TOKEN_SECRET"],
+    createCompute: () =>
+      modal({
+        tokenId: process.env.MODAL_TOKEN_ID!,
+        tokenSecret: process.env.MODAL_TOKEN_SECRET!,
+        scalableSandboxes: true,
+      }),
     concurrencyTarget: 100_000,
     perRequestTimeoutMs: 120_000,
   },
   {
-    name: 'runloop',
-    requiredEnvVars: ['RUNLOOP_API_KEY'],
+    name: "runloop",
+    requiredEnvVars: ["RUNLOOP_API_KEY"],
     createCompute: () => runloop({ apiKey: process.env.RUNLOOP_API_KEY! }),
     concurrencyTarget: 100_000,
     perRequestTimeoutMs: 120_000,
     sandboxOptions: { timeout: KEEP_ALIVE_MS },
   },
   {
-    name: 'tensorlake',
-    requiredEnvVars: ['TENSORLAKE_API_KEY'],
-    createCompute: () => tensorlake({ apiKey: process.env.TENSORLAKE_API_KEY! }),
+    name: "tensorlake",
+    requiredEnvVars: ["TENSORLAKE_API_KEY"],
+    createCompute: () =>
+      tensorlake({ apiKey: process.env.TENSORLAKE_API_KEY! }),
     concurrencyTarget: 100_000,
     perRequestTimeoutMs: 120_000,
-    sandboxOptions: { timeout: KEEP_ALIVE_MS },
+    sandboxOptions: {
+      timeout: KEEP_ALIVE_MS,
+      cpus: 0.1,
+      memoryMb: 100,
+      ephemeralDiskMb: 100,
+    },
   },
   {
-    name: 'declaw',
-    requiredEnvVars: ['DECLAW_API_KEY'],
+    name: "declaw",
+    requiredEnvVars: ["DECLAW_API_KEY"],
     createCompute: () => declaw({ apiKey: process.env.DECLAW_API_KEY! }),
     concurrencyTarget: 100_000,
     perRequestTimeoutMs: 120_000,
     sandboxOptions: { timeout: KEEP_ALIVE_MS },
   },
   {
-    name: 'vercel',
-    requiredEnvVars: ['VERCEL_TOKEN', 'VERCEL_TEAM_ID', 'VERCEL_PROJECT_ID'],
-    createCompute: () => vercel({
-      token: process.env.VERCEL_TOKEN!,
-      teamId: process.env.VERCEL_TEAM_ID!,
-      projectId: process.env.VERCEL_PROJECT_ID!,
-    }),
+    name: "vercel",
+    requiredEnvVars: ["VERCEL_TOKEN", "VERCEL_TEAM_ID", "VERCEL_PROJECT_ID"],
+    createCompute: () =>
+      vercel({
+        token: process.env.VERCEL_TOKEN!,
+        teamId: process.env.VERCEL_TEAM_ID!,
+        projectId: process.env.VERCEL_PROJECT_ID!,
+      }),
     concurrencyTarget: 100_000,
     perRequestTimeoutMs: 120_000,
     sandboxOptions: { timeout: KEEP_ALIVE_MS },
@@ -100,9 +108,9 @@ export const providers: BurstProviderConfig[] = [
 ];
 
 export function getProvider(name: string): BurstProviderConfig {
-  const found = providers.find(p => p.name === name);
+  const found = providers.find((p) => p.name === name);
   if (!found) {
-    const available = providers.map(p => p.name).join(', ');
+    const available = providers.map((p) => p.name).join(", ");
     throw new Error(`Provider not opted in: ${name}. Available: ${available}`);
   }
   return found;
