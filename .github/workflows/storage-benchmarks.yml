@@ -52,6 +52,7 @@ jobs:
           - aws-s3
           - cloudflare-r2
           - tigris
+          - miosa
         file_size: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.file_size != '' && fromJson(format('["{0}"]', github.event.inputs.file_size))) || fromJson('["1MB","4MB","10MB","16MB"]') }}
     steps:
       - uses: actions/checkout@v4
@@ -81,6 +82,9 @@ jobs:
           TIGRIS_STORAGE_ACCESS_KEY_ID: ${{ secrets.TIGRIS_STORAGE_ACCESS_KEY_ID }}
           TIGRIS_STORAGE_SECRET_ACCESS_KEY: ${{ secrets.TIGRIS_STORAGE_SECRET_ACCESS_KEY }}
           TIGRIS_STORAGE_BUCKET: ${{ secrets.TIGRIS_STORAGE_BUCKET }}
+          MIOSA_API_KEY: ${{ secrets.MIOSA_API_KEY }}
+          MIOSA_BASE_URL: ${{ secrets.MIOSA_BASE_URL }}
+          MIOSA_STORAGE_BUCKET_ID: ${{ secrets.MIOSA_STORAGE_BUCKET_ID }}
         run: |
           FILE_SIZE="${{ matrix.file_size }}"
           npm run bench -- \
@@ -175,7 +179,7 @@ jobs:
               body += '|---|----------|-------|----------|------------|--------|--------|\n';
 
               results.forEach((r, i) => {
-                const name = r.provider === 'aws-s3' ? 'AWS S3' : r.provider === 'cloudflare-r2' ? 'Cloudflare R2' : r.provider.charAt(0).toUpperCase() + r.provider.slice(1);
+                const name = r.provider === 'aws-s3' ? 'AWS S3' : r.provider === 'cloudflare-r2' ? 'Cloudflare R2' : r.provider === 'miosa' ? 'MIOSA' : r.provider.charAt(0).toUpperCase() + r.provider.slice(1);
                 const score = r.compositeScore !== undefined ? r.compositeScore.toFixed(1) : '--';
                 const dl = (r.summary.downloadMs.median / 1000).toFixed(2) + 's';
                 const tp = r.summary.throughputMbps.median.toFixed(1) + ' Mbps';

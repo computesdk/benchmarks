@@ -2,6 +2,7 @@ import { s3 } from '@computesdk/s3';
 import { r2 } from '@computesdk/r2';
 import { tigris } from '@computesdk/tigris';
 import type { StorageProviderConfig } from './types.js';
+import { miosa } from './miosa.js';
 
 /**
  * Storage provider benchmark configurations.
@@ -38,6 +39,16 @@ export const storageProviders: StorageProviderConfig[] = [
     createStorage: () => tigris({
       accessKeyId: process.env.TIGRIS_STORAGE_ACCESS_KEY_ID!,
       secretAccessKey: process.env.TIGRIS_STORAGE_SECRET_ACCESS_KEY!,
+    }),
+    fileSizes: [1 * 1024 * 1024, 4 * 1024 * 1024, 10 * 1024 * 1024, 16 * 1024 * 1024],
+  },
+  {
+    name: 'miosa',
+    requiredEnvVars: ['MIOSA_API_KEY', 'MIOSA_STORAGE_BUCKET_ID'],
+    bucket: process.env.MIOSA_STORAGE_BUCKET_ID!,
+    createStorage: () => miosa({
+      apiKey: process.env.MIOSA_API_KEY!,
+      baseUrl: process.env.MIOSA_BASE_URL,
     }),
     fileSizes: [1 * 1024 * 1024, 4 * 1024 * 1024, 10 * 1024 * 1024, 16 * 1024 * 1024],
   },
