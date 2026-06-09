@@ -59,6 +59,10 @@ We're open to improving how we measure performance. Before making changes:
 
 Methodology changes require careful consideration since they affect historical comparability.
 
+### Submitting a Benchmark
+
+Want to contribute a *workload* — a realistic task you care about, measured across every provider in a category? See [submitting-benchmarks.md](./submitting-benchmarks.md). This is different from adding a provider: you contribute the thing being measured, built on `@computesdk/bench`, and we run it across the whole category.
+
 ### Documentation
 
 Documentation improvements are always welcome. No issue required for typos, clarifications, or formatting fixes.
