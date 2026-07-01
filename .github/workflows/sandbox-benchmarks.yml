@@ -62,7 +62,7 @@ jobs:
           - modal
           # - namespace
           - northflank
-          # - railway
+          - railway
           - runloop
           # - superserve
           - tensorlake
@@ -107,8 +107,8 @@ jobs:
           # NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
           NORTHFLANK_TOKEN: ${{ secrets.NORTHFLANK_TOKEN }}
           NORTHFLANK_PROJECT_ID: ${{ secrets.NORTHFLANK_PROJECT_ID }}
-          # RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
-          # RAILWAY_ENVIRONMENT_ID: ${{ secrets.RAILWAY_ENVIRONMENT_ID }}
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+          RAILWAY_ENVIRONMENT_ID: ${{ secrets.RAILWAY_ENVIRONMENT_ID }}
           RUNLOOP_API_KEY: ${{ secrets.RUNLOOP_API_KEY }}
           # SUPERSERVE_API_KEY: ${{ secrets.SUPERSERVE_API_KEY }}
           TENSORLAKE_API_KEY: ${{ secrets.TENSORLAKE_API_KEY }}

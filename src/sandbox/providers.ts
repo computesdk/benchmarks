@@ -11,7 +11,7 @@ import { isorun } from '@computesdk/isorun';
 import { modal } from '@computesdk/modal';
 // import { namespace } from '@computesdk/namespace';
 import { northflank } from '@computesdk/northflank';
-// import { railway } from '@computesdk/railway';
+import { railway } from '@computesdk/railway';
 import { runloop } from '@computesdk/runloop';
 import { sprites } from '@computesdk/sprites';
 // import { superserve } from '@computesdk/superserve';
@@ -102,11 +102,11 @@ export const providers: ProviderConfig[] = [
       runtime: 'node',
     }),
   },
-  // {
-  //   name: 'railway',
-  //   requiredEnvVars: ['RAILWAY_API_TOKEN', 'RAILWAY_ENVIRONMENT_ID'],
-  //   createCompute: () => railway({ token: process.env.RAILWAY_API_TOKEN!, environmentId: process.env.RAILWAY_ENVIRONMENT_ID! }),
-  // },
+  {
+    name: 'railway',
+    requiredEnvVars: ['RAILWAY_API_TOKEN', 'RAILWAY_ENVIRONMENT_ID'],
+    createCompute: () => railway({ token: process.env.RAILWAY_API_TOKEN!, environmentId: process.env.RAILWAY_ENVIRONMENT_ID! }),
+  },
   {
     name: 'runloop',
     requiredEnvVars: ['RUNLOOP_API_KEY'],
