@@ -13,7 +13,10 @@ import {
 
 const RANDOM_URL = 'https://en.wikipedia.org/wiki/Special:Random';
 const FIRST_HEADING = '#firstHeading';
-const ARTICLE_LINK = '#mw-content-text a[href^="/wiki/"]:not([href*=":"])';
+// Match article-body links across both classic MediaWiki HTML (relative "/wiki/Foo")
+// and Parsoid read-HTML (protocol-relative absolute "//en.wikipedia.org/wiki/Foo").
+// :not([href*=":"]) still excludes namespace pages (Help:, File:) and external http(s) links.
+const ARTICLE_LINK = '#mw-content-text a[href*="/wiki/"]:not([href*=":"])';
 const LOOPS_PER_SESSION = 5;
 const ACTIONS_PER_LOOP = 10;
 const ACTIONS_PER_SESSION = LOOPS_PER_SESSION * ACTIONS_PER_LOOP; // 50
