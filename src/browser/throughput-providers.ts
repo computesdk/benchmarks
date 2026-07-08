@@ -40,7 +40,6 @@ export const throughputProviders: ThroughputProviderConfig[] = [
       stealth: true,
       headless: true,
       viewport: VIEWPORT,
-      proxies: false,
     },
   },
   {
