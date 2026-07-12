@@ -29,6 +29,7 @@ export const throughputProviders: ThroughputProviderConfig[] = [
       headless: true,
       viewport: VIEWPORT,
       recordSession: false,
+      enableNativeSelectPolyfill: false,
     },
   },
   {
