@@ -22,6 +22,7 @@ export const browserProviders: BrowserProviderConfig[] = [
     sessionCreateOptions: {
       region: 'us-east-1',
       stealth: false,
+      recordSession: false,
     },
   },
   {
