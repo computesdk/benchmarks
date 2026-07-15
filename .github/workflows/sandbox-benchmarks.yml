@@ -70,7 +70,7 @@ jobs:
           - e2b
           - hopx
           - isorun
-          # - lelantos
+          - lelantos
           - lightning
           - modal
           # - namespace
@@ -123,7 +123,7 @@ jobs:
           E2B_API_KEY: ${{ secrets.E2B_API_KEY }}
           HOPX_API_KEY: ${{ secrets.HOPX_API_KEY }}
           ISORUN_API_KEY: ${{ secrets.ISORUN_API_KEY }}
-          # LELANTOS_API_KEY: ${{ secrets.LELANTOS_API_KEY }}
+          LELANTOS_API_KEY: ${{ secrets.LELANTOS_API_KEY }}
           LIGHTNING_API_KEY: ${{ secrets.LIGHTNING_API_KEY }}
           MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
           MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}

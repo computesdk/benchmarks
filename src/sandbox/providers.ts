@@ -11,7 +11,7 @@ import { declaw } from '@computesdk/declaw';
 import { e2b } from '@computesdk/e2b';
 import { hopx } from '@computesdk/hopx';
 import { isorun } from '@computesdk/isorun';
-// import { lelantos } from '@computesdk/lelantos';
+import { lelantos } from '@computesdk/lelantos';
 import { lightning } from '@computesdk/lightning';
 import { modal } from '@computesdk/modal';
 // import { namespace } from '@computesdk/namespace';
@@ -106,11 +106,11 @@ export const providers: ProviderConfig[] = [
     createCompute: () => isorun({ apiKey: process.env.ISORUN_API_KEY! }),
     sandboxOptions: { image: 'node:22' },
   },
-  // {
-  //   name: 'lelantos',
-  //   requiredEnvVars: ['LELANTOS_API_KEY'],
-  //   createCompute: () => lelantos({ apiKey: process.env.LELANTOS_API_KEY! }),
-  // },
+  {
+    name: 'lelantos',
+    requiredEnvVars: ['LELANTOS_API_KEY'],
+    createCompute: () => lelantos({ apiKey: process.env.LELANTOS_API_KEY! }),
+  },
   {
     name: 'lightning',
     requiredEnvVars: ['LIGHTNING_API_KEY'],
