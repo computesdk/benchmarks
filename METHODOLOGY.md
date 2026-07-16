@@ -77,7 +77,7 @@ We run three independent TTI tests daily, each measuring a different aspect of p
 Sandboxes are created one at a time. Each sandbox is created, tested, and destroyed before the next begins.
 
 ```bash
-npm run bench:sequential -- --iterations 100
+npm run bench:sandbox:tti-sequential -- --iterations 100
 ```
 
 | Parameter | Value |
@@ -92,7 +92,7 @@ This is the baseline measurement — isolated cold-start performance with no con
 Sandboxes are launched with a fixed delay between each, ramping up concurrent load gradually.
 
 ```bash
-npm run bench:staggered -- --concurrency 100 --stagger-delay 200
+npm run bench:sandbox:tti-staggered -- --concurrency 100 --stagger-delay 200
 ```
 
 | Parameter | Default |
@@ -114,7 +114,7 @@ Each sandbox still measures its own individual TTI. Additionally, we capture a *
 All sandboxes are created simultaneously — no waiting between launches.
 
 ```bash
-npm run bench:burst -- --concurrency 100
+npm run bench:sandbox:tti-burst -- --concurrency 100
 ```
 
 | Parameter | Default |
@@ -138,12 +138,62 @@ Each sandbox still measures its own individual TTI. We also capture:
 By default, `npm run bench` runs all three tests in sequence:
 
 ```bash
-npm run bench                          # Runs sequential → staggered → burst
+npm run bench                          # Runs sandbox TTI sequential → staggered → burst
 npm run bench -- --provider e2b        # All 3 tests, single provider
-npm run bench:sequential               # Sequential only
-npm run bench:staggered                # Staggered only
-npm run bench:burst                    # Burst only
+npm run bench:sandbox:tti-sequential   # Sequential only
+npm run bench:sandbox:tti-staggered    # Staggered only
+npm run bench:sandbox:tti-burst        # Burst only
 ```
+
+### Sandbox Filesystem IO
+
+The filesystem benchmark is a separate opt-in sandbox workload benchmark. It creates a fresh sandbox, writes and reads a 64MB file, then creates, reads, and deletes 1,000 small 4KB files.
+
+```bash
+npm run bench:sandbox:filesystem -- --iterations 10
+```
+
+This benchmark is intentionally separate from TTI so filesystem performance can be compared directly without changing historical startup scoring.
+
+### Sandbox Git Clone
+
+The git clone benchmark is a separate opt-in sandbox workload benchmark. It creates a fresh sandbox, runs a shallow clone of the benchmark repository, records the git version and HEAD SHA, and counts files and checkout bytes.
+
+```bash
+npm run bench:sandbox:git-clone -- --iterations 10
+```
+
+This benchmark exercises git availability, outbound network, TLS/DNS, process execution, and filesystem writes as one real developer workflow.
+
+### Sandbox npm Install
+
+The npm install benchmark is a separate opt-in sandbox workload benchmark. It creates a fresh sandbox, writes a small pinned JavaScript project, runs `npm install --ignore-scripts --no-audit --no-fund`, and records install time, Node/npm versions, `node_modules` file count, and `node_modules` byte size.
+
+```bash
+npm run bench:sandbox:npm-install -- --iterations 10
+```
+
+This benchmark exercises package manager availability, npm registry access, TLS/DNS, filesystem writes, and process execution.
+
+### Sandbox Resources
+
+The resources benchmark is a separate opt-in sandbox observation benchmark. It creates a fresh sandbox and captures CPU, memory, disk, OS, cgroup, process-limit, and tool availability metadata without assigning a performance score.
+
+```bash
+npm run bench:sandbox:resources -- --iterations 3
+```
+
+This benchmark helps explain what a provider's advertised resources mean in practice, including visible CPUs, cgroup CPU quota, memory limit/current usage, disk free space, kernel/distro, `ulimit` values, process count, and availability of common developer tools.
+
+### Sandbox Heavy Build
+
+The heavy build benchmark is a separate opt-in sandbox workload benchmark. It generates a portable C project inside a fresh sandbox and compiles it with `make -j$(nproc)` capped at 32 jobs.
+
+```bash
+npm run bench:sandbox:heavy-build -- --iterations 3
+```
+
+This benchmark exercises sustained CPU, compiler/toolchain availability, process scheduling, memory pressure, and filesystem object generation without depending on external source downloads.
 
 ## Test Configuration
 
@@ -308,9 +358,9 @@ cp env.example .env  # Add your API keys
 npm run bench
 
 # Run individual tests
-npm run bench:sequential -- --iterations 10
-npm run bench:staggered -- --concurrency 10 --stagger-delay 200
-npm run bench:burst -- --concurrency 10
+npm run bench:sandbox:tti-sequential -- --iterations 10
+npm run bench:sandbox:tti-staggered -- --concurrency 10 --stagger-delay 200
+npm run bench:sandbox:tti-burst -- --concurrency 10
 
 # Single provider
 npm run bench -- --provider e2b

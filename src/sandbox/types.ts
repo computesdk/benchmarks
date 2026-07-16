@@ -28,7 +28,16 @@ export interface Stats {
   p99: number;
 }
 
-export type BenchmarkMode = 'sequential' | 'staggered' | 'burst' | 'concurrent';
+export type BenchmarkMode =
+  | 'sequential'
+  | 'staggered'
+  | 'burst'
+  | 'concurrent'
+  | 'sandbox-tti-sequential'
+  | 'sandbox-tti-staggered'
+  | 'sandbox-tti-burst';
+
+export type SandboxTtiMode = 'sequential' | 'staggered' | 'burst';
 
 export interface BenchmarkResult {
   provider: string;

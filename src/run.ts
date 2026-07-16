@@ -6,6 +6,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { runBenchmark } from './sandbox/benchmark.js';
 import { runConcurrentBenchmark } from './sandbox/concurrent.js';
+import { runFilesystemBenchmark, writeFilesystemResultsJson } from './sandbox/filesystem.js';
+import { runGitCloneBenchmark, writeGitCloneResultsJson } from './sandbox/git-clone.js';
+import { runHeavyBuildBenchmark, writeHeavyBuildResultsJson } from './sandbox/heavy-build.js';
+import { runNpmInstallBenchmark, writeNpmInstallResultsJson } from './sandbox/npm-install.js';
+import { runResourcesBenchmark, writeResourcesResultsJson } from './sandbox/resources.js';
 import { runStaggeredBenchmark } from './sandbox/staggered.js';
 import { runStorageBenchmark, writeStorageResultsJson } from './storage/benchmark.js';
 import {
@@ -31,7 +36,7 @@ import { computeCompositeScores } from './sandbox/scoring.js';
 import { computeStorageCompositeScores } from './storage/scoring.js';
 import { computeBrowserCompositeScores } from './browser/scoring.js';
 import { computeThroughputCompositeScores } from './browser/throughput-scoring.js';
-import type { BenchmarkResult, BenchmarkMode } from './sandbox/types.js';
+import type { BenchmarkResult, SandboxTtiMode } from './sandbox/types.js';
 import type { StorageBenchmarkResult } from './storage/types.js';
 import type { SnapshotForkBenchmarkResult } from './storage/snapshot-fork-types.js';
 import type { DatasetPreset } from './storage/snapshot-fork-types.js';
@@ -57,32 +62,62 @@ function getArgValue(args: string[], flag: string): string | undefined {
   return idx !== -1 && idx + 1 < args.length ? args[idx + 1] : undefined;
 }
 
+function normalizeSandboxTtiMode(mode: string): SandboxTtiMode | undefined {
+  switch (mode) {
+    case 'sequential':
+    case 'sandbox-tti-sequential':
+      return 'sequential';
+    case 'staggered':
+    case 'sandbox-tti-staggered':
+      return 'staggered';
+    case 'burst':
+    case 'concurrent':
+    case 'sandbox-tti-burst':
+      return 'burst';
+    default:
+      return undefined;
+  }
+}
+
 /** Resolve which modes to run */
-function getModesToRun(): BenchmarkMode[] | ['storage'] | ['snapshot-fork'] | ['browser'] | ['browser-throughput'] {
+function getModesToRun(): SandboxTtiMode[] | ['storage'] | ['snapshot-fork'] | ['browser'] | ['browser-throughput'] | ['sandbox-filesystem'] | ['sandbox-git-clone'] | ['sandbox-npm-install'] | ['sandbox-resources'] | ['sandbox-heavy-build'] {
   if (!rawMode) return ['sequential', 'staggered', 'burst'];
   if (rawMode === 'storage') return ['storage'];
   if (rawMode === 'snapshot-fork') return ['snapshot-fork'];
   if (rawMode === 'browser') return ['browser'];
   if (rawMode === 'browser-throughput') return ['browser-throughput'];
-  const m = rawMode === 'concurrent' ? 'burst' : rawMode as BenchmarkMode;
-  return [m];
+  if (rawMode === 'sandbox-filesystem') return ['sandbox-filesystem'];
+  if (rawMode === 'sandbox-git-clone') return ['sandbox-git-clone'];
+  if (rawMode === 'sandbox-npm-install') return ['sandbox-npm-install'];
+  if (rawMode === 'sandbox-resources') return ['sandbox-resources'];
+  if (rawMode === 'sandbox-heavy-build') return ['sandbox-heavy-build'];
+  const sandboxTtiMode = normalizeSandboxTtiMode(rawMode);
+  if (!sandboxTtiMode) {
+    console.error(`Unknown mode: ${rawMode}`);
+    process.exit(1);
+  }
+  return [sandboxTtiMode];
 }
 
 /** Map mode to results subdirectory name */
-function modeToDir(m: BenchmarkMode | 'storage' | 'snapshot-fork' | 'browser-throughput'): string {
+function modeToDir(m: SandboxTtiMode | 'storage' | 'snapshot-fork' | 'browser-throughput' | 'sandbox-filesystem' | 'sandbox-git-clone' | 'sandbox-npm-install' | 'sandbox-resources' | 'sandbox-heavy-build'): string {
   switch (m) {
     case 'sequential': return 'sequential_tti';
     case 'staggered': return 'staggered_tti';
     case 'burst':
-    case 'concurrent': return 'burst_tti';
     case 'storage': return 'storage';
     case 'snapshot-fork': return 'snapshot-fork';
     case 'browser-throughput': return 'browser-throughput';
+    case 'sandbox-filesystem': return 'sandbox-filesystem';
+    case 'sandbox-git-clone': return 'sandbox-git-clone';
+    case 'sandbox-npm-install': return 'sandbox-npm-install';
+    case 'sandbox-resources': return 'sandbox-resources';
+    case 'sandbox-heavy-build': return 'sandbox-heavy-build';
     default: return `${m}_tti`;
   }
 }
 
-async function runMode(mode: BenchmarkMode, toRun: typeof providers): Promise<void> {
+async function runMode(mode: SandboxTtiMode, toRun: typeof providers): Promise<void> {
   console.log('\n' + '='.repeat(70));
   console.log(`  MODE: ${mode.toUpperCase()}`);
   if (mode === 'sequential') {
@@ -113,8 +148,7 @@ async function runMode(mode: BenchmarkMode, toRun: typeof providers): Promise<vo
         results.push(result);
         break;
       }
-      case 'burst':
-      case 'concurrent': {
+      case 'burst': {
         const result = await runConcurrentBenchmark({ ...providerConfig, concurrency });
         results.push(result);
         break;
@@ -258,6 +292,205 @@ async function runSnapshotFork(toRun: typeof storageProviders, datasetLabel: str
   const latestPath = path.join(datasetDir, 'latest.json');
   fs.copyFileSync(outPath, latestPath);
   console.log(`Copied latest: ${latestPath}`);
+}
+
+async function runSandboxFilesystem(toRun: typeof providers): Promise<void> {
+  console.log('\n' + '='.repeat(70));
+  console.log('  MODE: SANDBOX FILESYSTEM');
+  console.log(`  Iterations per provider: ${iterations}`);
+  console.log('='.repeat(70));
+
+  const results = [];
+
+  for (const providerConfig of toRun) {
+    const result = await runFilesystemBenchmark({ ...providerConfig, iterations });
+    results.push(result);
+  }
+
+  console.log('\n--- Sandbox Filesystem Benchmark Results ---');
+  for (const r of results) {
+    if (r.skipped) {
+      console.log(`${r.provider}: SKIPPED (${r.skipReason})`);
+      continue;
+    }
+    const ok = r.iterations.filter(i => !i.error).length;
+    const total = r.iterations.length;
+    console.log(`${r.provider}:`);
+    console.log(`  Total: ${(r.summary.totalMs.median / 1000).toFixed(2)}s median`);
+    console.log(`  Large file: write ${r.summary.largeWriteMbps.median.toFixed(1)} Mbps, read ${r.summary.largeReadMbps.median.toFixed(1)} Mbps`);
+    console.log(`  Small files: create ${(r.summary.smallFileCreateMs.median / 1000).toFixed(2)}s, read ${(r.summary.smallFileReadMs.median / 1000).toFixed(2)}s, delete ${(r.summary.smallFileDeleteMs.median / 1000).toFixed(2)}s (${ok}/${total} OK)`);
+  }
+
+  const timestamp = new Date().toISOString().slice(0, 10);
+  const resultsDir = path.resolve(__dirname, `../results/${modeToDir('sandbox-filesystem')}`);
+  fs.mkdirSync(resultsDir, { recursive: true });
+
+  const outPath = path.join(resultsDir, `${timestamp}.json`);
+  await writeFilesystemResultsJson(results, outPath);
+
+  const latestPath = path.join(resultsDir, 'latest.json');
+  fs.copyFileSync(outPath, latestPath);
+  console.log(`Copied latest: ${latestPath}`);
+}
+
+async function runSandboxGitClone(toRun: typeof providers): Promise<void> {
+  console.log('\n' + '='.repeat(70));
+  console.log('  MODE: SANDBOX GIT CLONE');
+  console.log(`  Iterations per provider: ${iterations}`);
+  console.log('='.repeat(70));
+
+  const results = [];
+
+  for (const providerConfig of toRun) {
+    const result = await runGitCloneBenchmark({ ...providerConfig, iterations });
+    results.push(result);
+  }
+
+  console.log('\n--- Sandbox Git Clone Benchmark Results ---');
+  for (const r of results) {
+    if (r.skipped) {
+      console.log(`${r.provider}: SKIPPED (${r.skipReason})`);
+      continue;
+    }
+    const ok = r.iterations.filter(i => !i.error).length;
+    const total = r.iterations.length;
+    console.log(`${r.provider}:`);
+    console.log(`  Clone: ${(r.summary.cloneMs.median / 1000).toFixed(2)}s median`);
+    console.log(`  Checkout: ${r.summary.fileCount.median.toFixed(0)} files, ${(r.summary.checkoutBytes.median / 1024 / 1024).toFixed(1)} MiB (${ok}/${total} OK)`);
+  }
+
+  const timestamp = new Date().toISOString().slice(0, 10);
+  const resultsDir = path.resolve(__dirname, `../results/${modeToDir('sandbox-git-clone')}`);
+  fs.mkdirSync(resultsDir, { recursive: true });
+
+  const outPath = path.join(resultsDir, `${timestamp}.json`);
+  await writeGitCloneResultsJson(results, outPath);
+
+  const latestPath = path.join(resultsDir, 'latest.json');
+  fs.copyFileSync(outPath, latestPath);
+  console.log(`Copied latest: ${latestPath}`);
+}
+
+async function runSandboxNpmInstall(toRun: typeof providers): Promise<void> {
+  console.log('\n' + '='.repeat(70));
+  console.log('  MODE: SANDBOX NPM INSTALL');
+  console.log(`  Iterations per provider: ${iterations}`);
+  console.log('='.repeat(70));
+
+  const results = [];
+
+  for (const providerConfig of toRun) {
+    const result = await runNpmInstallBenchmark({ ...providerConfig, iterations });
+    results.push(result);
+  }
+
+  console.log('\n--- Sandbox npm Install Benchmark Results ---');
+  for (const r of results) {
+    if (r.skipped) {
+      console.log(`${r.provider}: SKIPPED (${r.skipReason})`);
+      continue;
+    }
+    const ok = r.iterations.filter(i => !i.error).length;
+    const total = r.iterations.length;
+    console.log(`${r.provider}:`);
+    console.log(`  Install: ${(r.summary.installMs.median / 1000).toFixed(2)}s median`);
+    console.log(`  node_modules: ${r.summary.packageCount.median.toFixed(0)} files, ${(r.summary.nodeModulesBytes.median / 1024 / 1024).toFixed(1)} MiB (${ok}/${total} OK)`);
+  }
+
+  const timestamp = new Date().toISOString().slice(0, 10);
+  const resultsDir = path.resolve(__dirname, `../results/${modeToDir('sandbox-npm-install')}`);
+  fs.mkdirSync(resultsDir, { recursive: true });
+
+  const outPath = path.join(resultsDir, `${timestamp}.json`);
+  await writeNpmInstallResultsJson(results, outPath);
+
+  const latestPath = path.join(resultsDir, 'latest.json');
+  fs.copyFileSync(outPath, latestPath);
+  console.log(`Copied latest: ${latestPath}`);
+}
+
+async function runSandboxResources(toRun: typeof providers): Promise<void> {
+  console.log('\n' + '='.repeat(70));
+  console.log('  MODE: SANDBOX RESOURCES');
+  console.log(`  Iterations per provider: ${iterations}`);
+  console.log('='.repeat(70));
+
+  const results = [];
+
+  for (const providerConfig of toRun) {
+    const result = await runResourcesBenchmark({ ...providerConfig, iterations });
+    results.push(result);
+  }
+
+  console.log('\n--- Sandbox Resources Benchmark Results ---');
+  for (const r of results) {
+    if (r.skipped) {
+      console.log(`${r.provider}: SKIPPED (${r.skipReason})`);
+      continue;
+    }
+    const latest = [...r.iterations].reverse().find(i => !i.error);
+    const ok = r.iterations.filter(i => !i.error).length;
+    const total = r.iterations.length;
+    console.log(`${r.provider}:`);
+    if (latest) {
+      const effectiveCpu = latest.cpu?.cgroupEffectiveCpus;
+      const cpu = effectiveCpu ? `${effectiveCpu.toFixed(2)} effective CPUs` : `${latest.cpu?.nproc ?? '--'} visible CPUs`;
+      const memoryBytes = latest.memory?.cgroupMaxBytes ?? (latest.memory?.memTotalKb ? latest.memory.memTotalKb * 1024 : undefined);
+      console.log(`  ${cpu}, memory ${formatBytes(memoryBytes)}, root disk free ${formatBytes(latest.disk?.rootAvailableBytes)} (${ok}/${total} OK)`);
+    } else {
+      console.log(`  No successful observations (${ok}/${total} OK)`);
+    }
+  }
+
+  const timestamp = new Date().toISOString().slice(0, 10);
+  const resultsDir = path.resolve(__dirname, `../results/${modeToDir('sandbox-resources')}`);
+  fs.mkdirSync(resultsDir, { recursive: true });
+
+  const outPath = path.join(resultsDir, `${timestamp}.json`);
+  await writeResourcesResultsJson(results, outPath);
+
+  const latestPath = path.join(resultsDir, 'latest.json');
+  fs.copyFileSync(outPath, latestPath);
+  console.log(`Copied latest: ${latestPath}`);
+}
+
+async function runSandboxHeavyBuild(toRun: typeof providers): Promise<void> {
+  console.log('\n' + '='.repeat(70));
+  console.log('  MODE: SANDBOX HEAVY BUILD');
+  console.log(`  Iterations per provider: ${iterations}`);
+  console.log('='.repeat(70));
+
+  const results = [];
+
+  for (const providerConfig of toRun) {
+    const result = await runHeavyBuildBenchmark({ ...providerConfig, iterations });
+    results.push(result);
+  }
+
+  console.log('\n--- Sandbox Heavy Build Benchmark Results ---');
+  for (const r of results) {
+    if (r.skipped) {
+      console.log(`${r.provider}: SKIPPED (${r.skipReason})`);
+      continue;
+    }
+    const ok = r.iterations.filter(i => !i.error).length;
+    const total = r.iterations.length;
+    console.log(`${r.provider}: build ${(r.summary.buildMs.median / 1000).toFixed(2)}s median, jobs ${r.summary.jobs.median.toFixed(0)} (${ok}/${total} OK)`);
+  }
+
+  const timestamp = new Date().toISOString().slice(0, 10);
+  const resultsDir = path.resolve(__dirname, `../results/${modeToDir('sandbox-heavy-build')}`);
+  fs.mkdirSync(resultsDir, { recursive: true });
+  const outPath = path.join(resultsDir, `${timestamp}.json`);
+  await writeHeavyBuildResultsJson(results, outPath);
+  const latestPath = path.join(resultsDir, 'latest.json');
+  fs.copyFileSync(outPath, latestPath);
+  console.log(`Copied latest: ${latestPath}`);
+}
+
+function formatBytes(bytes: number | null | undefined): string {
+  if (!bytes || !Number.isFinite(bytes)) return '--';
+  return `${(bytes / 1024 / 1024).toFixed(0)} MiB`;
 }
 
 async function runBrowser(toRun: typeof browserProviders): Promise<void> {
@@ -527,6 +760,83 @@ async function main() {
     return;
   }
 
+  if (modes[0] === 'sandbox-filesystem') {
+    const toRun = providerFilter
+      ? providers.filter(p => p.name === providerFilter)
+      : providers;
+
+    if (toRun.length === 0) {
+      console.error(`Unknown provider: ${providerFilter}`);
+      console.error(`Available: ${providers.map(p => p.name).join(', ')}`);
+      process.exit(1);
+    }
+
+    await runSandboxFilesystem(toRun);
+    console.log('\nAll sandbox filesystem tests complete.');
+    return;
+  }
+
+  if (modes[0] === 'sandbox-git-clone') {
+    const toRun = providerFilter
+      ? providers.filter(p => p.name === providerFilter)
+      : providers;
+
+    if (toRun.length === 0) {
+      console.error(`Unknown provider: ${providerFilter}`);
+      console.error(`Available: ${providers.map(p => p.name).join(', ')}`);
+      process.exit(1);
+    }
+
+    await runSandboxGitClone(toRun);
+    console.log('\nAll sandbox git clone tests complete.');
+    return;
+  }
+
+  if (modes[0] === 'sandbox-npm-install') {
+    const toRun = providerFilter
+      ? providers.filter(p => p.name === providerFilter)
+      : providers;
+
+    if (toRun.length === 0) {
+      console.error(`Unknown provider: ${providerFilter}`);
+      console.error(`Available: ${providers.map(p => p.name).join(', ')}`);
+      process.exit(1);
+    }
+
+    await runSandboxNpmInstall(toRun);
+    console.log('\nAll sandbox npm install tests complete.');
+    return;
+  }
+
+  if (modes[0] === 'sandbox-resources') {
+    const toRun = providerFilter
+      ? providers.filter(p => p.name === providerFilter)
+      : providers;
+
+    if (toRun.length === 0) {
+      console.error(`Unknown provider: ${providerFilter}`);
+      console.error(`Available: ${providers.map(p => p.name).join(', ')}`);
+      process.exit(1);
+    }
+
+    await runSandboxResources(toRun);
+    console.log('\nAll sandbox resource tests complete.');
+    return;
+  }
+
+  if (modes[0] === 'sandbox-heavy-build') {
+    const toRun = providerFilter ? providers.filter(p => p.name === providerFilter) : providers;
+    if (toRun.length === 0) {
+      console.error(`Unknown provider: ${providerFilter}`);
+      console.error(`Available: ${providers.map(p => p.name).join(', ')}`);
+      process.exit(1);
+    }
+
+    await runSandboxHeavyBuild(toRun);
+    console.log('\nAll sandbox heavy build tests complete.');
+    return;
+  }
+
   console.log('ComputeSDK Sandbox Provider Benchmarks');
   console.log(`Tests to run: ${modes.join(', ')}`);
   console.log(`Date: ${new Date().toISOString()}\n`);
@@ -543,7 +853,7 @@ async function main() {
   }
 
   for (const mode of modes) {
-    await runMode(mode as BenchmarkMode, toRun);
+    await runMode(mode as SandboxTtiMode, toRun);
   }
 
   console.log('\nAll tests complete.');

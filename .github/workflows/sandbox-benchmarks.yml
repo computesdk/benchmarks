@@ -36,9 +36,14 @@ on:
         type: choice
         options:
           - ''
-          - sequential
-          - staggered
-          - burst
+          - sandbox-tti-sequential
+          - sandbox-tti-staggered
+          - sandbox-tti-burst
+          - sandbox-filesystem
+          - sandbox-git-clone
+          - sandbox-npm-install
+          - sandbox-resources
+          - sandbox-heavy-build
 
 concurrency:
   group: benchmarks
@@ -51,6 +56,7 @@ permissions:
 jobs:
   bench:
     name: Bench ${{ matrix.provider }}
+    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.mode == '' || contains(fromJSON('["sandbox-tti-sequential","sandbox-tti-staggered","sandbox-tti-burst"]'), github.event.inputs.mode) }}
     runs-on: namespace-profile-default
     timeout-minutes: 60
     strategy:
@@ -161,10 +167,98 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  workload-bench:
+    name: Bench ${{ matrix.provider }} ${{ matrix.mode }}
+    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.mode == '' || contains(fromJSON('["sandbox-filesystem","sandbox-git-clone","sandbox-npm-install","sandbox-resources","sandbox-heavy-build"]'), github.event.inputs.mode) }}
+    runs-on: namespace-profile-default
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        provider:
+          - archil
+          - blaxel
+          - cloudflare
+          - codesandbox
+          - daytona
+          - declaw
+          - e2b
+          - hopx
+          - isorun
+          - modal
+          - northflank
+          - runloop
+          - tensorlake
+          - upstash
+          - vercel
+        mode:
+          - sandbox-filesystem
+          - sandbox-git-clone
+          - sandbox-npm-install
+          - sandbox-resources
+          - sandbox-heavy-build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - name: Install dependencies
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            npm update
+          else
+            npm ci
+          fi
+      - name: Clear stale results from checkout
+        run: rm -rf results/
+      - name: Run workload benchmark
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.mode == '' || github.event.inputs.mode == matrix.mode }}
+        env:
+          COMPUTESDK_API_KEY: ${{ secrets.COMPUTESDK_API_KEY }}
+          ARCHIL_API_KEY: ${{ secrets.ARCHIL_API_KEY }}
+          ARCHIL_REGION: ${{ secrets.ARCHIL_REGION }}
+          ARCHIL_DISK_ID: ${{ secrets.ARCHIL_DISK_ID }}
+          BL_API_KEY: ${{ secrets.BL_API_KEY }}
+          BL_WORKSPACE: ${{ secrets.BL_WORKSPACE }}
+          CLOUDFLARE_SANDBOX_URL: ${{ secrets.CLOUDFLARE_SANDBOX_URL }}
+          CLOUDFLARE_SANDBOX_SECRET: ${{ secrets.CLOUDFLARE_SANDBOX_SECRET }}
+          CSB_API_KEY: ${{ secrets.CSB_API_KEY }}
+          DAYTONA_API_KEY: ${{ secrets.DAYTONA_API_KEY }}
+          DECLAW_API_KEY: ${{ secrets.DECLAW_API_KEY }}
+          E2B_API_KEY: ${{ secrets.E2B_API_KEY }}
+          HOPX_API_KEY: ${{ secrets.HOPX_API_KEY }}
+          ISORUN_API_KEY: ${{ secrets.ISORUN_API_KEY }}
+          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+          NORTHFLANK_TOKEN: ${{ secrets.NORTHFLANK_TOKEN }}
+          NORTHFLANK_PROJECT_ID: ${{ secrets.NORTHFLANK_PROJECT_ID }}
+          RUNLOOP_API_KEY: ${{ secrets.RUNLOOP_API_KEY }}
+          TENSORLAKE_API_KEY: ${{ secrets.TENSORLAKE_API_KEY }}
+          UPSTASH_BOX_API_KEY: ${{ secrets.UPSTASH_BOX_API_KEY }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          npm run bench -- \
+            --provider ${{ matrix.provider }} \
+            --mode ${{ matrix.mode }} \
+            --iterations ${{ github.event_name == 'pull_request' && '1' || '3' }}
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: results-${{ matrix.provider }}-${{ matrix.mode }}
+          path: results/
+          if-no-files-found: ignore
+          retention-days: 7
+
   collect:
     name: Collect Results
     runs-on: namespace-profile-default
-    needs: bench
+    needs:
+      - bench
+      - workload-bench
     if: always()
     steps:
       - uses: actions/checkout@v4
@@ -222,9 +316,23 @@ jobs:
 
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const modes = [
-              { key: 'sequential_tti', label: 'Sequential' },
-              { key: 'staggered_tti', label: 'Staggered' },
-              { key: 'burst_tti', label: 'Burst' },
+              { key: 'sequential_tti', label: 'Sandbox TTI Sequential' },
+              { key: 'staggered_tti', label: 'Sandbox TTI Staggered' },
+              { key: 'burst_tti', label: 'Sandbox TTI Burst' },
+            ];
+            const workloadModes = [
+              { key: 'sandbox-filesystem', label: 'Sandbox Filesystem', metric: r => `total ${(r.summary.totalMs.median / 1000).toFixed(2)}s · write ${r.summary.largeWriteMbps.median.toFixed(1)} Mbps · read ${r.summary.largeReadMbps.median.toFixed(1)} Mbps` },
+              { key: 'sandbox-git-clone', label: 'Sandbox Git Clone', metric: r => `clone ${(r.summary.cloneMs.median / 1000).toFixed(2)}s · ${Math.round(r.summary.fileCount.median)} files` },
+              { key: 'sandbox-npm-install', label: 'Sandbox npm Install', metric: r => `install ${(r.summary.installMs.median / 1000).toFixed(2)}s · ${(r.summary.nodeModulesBytes.median / 1024 / 1024).toFixed(1)} MiB` },
+              { key: 'sandbox-resources', label: 'Sandbox Resources', metric: r => {
+                const latest = [...r.iterations].reverse().find(i => !i.error);
+                if (!latest) return 'no successful observation';
+                const cpu = latest.cpu?.cgroupEffectiveCpus ? `${latest.cpu.cgroupEffectiveCpus.toFixed(2)} effective CPUs` : `${latest.cpu?.nproc ?? '--'} visible CPUs`;
+                const memoryBytes = latest.memory?.cgroupMaxBytes ?? (latest.memory?.memTotalKb ? latest.memory.memTotalKb * 1024 : undefined);
+                const memory = memoryBytes ? `${(memoryBytes / 1024 / 1024).toFixed(0)} MiB memory` : 'unknown memory';
+                return `${cpu} · ${memory}`;
+              } },
+              { key: 'sandbox-heavy-build', label: 'Sandbox Heavy Build', metric: r => `build ${(r.summary.buildMs.median / 1000).toFixed(2)}s · ${Math.round(r.summary.jobs.median)} jobs` },
             ];
             let body = '## Sandbox Benchmark Results\n\n';
             let hasResults = false;
@@ -253,6 +361,28 @@ jobs:
                 const ok = r.iterations.filter(it => !it.error).length;
                 const total = r.iterations.length;
                 body += `| ${i + 1} | ${r.provider} | ${score} | ${median} | ${p95} | ${p99} | ${ok}/${total} |\n`;
+              });
+
+              body += '\n';
+            }
+
+            for (const mode of workloadModes) {
+              const latestPath = path.join('results', mode.key, 'latest.json');
+              if (!fs.existsSync(latestPath)) continue;
+
+              const data = JSON.parse(fs.readFileSync(latestPath, 'utf-8'));
+              const results = data.results.filter(r => !r.skipped);
+              if (results.length === 0) continue;
+              hasResults = true;
+
+              body += `### ${mode.label}\n\n`;
+              body += '| Provider | Metric | Status |\n';
+              body += '|----------|--------|--------|\n';
+
+              results.forEach(r => {
+                const ok = r.iterations.filter(it => !it.error).length;
+                const total = r.iterations.length;
+                body += `| ${r.provider} | ${mode.metric(r)} | ${ok}/${total} |\n`;
               });
 
               body += '\n';

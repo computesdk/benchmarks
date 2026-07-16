@@ -35,6 +35,20 @@ const MODE_SUBTITLES: Record<string, string> = {
   burst: 'Sandbox TTI under simultaneous burst load',
 };
 
+function normalizeMode(mode: string): string {
+  switch (mode) {
+    case 'sandbox-tti-sequential':
+      return 'sequential';
+    case 'sandbox-tti-staggered':
+      return 'staggered';
+    case 'sandbox-tti-burst':
+    case 'concurrent':
+      return 'burst';
+    default:
+      return mode;
+  }
+}
+
 /** Map mode name to results subdirectory */
 function modeToDir(mode: string): string {
   return `${mode}_tti`;
@@ -313,7 +327,7 @@ function main() {
 
   if (requestedMode) {
     // Generate SVG for a specific mode
-    const mode = requestedMode === 'concurrent' ? 'burst' : requestedMode;
+    const mode = normalizeMode(requestedMode);
     if (!generateForMode(mode)) {
       process.exit(1);
     }
