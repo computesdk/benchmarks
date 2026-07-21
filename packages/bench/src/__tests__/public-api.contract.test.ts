@@ -859,7 +859,12 @@ describe('runWorker lifecycle and task execution', () => {
   });
 
   it('VAL-SDK-052-default-and-unref: defaults flushIntervalMs to 30000 and unrefs the flush interval', async () => {
-    const unrefSpy = vi.fn<[number | undefined], unknown>();
+    // runWorker registers two intervals — a heartbeat and a result flush — and both default to
+    // 30000ms and are unref-ed. Pushing the heartbeat onto a distinct 60000ms cadence leaves the
+    // 30000ms setInterval call attributable to the flush alone, so the assertions below can prove
+    // the flush interval (not the heartbeat) is the one that defaulted to 30000 and got unref-ed.
+    const HEARTBEAT_MS = 60_000;
+    const unrefedDelays: Array<number | undefined> = [];
     const realSetInterval = globalThis.setInterval;
     const setIntervalSpy = vi
       .spyOn(globalThis, 'setInterval')
@@ -868,7 +873,7 @@ describe('runWorker lifecycle and task execution', () => {
         const timer = handle as unknown as { unref?: () => unknown };
         const originalUnref = timer.unref?.bind(timer);
         timer.unref = () => {
-          unrefSpy(delay);
+          unrefedDelays.push(delay);
           return originalUnref?.();
         };
         return handle;
@@ -878,18 +883,57 @@ describe('runWorker lifecycle and task execution', () => {
     const client = createBenchmarkClient({ baseUrl: BASE, apiKey: 'k', fetch: fetchMock });
     await client.runWorker({
       benchmarkSlug: 'scale', runId: 'run_1', participantSlug: 'e2b',
+      heartbeatIntervalMs: HEARTBEAT_MS,
       task: async () => ({ ok: true }),
     });
 
-    // flushIntervalMs is omitted, so the flush interval registers with the 30000ms default
-    // (never the custom `1` value exercised by VAL-SDK-052 above).
+    // flushIntervalMs is omitted, so exactly one 30000ms setInterval call — the flush default —
+    // is registered (never the custom `1` value exercised by VAL-SDK-052 above), while the
+    // heartbeat lands on its own 60000ms cadence.
     const delays = setIntervalSpy.mock.calls.map((call) => call[1]);
-    expect(delays).toContain(30000);
+    expect(delays.filter((delay) => delay === 30000)).toHaveLength(1);
+    expect(delays).toContain(HEARTBEAT_MS);
     expect(delays).not.toContain(1);
 
-    // The flush interval handle is unref-ed so it never keeps the event loop alive.
-    expect(unrefSpy).toHaveBeenCalled();
-    expect(unrefSpy.mock.calls.some(([delay]) => delay === 30000)).toBe(true);
+    // The flush interval handle (the 30000ms one) is unref-ed so it never keeps the loop alive.
+    expect(unrefedDelays).toContain(30000);
+  });
+
+  it('VAL-SDK-052-flush-handle-isolation: unrefs the exact 30000ms flush handle, distinct from the heartbeat handle', async () => {
+    // Correlate each setInterval registration with the specific handle returned and whether that
+    // exact handle was unref-ed. With the heartbeat pushed to 60000ms, this proves the unref lands
+    // on the flush handle itself rather than incidentally on the same-cadence heartbeat handle.
+    const HEARTBEAT_MS = 60_000;
+    const registrations: Array<{ delay: number | undefined; handle: unknown; unrefed: boolean }> = [];
+    const realSetInterval = globalThis.setInterval;
+    vi.spyOn(globalThis, 'setInterval').mockImplementation(((handler: () => void, delay?: number, ...args: unknown[]) => {
+      const handle = realSetInterval(handler, delay, ...args);
+      const registration = { delay, handle, unrefed: false };
+      registrations.push(registration);
+      const timer = handle as unknown as { unref?: () => unknown };
+      const originalUnref = timer.unref?.bind(timer);
+      timer.unref = () => {
+        registration.unrefed = true;
+        return originalUnref?.();
+      };
+      return handle;
+    }) as unknown as typeof setInterval);
+
+    const { fetchMock } = recordingClient(lifecycleResponder({ taskRange: { start: 0, end: 0, count: 1 } }));
+    const client = createBenchmarkClient({ baseUrl: BASE, apiKey: 'k', fetch: fetchMock });
+    await client.runWorker({
+      benchmarkSlug: 'scale', runId: 'run_1', participantSlug: 'e2b',
+      heartbeatIntervalMs: HEARTBEAT_MS,
+      task: async () => ({ ok: true }),
+    });
+
+    const flushRegistrations = registrations.filter((r) => r.delay === 30000);
+    expect(flushRegistrations).toHaveLength(1);
+    expect(flushRegistrations[0].unrefed).toBe(true);
+
+    const heartbeatRegistrations = registrations.filter((r) => r.delay === HEARTBEAT_MS);
+    expect(heartbeatRegistrations).toHaveLength(1);
+    expect(heartbeatRegistrations[0].handle).not.toBe(flushRegistrations[0].handle);
   });
 
   it('VAL-SDK-053: sends a final flush with isFinal: true', async () => {
