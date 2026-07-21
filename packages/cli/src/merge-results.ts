@@ -42,7 +42,7 @@ import type { ThroughputBenchmarkResult } from './browser/throughput-types.js';
 import type { AIGatewayBenchmarkResult } from './ai-gateway/types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(__dirname, '..');
+const ROOT = path.resolve(__dirname, '../../..');
 const SANDBOX_WORKLOAD_DIRS = new Set([
   'sandbox-dax',
 ]);

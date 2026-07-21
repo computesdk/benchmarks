@@ -5,7 +5,7 @@ import type { BenchmarkResult, BenchmarkMode, ConcurrentBenchmarkResult, Stagger
 import { sortByCompositeScore, computeCompositeScores } from './scoring.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(__dirname, '../..');
+const ROOT = path.resolve(__dirname, '../../../..');
 const RESULTS_DIR = path.join(ROOT, 'results');
 
 // ComputeSDK logo - the "C" path
