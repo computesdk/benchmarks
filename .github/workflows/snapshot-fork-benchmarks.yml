@@ -3,10 +3,10 @@ name: Snapshot/Fork Benchmark
 on:
   pull_request:
     paths:
-      - 'src/storage/**'
-      - 'src/util/**'
-      - 'src/run.ts'
-      - 'src/merge-results.ts'
+      - 'packages/cli/src/storage/**'
+      - 'packages/cli/src/util/**'
+      - 'packages/cli/src/run.ts'
+      - 'packages/cli/src/merge-results.ts'
       - 'package.json'
   schedule:
     - cron: '0 7 * * 5' # Weekly on Friday at 7am UTC (offset from the storage benchmark at 6am to avoid racing pushes to master)
@@ -59,16 +59,17 @@ jobs:
           # - vercel-blob
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
+          cache: 'pnpm'
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            npm update
+            pnpm update
           else
-            npm ci
+            pnpm install --frozen-lockfile
           fi
       - name: Clear stale results from checkout
         run: rm -rf results/snapshot-fork/
@@ -108,7 +109,7 @@ jobs:
           # VERCEL_SNAPSHOT_BLOB_READ_WRITE_TOKEN: ${{ secrets.VERCEL_SNAPSHOT_BLOB_READ_WRITE_TOKEN }}
           # VERCEL_SNAPSHOT_BLOB_BUCKET: ${{ secrets.VERCEL_SNAPSHOT_BLOB_BUCKET }}
         run: |
-          npm run bench -- \
+          pnpm --filter @benchmarks/cli run bench -- \
             --mode snapshot-fork \
             --provider ${{ matrix.provider }} \
             --dataset ${{ github.event.inputs.dataset || 'small' }} \
@@ -134,16 +135,17 @@ jobs:
           # A shallow (depth-1) clone can make `git rebase origin/<branch>`
           # fail when the remote has advanced past the shallow boundary.
           fetch-depth: 0
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
+          cache: 'pnpm'
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            npm update
+            pnpm update
           else
-            npm ci
+            pnpm install --frozen-lockfile
           fi
       - name: Download snapshot/fork artifacts
         uses: actions/download-artifact@v4
@@ -155,7 +157,7 @@ jobs:
         # Guarded so a run with no snapshot/fork artifacts doesn't hard-fail.
         run: |
           if find sf-artifacts -name latest.json 2>/dev/null | grep -q .; then
-            npx tsx src/merge-results.ts --input sf-artifacts --mode snapshot-fork
+            npx tsx packages/cli/src/merge-results.ts --input sf-artifacts --mode snapshot-fork
           else
             echo "No snapshot/fork artifacts to merge"
           fi
@@ -164,7 +166,7 @@ jobs:
         # non-zero when none exist) doesn't fail the collect job.
         run: |
           if find results/snapshot-fork -name latest.json 2>/dev/null | grep -q .; then
-            npm run generate-snapshot-fork-svg
+            pnpm --filter @benchmarks/cli run generate-snapshot-fork-svg
           else
             echo "No snapshot/fork results to render"
           fi
@@ -284,7 +286,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json snapshot_fork_*.svg results/snapshot-fork/
+          git add package.json pnpm-lock.yaml snapshot_fork_*.svg results/snapshot-fork/
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "chore: update snapshot/fork benchmark results [skip ci]"
 

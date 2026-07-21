@@ -1,5 +1,5 @@
 /**
- * Thin reporting layer over the platform-orchestrated `@computesdk/bench`
+ * Thin reporting layer over the platform-orchestrated `benchmarks`
  * client (v0.1.7+).
  *
  * Why the low-level client and not `defineWorker`/`defineStep`: the scale burst
@@ -23,7 +23,7 @@
  * the burst, so network errors are swallowed (mirroring the old bench SDK's
  * internal behaviour).
  */
-import { createBenchmarkClient } from '@computesdk/bench';
+import { createBenchmarkClient } from 'benchmarks';
 import type {
   BenchmarkAssignment,
   BenchmarkClient,
@@ -31,7 +31,7 @@ import type {
   TaskResultRecord,
   TaskStepRecord,
   WorkerConcurrencySample,
-} from '@computesdk/bench';
+} from 'benchmarks';
 import type { ProgressStats, SandboxResult } from './types.js';
 import { log } from './logger.js';
 

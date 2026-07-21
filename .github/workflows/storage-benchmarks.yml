@@ -3,10 +3,10 @@ name: Storage Benchmark
 on:
   pull_request:
     paths:
-      - 'src/storage/**'
-      - 'src/util/**'
-      - 'src/run.ts'
-      - 'src/merge-results.ts'
+      - 'packages/cli/src/storage/**'
+      - 'packages/cli/src/util/**'
+      - 'packages/cli/src/run.ts'
+      - 'packages/cli/src/merge-results.ts'
       - 'package.json'
   schedule:
     - cron: '0 6 * * 5' # Weekly on Friday at 6am UTC
@@ -58,16 +58,17 @@ jobs:
         file_size: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.file_size != '' && fromJson(format('["{0}"]', github.event.inputs.file_size))) || (github.event_name == 'pull_request' && fromJson('["1MB"]')) || fromJson('["1MB","4MB","10MB","16MB"]') }}
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
+          cache: 'pnpm'
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            npm update
+            pnpm update
           else
-            npm ci
+            pnpm install --frozen-lockfile
           fi
       - name: Clear stale results from checkout
         run: rm -rf results/storage/
@@ -95,7 +96,7 @@ jobs:
           AZURE_CONTAINER: ${{ secrets.AZURE_CONTAINER }}
         run: |
           FILE_SIZE="${{ matrix.file_size }}"
-          npm run bench -- \
+          pnpm --filter @benchmarks/cli run bench -- \
             --mode storage \
             --provider ${{ matrix.provider }} \
             --file-size $FILE_SIZE \
@@ -122,16 +123,17 @@ jobs:
           # A shallow (depth-1) clone can make `git rebase origin/<branch>`
           # fail when the remote has advanced past the shallow boundary.
           fetch-depth: 0
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
+          cache: 'pnpm'
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            npm update
+            pnpm update
           else
-            npm ci
+            pnpm install --frozen-lockfile
           fi
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -139,15 +141,15 @@ jobs:
           path: artifacts/
           pattern: storage-results-*
       - name: Merge results
-        run: npx tsx src/merge-results.ts --input artifacts --mode storage
+        run: npx tsx packages/cli/src/merge-results.ts --input artifacts --mode storage
       - name: Ingest results to platform
         if: github.event_name != 'pull_request'
         continue-on-error: true
         env:
           INGEST_URL: ${{ secrets.INGEST_URL }}
           INGEST_SECRET: ${{ secrets.INGEST_SECRET }}
-        run: npx tsx src/ingest.ts --type storage
-      - run: npm run generate-storage-svg
+        run: npx tsx packages/cli/src/ingest.ts --type storage
+      - run: pnpm --filter @benchmarks/cli run generate-storage-svg
       - name: Upload SVGs as artifacts
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
@@ -248,7 +250,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json storage_*.svg results/storage/
+          git add package.json pnpm-lock.yaml storage_*.svg results/storage/
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "chore: update storage benchmark results [skip ci]"
 

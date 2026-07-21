@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "typecheck": "tsc --noEmit",
     "bench": "tsx src/run.ts",
     "bench:sequential": "tsx src/run.ts --mode sequential",
     "bench:staggered": "tsx src/run.ts --mode staggered",
@@ -51,7 +52,7 @@
     "bench:snapshot-fork:s3": "tsx src/run.ts --mode snapshot-fork --provider aws-s3",
     "bench:snapshot-fork:wide": "tsx src/run.ts --mode snapshot-fork --dataset wide",
     "bench:snapshot-fork:deep": "tsx src/run.ts --mode snapshot-fork --dataset deep",
-    "bundle:scale": "esbuild packages/cli/src/scale/sdk-coordinator.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist/scale.cjs",
+    "bundle:scale": "esbuild packages/cli/src/scale/sdk-coordinator.ts --bundle --platform=node --target=node20 --format=cjs --outfile=packages/cli/dist/scale.cjs",
     "bench:scale:image": "SCALE_IMAGE_REPO=${SCALE_IMAGE_REPO:-nscr.io/5enq753trme1k/scale}; SCALE_IMAGE_TAG=${SCALE_IMAGE_TAG:-latest}; docker buildx build --platform linux/amd64 --provenance=false --sbom=false -f packages/cli/src/scale/Dockerfile --push -t \"$SCALE_IMAGE_REPO:$SCALE_IMAGE_TAG\" .",
     "bench:scale:local": "tsx src/scale/sdk-coordinator.ts",
     "bench:scale:start": "tsx src/scale/scripts/start.ts",

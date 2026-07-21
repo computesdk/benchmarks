@@ -3,10 +3,10 @@ name: Browser Throughput Benchmark
 on:
   pull_request:
     paths:
-      - 'src/browser/**'
-      - 'src/util/**'
-      - 'src/run.ts'
-      - 'src/merge-results.ts'
+      - 'packages/cli/src/browser/**'
+      - 'packages/cli/src/util/**'
+      - 'packages/cli/src/run.ts'
+      - 'packages/cli/src/merge-results.ts'
       - 'package.json'
   schedule:
     - cron: '0 3 * * 5' # Weekly on Friday at 03:00 UTC (offset from main browser benchmark)
@@ -94,16 +94,17 @@ jobs:
           - steel
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
+          cache: 'pnpm'
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            npm update
+            pnpm update
           else
-            npm ci
+            pnpm install --frozen-lockfile
           fi
       - name: Clear stale results from checkout
         run: rm -rf results/browser-throughput/
@@ -118,7 +119,7 @@ jobs:
           NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
           STEEL_API_KEY: ${{ secrets.STEEL_API_KEY }}
         run: |
-          npm run bench -- \
+          pnpm --filter @benchmarks/cli run bench -- \
             --mode browser-throughput \
             --provider ${{ matrix.provider }} \
             --iterations ${{ github.event_name == 'pull_request' && '3' || github.event.inputs.iterations || '100' }}
@@ -143,16 +144,17 @@ jobs:
           # A shallow (depth-1) clone can make `git rebase origin/<branch>`
           # fail when the remote has advanced past the shallow boundary.
           fetch-depth: 0
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
+          cache: 'pnpm'
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            npm update
+            pnpm update
           else
-            npm ci
+            pnpm install --frozen-lockfile
           fi
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -160,8 +162,8 @@ jobs:
           path: artifacts/
           pattern: browser-throughput-results-*
       - name: Merge results
-        run: npx tsx src/merge-results.ts --input artifacts --mode browser-throughput
-      - run: npm run generate-browser-throughput-svg
+        run: npx tsx packages/cli/src/merge-results.ts --input artifacts --mode browser-throughput
+      - run: pnpm --filter @benchmarks/cli run generate-browser-throughput-svg
       - name: Upload SVG as artifact
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
@@ -246,7 +248,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json browser-throughput.svg results/browser-throughput/
+          git add package.json pnpm-lock.yaml browser-throughput.svg results/browser-throughput/
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "chore: update browser throughput benchmark results [skip ci]"
 

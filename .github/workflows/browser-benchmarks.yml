@@ -3,10 +3,10 @@ name: Browser Benchmark
 on:
   pull_request:
     paths:
-      - 'src/browser/**'
-      - 'src/util/**'
-      - 'src/run.ts'
-      - 'src/merge-results.ts'
+      - 'packages/cli/src/browser/**'
+      - 'packages/cli/src/util/**'
+      - 'packages/cli/src/run.ts'
+      - 'packages/cli/src/merge-results.ts'
       - 'package.json'
   schedule:
     - cron: '0 0 * * 5' # Weekly on Friday at midnight UTC
@@ -43,16 +43,17 @@ jobs:
           # - anchorbrowser
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
+          cache: 'pnpm'
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            npm update
+            pnpm update
           else
-            npm ci
+            pnpm install --frozen-lockfile
           fi
       - name: Clear stale results from checkout
         run: rm -rf results/browser/
@@ -67,7 +68,7 @@ jobs:
           STEEL_API_KEY: ${{ secrets.STEEL_API_KEY }}
           # ANCHORBROWSER_API_KEY: ${{ secrets.ANCHORBROWSER_API_KEY }}
         run: |
-          npm run bench -- \
+          pnpm --filter @benchmarks/cli run bench -- \
             --mode browser \
             --provider ${{ matrix.provider }} \
             --iterations ${{ github.event_name == 'pull_request' && '10' || github.event.inputs.iterations || '100' }}
@@ -92,16 +93,17 @@ jobs:
           # A shallow (depth-1) clone can make `git rebase origin/<branch>`
           # fail when the remote has advanced past the shallow boundary.
           fetch-depth: 0
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
+          cache: 'pnpm'
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            npm update
+            pnpm update
           else
-            npm ci
+            pnpm install --frozen-lockfile
           fi
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -109,15 +111,15 @@ jobs:
           path: artifacts/
           pattern: browser-results-*
       - name: Merge results
-        run: npx tsx src/merge-results.ts --input artifacts --mode browser
+        run: npx tsx packages/cli/src/merge-results.ts --input artifacts --mode browser
       - name: Ingest results to platform
         if: github.event_name != 'pull_request'
         continue-on-error: true
         env:
           INGEST_URL: ${{ secrets.INGEST_URL }}
           INGEST_SECRET: ${{ secrets.INGEST_SECRET }}
-        run: npx tsx src/ingest.ts --type browser
-      - run: npm run generate-browser-svg
+        run: npx tsx packages/cli/src/ingest.ts --type browser
+      - run: pnpm --filter @benchmarks/cli run generate-browser-svg
       - name: Upload SVG as artifact
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
@@ -202,7 +204,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json browser.svg results/browser/
+          git add package.json pnpm-lock.yaml browser.svg results/browser/
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "chore: update browser benchmark results [skip ci]"
 

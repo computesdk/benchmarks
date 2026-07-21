@@ -3,10 +3,10 @@ name: Sandbox Dax Benchmark
 on:
   pull_request:
     paths:
-      - 'src/sandbox/dax.ts'
-      - 'src/sandbox/providers.ts'
-      - 'src/run.ts'
-      - 'src/merge-results.ts'
+      - 'packages/cli/src/sandbox/dax.ts'
+      - 'packages/cli/src/sandbox/providers.ts'
+      - 'packages/cli/src/run.ts'
+      - 'packages/cli/src/merge-results.ts'
       - 'scripts/dax-benchmark.sh'
       - 'package.json'
       - '.github/workflows/sandbox-dax-benchmarks.yml'
@@ -69,16 +69,17 @@ jobs:
           - vercel
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
+          cache: 'pnpm'
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            npm update
+            pnpm update
           else
-            npm ci
+            pnpm install --frozen-lockfile
           fi
       - name: Build E2B template with 8 vCPU / 16 GiB
         if: matrix.provider == 'e2b'
@@ -128,7 +129,7 @@ jobs:
           VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          npm run bench -- \
+          pnpm --filter @benchmarks/cli run bench -- \
             --provider ${{ matrix.provider }} \
             --mode sandbox-dax \
             --iterations ${{ github.event.inputs.iterations || '1' }}
@@ -150,16 +151,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
+          cache: 'pnpm'
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            npm update
+            pnpm update
           else
-            npm ci
+            pnpm install --frozen-lockfile
           fi
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -167,14 +169,14 @@ jobs:
           path: artifacts/
           pattern: results-*
       - name: Merge results
-        run: npx tsx src/merge-results.ts --input artifacts
+        run: npx tsx packages/cli/src/merge-results.ts --input artifacts
       - name: Ingest results to platform
         if: github.event_name != 'pull_request' && github.event.inputs.dry_run != 'true'
         continue-on-error: true
         env:
           INGEST_URL: ${{ secrets.INGEST_URL }}
           INGEST_SECRET: ${{ secrets.INGEST_SECRET }}
-        run: npx tsx src/ingest.ts --type sandbox
+        run: npx tsx packages/cli/src/ingest.ts --type sandbox
       - name: Post results to PR
         if: github.event_name == 'pull_request'
         continue-on-error: true

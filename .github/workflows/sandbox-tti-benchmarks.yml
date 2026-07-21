@@ -3,10 +3,10 @@ name: Sandbox TTI Benchmark
 on:
   pull_request:
     paths:
-      - 'src/sandbox/**'
-      - 'src/util/**'
-      - 'src/run.ts'
-      - 'src/merge-results.ts'
+      - 'packages/cli/src/sandbox/**'
+      - 'packages/cli/src/util/**'
+      - 'packages/cli/src/run.ts'
+      - 'packages/cli/src/merge-results.ts'
       - 'package.json'
   schedule:
     - cron: '0 0 * * 5' # Weekly on Friday at midnight UTC
@@ -85,17 +85,18 @@ jobs:
           - vercel
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
+          cache: 'pnpm'
       - name: Install dependencies
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.provider == '' || github.event.inputs.provider == matrix.provider
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            npm update
+            pnpm update
           else
-            npm ci
+            pnpm install --frozen-lockfile
           fi
       - name: Clear stale results from checkout
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.provider == '' || github.event.inputs.provider == matrix.provider
@@ -147,7 +148,7 @@ jobs:
           if [ -n "${{ github.event.inputs.mode }}" ]; then
             MODE_FLAG="--mode ${{ github.event.inputs.mode }}"
           fi
-          npm run bench -- \
+          pnpm --filter @benchmarks/cli run bench -- \
             --provider ${{ matrix.provider }} \
             --iterations ${{ github.event.inputs.iterations || (github.event_name == 'pull_request' && '10') || '100' }} \
             --concurrency ${{ github.event.inputs.concurrency || (github.event_name == 'pull_request' && '10') || '100' }} \
@@ -173,16 +174,17 @@ jobs:
           # A shallow (depth-1) clone can make `git rebase origin/<branch>`
           # fail when the remote has advanced past the shallow boundary.
           fetch-depth: 0
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
+          cache: 'pnpm'
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            npm update
+            pnpm update
           else
-            npm ci
+            pnpm install --frozen-lockfile
           fi
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -190,16 +192,16 @@ jobs:
           path: artifacts/
           pattern: results-*
       - name: Merge results
-        run: npx tsx src/merge-results.ts --input artifacts
+        run: npx tsx packages/cli/src/merge-results.ts --input artifacts
       - name: Ingest results to platform
         if: github.event_name != 'pull_request' && github.event.inputs.dry_run != 'true'
         continue-on-error: true
         env:
           INGEST_URL: ${{ secrets.INGEST_URL }}
           INGEST_SECRET: ${{ secrets.INGEST_SECRET }}
-        run: npx tsx src/ingest.ts --type sandbox
-      - run: npm run generate-svg
-      - run: npm run generate-pricing-svg
+        run: npx tsx packages/cli/src/ingest.ts --type sandbox
+      - run: pnpm --filter @benchmarks/cli run generate-svg
+      - run: pnpm --filter @benchmarks/cli run generate-pricing-svg
       - name: Upload SVGs as artifacts
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
@@ -294,7 +296,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json results.svg *_tti.svg pricing.svg results/
+          git add package.json pnpm-lock.yaml results.svg *_tti.svg pricing.svg results/
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "chore: update benchmark results [skip ci]"
 

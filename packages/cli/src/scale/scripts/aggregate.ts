@@ -2,7 +2,7 @@
 /**
  * Aggregate a scale run into the meta.json shape the single-VM coordinator
  * writes, sourced entirely from the orchestrator analytics endpoints
- * (@computesdk/bench). No external storage: the report prints to stdout and,
+ * (benchmarks). No external storage: the report prints to stdout and,
  * with --out, is written to a local JSON file.
  *
  * Provenance (all via the bench client):
@@ -40,14 +40,14 @@
 
 import 'dotenv/config';
 import * as fs from 'node:fs';
-import { createBenchmarkClient, BenchmarkApiError } from '@computesdk/bench';
+import { createBenchmarkClient, BenchmarkApiError } from 'benchmarks';
 import type {
   BenchmarkResultLatencySummary,
   BenchmarkRunResults,
   BenchmarkRunTaskResults,
   BenchmarkRunTimeline,
   RunProgress,
-} from '@computesdk/bench';
+} from 'benchmarks';
 
 const BENCHMARK_SLUG = process.env.BENCHMARK_SLUG ?? 'scale';
 
