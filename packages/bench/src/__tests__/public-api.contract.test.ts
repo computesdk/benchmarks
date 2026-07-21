@@ -63,6 +63,7 @@ import type {
   DefineWorkerOptions,
   JsonObject,
   JsonValue,
+  PlanWorkersInput,
   RunProgress,
   RunProgressConcurrency,
   RunProgressParticipant,
@@ -152,6 +153,7 @@ type _PublicTypeSurface = [
   DefineWorkerOptions,
   JsonObject,
   JsonValue,
+  PlanWorkersInput,
   RunProgress,
   RunProgressConcurrency,
   RunProgressParticipant,
@@ -856,6 +858,40 @@ describe('runWorker lifecycle and task execution', () => {
     expect((events[0].body as { isFinal: boolean }).isFinal).toBe(false);
   });
 
+  it('VAL-SDK-052-default-and-unref: defaults flushIntervalMs to 30000 and unrefs the flush interval', async () => {
+    const unrefSpy = vi.fn<[number | undefined], unknown>();
+    const realSetInterval = globalThis.setInterval;
+    const setIntervalSpy = vi
+      .spyOn(globalThis, 'setInterval')
+      .mockImplementation(((handler: () => void, delay?: number, ...args: unknown[]) => {
+        const handle = realSetInterval(handler, delay, ...args);
+        const timer = handle as unknown as { unref?: () => unknown };
+        const originalUnref = timer.unref?.bind(timer);
+        timer.unref = () => {
+          unrefSpy(delay);
+          return originalUnref?.();
+        };
+        return handle;
+      }) as unknown as typeof setInterval);
+
+    const { fetchMock } = recordingClient(lifecycleResponder({ taskRange: { start: 0, end: 0, count: 1 } }));
+    const client = createBenchmarkClient({ baseUrl: BASE, apiKey: 'k', fetch: fetchMock });
+    await client.runWorker({
+      benchmarkSlug: 'scale', runId: 'run_1', participantSlug: 'e2b',
+      task: async () => ({ ok: true }),
+    });
+
+    // flushIntervalMs is omitted, so the flush interval registers with the 30000ms default
+    // (never the custom `1` value exercised by VAL-SDK-052 above).
+    const delays = setIntervalSpy.mock.calls.map((call) => call[1]);
+    expect(delays).toContain(30000);
+    expect(delays).not.toContain(1);
+
+    // The flush interval handle is unref-ed so it never keeps the event loop alive.
+    expect(unrefSpy).toHaveBeenCalled();
+    expect(unrefSpy.mock.calls.some(([delay]) => delay === 30000)).toBe(true);
+  });
+
   it('VAL-SDK-053: sends a final flush with isFinal: true', async () => {
     const { calls, fetchMock } = recordingClient(lifecycleResponder({ taskRange: { start: 0, end: 0, count: 1 } }));
     const client = createBenchmarkClient({ baseUrl: BASE, apiKey: 'k', fetch: fetchMock });
@@ -1417,7 +1453,7 @@ describe('public API surface and type exports', () => {
     'BenchmarkRunTimelineInput', 'BenchmarkRunWorker', 'BenchmarkStepResultSummary', 'BenchmarkTaskBucket',
     'BenchmarkWorkerAttempt', 'BenchmarkWorkerStatus', 'ClaimWorkerInput', 'CreateWorkerArtifactInput',
     'CreateWorkerArtifactResponse', 'CreateRunInput', 'DefineBenchOptions', 'DefineStepOptions', 'DefinedStep',
-    'DefinedTask', 'DefineWorkerOptions', 'JsonObject', 'JsonValue', 'RunProgress', 'RunProgressConcurrency',
+    'DefinedTask', 'DefineWorkerOptions', 'JsonObject', 'JsonValue', 'PlanWorkersInput', 'RunProgress', 'RunProgressConcurrency',
     'RunProgressParticipant', 'RunProgressParticipantCounts', 'RunProgressStatus', 'RunProgressSummary',
     'RunProgressTaskCounts', 'RunProgressWorkerCounts', 'RunWorkerContext', 'RunWorkerOptions', 'RunWorkerResult',
     'SendTaskResultsInput', 'TaskStepRecord', 'TaskResultRecord', 'TaskResultsResponse', 'TaskFunction',

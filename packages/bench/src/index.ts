@@ -55,6 +55,7 @@ export type {
   DefineWorkerOptions,
   JsonObject,
   JsonValue,
+  PlanWorkersInput,
   RunProgress,
   RunProgressConcurrency,
   RunProgressParticipant,
