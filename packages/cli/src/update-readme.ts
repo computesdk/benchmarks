@@ -5,7 +5,7 @@ import type { BenchmarkResult, ConcurrentBenchmarkResult } from './sandbox/types
 import { sortByCompositeScore, computeCompositeScores } from './sandbox/scoring.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(__dirname, '..');
+const ROOT = path.resolve(__dirname, '../../..');
 const RESULTS_DIR = path.join(ROOT, 'results');
 const README_PATH = path.join(ROOT, 'README.md');
 

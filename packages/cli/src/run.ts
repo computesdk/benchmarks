@@ -135,7 +135,7 @@ async function runMode(mode: BenchmarkMode, toRun: typeof providers): Promise<vo
   // Write JSON results to mode-specific subdirectory
   const timestamp = new Date().toISOString().slice(0, 10);
   const subDir = modeToDir(mode);
-  const resultsDir = path.resolve(__dirname, `../results/${subDir}`);
+  const resultsDir = path.resolve(__dirname, `../../../results/${subDir}`);
   fs.mkdirSync(resultsDir, { recursive: true });
 
   const outPath = path.join(resultsDir, `${timestamp}.json`);
@@ -190,7 +190,7 @@ async function runStorage(toRun: typeof storageProviders, fileSizeLabel: string)
   // Write JSON results to storage subdirectory with file size
   const timestamp = new Date().toISOString().slice(0, 10);
   const subDir = modeToDir('storage');
-  const sizeDir = path.resolve(__dirname, `../results/${subDir}/${fileSizeLabel.toLowerCase()}`);
+  const sizeDir = path.resolve(__dirname, `../../../results/${subDir}/${fileSizeLabel.toLowerCase()}`);
   fs.mkdirSync(sizeDir, { recursive: true });
 
   const outPath = path.join(sizeDir, `${timestamp}.json`);
@@ -253,7 +253,7 @@ async function runSnapshotFork(toRun: typeof storageProviders, datasetLabel: str
 
   const timestamp = new Date().toISOString().slice(0, 10);
   const subDir = modeToDir('snapshot-fork');
-  const datasetDir = path.resolve(__dirname, `../results/${subDir}/${dataset}`);
+  const datasetDir = path.resolve(__dirname, `../../../results/${subDir}/${dataset}`);
   fs.mkdirSync(datasetDir, { recursive: true });
 
   const outPath = path.join(datasetDir, `${timestamp}.json`);
@@ -296,7 +296,7 @@ async function runBrowser(toRun: typeof browserProviders): Promise<void> {
 
   // Write JSON results to browser subdirectory
   const timestamp = new Date().toISOString().slice(0, 10);
-  const resultsDir = path.resolve(__dirname, '../results/browser');
+  const resultsDir = path.resolve(__dirname, '../../../results/browser');
   fs.mkdirSync(resultsDir, { recursive: true });
 
   const outPath = path.join(resultsDir, `${timestamp}.json`);
@@ -422,7 +422,7 @@ async function runBrowserThroughput(toRun: typeof throughputProviders): Promise<
 
   // Write JSON results to browser-throughput subdirectory
   const timestamp = new Date().toISOString().slice(0, 10);
-  const resultsDir = path.resolve(__dirname, '../results/browser-throughput');
+  const resultsDir = path.resolve(__dirname, '../../../results/browser-throughput');
   fs.mkdirSync(resultsDir, { recursive: true });
 
   const outPath = path.join(resultsDir, `${timestamp}.json`);
@@ -462,7 +462,7 @@ async function runSandboxDax(toRun: typeof providers): Promise<void> {
   }
 
   const timestamp = new Date().toISOString().slice(0, 10);
-  const resultsDir = path.resolve(__dirname, `../results/${modeToDir('sandbox-dax')}`);
+  const resultsDir = path.resolve(__dirname, `../../../results/${modeToDir('sandbox-dax')}`);
   fs.mkdirSync(resultsDir, { recursive: true });
   const outPath = path.join(resultsDir, `${timestamp}.json`);
   await writeDaxResultsJson(results, outPath);

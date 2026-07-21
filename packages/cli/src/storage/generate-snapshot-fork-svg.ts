@@ -1,19 +1,23 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import type { StorageBenchmarkResult } from './types.js';
-import { sortStorageByCompositeScore, computeStorageCompositeScores } from './scoring.js';
+import type { SnapshotForkBenchmarkResult, DatasetPreset } from './snapshot-fork-types.js';
+import { computeSnapshotForkCompositeScores } from './snapshot-fork-benchmark.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(__dirname, '../..');
-const RESULTS_DIR = path.join(ROOT, 'results', 'storage');
+const ROOT = path.resolve(__dirname, '../../../..');
+const RESULTS_DIR = path.join(ROOT, 'results', 'snapshot-fork');
+
+// Datasets to render, in display order. Matches DATASET_PRESETS in
+// snapshot-fork-types.ts; only those with a latest.json on disk are emitted.
+const DATASETS: DatasetPreset[] = ['small', 'wide', 'deep'];
 
 // ComputeSDK logo
 const LOGO_C_PATH = `M1036.26,1002.28h237.87l-.93,19.09c-8.38,110.32-49.81,198.3-123.82,262.07-73.09,63.31-170.84,95.43-290.48,95.43-130.81,0-235.55-44.69-311.43-133.6-74.48-87.98-112.65-209.48-112.65-361.23v-60.51c0-96.83,17.7-183.41,51.68-257.43,34.91-74.95,85.19-133.61,149.89-173.63,64.7-40.04,140.12-60.52,225.3-60.52,117.77,0,214.13,32.12,286.29,95.9,72.62,63.3,114.98,153.61,126.15,267.67l1.86,19.08h-238.34l-.93-15.83c-4.65-59.11-20.95-101.94-47.95-127.08-27-25.6-69.83-38.17-127.08-38.17-61.91,0-107.06,20.95-137.33,65.17-31.65,45.15-47.94,117.77-48.87,215.53v74.48c0,102.41,15.36,177.83,45.62,223.91,28.86,44.22,74.01,65.63,137.79,65.63,58.19,0,101.48-12.57,128.95-38.17,26.99-25.14,43.29-66.1,47.48-121.5l.93-16.3Z`;
 
 interface ResultFile {
   timestamp: string;
-  results: StorageBenchmarkResult[];
+  results: SnapshotForkBenchmarkResult[];
 }
 
 // Parse CLI args
@@ -36,17 +40,15 @@ function formatSeconds(ms: number): string {
   return (ms / 1000).toFixed(2) + 's';
 }
 
-function formatMbps(mbps: number): string {
-  return mbps.toFixed(1) + ' Mbps';
-}
-
-function generateSVG(results: StorageBenchmarkResult[], timestamp: string, fileSizeLabel: string): string {
+function generateSVG(results: SnapshotForkBenchmarkResult[], timestamp: string, datasetLabel: string): string {
   // Compute scores if any are missing
   if (!results.every(r => r.compositeScore !== undefined)) {
-    computeStorageCompositeScores(results);
+    computeSnapshotForkCompositeScores(results);
   }
 
-  const sorted = sortStorageByCompositeScore(results).filter(r => !r.skipped);
+  const sorted = results
+    .filter(r => !r.skipped)
+    .sort((a, b) => (b.compositeScore ?? 0) - (a.compositeScore ?? 0));
 
   const rowHeight = 44;
   const headerHeight = 110;
@@ -64,14 +66,15 @@ function generateSVG(results: StorageBenchmarkResult[], timestamp: string, fileS
     rank: 40,
     provider: 80,
     score: 280,
-    download: 420,
-    throughput: 600,
-    upload: 780,
-    status: 960,
+    snapshot: 400,
+    forkSnapshot: 590,
+    forkLive: 780,
+    firstRead: 940,
+    status: 1090,
   };
 
-  const title = 'Object Storage Benchmarks';
-  const subtitle = `Download performance - ${fileSizeLabel} files`;
+  const title = 'Object Storage Snapshot &amp; Fork Benchmarks';
+  const subtitle = `Snapshot/fork provisioning - ${datasetLabel} dataset`;
 
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
   <defs>
@@ -91,7 +94,7 @@ function generateSVG(results: StorageBenchmarkResult[], timestamp: string, fileS
     .rank-2 { fill: #8a8a8a; }
     .rank-3 { fill: #a0522d; }
     .provider { font-weight: 600; fill: #0969da; }
-    .download { font-weight: 700; font-size: 15px; }
+    .metric { font-weight: 700; font-size: 15px; }
     .fast { fill: #1a7f37; }
     .medium { fill: #9a6700; }
     .slow { fill: #cf222e; }
@@ -123,25 +126,26 @@ function generateSVG(results: StorageBenchmarkResult[], timestamp: string, fileS
   <text class="table-header" x="${cols.rank}" y="${tableTop + 28}">#</text>
   <text class="table-header" x="${cols.provider}" y="${tableTop + 28}">Provider</text>
   <text class="table-header" x="${cols.score}" y="${tableTop + 28}">Score</text>
-  <text class="table-header" x="${cols.download}" y="${tableTop + 28}">Download Time</text>
-  <text class="table-header" x="${cols.throughput}" y="${tableTop + 28}">Throughput</text>
-  <text class="table-header" x="${cols.upload}" y="${tableTop + 28}">Upload Time</text>
+  <text class="table-header" x="${cols.snapshot}" y="${tableTop + 28}">Snapshot</text>
+  <text class="table-header" x="${cols.forkSnapshot}" y="${tableTop + 28}">Fork (Snapshot)</text>
+  <text class="table-header" x="${cols.forkLive}" y="${tableTop + 28}">Fork (Live)</text>
+  <text class="table-header" x="${cols.firstRead}" y="${tableTop + 28}">First Read</text>
   <text class="table-header" x="${cols.status}" y="${tableTop + 28}">Status</text>
 `;
 
   sorted.forEach((r, i) => {
     const y = tableTop + tableHeaderHeight + (i * rowHeight) + 30;
-    const ok = r.iterations.filter(it => !it.error).length;
+    const ok = r.iterations.filter(it => !it.error && it.verified).length;
     const total = r.iterations.length;
     const rank = i + 1;
-    const downloadMs = r.summary.downloadMs.median;
+    const snapshotMs = r.summary.snapshotCreateMs.median;
     const allFailed = ok === 0;
     const score = r.compositeScore !== undefined ? r.compositeScore.toFixed(1) : '--';
 
-    // Color code based on download speed
+    // Color code based on snapshot-create speed
     let speedClass = allFailed ? 'slow' : 'fast';
-    if (!allFailed && downloadMs > 5000) speedClass = 'slow';
-    else if (!allFailed && downloadMs > 2000) speedClass = 'medium';
+    if (!allFailed && snapshotMs > 5000) speedClass = 'slow';
+    else if (!allFailed && snapshotMs > 2000) speedClass = 'medium';
 
     // Rank styling
     let rankClass = 'rank';
@@ -149,18 +153,20 @@ function generateSVG(results: StorageBenchmarkResult[], timestamp: string, fileS
     else if (rank === 2) rankClass = 'rank rank-2';
     else if (rank === 3) rankClass = 'rank rank-3';
 
-    const downloadDisplay = allFailed ? '--' : formatSeconds(downloadMs);
-    const throughputDisplay = allFailed ? '--' : formatMbps(r.summary.throughputMbps.median);
-    const uploadDisplay = allFailed ? '--' : formatSeconds(r.summary.uploadMs.median);
+    const snapshotDisplay = allFailed ? '--' : formatSeconds(snapshotMs);
+    const forkSnapshotDisplay = allFailed ? '--' : formatSeconds(r.summary.forkFromSnapshotMs.median);
+    const forkLiveDisplay = allFailed ? '--' : formatSeconds(r.summary.forkFromLiveMs.median);
+    const firstReadDisplay = allFailed ? '--' : formatSeconds(r.summary.forkFirstReadMs.median);
 
     svg += `
   <!-- Row ${rank} -->
   <text class="${rankClass}" x="${cols.rank}" y="${y}">${rank}</text>
   <text class="row provider" x="${cols.provider}" y="${y}">${formatProviderName(r.provider)}</text>
-  <text class="row download" x="${cols.score}" y="${y}">${score}</text>
-  <text class="row download ${speedClass}" x="${cols.download}" y="${y}">${downloadDisplay}</text>
-  <text class="row" x="${cols.throughput}" y="${y}">${throughputDisplay}</text>
-  <text class="row" x="${cols.upload}" y="${y}">${uploadDisplay}</text>
+  <text class="row metric" x="${cols.score}" y="${y}">${score}</text>
+  <text class="row metric ${speedClass}" x="${cols.snapshot}" y="${y}">${snapshotDisplay}</text>
+  <text class="row" x="${cols.forkSnapshot}" y="${y}">${forkSnapshotDisplay}</text>
+  <text class="row" x="${cols.forkLive}" y="${y}">${forkLiveDisplay}</text>
+  <text class="row" x="${cols.firstRead}" y="${y}">${firstReadDisplay}</text>
   <text class="row status" x="${cols.status}" y="${y}">${ok}/${total}</text>
 `;
 
@@ -185,27 +191,27 @@ function generateSVG(results: StorageBenchmarkResult[], timestamp: string, fileS
   <text class="timestamp" x="${width - padding}" y="${height - 28}" text-anchor="end">Last updated: ${date}</text>
 
   <!-- Footnote -->
-  <text class="timestamp" x="${padding}" y="${height - 14}">Tests upload then download. Lower download time is better. Throughput is computed from download timing.</text>
+  <text class="timestamp" x="${padding}" y="${height - 14}">Measures snapshot creation and fork provisioning (from snapshot and from live). Lower time is better.</text>
 
 </svg>`;
 
   return svg;
 }
 
-function generateForFileSize(fileSizeLabel: string): boolean {
-  const sizeDir = path.join(RESULTS_DIR, fileSizeLabel.toLowerCase());
-  const latestPath = path.join(sizeDir, 'latest.json');
+function generateForDataset(datasetLabel: string): boolean {
+  const datasetDir = path.join(RESULTS_DIR, datasetLabel.toLowerCase());
+  const latestPath = path.join(datasetDir, 'latest.json');
 
   if (!fs.existsSync(latestPath)) {
-    console.log(`No results found for file size: ${fileSizeLabel}`);
+    console.log(`No results found for dataset: ${datasetLabel}`);
     return false;
   }
 
   const raw = fs.readFileSync(latestPath, 'utf-8');
   const data: ResultFile = JSON.parse(raw);
 
-  const svg = generateSVG(data.results, data.timestamp, fileSizeLabel);
-  const svgPath = path.join(ROOT, `storage_${fileSizeLabel.toLowerCase()}.svg`);
+  const svg = generateSVG(data.results, data.timestamp, datasetLabel);
+  const svgPath = path.join(ROOT, `snapshot_fork_${datasetLabel.toLowerCase()}.svg`);
   fs.writeFileSync(svgPath, svg);
   console.log(`SVG written to ${svgPath}`);
 
@@ -213,24 +219,23 @@ function generateForFileSize(fileSizeLabel: string): boolean {
 }
 
 function main() {
-  const requestedSize = getArgValue(args, '--file-size');
+  const requestedDataset = getArgValue(args, '--dataset');
 
-  if (requestedSize) {
-    // Generate SVG for a specific file size
-    if (!generateForFileSize(requestedSize)) {
+  if (requestedDataset) {
+    // Generate SVG for a specific dataset
+    if (!generateForDataset(requestedDataset)) {
       process.exit(1);
     }
   } else {
-    // Generate SVGs for all available file sizes
-    const sizes = ['1MB', '4MB', '10MB', '16MB'];
+    // Generate SVGs for all available datasets
     let generated = 0;
-    for (const size of sizes) {
-      if (generateForFileSize(size)) {
+    for (const dataset of DATASETS) {
+      if (generateForDataset(dataset)) {
         generated++;
       }
     }
     if (generated === 0) {
-      console.error('No storage benchmark results found for any file size');
+      console.error('No snapshot/fork benchmark results found for any dataset');
       process.exit(1);
     }
   }
