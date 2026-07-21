@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "scripts": {},
+  "scripts": {
+    "build": "pnpm -r build",
+    "changeset": "changeset",
+    "version": "changeset version && pnpm install --no-frozen-lockfile"
+  },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1076.0",
     "@aws-sdk/lib-storage": "^3.1076.0",
@@ -57,6 +61,7 @@
     "playwright-core": "^1.61.1"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.26.0",
     "@types/node": "^26.0.1",
     "@types/pg": "^8.20.0",
     "esbuild": "^0.28.1",
