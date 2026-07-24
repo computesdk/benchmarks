@@ -5,10 +5,10 @@ on:
     branches:
       - master
     paths:
-      - 'src/scale/**'
+      - 'benchmarks/scale/**'
   pull_request:
     paths:
-      - 'src/scale/**'
+      - 'benchmarks/scale/**'
   workflow_dispatch:
 
 concurrency:
@@ -39,7 +39,7 @@ jobs:
             --platform linux/amd64 \
             --provenance=false \
             --sbom=false \
-            -f src/scale/Dockerfile \
+            -f benchmarks/scale/Dockerfile \
             --push \
             -t "$IMAGE_REPO:$IMAGE_SHA_TAG" \
             .
@@ -51,7 +51,7 @@ jobs:
             --platform linux/amd64 \
             --provenance=false \
             --sbom=false \
-            -f src/scale/Dockerfile \
+            -f benchmarks/scale/Dockerfile \
             --push \
             -t "$IMAGE_REPO:latest" \
             .

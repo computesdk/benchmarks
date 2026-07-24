@@ -1,14 +1,24 @@
 {
   "compilerOptions": {
-    "target": "es2020",
-    "module": "es2020",
+    "target": "es2022",
+    "module": "es2022",
     "moduleResolution": "bundler",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "rootDir": "./",
   },
-  "include": ["src/**/*.ts"]
+  "include": [
+    "benchmarks/src/**/*.ts",
+    "benchmarks/scripts/**/*.ts",
+    "benchmarks/sandbox/**/*.ts",
+    "benchmarks/browser/**/*.ts",
+    "benchmarks/storage/**/*.ts",
+    "benchmarks/ai-gateway/**/*.ts",
+    "benchmarks/scale/**/*.ts"
+  ],
+  "exclude": ["node_modules", "benchmarks/dist", "packages", "results", ".git"]
 }

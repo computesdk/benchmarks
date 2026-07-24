@@ -23,6 +23,9 @@ importers:
       '@azure/storage-blob':
         specifier: ^12.33.0
         version: 12.33.0
+      '@codesandbox/sdk':
+        specifier: ^2.4.2
+        version: 2.4.2(@hey-api/openapi-ts@0.99.0(magicast@0.3.5)(typescript@6.0.3))(@xterm/xterm@5.5.0)(ink@7.1.1(bufferutil@4.1.0)(react@19.2.8)(utf-8-validate@6.0.6))
       '@computesdk/anchorbrowser':
         specifier: ^0.2.4
         version: 0.2.6(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -30,8 +33,8 @@ importers:
         specifier: ^0.4.7
         version: 0.4.7
       '@computesdk/beam':
-        specifier: ^0.2.1
-        version: 0.2.1(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@6.0.6)
+        specifier: ^0.3.0
+        version: 0.3.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@6.0.6)
       '@computesdk/blaxel':
         specifier: ^1.6.18
         version: 1.6.18(@hey-api/openapi-ts@0.99.0(magicast@0.3.5)(typescript@6.0.3))(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -98,6 +101,9 @@ importers:
       '@computesdk/notte':
         specifier: ^0.3.4
         version: 0.3.6(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      '@computesdk/opencomputer':
+        specifier: ^1.0.1
+        version: 1.0.1
       '@computesdk/quilt':
         specifier: ^1.0.1
         version: 1.0.2
@@ -117,11 +123,14 @@ importers:
         specifier: ^0.2.1
         version: 0.2.1
       '@computesdk/tenki':
-        specifier: ^0.1.1
+        specifier: ^0.1.2
         version: 0.1.2(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@computesdk/tensorlake':
         specifier: ^0.1.9
         version: 0.1.9(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      '@computesdk/tilion':
+        specifier: ^0.1.0
+        version: 0.1.0
       '@computesdk/upstash':
         specifier: ^0.3.9
         version: 0.3.9(zod@4.4.3)
@@ -137,18 +146,27 @@ importers:
       '@storagesdk/core':
         specifier: ^0.4.2
         version: 0.4.2
+      '@superserve/sdk':
+        specifier: ^0.8.1
+        version: 0.8.1
       '@tigrisdata/storage':
         specifier: ^3.16.0
         version: 3.17.2
       '@vercel/blob':
         specifier: ^2.5.0
         version: 2.6.1
+      benchsdk:
+        specifier: workspace:*
+        version: link:packages/benchsdk
       computesdk:
         specifier: ^4.1.4
         version: 4.1.4
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
+      e2b:
+        specifier: ^2.35.0
+        version: 2.35.0
       p-limit:
         specifier: ^7.3.0
         version: 7.3.1
@@ -175,7 +193,7 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
-  packages/bench:
+  packages/benchsdk:
     devDependencies:
       '@types/node':
         specifier: ^20.0.0
@@ -198,12 +216,6 @@ importers:
       vitest:
         specifier: ^1.0.0
         version: 1.6.1(@types/node@20.19.43)
-
-  packages/cli:
-    dependencies:
-      benchmarks:
-        specifier: workspace:*
-        version: link:../bench
 
 packages:
 
@@ -383,8 +395,8 @@ packages:
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
 
-  '@beamcloud/beam-js@1.0.0-rc.30':
-    resolution: {integrity: sha512-lIs9Y5yD9xK1ZpUqAY1VQEBwoxJmnaghd9aB9+DvuBcjEEoU7y7XpU42h6Jh37DKt20uYjqCWXHTauVPHFcI2Q==}
+  '@beamcloud/beam-js@1.0.13':
+    resolution: {integrity: sha512-y2DDUKNr2lK8mQbeSkeo1W6RMhTeLeZRyED8FfxjowLxYEj2QN3kgXxn2/v93OY1OCRW4mRYSe0+cHhpe65iqQ==}
     peerDependencies:
       typescript: ^5.0.0
 
@@ -465,8 +477,8 @@ packages:
   '@computesdk/archil@0.4.7':
     resolution: {integrity: sha512-KQ4etnH+yrGOxPc3IJ4e/NJkijgSJw379r3W6FvV7POGNqdM/RJ+lWuQttFAh40f04bEieurOD7cOXHaa2vktw==}
 
-  '@computesdk/beam@0.2.1':
-    resolution: {integrity: sha512-GXZN6GKNMZObddRgZYypMtAY9MvMBJU0bTKOEcctLt5kfyPQ02gYHiRQzKMm3WRNX7z3zzDMK/WOYIFzQZ4EwQ==}
+  '@computesdk/beam@0.3.0':
+    resolution: {integrity: sha512-fdKdtyCutMPnsiIopG83eAs3K7qdW7EZEEE1UA237L6XlJlG9hnfs4ZM3BrIIggtN184KyWMurg8oh+W7sSriw==}
 
   '@computesdk/blaxel@1.6.18':
     resolution: {integrity: sha512-gAOfdkzbRKOe1jSIGi5jXyzPBxU3bp81HwKtm6R19f//5PkV1tQv+m3RtPTIQTxi37Wv4DATyBAp289znfJwwQ==}
@@ -543,6 +555,9 @@ packages:
   '@computesdk/notte@0.3.6':
     resolution: {integrity: sha512-3/Z0eor1yrFrL+Vg5RjO0AQKszDJvyiqTbm4UgjWIGcExjIdG2a93PxJUvp02+ch5cPykfrs4pmnquOWfirJ0g==}
 
+  '@computesdk/opencomputer@1.0.1':
+    resolution: {integrity: sha512-430gMhj2kFbxZZvcCINJFgTBroG60VIOa67CQuGK5vbTwK3babHdOLiND5JK6P60m5QNwWw1jnPaq4PQLWHfnA==}
+
   '@computesdk/provider@2.1.4':
     resolution: {integrity: sha512-abTZS8kpif4QpLZ7Jzo6hmlje2b3YB4VRC8hVkrb/tKXwt0QcU7Nao7tM1phRru0HxVrfHycb/vZtdJSlNFGeA==}
 
@@ -572,6 +587,9 @@ packages:
 
   '@computesdk/tensorlake@0.1.9':
     resolution: {integrity: sha512-Uit3L/4bt1Rhprj5SCVAIlI7B35BaU5hRB8Xsl8MzSaVqG36r1SrQbBjOaZ2F6xFmptNETC88m7jQ+YaEY3J4g==}
+
+  '@computesdk/tilion@0.1.0':
+    resolution: {integrity: sha512-de52KDHopaMWB9XuDZBurItAWw1N3+zpuXne/d/SZB+ECs1Jk7p504G1TxihNFYBULESv+bTeBz0pc9QrG59QQ==}
 
   '@computesdk/upstash@0.3.9':
     resolution: {integrity: sha512-UlzgAKbu9HFFo1GJDZvX+j3vN/eHCtvKycy5vBuey0KxF1YpfmEcci3BsgDFQ8CwYu4icFpG6LLQP+9fspgNFg==}
@@ -1315,6 +1333,10 @@ packages:
   '@onkernel/sdk@0.49.0':
     resolution: {integrity: sha512-nsq5OfkaNKxRTCdXQF8BSTj/Wl0iBIqyWoI/ATgQt15pV+59E22MsZ+IHPiVwwb33tXLtnOqUe5ffOxm7l3GHg==}
 
+  '@opencomputer/sdk@0.12.4':
+    resolution: {integrity: sha512-/BpMJMHxskkSI2GUri27xej9eXMrjlvu85NxIz/luiEKJ6lJKFF3w6uTY0IweZlB50SqIt7/dsC5ksZFXkyPzA==}
+    engines: {node: '>=18'}
+
   '@opentelemetry/api-logs@0.217.0':
     resolution: {integrity: sha512-Cdq0jW2lknrNfrAm92MyEAvpe2cRsKjdnQLHUL6xRA4IVUnsWx6P65E7NcUO0Y+L4w1Aee5iV8FvjSwd+lrs9A==}
     engines: {node: '>=8.0.0'}
@@ -1987,6 +2009,9 @@ packages:
 
   '@superserve/sdk@0.7.8':
     resolution: {integrity: sha512-lKyJuUed118fpS6fEq6NsUIqb4apbg74sAJ1RilzkHfTrP40qzPbYKfPQZ2EecgobugxPRN/68S7OWBL0FcgEw==}
+
+  '@superserve/sdk@0.8.1':
+    resolution: {integrity: sha512-AXYLNYxnuvqqHynTSZSUeOgAw+k+2fYNRp3kx3uzOG0vVBODkGa2BdCBRvhJtN7yCStDNIS/xcAqzBBh38RehA==}
 
   '@tenkicloud/sandbox@0.4.0':
     resolution: {integrity: sha512-p9GiQutfqEhEEAQlEOph/wuP2Vk0kDof4GjhIvnV96TbvzoqPFp1pD6iEjUcJMri6sJsEXBGf0Grsyl+X52GiA==}
@@ -5392,7 +5417,7 @@ snapshots:
 
   '@bcoe/v8-coverage@0.2.3': {}
 
-  '@beamcloud/beam-js@1.0.0-rc.30(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@6.0.6)':
+  '@beamcloud/beam-js@1.0.13(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@6.0.6)':
     dependencies:
       archiver: 7.0.1
       axios: 1.18.1
@@ -5529,9 +5554,9 @@ snapshots:
       '@computesdk/provider': 2.1.4
       computesdk: 4.1.4
 
-  '@computesdk/beam@0.2.1(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@6.0.6)':
+  '@computesdk/beam@0.3.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@6.0.6)':
     dependencies:
-      '@beamcloud/beam-js': 1.0.0-rc.30(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@6.0.6)
+      '@beamcloud/beam-js': 1.0.13(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@6.0.6)
       '@computesdk/provider': 2.1.4
       computesdk: 4.1.4
     transitivePeerDependencies:
@@ -5735,6 +5760,12 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
+  '@computesdk/opencomputer@1.0.1':
+    dependencies:
+      '@computesdk/provider': 2.1.4
+      '@opencomputer/sdk': 0.12.4
+      computesdk: 4.1.4
+
   '@computesdk/provider@2.1.4':
     dependencies:
       '@computesdk/cmd': 0.4.1
@@ -5798,6 +5829,11 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+
+  '@computesdk/tilion@0.1.0':
+    dependencies:
+      '@computesdk/provider': 2.1.4
+      computesdk: 4.1.4
 
   '@computesdk/upstash@0.3.9(zod@4.4.3)':
     dependencies:
@@ -6454,6 +6490,8 @@ snapshots:
       - encoding
 
   '@onkernel/sdk@0.49.0': {}
+
+  '@opencomputer/sdk@0.12.4': {}
 
   '@opentelemetry/api-logs@0.217.0':
     dependencies:
@@ -7254,6 +7292,8 @@ snapshots:
   '@storagesdk/core@0.4.2': {}
 
   '@superserve/sdk@0.7.8': {}
+
+  '@superserve/sdk@0.8.1': {}
 
   '@tenkicloud/sandbox@0.4.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
     dependencies:
@@ -9259,7 +9299,7 @@ snapshots:
 
   node-emoji@1.11.0:
     dependencies:
-      lodash: 4.17.23
+      lodash: 4.18.1
 
   node-fetch@2.6.7:
     dependencies:

@@ -77,7 +77,7 @@ We run three independent TTI tests daily, each measuring a different aspect of p
 Sandboxes are created one at a time. Each sandbox is created, tested, and destroyed before the next begins.
 
 ```bash
-npm run bench:sequential -- --iterations 100
+pnpm run bench:sequential -- --iterations 100
 ```
 
 | Parameter | Value |
@@ -92,7 +92,7 @@ This is the baseline measurement — isolated cold-start performance with no con
 Sandboxes are launched with a fixed delay between each, ramping up concurrent load gradually.
 
 ```bash
-npm run bench:staggered -- --concurrency 100 --stagger-delay 200
+pnpm run bench:staggered -- --concurrency 100 --stagger-delay 200
 ```
 
 | Parameter | Default |
@@ -114,7 +114,7 @@ Each sandbox still measures its own individual TTI. Additionally, we capture a *
 All sandboxes are created simultaneously — no waiting between launches.
 
 ```bash
-npm run bench:burst -- --concurrency 100
+pnpm run bench:burst -- --concurrency 100
 ```
 
 | Parameter | Default |
@@ -135,14 +135,14 @@ Each sandbox still measures its own individual TTI. We also capture:
 
 ### Running All Tests
 
-By default, `npm run bench` runs all three tests in sequence:
+By default, `pnpm run bench` runs all three tests in sequence:
 
 ```bash
-npm run bench                          # Runs sequential → staggered → burst
-npm run bench -- --provider e2b        # All 3 tests, single provider
-npm run bench:sequential               # Sequential only
-npm run bench:staggered                # Staggered only
-npm run bench:burst                    # Burst only
+pnpm run bench                          # Runs sequential → staggered → burst
+pnpm run bench -- --provider e2b        # All 3 tests, single provider
+pnpm run bench:sequential               # Sequential only
+pnpm run bench:staggered                # Staggered only
+pnpm run bench:burst                    # Burst only
 ```
 
 ## Test Configuration
@@ -301,19 +301,19 @@ Reproduce our results:
 ```bash
 git clone https://github.com/computesdk/benchmarks.git
 cd benchmarks
-npm install
-cp env.example .env  # Add your API keys
+pnpm install
+cp benchmarks/.env.example benchmarks/.env  # Add your API keys
 
 # Run all 3 tests
-npm run bench
+pnpm run bench
 
 # Run individual tests
-npm run bench:sequential -- --iterations 10
-npm run bench:staggered -- --concurrency 10 --stagger-delay 200
-npm run bench:burst -- --concurrency 10
+pnpm run bench:sequential -- --iterations 10
+pnpm run bench:staggered -- --concurrency 10 --stagger-delay 200
+pnpm run bench:burst -- --concurrency 10
 
 # Single provider
-npm run bench -- --provider e2b
+pnpm run bench -- --provider e2b
 ```
 
 **Note**: Your results will differ based on your network location and conditions.

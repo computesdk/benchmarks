@@ -4,10 +4,10 @@ on:
   push:
     branches: [master]
     paths:
-      - 'src/sandbox/**'
-      - 'src/util/**'
-      - 'src/run.ts'
-      - 'src/merge-results.ts'
+      - 'benchmarks/sandbox/**'
+      - 'benchmarks/src/util/**'
+      - 'benchmarks/src/run.ts'
+      - 'benchmarks/src/merge-results.ts'
       - 'package.json'
   schedule:
     - cron: '0 0 * * 5' # Weekly on Friday at midnight UTC
@@ -87,17 +87,18 @@ jobs:
           - vercel
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
+          cache: 'pnpm'
       - name: Install dependencies
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.provider == '' || github.event.inputs.provider == matrix.provider
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            npm update
+            pnpm update
           else
-            npm ci
+            pnpm install --frozen-lockfile
           fi
       - name: Clear stale results from checkout
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.provider == '' || github.event.inputs.provider == matrix.provider
@@ -151,7 +152,7 @@ jobs:
           if [ -n "${{ github.event.inputs.mode }}" ]; then
             MODE_FLAG="--mode ${{ github.event.inputs.mode }}"
           fi
-          npm run bench -- \
+          pnpm run bench -- \
             --provider ${{ matrix.provider }} \
             --iterations ${{ github.event.inputs.iterations || (github.event_name == 'push' && '10') || '100' }} \
             --concurrency ${{ github.event.inputs.concurrency || (github.event_name == 'push' && '10') || '100' }} \
@@ -177,16 +178,17 @@ jobs:
           # A shallow (depth-1) clone can make `git rebase origin/<branch>`
           # fail when the remote has advanced past the shallow boundary.
           fetch-depth: 0
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
+          cache: 'pnpm'
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            npm update
+            pnpm update
           else
-            npm ci
+            pnpm install --frozen-lockfile
           fi
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -194,16 +196,16 @@ jobs:
           path: artifacts/
           pattern: results-*
       - name: Merge results
-        run: npx tsx src/merge-results.ts --input artifacts
+        run: npx tsx benchmarks/src/merge-results.ts --input artifacts
       - name: Ingest results to platform
         if: github.event_name != 'push' && github.event.inputs.dry_run != 'true'
         continue-on-error: true
         env:
           INGEST_URL: ${{ secrets.INGEST_URL }}
           INGEST_SECRET: ${{ secrets.INGEST_SECRET }}
-        run: npx tsx src/ingest.ts --type sandbox
-      - run: npm run generate-svg
-      - run: npm run generate-pricing-svg
+        run: npx tsx benchmarks/src/ingest.ts --type sandbox
+      - run: pnpm run generate-svg
+      - run: pnpm run generate-pricing-svg
       - name: Upload SVGs as artifacts
         if: github.event_name == 'push'
         uses: actions/upload-artifact@v4

@@ -34,7 +34,7 @@ Every probe (cold or warm) also records:
 | `ttftMs` | Request fully sent → first content token observed in the SSE stream |
 | `coldE2eMs` | `dnsMs + tcpMs + tlsMs + ttftMs` — what a short-lived process (a serverless function, a CLI tool, an edge function) actually pays end to end for one request |
 
-These are real socket timestamps, not estimates: Node's `https.request` exposes `lookup`/`connect`/`secureConnect` events directly on the underlying `TLSSocket` (`src/ai-gateway/phase-probe.ts`), so DNS/TCP/TLS are each timed from the actual connection lifecycle rather than inferred.
+These are real socket timestamps, not estimates: Node's `https.request` exposes `lookup`/`connect`/`secureConnect` events directly on the underlying `TLSSocket` (`benchmarks/ai-gateway/phase-probe.ts`), so DNS/TCP/TLS are each timed from the actual connection lifecycle rather than inferred.
 
 ### Warm-phase metrics
 
@@ -49,7 +49,7 @@ Only `ttfbMs` and `ttftMs` apply — there is no `dnsMs`/`tcpMs`/`tlsMs`/`coldE2
 - **`max_tokens`**: 200. **`temperature`**: 0. **`stream`**: true (required for TTFT; also used for token-count extraction via `stream_options.include_usage` on the OpenAI-compatible path).
 - **Timeout**: 45 seconds per request.
 
-Two wire formats are in play, handled explicitly per gateway (`AIGatewayProviderConfig.wireFormat` in `src/ai-gateway/types.ts`):
+Two wire formats are in play, handled explicitly per gateway (`AIGatewayProviderConfig.wireFormat` in `benchmarks/ai-gateway/types.ts`):
 
 - **`openai`** (OpenRouter, Vercel AI Gateway, LLM Gateway) — OpenAI-compatible `/chat/completions` shape, `Authorization: Bearer <key>`.
 - **`anthropic`** (Cloudflare AI Gateway, Anthropic direct, Pydantic AI Gateway) — Anthropic's native `/v1/messages` shape. Auth header varies within this group: Cloudflare and Anthropic direct use `x-api-key` + `anthropic-version`; Pydantic AI Gateway uses `Authorization: Bearer <key>` + `anthropic-version` instead — confirmed directly against a real request (its own auth failures return a same-shaped 401 regardless of which of the two header styles is wrong, so this took a few rounds of live testing to pin down precisely).
@@ -68,7 +68,7 @@ A gateway that's itself proxied through a second gateway would have that second 
 
 ### Round-robin across gateways — and what that does and doesn't mean
 
-Iterations run **round-robin across every active gateway**, not sequentially per gateway (`runAIGatewayBenchmarks` in `src/ai-gateway/benchmark.ts`):
+Iterations run **round-robin across every active gateway**, not sequentially per gateway (`runAIGatewayBenchmarks` in `benchmarks/ai-gateway/benchmark.ts`):
 
 ```
 round 1: openrouter → vercel-ai-gateway → cloudflare-ai-gateway → llmgateway → pydantic-ai-gateway → anthropic-direct
@@ -86,7 +86,7 @@ Each warm iteration is fully self-contained: open a fresh keep-alive connection 
 
 ## Scoring
 
-A composite score (0–100, higher is better) combines the two latency axes that matter most in practice with throughput and reliability (`src/ai-gateway/scoring.ts`):
+A composite score (0–100, higher is better) combines the two latency axes that matter most in practice with throughput and reliability (`benchmarks/ai-gateway/scoring.ts`):
 
 ```
 score = (
@@ -108,31 +108,31 @@ Cold E2E and warm TTFT are weighted equally (30% median + 15% p95 each) because 
 
 ```bash
 # All six gateways, default 10 cold + 10 warm iterations each
-npm run bench:ai-gateway
+pnpm run bench:ai-gateway
 
 # One gateway
-npm run bench:ai-gateway:openrouter
-npm run bench:ai-gateway:vercel
-npm run bench:ai-gateway:cloudflare
-npm run bench:ai-gateway:llmgateway
-npm run bench:ai-gateway:pydantic
-npm run bench:ai-gateway:anthropic
+pnpm run bench:ai-gateway:openrouter
+pnpm run bench:ai-gateway:vercel
+pnpm run bench:ai-gateway:cloudflare
+pnpm run bench:ai-gateway:llmgateway
+pnpm run bench:ai-gateway:pydantic
+pnpm run bench:ai-gateway:anthropic
 
 # Custom iteration count (applies to both cold and warm)
-npm run bench:ai-gateway -- --iterations 20
+pnpm run bench:ai-gateway -- --iterations 20
 
 # Asymmetric cold/warm split, or isolating one phase entirely
-npx tsx src/run.ts --mode ai-gateway --ai-gateway-iterations-cold 20 --ai-gateway-iterations-warm 0
+npx tsx benchmarks/src/run.ts --mode ai-gateway --ai-gateway-iterations-cold 20 --ai-gateway-iterations-warm 0
 ```
 
-Required environment variables (`env.example`): `OPENROUTER_API_KEY`, `VERCEL_AI_GATEWAY_API_KEY`, `LLM_GATEWAY_API_KEY`, `PYDANTIC_AI_GATEWAY_API_KEY`, `CLOUDFLARE_AI_GATEWAY_ACCOUNT_ID` + `CLOUDFLARE_AI_GATEWAY_GATEWAY_ID` (+ optional `CLOUDFLARE_AI_GATEWAY_TOKEN` if the gateway has Authenticated Gateway enabled), `ANTHROPIC_API_KEY` (shared by Cloudflare's passthrough and the direct baseline). Missing credentials cause that gateway to be reported as `SKIPPED` rather than failing the run.
+Required environment variables (`benchmarks/.env.example`): `OPENROUTER_API_KEY`, `VERCEL_AI_GATEWAY_API_KEY`, `LLM_GATEWAY_API_KEY`, `PYDANTIC_AI_GATEWAY_API_KEY`, `CLOUDFLARE_AI_GATEWAY_ACCOUNT_ID` + `CLOUDFLARE_AI_GATEWAY_GATEWAY_ID` (+ optional `CLOUDFLARE_AI_GATEWAY_TOKEN` if the gateway has Authenticated Gateway enabled), `ANTHROPIC_API_KEY` (shared by Cloudflare's passthrough and the direct baseline). Missing credentials cause that gateway to be reported as `SKIPPED` rather than failing the run.
 
 ## Output
 
 Results are written to `results/ai-gateway/YYYY-MM-DD.json` and copied to `results/ai-gateway/latest.json`. Every iteration's phase timings, token counts, and receipt headers are preserved in full — enough to trace any specific measured request back to its provider-side request ID.
 
 ```bash
-npm run generate-ai-gateway-svg
+pnpm run generate-ai-gateway-svg
 ```
 produces `ai-gateway.svg` — a ranked comparison table (score, cold E2E, warm TTFT, tokens/sec, success rate).
 

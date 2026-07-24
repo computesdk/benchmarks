@@ -68,42 +68,42 @@ Documentation improvements are always welcome. No issue required for typos, clar
 ```bash
 git clone https://github.com/computesdk/benchmarks.git
 cd benchmarks
-npm install
-cp env.example .env
+pnpm install
+cp benchmarks/.env.example benchmarks/.env
 ```
 
 ### Running Tests Locally
 
 ```bash
 # Run all three sandbox test modes (sequential → staggered → burst)
-npm run bench
+pnpm run bench
 
 # Run individual sandbox test modes
-npm run bench -- --mode sequential --iterations 10
-npm run bench -- --mode staggered --concurrency 10 --stagger-delay 200
-npm run bench -- --mode burst --concurrency 10
+pnpm run bench -- --mode sequential --iterations 10
+pnpm run bench -- --mode staggered --concurrency 10 --stagger-delay 200
+pnpm run bench -- --mode burst --concurrency 10
 
 # Run a single provider
-npm run bench -- --provider e2b
+pnpm run bench -- --provider e2b
 
 # Combine flags
-npm run bench -- --provider e2b --mode sequential --iterations 5
+pnpm run bench -- --provider e2b --mode sequential --iterations 5
 
 # Run browser benchmarks
-npm run bench -- --mode browser
-npm run bench -- --mode browser --provider browserbase
+pnpm run bench -- --mode browser
+pnpm run bench -- --mode browser --provider browserbase
 
 # Run storage benchmarks
-npm run bench -- --mode storage
-npm run bench -- --mode storage --provider aws-s3
-npm run bench -- --mode storage --file-size 100MB
+pnpm run bench -- --mode storage
+pnpm run bench -- --mode storage --provider aws-s3
+pnpm run bench -- --mode storage --file-size 100MB
 ```
 
 ### Code Style
 
 - TypeScript with strict mode
 - ES modules (`import`/`export`)
-- Prettier for formatting (run `npm run format` if available)
+- Prettier for formatting (run `pnpm run format` if available)
 
 ## Code of Conduct
 

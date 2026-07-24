@@ -4,10 +4,10 @@ on:
   push:
     branches: [master]
     paths:
-      - 'src/browser/**'
-      - 'src/util/**'
-      - 'src/run.ts'
-      - 'src/merge-results.ts'
+      - 'benchmarks/browser/**'
+      - 'benchmarks/src/util/**'
+      - 'benchmarks/src/run.ts'
+      - 'benchmarks/src/merge-results.ts'
       - 'package.json'
   schedule:
     - cron: '0 3 * * 5' # Weekly on Friday at 03:00 UTC (offset from main browser benchmark)
@@ -96,16 +96,17 @@ jobs:
           - tilion
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
+          cache: 'pnpm'
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            npm update
+            pnpm update
           else
-            npm ci
+            pnpm install --frozen-lockfile
           fi
       - name: Clear stale results from checkout
         run: rm -rf results/browser-throughput/
@@ -122,7 +123,7 @@ jobs:
           TILION_API_KEY: ${{ secrets.TILION_API_KEY }}
           TILION_BASE_URL: ${{ secrets.TILION_BASE_URL }}
         run: |
-          npm run bench -- \
+          pnpm run bench -- \
             --mode browser-throughput \
             --provider ${{ matrix.provider }} \
             --iterations ${{ github.event_name == 'push' && '3' || github.event.inputs.iterations || '100' }}
@@ -147,16 +148,17 @@ jobs:
           # A shallow (depth-1) clone can make `git rebase origin/<branch>`
           # fail when the remote has advanced past the shallow boundary.
           fetch-depth: 0
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
+          cache: 'pnpm'
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            npm update
+            pnpm update
           else
-            npm ci
+            pnpm install --frozen-lockfile
           fi
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -164,8 +166,8 @@ jobs:
           path: artifacts/
           pattern: browser-throughput-results-*
       - name: Merge results
-        run: npx tsx src/merge-results.ts --input artifacts --mode browser-throughput
-      - run: npm run generate-browser-throughput-svg
+        run: npx tsx benchmarks/src/merge-results.ts --input artifacts --mode browser-throughput
+      - run: pnpm run generate-browser-throughput-svg
       - name: Upload SVG as artifact
         if: github.event_name == 'push'
         uses: actions/upload-artifact@v4

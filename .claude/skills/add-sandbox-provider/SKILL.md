@@ -34,7 +34,7 @@ In [package.json](../../../package.json) add `"@computesdk/<name>": "^<version>"
 `dependencies`, **in alphabetical order**. Then sync the lockfile:
 
 ```bash
-npm install
+pnpm install
 ```
 
 Confirm the diff only added the new package — `git diff --stat package-lock.json`
@@ -43,7 +43,7 @@ that's fine as long as the committed lockfile only gained the new entry).
 
 ## 3. Document the env var(s)
 
-In [env.example](../../../env.example) append a section (staged providers live near the
+In [benchmarks/.env.example](../../../benchmarks/.env.example) append a section (staged providers live near the
 bottom, by `BEAM`):
 
 ```
@@ -53,7 +53,7 @@ bottom, by `BEAM`):
 
 ## 4. Stage the provider entry (commented)
 
-In [src/sandbox/providers.ts](../../../src/sandbox/providers.ts):
+In [benchmarks/sandbox/providers.ts](../../../benchmarks/sandbox/providers.ts):
 
 - Add a commented import near the other imports: `// import { <name> } from '@computesdk/<name>';`
 - Add a commented entry in the `providers[]` array (direct-mode section, alphabetical):
@@ -81,7 +81,7 @@ two spots, both commented like the `beam` lines:
 
 ## What you do NOT need to touch
 
-- `GATEWAY_PROVIDERS` in `src/sandbox/generate-svg.ts` — only for automatic-mode
+- `GATEWAY_PROVIDERS` in `benchmarks/sandbox/generate-svg.ts` — only for automatic-mode
   providers routed through the ComputeSDK gateway (railway/render), not direct-mode SDKs.
 - A `bench:<name>` script in package.json is optional; CI invokes
   `--provider ${{ matrix.provider }}` directly. Skip it unless asked.
@@ -91,7 +91,7 @@ two spots, both commented like the `beam` lines:
 
 The runner gracefully **skips** any provider whose `requiredEnvVars` are missing — it
 returns a `skipped: true` result rather than failing (see
-[src/sandbox/benchmark.ts](../../../src/sandbox/benchmark.ts), the `missingVars` check).
+[benchmarks/sandbox/benchmark.ts](../../../benchmarks/sandbox/benchmark.ts), the `missingVars` check).
 So activating without the secret wouldn't break CI; staging is a convention to keep the
 provider list reflecting what's actually being benchmarked until the secret is added.
 
@@ -104,5 +104,5 @@ repo settings first.
 ## Final check
 
 Run `git diff` and confirm the change set is exactly: package.json, package-lock.json,
-env.example, src/sandbox/providers.ts, .github/workflows/sandbox-benchmarks.yml — and
+benchmarks/.env.example, benchmarks/sandbox/providers.ts, .github/workflows/sandbox-benchmarks.yml — and
 that every provider-specific line is commented out (staged).
