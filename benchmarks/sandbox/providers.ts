@@ -26,6 +26,7 @@ import { tenki } from '@computesdk/tenki';
 import { tensorlake } from '@computesdk/tensorlake'
 import { upstash } from '@computesdk/upstash';
 import { vercel } from '@computesdk/vercel';
+import { runCloud } from './run-cloud.js';
 import type { ProviderConfig } from './types.js';
 
 /**
@@ -174,6 +175,15 @@ export const providers: ProviderConfig[] = [
     name: 'runloop',
     requiredEnvVars: ['RUNLOOP_API_KEY'],
     createCompute: () => runloop({ apiKey: process.env.RUNLOOP_API_KEY! }),
+  },
+  {
+    name: 'run-cloud',
+    requiredEnvVars: ['RUN_CLOUD_API_KEY'],
+    createCompute: () => runCloud({
+      apiKey: process.env.RUN_CLOUD_API_KEY!,
+      apiUrl: process.env.RUN_CLOUD_API_URL,
+    }),
+    sandboxOptions: { disk: 40 },
   },
   {
     name: 'sprites',
