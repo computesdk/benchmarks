@@ -64,14 +64,13 @@ async function runLongCommand(
   const stdoutPath = `${prefix}.stdout`;
   const stderrPath = `${prefix}.stderr`;
   const statusPath = `${prefix}.status`;
-  const pidPath = `${prefix}.pid`;
+  const unitName = `run-cloud-benchmark-${runId}`;
   const encodedCommand = Buffer.from(command).toString('base64');
 
   const launch = [
     `printf '%s' '${encodedCommand}' | base64 -d > '${scriptPath}'`,
     `chmod 700 '${scriptPath}'`,
-    `nohup setsid sh -c 'bash "$1" >"$2" 2>"$3"; printf "%s" "$?" >"$4"' _ '${scriptPath}' '${stdoutPath}' '${stderrPath}' '${statusPath}' >/dev/null 2>&1 < /dev/null &`,
-    `printf '%s' "$!" > '${pidPath}'`,
+    `systemd-run --unit='${unitName}' --collect --quiet --property=OOMPolicy=continue /bin/sh -c 'bash "$1" >"$2" 2>"$3"; printf "%s" "$?" >"$4"' _ '${scriptPath}' '${stdoutPath}' '${stderrPath}' '${statusPath}'`,
   ].join('\n');
 
   const launched = await client.sandboxes.exec(sandboxId, launch, {
@@ -81,23 +80,32 @@ async function runLongCommand(
 
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const status = await client.sandboxes.exec(
-      sandboxId,
-      `if [ -f '${statusPath}' ]; then cat '${statusPath}'; else printf pending; fi`,
-      { timeoutSeconds: 30 },
-    );
+    let status: ExecResult;
+    try {
+      status = await client.sandboxes.exec(
+        sandboxId,
+        `if [ -f '${statusPath}' ]; then cat '${statusPath}'; else printf pending; fi`,
+        { timeoutSeconds: 30 },
+      );
+    } catch (error) {
+      if (!isTransientApiError(error)) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      continue;
+    }
 
     if (status.stdout.trim() !== 'pending') {
       const exitCode = Number.parseInt(status.stdout.trim(), 10);
-      const stdout = await client.sandboxes.exec(
+      const stdout = await execWithTransientRetry(
+        client,
         sandboxId,
         ['cat', stdoutPath],
-        { timeoutSeconds: 30 },
+        deadline,
       );
-      const stderr = await client.sandboxes.exec(
+      const stderr = await execWithTransientRetry(
+        client,
         sandboxId,
         ['cat', stderrPath],
-        { timeoutSeconds: 30 },
+        deadline,
       );
       await cleanupCommandFiles(client, sandboxId, prefix);
 
@@ -114,11 +122,36 @@ async function runLongCommand(
 
   await client.sandboxes.exec(
     sandboxId,
-    `if [ -f '${pidPath}' ]; then kill "$(cat '${pidPath}')" 2>/dev/null || true; fi`,
+    `systemctl stop '${unitName}' 2>/dev/null || true`,
     { timeoutSeconds: 30 },
   ).catch(() => {});
   await cleanupCommandFiles(client, sandboxId, prefix);
   throw new Error(`Run Cloud command timed out after ${timeoutMs}ms`);
+}
+
+async function execWithTransientRetry(
+  client: Client,
+  sandboxId: string,
+  command: string[],
+  deadline: number,
+): Promise<ExecResult> {
+  while (Date.now() < deadline) {
+    try {
+      return await client.sandboxes.exec(sandboxId, command, {
+        timeoutSeconds: 30,
+      });
+    } catch (error) {
+      if (!isTransientApiError(error)) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }
+
+  throw new Error('Run Cloud API remained unavailable while collecting benchmark output');
+}
+
+function isTransientApiError(error: unknown): boolean {
+  return error instanceof Error
+    && /run\.cloud API (?:429|5\d\d)\b/.test(error.message);
 }
 
 async function cleanupCommandFiles(
@@ -128,7 +161,7 @@ async function cleanupCommandFiles(
 ): Promise<void> {
   await client.sandboxes.exec(
     sandboxId,
-    `rm -f '${prefix}.sh' '${prefix}.stdout' '${prefix}.stderr' '${prefix}.status' '${prefix}.pid'`,
+    `rm -f '${prefix}.sh' '${prefix}.stdout' '${prefix}.stderr' '${prefix}.status'`,
     { timeoutSeconds: 30 },
   ).catch(() => {});
 }
