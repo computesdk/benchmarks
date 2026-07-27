@@ -106,6 +106,8 @@ jobs:
           ARCHIL_API_KEY: ${{ secrets.ARCHIL_API_KEY }}
           ARCHIL_REGION: ${{ secrets.ARCHIL_REGION }}
           ARCHIL_DISK_ID: ${{ secrets.ARCHIL_DISK_ID }}
+          ARKER_API_KEY: ${{ secrets.ARKER_API_KEY }}
+          ARKER_SOURCE: ubuntu-full-32
           BEAM_TOKEN: ${{ secrets.BEAM_TOKEN }}
           BEAM_WORKSPACE_ID: ${{ secrets.BEAM_WORKSPACE_ID }}
           CLOUD_RUN_SANDBOX_URL: ${{ secrets.CLOUD_RUN_SANDBOX_URL }}

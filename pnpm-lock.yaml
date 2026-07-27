@@ -35,6 +35,9 @@ importers:
       '@computesdk/archil':
         specifier: ^0.4.7
         version: 0.4.7
+      '@computesdk/arker':
+        specifier: ^0.1.1
+        version: 0.1.1(@computesdk/daytona@1.7.32(ws@8.21.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@computesdk/e2b@1.7.52)(@computesdk/modal@1.9.4)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@computesdk/beam':
         specifier: ^0.3.0
         version: 0.3.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@6.0.6)
@@ -247,6 +250,25 @@ packages:
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
+
+  '@arker-ai/sdk@0.8.6':
+    resolution: {integrity: sha512-glM4fNdYipmxOdLEStTUiSaxxZYmqwz5jUuMyCV/63DyQFuQ3RXZSzROL1LYBMlejWHa6grqJUK0B1fWLI9zXA==}
+    engines: {node: '>=18'}
+    hasBin: true
+    peerDependencies:
+      '@computesdk/daytona': ^1.7.30
+      '@computesdk/e2b': ^1.7.51
+      '@computesdk/modal': ^1.9.3
+      computesdk: ^4.1.3
+    peerDependenciesMeta:
+      '@computesdk/daytona':
+        optional: true
+      '@computesdk/e2b':
+        optional: true
+      '@computesdk/modal':
+        optional: true
+      computesdk:
+        optional: true
 
   '@aws-crypto/sha256-js@5.2.0':
     resolution: {integrity: sha512-FFQQyu7edu4ufvIZ+OadFpHHOt+eSTBaYaki44c+akjg7qZg9oOQeLlk77F6tSYqjDAFClrHJk9tMf0HdVyOvA==}
@@ -556,6 +578,9 @@ packages:
 
   '@computesdk/archil@0.4.7':
     resolution: {integrity: sha512-KQ4etnH+yrGOxPc3IJ4e/NJkijgSJw379r3W6FvV7POGNqdM/RJ+lWuQttFAh40f04bEieurOD7cOXHaa2vktw==}
+
+  '@computesdk/arker@0.1.1':
+    resolution: {integrity: sha512-Nj2s+FAY94uHeSB0G9nsfDDoBr4Bw5IJ/eK0KO4WUQxhXzEjEfIZgY5ptOYtIrQ2acDn7f05gz68OYcu2/ricA==}
 
   '@computesdk/beam@0.3.0':
     resolution: {integrity: sha512-fdKdtyCutMPnsiIopG83eAs3K7qdW7EZEEE1UA237L6XlJlG9hnfs4ZM3BrIIggtN184KyWMurg8oh+W7sSriw==}
@@ -4846,6 +4871,10 @@ packages:
     resolution: {integrity: sha512-9FcyK4PA6+WbzlTM9WhQm6vB5W7cP7dUiPsv1g7YDwEQnQ1CGpK3MGlKk/ITVWMk05kHZuBhmVhiv8LZoy/PFQ==}
     engines: {node: '>=18'}
 
+  tar@7.5.22:
+    resolution: {integrity: sha512-MFO/QzvtAOmJbkhOaCTvbGcFN9L9b+JunIsDwaKljSOdcLMea3NJ1k9Usz/rjdfSXTq4dfzfeS7W4p4YOAAHeA==}
+    engines: {node: '>=18'}
+
   teeny-request@9.0.0:
     resolution: {integrity: sha512-resvxdc6Mgb7YEThw6G6bExlXKkv6+YbuzGg9xuXxSgxJF7Ozs+o8Y9+2R3sArdWdW8nOokoQb1yrpFB0pQK2g==}
     engines: {node: '>=14'}
@@ -5323,6 +5352,19 @@ snapshots:
     dependencies:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
+
+  '@arker-ai/sdk@0.8.6(@computesdk/daytona@1.7.32(ws@8.21.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@computesdk/e2b@1.7.52)(@computesdk/modal@1.9.4)(bufferutil@4.1.0)(computesdk@4.1.4)(utf-8-validate@6.0.6)':
+    dependencies:
+      tar: 7.5.22
+      ws: 8.21.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+    optionalDependencies:
+      '@computesdk/daytona': 1.7.32(ws@8.21.1(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+      '@computesdk/e2b': 1.7.52
+      '@computesdk/modal': 1.9.4
+      computesdk: 4.1.4
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
   '@aws-crypto/sha256-js@5.2.0':
     dependencies:
@@ -5939,6 +5981,18 @@ snapshots:
     dependencies:
       '@computesdk/provider': 2.1.4
       computesdk: 4.1.4
+
+  '@computesdk/arker@0.1.1(@computesdk/daytona@1.7.32(ws@8.21.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@computesdk/e2b@1.7.52)(@computesdk/modal@1.9.4)(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
+    dependencies:
+      '@arker-ai/sdk': 0.8.6(@computesdk/daytona@1.7.32(ws@8.21.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@computesdk/e2b@1.7.52)(@computesdk/modal@1.9.4)(bufferutil@4.1.0)(computesdk@4.1.4)(utf-8-validate@6.0.6)
+      '@computesdk/provider': 2.1.4
+      computesdk: 4.1.4
+    transitivePeerDependencies:
+      - '@computesdk/daytona'
+      - '@computesdk/e2b'
+      - '@computesdk/modal'
+      - bufferutil
+      - utf-8-validate
 
   '@computesdk/beam@0.3.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@6.0.6)':
     dependencies:
@@ -10727,6 +10781,14 @@ snapshots:
       - react-native-b4a
 
   tar@7.5.20:
+    dependencies:
+      '@isaacs/fs-minipass': 4.0.1
+      chownr: 3.0.0
+      minipass: 7.1.3
+      minizlib: 3.1.0
+      yallist: 5.0.0
+
+  tar@7.5.22:
     dependencies:
       '@isaacs/fs-minipass': 4.0.1
       chownr: 3.0.0
