@@ -46,10 +46,6 @@ export const providers: ProviderConfig[] = [
   {
     name: 'arker',
     requiredEnvVars: ['ARKER_API_KEY'],
-    // Arker picks the VM to fork via `source` on the provider factory (the SDK ignores a
-    // template passed to sandbox.create()), so it can't be sized through
-    // DAX_RESOURCE_OPTIONS like most providers. The dax workflow sets
-    // ARKER_SOURCE=ubuntu-full-32; it defaults to ubuntu-small everywhere else.
     createCompute: () => arker({
       apiKey: process.env.ARKER_API_KEY!,
       source: process.env.ARKER_SOURCE || 'ubuntu-small',
