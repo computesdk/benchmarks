@@ -143,6 +143,9 @@ importers:
       '@google-cloud/storage':
         specifier: ^7.21.0
         version: 7.21.0
+      '@run-cloud/sdk':
+        specifier: ^0.5.1
+        version: 0.5.1
       '@storagesdk/adapters':
         specifier: ^0.7.1
         version: 0.7.1(@aws-sdk/client-s3@3.1092.0)(@aws-sdk/lib-storage@3.1092.0(@aws-sdk/client-s3@3.1092.0))(@aws-sdk/s3-presigned-post@3.1092.0)(@aws-sdk/s3-request-presigner@3.1092.0)(@azure/storage-blob@12.33.0)(@google-cloud/storage@7.21.0)(@tigrisdata/storage@3.17.2)(@vercel/blob@2.6.1)
@@ -1986,6 +1989,10 @@ packages:
     resolution: {integrity: sha512-BfzEnDJOt9T8M989/lA37EcJgat01wLRnoi5dQf3QzOH7jzpqTAzdDbVfRljVr5r+jzKqpbHeyOfAaXxAd0PAA==}
     cpu: [x64]
     os: [win32]
+
+  '@run-cloud/sdk@0.5.1':
+    resolution: {integrity: sha512-eqvlA4nzCsr8A6zQ6a8kQ+C3u+oUZqx+N47kjTqhIYrbdRNsY2chfvfTw5wOJja6AoaF5dqg25Ium/2u0KH/5A==}
+    engines: {node: '>=20'}
 
   '@runloop/api-client@1.25.0':
     resolution: {integrity: sha512-I1LMbxrB4hqnkERLrnCoy+J0CeXv+3SbiaHDQZpw7UBRyvd817fs1JblP3i4Crr77xLToMsYqL3htCwxWZzlEA==}
@@ -7552,6 +7559,8 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.62.2':
     optional: true
+
+  '@run-cloud/sdk@0.5.1': {}
 
   '@runloop/api-client@1.25.0':
     dependencies:

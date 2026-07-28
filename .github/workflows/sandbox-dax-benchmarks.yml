@@ -6,6 +6,7 @@ on:
     paths:
       - 'benchmarks/sandbox/dax.ts'
       - 'benchmarks/sandbox/providers.ts'
+      - 'benchmarks/sandbox/run-cloud.ts'
       - 'benchmarks/src/run.ts'
       - 'benchmarks/src/merge-results.ts'
       - 'benchmarks/scripts/dax-benchmark.sh'
@@ -63,6 +64,7 @@ jobs:
           - namespace
           - northflank
           - opencomputer
+          - run-cloud
           - runloop
           - superserve
           - tenki
@@ -130,6 +132,8 @@ jobs:
           NORTHFLANK_PROJECT_ID: ${{ secrets.NORTHFLANK_PROJECT_ID }}
           OPENCOMPUTER_API_KEY: ${{ secrets.OPENCOMPUTER_API_KEY }}
           OPENCOMPUTER_API_URL: ${{ secrets.OPENCOMPUTER_API_URL }}
+          RUN_CLOUD_API_KEY: ${{ secrets.RUN_CLOUD_API_KEY }}
+          RUN_CLOUD_API_URL: https://api.run.cloud
           RUNLOOP_API_KEY: ${{ secrets.RUNLOOP_API_KEY }}
           SUPERSERVE_API_KEY: ${{ secrets.SUPERSERVE_API_KEY }}
           TENKI_API_KEY: ${{ secrets.TENKI_API_KEY }}
