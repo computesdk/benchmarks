@@ -20,6 +20,7 @@ import { opencomputer } from '@computesdk/opencomputer';
 // import { quilt } from '@computesdk/quilt';
 // import { railway } from '@computesdk/railway';
 import { runloop } from '@computesdk/runloop';
+import { sandbox0 } from '@computesdk/sandbox0';
 import { sprites } from '@computesdk/sprites';
 import { superserve } from '@computesdk/superserve';
 import { tenki } from '@computesdk/tenki';
@@ -174,6 +175,11 @@ export const providers: ProviderConfig[] = [
     name: 'runloop',
     requiredEnvVars: ['RUNLOOP_API_KEY'],
     createCompute: () => runloop({ apiKey: process.env.RUNLOOP_API_KEY! }),
+  },
+  {
+    name: 'sandbox0',
+    requiredEnvVars: ['SANDBOX0_TOKEN'],
+    createCompute: () => sandbox0({ token: process.env.SANDBOX0_TOKEN! }),
   },
   {
     name: 'sprites',
