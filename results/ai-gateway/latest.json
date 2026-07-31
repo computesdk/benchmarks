@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-07-31T20:04:54.591Z",
+  "timestamp": "2026-07-31T14:05:36.944Z",
   "environment": {
     "node": "v24.18.1",
     "platform": "linux",
@@ -12,1115 +12,1075 @@
   },
   "results": [
     {
-      "provider": "anthropic-direct",
+      "provider": "openrouter",
       "mode": "ai-gateway",
-      "model": "claude-haiku-4-5-20251001",
+      "model": "anthropic/claude-haiku-4.5",
       "iterations": [
         {
           "mode": "cold",
-          "dnsMs": 7.51,
-          "tcpMs": 0.86,
-          "tlsMs": 3.26,
-          "ttfbMs": 588.74,
-          "ttftMs": 588.94,
-          "coldE2eMs": 600.57,
-          "outputTokens": 89,
-          "outputTokensPerSec": 88.26,
+          "dnsMs": 23.76,
+          "tcpMs": 1.49,
+          "tlsMs": 5.49,
+          "ttfbMs": 867.05,
+          "ttftMs": 868.79,
+          "coldE2eMs": 899.53,
+          "outputTokens": 94,
+          "outputTokensPerSec": 83.82,
           "receipts": {
-            "cf-ray": "a23d13c2abe057da-IAD",
-            "request-id": "req_011CdaF8BpFnjLEh6bGGZndG"
+            "cf-ray": "a23d137b4e9e2e05-IAD"
           }
         },
         {
           "mode": "cold",
-          "dnsMs": 1.93,
-          "tcpMs": 1.26,
-          "tlsMs": 3.74,
-          "ttfbMs": 611.41,
-          "ttftMs": 611.77,
-          "coldE2eMs": 618.7,
+          "dnsMs": 0.83,
+          "tcpMs": 1.23,
+          "tlsMs": 3.34,
+          "ttfbMs": 1225.83,
+          "ttftMs": 1228.06,
+          "coldE2eMs": 1233.47,
           "outputTokens": 76,
-          "outputTokensPerSec": 94.38,
+          "outputTokensPerSec": 95.63,
           "receipts": {
-            "cf-ray": "a23d141369d45946-IAD",
-            "request-id": "req_011CdaF99TeyKaNJJJqngqge"
+            "cf-ray": "a23d13cd890c0867-IAD"
           }
         },
         {
           "mode": "cold",
-          "dnsMs": 1.77,
-          "tcpMs": 1.69,
-          "tlsMs": 5.03,
-          "ttfbMs": 730.66,
-          "ttftMs": 731.03,
-          "coldE2eMs": 739.52,
-          "outputTokens": 81,
-          "outputTokensPerSec": 99.95,
+          "dnsMs": 1.42,
+          "tcpMs": 1.04,
+          "tlsMs": 3.65,
+          "ttfbMs": 951.62,
+          "ttftMs": 952.36,
+          "coldE2eMs": 958.47,
+          "outputTokens": 89,
+          "outputTokensPerSec": 71.09,
           "receipts": {
-            "cf-ray": "a23d1477fd2fc9fe-IAD",
-            "request-id": "req_011CdaFAKpXSifrwz3wHybHZ"
+            "cf-ray": "a23d141cff70cb8c-IAD"
           }
         },
         {
           "mode": "cold",
-          "dnsMs": 0.8,
-          "tcpMs": 1.11,
-          "tlsMs": 3.49,
-          "ttfbMs": 531.25,
-          "ttftMs": 531.33,
-          "coldE2eMs": 536.72,
-          "outputTokens": 85,
-          "outputTokensPerSec": 86.29,
-          "receipts": {
-            "cf-ray": "a23d14c989613ad9-IAD",
-            "request-id": "req_011CdaFBHcMC7gstN3Whwnfe"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.74,
-          "tcpMs": 1.2,
-          "tlsMs": 3.21,
-          "ttfbMs": 503.42,
-          "ttftMs": 503.65,
-          "coldE2eMs": 508.79,
-          "outputTokens": 84,
-          "outputTokensPerSec": 84.58,
-          "receipts": {
-            "cf-ray": "a23d151adcc4b268-IAD",
-            "request-id": "req_011CdaFCFCmKhWxsPVEEY2ZY"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.79,
-          "tcpMs": 0.94,
-          "tlsMs": 2.21,
-          "ttfbMs": 607.02,
-          "ttftMs": 641.9,
-          "coldE2eMs": 645.84,
+          "dnsMs": 1.34,
+          "tcpMs": 1.03,
+          "tlsMs": 2.83,
+          "ttfbMs": 670.26,
+          "ttftMs": 671.86,
+          "coldE2eMs": 677.06,
           "outputTokens": 80,
-          "outputTokensPerSec": 88.76,
+          "outputTokensPerSec": 82.18,
           "receipts": {
-            "cf-ray": "a23d15864ee6211a-IAD",
-            "request-id": "req_011CdaFDWhx69wZP7EfYUcBe"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.85,
-          "tcpMs": 0.95,
-          "tlsMs": 2.87,
-          "ttfbMs": 784.05,
-          "ttftMs": 784.17,
-          "coldE2eMs": 788.85,
-          "outputTokens": 80,
-          "outputTokensPerSec": 82.09,
-          "receipts": {
-            "cf-ray": "a23d15d5f9d9e60b-IAD",
-            "request-id": "req_011CdaFETZxmDXgn5Q6NJWWb"
+            "cf-ray": "a23d14826bb7e647-IAD"
           }
         },
         {
           "mode": "cold",
           "dnsMs": 0.77,
-          "tcpMs": 1.13,
-          "tlsMs": 2.63,
-          "ttfbMs": 539.08,
-          "ttftMs": 541.65,
-          "coldE2eMs": 546.17,
-          "outputTokens": 82,
-          "outputTokensPerSec": 98.36,
+          "tcpMs": 1.12,
+          "tlsMs": 4.33,
+          "ttfbMs": 1130.42,
+          "ttftMs": 1131.6,
+          "coldE2eMs": 1137.81,
+          "outputTokens": 76,
+          "outputTokensPerSec": 91.47,
           "receipts": {
-            "cf-ray": "a23d16354989e629-IAD",
-            "request-id": "req_011CdaFFaRjxem5JcNcdy8ca"
+            "cf-ray": "a23d14d43b76e98e-IAD"
           }
         },
         {
           "mode": "cold",
-          "dnsMs": 0.72,
-          "tcpMs": 1.34,
-          "tlsMs": 2.98,
-          "ttfbMs": 488.69,
-          "ttftMs": 489.12,
-          "coldE2eMs": 494.16,
-          "outputTokens": 80,
-          "outputTokensPerSec": 82.47,
+          "dnsMs": 0.74,
+          "tcpMs": 1.21,
+          "tlsMs": 3.21,
+          "ttfbMs": 760.16,
+          "ttftMs": 787.08,
+          "coldE2eMs": 792.23,
+          "outputTokens": 82,
+          "outputTokensPerSec": 111.97,
           "receipts": {
-            "cf-ray": "a23d167f3c82a159-IAD",
-            "request-id": "req_011CdaFGSyoE6yeL1beKWGmg"
+            "cf-ray": "a23d1524d9ac0c3d-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.79,
+          "tcpMs": 0.88,
+          "tlsMs": 5.21,
+          "ttfbMs": 725.89,
+          "ttftMs": 728.77,
+          "coldE2eMs": 735.64,
+          "outputTokens": 81,
+          "outputTokensPerSec": 96.34,
+          "receipts": {
+            "cf-ray": "a23d1590a9bf1735-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.74,
+          "tcpMs": 0.96,
+          "tlsMs": 2.93,
+          "ttfbMs": 517.83,
+          "ttftMs": 519.68,
+          "coldE2eMs": 524.31,
+          "outputTokens": 80,
+          "outputTokensPerSec": 82.98,
+          "receipts": {
+            "cf-ray": "a23d15e1a89382bd-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.9,
+          "tcpMs": 1.4,
+          "tlsMs": 5,
+          "ttfbMs": 608.77,
+          "ttftMs": 614.02,
+          "coldE2eMs": 621.32,
+          "outputTokens": 82,
+          "outputTokensPerSec": 101.94,
+          "receipts": {
+            "cf-ray": "a23d163e8991f2a5-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.77,
+          "tcpMs": 1.21,
+          "tlsMs": 3.59,
+          "ttfbMs": 632.05,
+          "ttftMs": 633.7,
+          "coldE2eMs": 639.27,
+          "outputTokens": 76,
+          "outputTokensPerSec": 91.49,
+          "receipts": {
+            "cf-ray": "a23d16890f5473eb-IAD"
           }
         },
         {
           "mode": "cold",
           "dnsMs": 0.87,
-          "tcpMs": 1.12,
-          "tlsMs": 3.64,
-          "ttfbMs": 464.11,
-          "ttftMs": 465.34,
-          "coldE2eMs": 470.97,
-          "outputTokens": 83,
-          "outputTokensPerSec": 96.67,
+          "tcpMs": 1.03,
+          "tlsMs": 3.09,
+          "ttfbMs": 575.31,
+          "ttftMs": 578.05,
+          "coldE2eMs": 583.05,
+          "outputTokens": 89,
+          "outputTokensPerSec": 88.89,
           "receipts": {
-            "cf-ray": "a23d16dd8d09c9bc-IAD",
-            "request-id": "req_011CdaFHZZi5KcvQQMwqQ4eY"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.82,
-          "tcpMs": 1.45,
-          "tlsMs": 2.77,
-          "ttfbMs": 640.59,
-          "ttftMs": 640.69,
-          "coldE2eMs": 645.74,
-          "outputTokens": 81,
-          "outputTokensPerSec": 99.77,
-          "receipts": {
-            "cf-ray": "a23d1734bad70fbe-IAD",
-            "request-id": "req_011CdaFJbCTdFQaKTNhYyzta"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.69,
-          "tcpMs": 1.37,
-          "tlsMs": 4.04,
-          "ttfbMs": 538.98,
-          "ttftMs": 539.1,
-          "coldE2eMs": 545.19,
-          "outputTokens": 82,
-          "outputTokensPerSec": 96.88,
-          "receipts": {
-            "cf-ray": "a23d177da94096a2-IAD",
-            "request-id": "req_011CdaFKT6aeawSHtXuJXgVQ"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 1.05,
-          "tcpMs": 0.88,
-          "tlsMs": 5.53,
-          "ttfbMs": 533.73,
-          "ttftMs": 533.9,
-          "coldE2eMs": 541.35,
-          "outputTokens": 76,
-          "outputTokensPerSec": 90.49,
-          "receipts": {
-            "cf-ray": "a23d17e83822dddf-IAD",
-            "request-id": "req_011CdaFLhwpZDk68E11d7NSA"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.89,
-          "tcpMs": 9.87,
-          "tlsMs": 11.96,
-          "ttfbMs": 498.99,
-          "ttftMs": 499.12,
-          "coldE2eMs": 521.83,
-          "outputTokens": 82,
-          "outputTokensPerSec": 105.19,
-          "receipts": {
-            "cf-ray": "a23d18504a30c978-IAD",
-            "request-id": "req_011CdaFMw7NAHezqnG6QWNUV"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.75,
-          "tcpMs": 0.87,
-          "tlsMs": 3.27,
-          "ttfbMs": 1539.14,
-          "ttftMs": 1558.99,
-          "coldE2eMs": 1563.89,
-          "outputTokens": 82,
-          "outputTokensPerSec": 13.76,
-          "receipts": {
-            "cf-ray": "a23d18ae1eaa52d5-IAD",
-            "request-id": "req_011CdaFP3zdWnEqQRgbcXWBT"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.64,
-          "tcpMs": 0.89,
-          "tlsMs": 5.75,
-          "ttfbMs": 520.53,
-          "ttftMs": 520.64,
-          "coldE2eMs": 527.93,
-          "outputTokens": 82,
-          "outputTokensPerSec": 102.41,
-          "receipts": {
-            "cf-ray": "a23d193a5d2f059d-IAD",
-            "request-id": "req_011CdaFQhF27zDhz667e5aYM"
+            "cf-ray": "a23d16e68e76e55f-IAD"
           }
         },
         {
           "mode": "cold",
           "dnsMs": 0.73,
-          "tcpMs": 0.89,
-          "tlsMs": 2.56,
-          "ttfbMs": 816.71,
-          "ttftMs": 816.82,
-          "coldE2eMs": 821,
-          "outputTokens": 76,
-          "outputTokensPerSec": 86,
-          "receipts": {
-            "cf-ray": "a23d19a9a85e1272-IAD",
-            "request-id": "req_011CdaFS1RgQzxnbPXVRKXLZ"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.76,
-          "tcpMs": 1.19,
-          "tlsMs": 2.78,
-          "ttfbMs": 557.85,
-          "ttftMs": 560.82,
-          "coldE2eMs": 565.54,
+          "tcpMs": 0.99,
+          "tlsMs": 3.85,
+          "ttfbMs": 713.47,
+          "ttftMs": 715.16,
+          "coldE2eMs": 720.74,
           "outputTokens": 80,
-          "outputTokensPerSec": 82.35,
+          "outputTokensPerSec": 71.35,
           "receipts": {
-            "cf-ray": "a23d19f9bd56ae7d-IAD",
-            "request-id": "req_011CdaFSx9mE9FjvbQtAhf4E"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.74,
-          "tcpMs": 1.16,
-          "tlsMs": 3.61,
-          "ttfbMs": 642.7,
-          "ttftMs": 643.65,
-          "coldE2eMs": 649.17,
-          "outputTokens": 80,
-          "outputTokensPerSec": 82.57,
-          "receipts": {
-            "cf-ray": "a23d1a4a8bf74078-IAD",
-            "request-id": "req_011CdaFTv8VsaGwLbFsLu1V7"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 1.88,
-          "tcpMs": 0.86,
-          "tlsMs": 2.84,
-          "ttfbMs": 719.86,
-          "ttftMs": 725.2,
-          "coldE2eMs": 730.78,
-          "outputTokens": 83,
-          "outputTokensPerSec": 90.24,
-          "receipts": {
-            "cf-ray": "a23d1a9a0cc2f2c6-IAD",
-            "request-id": "req_011CdaFUqrYah1v2ayvQ7Gxa"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 566.19,
-          "ttftMs": 566.73,
-          "outputTokens": 82,
-          "outputTokensPerSec": 104.52,
-          "receipts": {
-            "cf-ray": "a23d1b457ffcef60-IAD",
-            "request-id": "req_011CdaFWsX4rV4qbY1EsNCSZ"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 870.51,
-          "ttftMs": 870.68,
-          "outputTokens": 82,
-          "outputTokensPerSec": 102.88,
-          "receipts": {
-            "cf-ray": "a23d1be3cc313e97-IAD",
-            "request-id": "req_011CdaFYjcNB96v6SLCVXxSK"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 443.77,
-          "ttftMs": 448.47,
-          "outputTokens": 76,
-          "outputTokensPerSec": 94.33,
-          "receipts": {
-            "cf-ray": "a23d1c8ea93b9bb5-IAD",
-            "request-id": "req_011CdaFakCtbS79VrCeV3AD3"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 2122.89,
-          "ttftMs": 2207.74,
-          "outputTokens": 80,
-          "outputTokensPerSec": 92.03,
-          "receipts": {
-            "cf-ray": "a23d1d283cb288d0-IAD",
-            "request-id": "req_011CdaFcZL6sRep1TFbHBXnu"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 517.77,
-          "ttftMs": 517.95,
-          "outputTokens": 83,
-          "outputTokensPerSec": 83.89,
-          "receipts": {
-            "cf-ray": "a23d1dd82dfce613-IAD",
-            "request-id": "req_011CdaFedtzP9V7aes1EicK6"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 822.19,
-          "ttftMs": 832.24,
-          "outputTokens": 80,
-          "outputTokensPerSec": 84.67,
-          "receipts": {
-            "cf-ray": "a23d1e78bd5dd147-IAD",
-            "request-id": "req_011CdaFgXYZ1EZ8fhbnGPXAe"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 517.1,
-          "ttftMs": 517.45,
-          "outputTokens": 82,
-          "outputTokensPerSec": 105.04,
-          "receipts": {
-            "cf-ray": "a23d1f1b5a06b274-IAD",
-            "request-id": "req_011CdaFiSncZdzdetry71Qc7"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 468.9,
-          "ttftMs": 470.59,
-          "outputTokens": 80,
-          "outputTokensPerSec": 82.99,
-          "receipts": {
-            "cf-ray": "a23d1fc0e9b9aa85-IAD",
-            "request-id": "req_011CdaFkQ3U1GiANXi6WysA4"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 879.55,
-          "ttftMs": 881.12,
-          "outputTokens": 76,
-          "outputTokensPerSec": 93.5,
-          "receipts": {
-            "cf-ray": "a23d206c4ffd5e59-IAD",
-            "request-id": "req_011CdaFnRHw9jfimLqeJdkyG"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 539.55,
-          "ttftMs": 539.72,
-          "outputTokens": 81,
-          "outputTokensPerSec": 97.69,
-          "receipts": {
-            "cf-ray": "a23d2119faf4c500-IAD",
-            "request-id": "req_011CdaFpUSzfBSwAszAX2kyU"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 699.11,
-          "ttftMs": 699.26,
-          "outputTokens": 80,
-          "outputTokensPerSec": 83.33,
-          "receipts": {
-            "cf-ray": "a23d21be1ca0eb77-IAD",
-            "request-id": "req_011CdaFrQYeojurg9KE19k5L"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 492.99,
-          "ttftMs": 493.08,
-          "outputTokens": 79,
-          "outputTokensPerSec": 87.99,
-          "receipts": {
-            "cf-ray": "a23d225e0b38290e-IAD",
-            "request-id": "req_011CdaFtHo9ewFoNpXP6Pgv3"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 499.31,
-          "ttftMs": 499.44,
-          "outputTokens": 94,
-          "outputTokensPerSec": 69,
-          "receipts": {
-            "cf-ray": "a23d23197b78d653-IAD",
-            "request-id": "req_011CdaFvW2AqCeCEmzrvLGYA"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 514.95,
-          "ttftMs": 517.76,
-          "outputTokens": 79,
-          "outputTokensPerSec": 88.15,
-          "receipts": {
-            "cf-ray": "a23d23eaec86e61b-IAD",
-            "request-id": "req_011CdaFxy98a5kA1t83oXqEo"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 644.15,
-          "ttftMs": 646.95,
-          "outputTokens": 76,
-          "outputTokensPerSec": 90.17,
-          "receipts": {
-            "cf-ray": "a23d24b62a6afbb3-IAD",
-            "request-id": "req_011CdaG1NQR8fB7jRfC8AXGi"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 582.81,
-          "ttftMs": 584.67,
-          "outputTokens": 89,
-          "outputTokensPerSec": 80.8,
-          "receipts": {
-            "cf-ray": "a23d2557de5ac655-IAD",
-            "request-id": "req_011CdaG3GuKmeWMcZix3zUfq"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 583.08,
-          "ttftMs": 583.56,
-          "outputTokens": 89,
-          "outputTokensPerSec": 85.24,
-          "receipts": {
-            "cf-ray": "a23d262158afc94e-IAD",
-            "request-id": "req_011CdaG5emGzVfToWaisdMuB"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 774.99,
-          "ttftMs": 775.25,
-          "outputTokens": 80,
-          "outputTokensPerSec": 73.92,
-          "receipts": {
-            "cf-ray": "a23d26f2e8c41d4c-IAD",
-            "request-id": "req_011CdaG88c9Hpo5S7LnTFJgH"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 515.88,
-          "ttftMs": 516.06,
-          "outputTokens": 80,
-          "outputTokensPerSec": 78.3,
-          "receipts": {
-            "cf-ray": "a23d2791ae5dd42d-IAD",
-            "request-id": "req_011CdaG9zjgQwZCaXDfu7KHa"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 1086.69,
-          "ttftMs": 1113.66,
-          "outputTokens": 81,
-          "outputTokensPerSec": 90.43,
-          "receipts": {
-            "cf-ray": "a23d28475daa3c85-IAD",
-            "request-id": "req_011CdaGC9jUKC5A1qdDt5pKq"
-          }
-        }
-      ],
-      "summary": {
-        "dnsMs": {
-          "median": 0.79,
-          "p95": 1.93,
-          "p99": 1.93
-        },
-        "tcpMs": {
-          "median": 1.13,
-          "p95": 1.69,
-          "p99": 1.69
-        },
-        "tlsMs": {
-          "median": 3.27,
-          "p95": 5.75,
-          "p99": 5.75
-        },
-        "coldTtfbMs": {
-          "median": 573.3,
-          "p95": 816.71,
-          "p99": 816.71
-        },
-        "coldTtftMs": {
-          "median": 574.88,
-          "p95": 816.82,
-          "p99": 816.82
-        },
-        "coldE2eMs": {
-          "median": 583.06,
-          "p95": 821,
-          "p99": 821
-        },
-        "warmTtfbMs": {
-          "median": 574.5,
-          "p95": 1086.69,
-          "p99": 1086.69
-        },
-        "warmTtftMs": {
-          "median": 575.15,
-          "p95": 1113.66,
-          "p99": 1113.66
-        },
-        "outputTokensPerSec": {
-          "median": 88.51,
-          "p95": 102.88,
-          "p99": 104.52
-        }
-      },
-      "compositeScore": 91.09,
-      "successRate": 1
-    },
-    {
-      "provider": "concentrate-ai-gateway",
-      "mode": "ai-gateway",
-      "model": "anthropic/claude-haiku-4-5-20251001",
-      "iterations": [
-        {
-          "mode": "cold",
-          "dnsMs": 120.64,
-          "tcpMs": 1.83,
-          "tlsMs": 5,
-          "ttfbMs": 709.23,
-          "ttftMs": 709.34,
-          "coldE2eMs": 836.81,
-          "outputTokens": 89,
-          "outputTokensPerSec": 89.38,
-          "receipts": {
-            "cf-ray": "a23f24b37d492d76-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.96,
-          "tcpMs": 1.27,
-          "tlsMs": 5.49,
-          "ttfbMs": 979.52,
-          "ttftMs": 984.69,
-          "coldE2eMs": 992.4,
-          "outputTokens": 80,
-          "outputTokensPerSec": 83.17,
-          "receipts": {
-            "cf-ray": "a23f24fd081f9388-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.94,
-          "tcpMs": 1.62,
-          "tlsMs": 5.7,
-          "ttfbMs": 790.86,
-          "ttftMs": 791.03,
-          "coldE2eMs": 799.29,
-          "outputTokens": 89,
-          "outputTokensPerSec": 89.78,
-          "receipts": {
-            "cf-ray": "a23f25486d4f1f57-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.93,
-          "tcpMs": 1.33,
-          "tlsMs": 5.25,
-          "ttfbMs": 756.27,
-          "ttftMs": 756.54,
-          "coldE2eMs": 764.05,
-          "outputTokens": 76,
-          "outputTokensPerSec": 84.44,
-          "receipts": {
-            "cf-ray": "a23f258f8d83fa80-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.93,
-          "tcpMs": 1.49,
-          "tlsMs": 5.89,
-          "ttfbMs": 744.86,
-          "ttftMs": 744.96,
-          "coldE2eMs": 753.28,
-          "outputTokens": 82,
-          "outputTokensPerSec": 93.88,
-          "receipts": {
-            "cf-ray": "a23f25dadfa7ca91-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 5.26,
-          "tcpMs": 1.24,
-          "tlsMs": 8.5,
-          "ttfbMs": 820.26,
-          "ttftMs": 820.37,
-          "coldE2eMs": 835.37,
-          "outputTokens": 89,
-          "outputTokensPerSec": 90.75,
-          "receipts": {
-            "cf-ray": "a23f262c98fc7ff1-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.95,
-          "tcpMs": 0.84,
-          "tlsMs": 5.35,
-          "ttfbMs": 865.41,
-          "ttftMs": 866.32,
-          "coldE2eMs": 873.46,
-          "outputTokens": 81,
-          "outputTokensPerSec": 94.05,
-          "receipts": {
-            "cf-ray": "a23f267e7f2cd67c-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.71,
-          "tcpMs": 1.26,
-          "tlsMs": 5.47,
-          "ttfbMs": 622.16,
-          "ttftMs": 622.22,
-          "coldE2eMs": 629.66,
-          "outputTokens": 82,
-          "outputTokensPerSec": 99.25,
-          "receipts": {
-            "cf-ray": "a23f26cb2e1ecf0f-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 1.1,
-          "tcpMs": 1.37,
-          "tlsMs": 9.42,
-          "ttfbMs": 610.17,
-          "ttftMs": 610.25,
-          "coldE2eMs": 622.14,
-          "outputTokens": 80,
-          "outputTokensPerSec": 82.87,
-          "receipts": {
-            "cf-ray": "a23f272218c02337-IAD"
+            "cf-ray": "a23d173e7f45d644-IAD"
           }
         },
         {
           "mode": "cold",
           "dnsMs": 0.77,
-          "tcpMs": 1.23,
-          "tlsMs": 5.93,
-          "ttfbMs": 897.15,
-          "ttftMs": 897.22,
-          "coldE2eMs": 905.16,
-          "outputTokens": 76,
-          "outputTokensPerSec": 94.01,
-          "receipts": {
-            "cf-ray": "a23f27707d745a5d-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.7,
-          "tcpMs": 0.89,
-          "tlsMs": 4.81,
-          "ttfbMs": 1249.56,
-          "ttftMs": 1249.63,
-          "coldE2eMs": 1256.03,
-          "outputTokens": 80,
-          "outputTokensPerSec": 88.23,
-          "receipts": {
-            "cf-ray": "a23f27bcaef6dab8-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.78,
-          "tcpMs": 1.06,
-          "tlsMs": 4.36,
-          "ttfbMs": 787.77,
-          "ttftMs": 787.87,
-          "coldE2eMs": 794.07,
-          "outputTokens": 82,
-          "outputTokensPerSec": 98.62,
-          "receipts": {
-            "cf-ray": "a23f2816c94cd6d0-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 1.03,
           "tcpMs": 1.01,
-          "tlsMs": 8.01,
-          "ttfbMs": 786.98,
-          "ttftMs": 787.05,
-          "coldE2eMs": 797.1,
-          "outputTokens": 76,
-          "outputTokensPerSec": 91.31,
-          "receipts": {
-            "cf-ray": "a23f28608ff681ed-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 1.21,
-          "tcpMs": 1.5,
-          "tlsMs": 16.41,
-          "ttfbMs": 821.73,
-          "ttftMs": 821.82,
-          "coldE2eMs": 840.93,
+          "tlsMs": 3.75,
+          "ttfbMs": 569.9,
+          "ttftMs": 571.25,
+          "coldE2eMs": 576.78,
           "outputTokens": 80,
-          "outputTokensPerSec": 84.06,
+          "outputTokensPerSec": 77.18,
           "receipts": {
-            "cf-ray": "a23f28a57fec8230-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 1.59,
-          "tcpMs": 1.76,
-          "tlsMs": 5.83,
-          "ttfbMs": 1614.88,
-          "ttftMs": 1646.68,
-          "coldE2eMs": 1655.87,
-          "outputTokens": 81,
-          "outputTokensPerSec": 105.16,
-          "receipts": {
-            "cf-ray": "a23f2900491a74e2-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.87,
-          "tcpMs": 1.8,
-          "tlsMs": 6.76,
-          "ttfbMs": 1072.42,
-          "ttftMs": 1072.5,
-          "coldE2eMs": 1081.93,
-          "outputTokens": 81,
-          "outputTokensPerSec": 93.62,
-          "receipts": {
-            "cf-ray": "a23f295caba5feee-IAD"
+            "cf-ray": "a23d17870f5f9c3a-IAD"
           }
         },
         {
           "mode": "cold",
           "dnsMs": 0.79,
-          "tcpMs": 1.35,
-          "tlsMs": 4.16,
-          "ttfbMs": 608.95,
-          "ttftMs": 609.02,
-          "coldE2eMs": 615.32,
-          "outputTokens": 80,
-          "outputTokensPerSec": 82.81,
+          "tcpMs": 1.69,
+          "tlsMs": 5.92,
+          "ttfbMs": 1296.75,
+          "ttftMs": 1303.17,
+          "coldE2eMs": 1311.57,
+          "outputTokens": 89,
+          "outputTokensPerSec": 78.29,
           "receipts": {
-            "cf-ray": "a23f29c0eaf6f27c-IAD"
+            "cf-ray": "a23d17f17d72e713-IAD"
           }
         },
         {
           "mode": "cold",
-          "dnsMs": 0.97,
-          "tcpMs": 1.53,
-          "tlsMs": 4.58,
-          "ttfbMs": 858.3,
-          "ttftMs": 878.28,
-          "coldE2eMs": 885.36,
-          "outputTokens": 81,
-          "outputTokensPerSec": 107.26,
+          "dnsMs": 0.91,
+          "tcpMs": 1.16,
+          "tlsMs": 4.6,
+          "ttfbMs": 581.62,
+          "ttftMs": 584.57,
+          "coldE2eMs": 591.25,
+          "outputTokens": 80,
+          "outputTokensPerSec": 54.1,
           "receipts": {
-            "cf-ray": "a23f2a13e8e4d4c1-IAD"
+            "cf-ray": "a23d18590bd885c0-IAD"
           }
         },
         {
           "mode": "cold",
-          "dnsMs": 1.32,
-          "tcpMs": 1.36,
-          "tlsMs": 5.73,
-          "ttfbMs": 955.7,
-          "ttftMs": 955.77,
-          "coldE2eMs": 964.18,
+          "dnsMs": 0.53,
+          "tcpMs": 0.76,
+          "tlsMs": 3.1,
+          "ttfbMs": 2166.89,
+          "ttftMs": 2197.98,
+          "coldE2eMs": 2202.38,
           "outputTokens": 80,
-          "outputTokensPerSec": 82.27,
+          "outputTokensPerSec": 87.65,
           "receipts": {
-            "cf-ray": "a23f2a5dbc26d6a0-IAD"
+            "cf-ray": "a23d18de3d26e603-IAD"
           }
         },
         {
           "mode": "cold",
-          "dnsMs": 0.99,
-          "tcpMs": 0.93,
-          "tlsMs": 4.06,
-          "ttfbMs": 1480.87,
-          "ttftMs": 1480.95,
-          "coldE2eMs": 1486.93,
+          "dnsMs": 0.92,
+          "tcpMs": 0.88,
+          "tlsMs": 4.43,
+          "ttfbMs": 2099.38,
+          "ttftMs": 2105.72,
+          "coldE2eMs": 2111.94,
           "outputTokens": 82,
-          "outputTokensPerSec": 107.01,
+          "outputTokensPerSec": 102.81,
           "receipts": {
-            "cf-ray": "a23f2aa9ab068e97-IAD"
+            "cf-ray": "a23d19435ee82d13-IAD"
           }
         },
         {
-          "mode": "warm",
-          "ttfbMs": 650.03,
-          "ttftMs": 650.68,
+          "mode": "cold",
+          "dnsMs": 0.74,
+          "tcpMs": 0.92,
+          "tlsMs": 3.84,
+          "ttfbMs": 572.58,
+          "ttftMs": 574.51,
+          "coldE2eMs": 580.02,
           "outputTokens": 81,
-          "outputTokensPerSec": 103.91,
+          "outputTokensPerSec": 95.92,
           "receipts": {
-            "cf-ray": "a23f2b3f9d3ee091-IAD"
+            "cf-ray": "a23d19b50c34c55a-IAD"
           }
         },
         {
-          "mode": "warm",
-          "ttfbMs": 556.22,
-          "ttftMs": 556.32,
-          "outputTokens": 76,
-          "outputTokensPerSec": 91.81,
-          "receipts": {
-            "cf-ray": "a23f2bee79ba3895-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 984.35,
-          "ttftMs": 984.45,
-          "outputTokens": 80,
-          "outputTokensPerSec": 83.37,
-          "receipts": {
-            "cf-ray": "a23f2c801ab8b114-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 603.97,
-          "ttftMs": 604.06,
-          "outputTokens": 91,
-          "outputTokensPerSec": 93.39,
-          "receipts": {
-            "cf-ray": "a23f2d137d057a77-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 600.91,
-          "ttftMs": 601,
-          "outputTokens": 80,
-          "outputTokensPerSec": 83.07,
-          "receipts": {
-            "cf-ray": "a23f2da8bcfb6d4d-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 618.24,
-          "ttftMs": 618.33,
-          "outputTokens": 80,
-          "outputTokensPerSec": 82.48,
-          "receipts": {
-            "cf-ray": "a23f2e37ea497048-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 621.07,
-          "ttftMs": 621.17,
-          "outputTokens": 80,
-          "outputTokensPerSec": 75.07,
-          "receipts": {
-            "cf-ray": "a23f2efe4b80d643-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 571.96,
-          "ttftMs": 572.05,
-          "outputTokens": 89,
-          "outputTokensPerSec": 87.52,
-          "receipts": {
-            "cf-ray": "a23f2f95c9c70fed-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 632.81,
-          "ttftMs": 632.9,
-          "outputTokens": 76,
-          "outputTokensPerSec": 95.02,
-          "receipts": {
-            "cf-ray": "a23f3028ed1905e4-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 579.95,
-          "ttftMs": 580.02,
-          "outputTokens": 89,
-          "outputTokensPerSec": 90.35,
-          "receipts": {
-            "cf-ray": "a23f30bd4e20731a-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 655.71,
-          "ttftMs": 655.8,
-          "outputTokens": 80,
-          "outputTokensPerSec": 83.39,
-          "receipts": {
-            "cf-ray": "a23f3160490a588a-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 617.44,
-          "ttftMs": 617.53,
-          "outputTokens": 82,
-          "outputTokensPerSec": 105.58,
-          "receipts": {
-            "cf-ray": "a23f31fb7b7812ce-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 585.73,
-          "ttftMs": 585.84,
-          "outputTokens": 89,
-          "outputTokensPerSec": 90.58,
-          "receipts": {
-            "cf-ray": "a23f32936f112ade-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 1130.72,
-          "ttftMs": 1130.82,
-          "outputTokens": 80,
-          "outputTokensPerSec": 81.55,
-          "receipts": {
-            "cf-ray": "a23f331cecbd150b-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 580.23,
-          "ttftMs": 580.33,
-          "outputTokens": 79,
-          "outputTokensPerSec": 53.02,
-          "receipts": {
-            "cf-ray": "a23f33c63fe47ca7-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 604.63,
-          "ttftMs": 605.05,
-          "outputTokens": 80,
-          "outputTokensPerSec": 79.99,
-          "receipts": {
-            "cf-ray": "a23f34664c619388-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 858.68,
-          "ttftMs": 858.78,
-          "outputTokens": 82,
-          "outputTokensPerSec": 142.04,
-          "receipts": {
-            "cf-ray": "a23f34ff280112f0-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 611.31,
-          "ttftMs": 611.4,
-          "outputTokens": 81,
-          "outputTokensPerSec": 100.2,
-          "receipts": {
-            "cf-ray": "a23f3591a8590814-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 637.4,
-          "ttftMs": 637.49,
+          "mode": "cold",
+          "dnsMs": 0.8,
+          "tcpMs": 0.82,
+          "tlsMs": 3.05,
+          "ttfbMs": 500.97,
+          "ttftMs": 502.11,
+          "coldE2eMs": 506.78,
           "outputTokens": 84,
-          "outputTokensPerSec": 85.32,
+          "outputTokensPerSec": 77.11,
           "receipts": {
-            "cf-ray": "a23f362d79208544-IAD"
+            "cf-ray": "a23d1a040ead609d-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 13.26,
+          "tcpMs": 1.1,
+          "tlsMs": 3.8,
+          "ttfbMs": 528.87,
+          "ttftMs": 529.81,
+          "coldE2eMs": 547.98,
+          "outputTokens": 81,
+          "outputTokensPerSec": 100.14,
+          "receipts": {
+            "cf-ray": "a23d1a557e657b0d-IAD"
           }
         },
         {
           "mode": "warm",
-          "ttfbMs": 599.64,
-          "ttftMs": 599.73,
-          "outputTokens": 82,
-          "outputTokensPerSec": 102.35,
+          "ttfbMs": 607.1,
+          "ttftMs": 613.6,
+          "outputTokens": 94,
+          "outputTokensPerSec": 87.24,
           "receipts": {
-            "cf-ray": "a23f36be6da96b8a-IAD"
+            "cf-ray": "a23d1ab5ef722dfc-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 641.07,
+          "ttftMs": 642.35,
+          "outputTokens": 80,
+          "outputTokensPerSec": 83.18,
+          "receipts": {
+            "cf-ray": "a23d1b58e9f4d693-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 1148.03,
+          "ttftMs": 1150.6,
+          "outputTokens": 82,
+          "outputTokensPerSec": 75.23,
+          "receipts": {
+            "cf-ray": "a23d1bf8be5ed6e9-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 507.42,
+          "ttftMs": 508.34,
+          "outputTokens": 82,
+          "outputTokensPerSec": 104.41,
+          "receipts": {
+            "cf-ray": "a23d1ca368fcd6a5-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 512.76,
+          "ttftMs": 514.22,
+          "outputTokens": 82,
+          "outputTokensPerSec": 86.67,
+          "receipts": {
+            "cf-ray": "a23d1d46dc9ffeee-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 525.32,
+          "ttftMs": 526.76,
+          "outputTokens": 89,
+          "outputTokensPerSec": 64.7,
+          "receipts": {
+            "cf-ray": "a23d1dee1fd3d4c1-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 517.7,
+          "ttftMs": 519.29,
+          "outputTokens": 80,
+          "outputTokensPerSec": 82.66,
+          "receipts": {
+            "cf-ray": "a23d1e90bfce9bb9-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 2710.44,
+          "ttftMs": 2751.14,
+          "outputTokens": 76,
+          "outputTokensPerSec": 87.89,
+          "receipts": {
+            "cf-ray": "a23d1f2ebba1319e-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 566.99,
+          "ttftMs": 569.38,
+          "outputTokens": 81,
+          "outputTokensPerSec": 67.49,
+          "receipts": {
+            "cf-ray": "a23d1fd66f0b1315-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 858.92,
+          "ttftMs": 890.62,
+          "outputTokens": 80,
+          "outputTokensPerSec": 75.99,
+          "receipts": {
+            "cf-ray": "a23d2085e9338b1a-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 519.45,
+          "ttftMs": 521.86,
+          "outputTokens": 80,
+          "outputTokensPerSec": 81.52,
+          "receipts": {
+            "cf-ray": "a23d212c4b1544a6-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 618.62,
+          "ttftMs": 620.03,
+          "outputTokens": 76,
+          "outputTokensPerSec": 90.97,
+          "receipts": {
+            "cf-ray": "a23d21d3cd3b0ab0-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 537.67,
+          "ttftMs": 540.08,
+          "outputTokens": 82,
+          "outputTokensPerSec": 99.9,
+          "receipts": {
+            "cf-ray": "a23d22739a16f2c6-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 861.87,
+          "ttftMs": 883.18,
+          "outputTokens": 81,
+          "outputTokensPerSec": 119.87,
+          "receipts": {
+            "cf-ray": "a23d233abf97bb25-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 1077.2,
+          "ttftMs": 1093.5,
+          "outputTokens": 94,
+          "outputTokensPerSec": 91.33,
+          "receipts": {
+            "cf-ray": "a23d240dbcead6d7-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 543.24,
+          "ttftMs": 544.43,
+          "outputTokens": 76,
+          "outputTokensPerSec": 92.62,
+          "receipts": {
+            "cf-ray": "a23d24ceaf8e70c5-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 838.61,
+          "ttftMs": 840.8,
+          "outputTokens": 89,
+          "outputTokensPerSec": 67.54,
+          "receipts": {
+            "cf-ray": "a23d256d08cee60b-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 1783.67,
+          "ttftMs": 1857.39,
+          "outputTokens": 80,
+          "outputTokensPerSec": 74.53,
+          "receipts": {
+            "cf-ray": "a23d2636aadaff56-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 576.89,
+          "ttftMs": 578.49,
+          "outputTokens": 80,
+          "outputTokensPerSec": 84.23,
+          "receipts": {
+            "cf-ray": "a23d270ce9d8e53f-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 3175.76,
+          "ttftMs": 3220.79,
+          "outputTokens": 89,
+          "outputTokensPerSec": 118.54,
+          "receipts": {
+            "cf-ray": "a23d27ac58c428bb-IAD"
           }
         }
       ],
       "summary": {
         "dnsMs": {
-          "median": 0.96,
-          "p95": 5.26,
-          "p99": 5.26
+          "median": 0.8,
+          "p95": 13.26,
+          "p99": 13.26
         },
         "tcpMs": {
-          "median": 1.34,
-          "p95": 1.8,
-          "p99": 1.8
+          "median": 1.04,
+          "p95": 1.49,
+          "p99": 1.49
         },
         "tlsMs": {
-          "median": 5.59,
-          "p95": 9.42,
-          "p99": 9.42
+          "median": 3.78,
+          "p95": 5.49,
+          "p99": 5.49
         },
         "coldTtfbMs": {
-          "median": 821,
-          "p95": 1480.87,
-          "p99": 1480.87
+          "median": 691.87,
+          "p95": 2099.38,
+          "p99": 2099.38
         },
         "coldTtftMs": {
-          "median": 821.09,
-          "p95": 1480.95,
-          "p99": 1480.95
+          "median": 693.51,
+          "p95": 2105.72,
+          "p99": 2105.72
         },
         "coldE2eMs": {
-          "median": 838.87,
-          "p95": 1486.93,
-          "p99": 1486.93
+          "median": 698.9,
+          "p95": 2111.94,
+          "p99": 2111.94
         },
         "warmTtfbMs": {
-          "median": 614.38,
-          "p95": 984.35,
-          "p99": 984.35
+          "median": 612.86,
+          "p95": 2710.44,
+          "p99": 2710.44
         },
         "warmTtftMs": {
-          "median": 614.47,
-          "p95": 984.45,
-          "p99": 984.45
+          "median": 616.81,
+          "p95": 2751.14,
+          "p99": 2751.14
         },
         "outputTokensPerSec": {
-          "median": 90.47,
-          "p95": 105.58,
-          "p99": 107.01
+          "median": 86.95,
+          "p95": 104.41,
+          "p99": 111.97
         }
       },
-      "compositeScore": 90.35,
+      "compositeScore": 88.58,
+      "successRate": 1
+    },
+    {
+      "provider": "vercel-ai-gateway",
+      "mode": "ai-gateway",
+      "model": "anthropic/claude-haiku-4.5",
+      "iterations": [
+        {
+          "mode": "cold",
+          "dnsMs": 22.5,
+          "tcpMs": 0.88,
+          "tlsMs": 5.17,
+          "ttfbMs": 789.29,
+          "ttftMs": 798.12,
+          "coldE2eMs": 826.67,
+          "outputTokens": 76,
+          "outputTokensPerSec": 92.4,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::r6t9f-1785505870173-4a7e85048ab3"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.87,
+          "tcpMs": 0.75,
+          "tlsMs": 5.52,
+          "ttfbMs": 660.13,
+          "ttftMs": 663.92,
+          "coldE2eMs": 671.06,
+          "outputTokens": 94,
+          "outputTokensPerSec": 87.24,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::l7ts7-1785505883353-8ad66ef7d175"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 39.19,
+          "tcpMs": 6.25,
+          "tlsMs": 20.84,
+          "ttfbMs": 828.85,
+          "ttftMs": 837.61,
+          "coldE2eMs": 903.88,
+          "outputTokens": 89,
+          "outputTokensPerSec": 90.51,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::cvhbq-1785505896332-8ce5bed62d8f"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 21.38,
+          "tcpMs": 5.93,
+          "tlsMs": 21.93,
+          "ttfbMs": 653.54,
+          "ttftMs": 661.9,
+          "coldE2eMs": 711.13,
+          "outputTokens": 82,
+          "outputTokensPerSec": 102.86,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::pgcpq-1785505911945-b98016b98f9e"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.89,
+          "tcpMs": 5.84,
+          "tlsMs": 22.38,
+          "ttfbMs": 597.04,
+          "ttftMs": 606.19,
+          "coldE2eMs": 635.31,
+          "outputTokens": 81,
+          "outputTokensPerSec": 103.74,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::g8jcw-1785505925333-f554f3b93f34"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.72,
+          "tcpMs": 5.73,
+          "tlsMs": 20.13,
+          "ttfbMs": 830.27,
+          "ttftMs": 839.44,
+          "coldE2eMs": 866.02,
+          "outputTokens": 80,
+          "outputTokensPerSec": 82.89,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::wj47v-1785505937785-dde90f982aa5"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 6.74,
+          "tcpMs": 0.93,
+          "tlsMs": 5.53,
+          "ttfbMs": 706.03,
+          "ttftMs": 715.29,
+          "coldE2eMs": 728.48,
+          "outputTokens": 91,
+          "outputTokensPerSec": 60.81,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::g5mzj-1785505955063-82524af44ba7"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 2.96,
+          "tcpMs": 5.78,
+          "tlsMs": 21.78,
+          "ttfbMs": 820.16,
+          "ttftMs": 827.59,
+          "coldE2eMs": 858.11,
+          "outputTokens": 82,
+          "outputTokensPerSec": 85.26,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::dg26t-1785505967979-42c7137feb2e"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.77,
+          "tcpMs": 5.82,
+          "tlsMs": 22.05,
+          "ttfbMs": 737.25,
+          "ttftMs": 748.95,
+          "coldE2eMs": 777.58,
+          "outputTokens": 83,
+          "outputTokensPerSec": 103.04,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::6hdcl-1785505982773-0873c4001a0f"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.72,
+          "tcpMs": 5.74,
+          "tlsMs": 20.75,
+          "ttfbMs": 598.84,
+          "ttftMs": 608.06,
+          "coldE2eMs": 635.27,
+          "outputTokens": 80,
+          "outputTokensPerSec": 83.01,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::s7gwf-1785505994727-98b08f766e41"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.79,
+          "tcpMs": 5.9,
+          "tlsMs": 20,
+          "ttfbMs": 639.74,
+          "ttftMs": 648.94,
+          "coldE2eMs": 675.63,
+          "outputTokens": 80,
+          "outputTokensPerSec": 52.77,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::b6vj7-1785506009790-8a9c7fd21f13"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 12.86,
+          "tcpMs": 5.71,
+          "tlsMs": 20.8,
+          "ttfbMs": 585.85,
+          "ttftMs": 595.08,
+          "coldE2eMs": 634.45,
+          "outputTokens": 94,
+          "outputTokensPerSec": 85.33,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::2wlwg-1785506024142-7da334d30e35"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 30.49,
+          "tcpMs": 5.91,
+          "tlsMs": 21.59,
+          "ttfbMs": 859.94,
+          "ttftMs": 869.08,
+          "coldE2eMs": 927.08,
+          "outputTokens": 80,
+          "outputTokensPerSec": 87.28,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::9sght-1785506035537-303a35b290d2"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.7,
+          "tcpMs": 6.16,
+          "tlsMs": 34.33,
+          "ttfbMs": 2866.06,
+          "ttftMs": 2875.73,
+          "coldE2eMs": 2916.92,
+          "outputTokens": 78,
+          "outputTokensPerSec": 82.26,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::l2jvw-1785506053390-a2017759fd2d"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 20,
+          "tcpMs": 5.83,
+          "tlsMs": 20.94,
+          "ttfbMs": 638.79,
+          "ttftMs": 648.27,
+          "coldE2eMs": 695.04,
+          "outputTokens": 76,
+          "outputTokensPerSec": 95.85,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::jb9jj-1785506069596-330d3c061ca4"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 23.79,
+          "tcpMs": 6.14,
+          "tlsMs": 22.58,
+          "ttfbMs": 670.89,
+          "ttftMs": 680.16,
+          "coldE2eMs": 732.66,
+          "outputTokens": 81,
+          "outputTokensPerSec": 95.08,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::vdpk8-1785506091959-b32397a8527b"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.7,
+          "tcpMs": 5.73,
+          "tlsMs": 21.06,
+          "ttfbMs": 1316.2,
+          "ttftMs": 1326.57,
+          "coldE2eMs": 1354.05,
+          "outputTokens": 81,
+          "outputTokensPerSec": 144.26,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::g8jcw-1785506107927-7a25c701ec2e"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 19.72,
+          "tcpMs": 5.87,
+          "tlsMs": 20.5,
+          "ttfbMs": 823.98,
+          "ttftMs": 833.3,
+          "coldE2eMs": 879.39,
+          "outputTokens": 81,
+          "outputTokensPerSec": 107.19,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::96rrb-1785506124633-281a029ef0e6"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 2.42,
+          "tcpMs": 5.83,
+          "tlsMs": 20.47,
+          "ttfbMs": 587.9,
+          "ttftMs": 596.96,
+          "coldE2eMs": 625.69,
+          "outputTokens": 89,
+          "outputTokensPerSec": 90.11,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::4lbnx-1785506137427-6bb22bbb99d9"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 17.18,
+          "tcpMs": 0.92,
+          "tlsMs": 5.27,
+          "ttfbMs": 737.13,
+          "ttftMs": 750.85,
+          "coldE2eMs": 774.22,
+          "outputTokens": 89,
+          "outputTokensPerSec": 85.93,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::qzvw5-1785506150180-e35d53beef8b"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 528.16,
+          "ttftMs": 537.63,
+          "outputTokens": 80,
+          "outputTokensPerSec": 84.7,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::ndxv7-1785506167588-16ed592e2b0e"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 555.36,
+          "ttftMs": 564.85,
+          "outputTokens": 76,
+          "outputTokensPerSec": 97.04,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::cz54s-1785506193758-62c604badd8a"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 1572.8,
+          "ttftMs": 1599.13,
+          "outputTokens": 82,
+          "outputTokensPerSec": 94.9,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::ckldd-1785506220560-b2d496e69d94"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 581.5,
+          "ttftMs": 590.68,
+          "outputTokens": 89,
+          "outputTokensPerSec": 82.28,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::xqw9b-1785506245946-0446873e9058"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 2181.73,
+          "ttftMs": 2200.83,
+          "outputTokens": 80,
+          "outputTokensPerSec": 67.07,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::rmsc2-1785506272601-f9657a22e605"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 569.14,
+          "ttftMs": 578.31,
+          "outputTokens": 89,
+          "outputTokensPerSec": 89.53,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::vf5l9-1785506299633-8a689ab20b66"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 716.94,
+          "ttftMs": 727.7,
+          "outputTokens": 81,
+          "outputTokensPerSec": 105.83,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::42rcg-1785506325552-060279b2cb4e"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 553.16,
+          "ttftMs": 562.42,
+          "outputTokens": 80,
+          "outputTokensPerSec": 77.7,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::wv274-1785506352815-a1699c0af2fe"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 823.73,
+          "ttftMs": 823.84,
+          "outputTokens": 82,
+          "outputTokensPerSec": 100.32,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::98s9h-1785506377799-14c860b77bae"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 591.3,
+          "ttftMs": 600.39,
+          "outputTokens": 81,
+          "outputTokensPerSec": 101,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::8vhfh-1785506406209-244a3c2c0865"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 569.99,
+          "ttftMs": 615.21,
+          "outputTokens": 76,
+          "outputTokensPerSec": 95.98,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::6744p-1785506432496-bb3e7c638ef9"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 827.07,
+          "ttftMs": 836.22,
+          "outputTokens": 89,
+          "outputTokensPerSec": 73.51,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::sjnnp-1785506458657-a87d12b33bb7"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 1370.21,
+          "ttftMs": 1379.59,
+          "outputTokens": 85,
+          "outputTokensPerSec": 82.99,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::9sght-1785506484784-571869feee22"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 1081.37,
+          "ttftMs": 1081.46,
+          "outputTokens": 94,
+          "outputTokensPerSec": 115.35,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::wv274-1785506517714-814d944775eb"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 4709.9,
+          "ttftMs": 4719.05,
+          "outputTokens": 79,
+          "outputTokensPerSec": 85.38,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::gbgtj-1785506550497-dae238ac4567"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 559.37,
+          "ttftMs": 568.39,
+          "outputTokens": 82,
+          "outputTokensPerSec": 100.81,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::zxjpm-1785506580876-f04e56d023e6"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 603.9,
+          "ttftMs": 613.17,
+          "outputTokens": 80,
+          "outputTokensPerSec": 68.74,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::flmff-1785506606902-a66cd89e7d15"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 2189.05,
+          "ttftMs": 2210.93,
+          "outputTokens": 82,
+          "outputTokensPerSec": 194.31,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::rhdh2-1785506640347-3056ac81cdbf"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 561.12,
+          "ttftMs": 568.86,
+          "outputTokens": 89,
+          "outputTokensPerSec": 78.27,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::dm627-1785506672857-4d15a2c91e09"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 997.59,
+          "ttftMs": 1046.59,
+          "outputTokens": 76,
+          "outputTokensPerSec": 105.53,
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::sq6jp-1785506701605-1b7f35bf9ad1"
+          }
+        }
+      ],
+      "summary": {
+        "dnsMs": {
+          "median": 4.85,
+          "p95": 30.49,
+          "p99": 30.49
+        },
+        "tcpMs": {
+          "median": 5.82,
+          "p95": 6.16,
+          "p99": 6.16
+        },
+        "tlsMs": {
+          "median": 20.82,
+          "p95": 22.58,
+          "p99": 22.58
+        },
+        "coldTtfbMs": {
+          "median": 721.58,
+          "p95": 1316.2,
+          "p99": 1316.2
+        },
+        "coldTtftMs": {
+          "median": 732.12,
+          "p95": 1326.57,
+          "p99": 1326.57
+        },
+        "coldE2eMs": {
+          "median": 753.44,
+          "p95": 1354.05,
+          "p99": 1354.05
+        },
+        "warmTtfbMs": {
+          "median": 660.42,
+          "p95": 2189.05,
+          "p99": 2189.05
+        },
+        "warmTtftMs": {
+          "median": 671.45,
+          "p95": 2210.93,
+          "p99": 2210.93
+        },
+        "outputTokensPerSec": {
+          "median": 89.82,
+          "p95": 107.19,
+          "p99": 115.35
+        }
+      },
+      "compositeScore": 89.54,
       "successRate": 1
     },
     {
@@ -2236,542 +2196,6 @@
       "successRate": 1
     },
     {
-      "provider": "vercel-ai-gateway",
-      "mode": "ai-gateway",
-      "model": "anthropic/claude-haiku-4.5",
-      "iterations": [
-        {
-          "mode": "cold",
-          "dnsMs": 22.5,
-          "tcpMs": 0.88,
-          "tlsMs": 5.17,
-          "ttfbMs": 789.29,
-          "ttftMs": 798.12,
-          "coldE2eMs": 826.67,
-          "outputTokens": 76,
-          "outputTokensPerSec": 92.4,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::r6t9f-1785505870173-4a7e85048ab3"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.87,
-          "tcpMs": 0.75,
-          "tlsMs": 5.52,
-          "ttfbMs": 660.13,
-          "ttftMs": 663.92,
-          "coldE2eMs": 671.06,
-          "outputTokens": 94,
-          "outputTokensPerSec": 87.24,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::l7ts7-1785505883353-8ad66ef7d175"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 39.19,
-          "tcpMs": 6.25,
-          "tlsMs": 20.84,
-          "ttfbMs": 828.85,
-          "ttftMs": 837.61,
-          "coldE2eMs": 903.88,
-          "outputTokens": 89,
-          "outputTokensPerSec": 90.51,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::cvhbq-1785505896332-8ce5bed62d8f"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 21.38,
-          "tcpMs": 5.93,
-          "tlsMs": 21.93,
-          "ttfbMs": 653.54,
-          "ttftMs": 661.9,
-          "coldE2eMs": 711.13,
-          "outputTokens": 82,
-          "outputTokensPerSec": 102.86,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::pgcpq-1785505911945-b98016b98f9e"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.89,
-          "tcpMs": 5.84,
-          "tlsMs": 22.38,
-          "ttfbMs": 597.04,
-          "ttftMs": 606.19,
-          "coldE2eMs": 635.31,
-          "outputTokens": 81,
-          "outputTokensPerSec": 103.74,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::g8jcw-1785505925333-f554f3b93f34"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.72,
-          "tcpMs": 5.73,
-          "tlsMs": 20.13,
-          "ttfbMs": 830.27,
-          "ttftMs": 839.44,
-          "coldE2eMs": 866.02,
-          "outputTokens": 80,
-          "outputTokensPerSec": 82.89,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::wj47v-1785505937785-dde90f982aa5"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 6.74,
-          "tcpMs": 0.93,
-          "tlsMs": 5.53,
-          "ttfbMs": 706.03,
-          "ttftMs": 715.29,
-          "coldE2eMs": 728.48,
-          "outputTokens": 91,
-          "outputTokensPerSec": 60.81,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::g5mzj-1785505955063-82524af44ba7"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 2.96,
-          "tcpMs": 5.78,
-          "tlsMs": 21.78,
-          "ttfbMs": 820.16,
-          "ttftMs": 827.59,
-          "coldE2eMs": 858.11,
-          "outputTokens": 82,
-          "outputTokensPerSec": 85.26,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::dg26t-1785505967979-42c7137feb2e"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.77,
-          "tcpMs": 5.82,
-          "tlsMs": 22.05,
-          "ttfbMs": 737.25,
-          "ttftMs": 748.95,
-          "coldE2eMs": 777.58,
-          "outputTokens": 83,
-          "outputTokensPerSec": 103.04,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::6hdcl-1785505982773-0873c4001a0f"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.72,
-          "tcpMs": 5.74,
-          "tlsMs": 20.75,
-          "ttfbMs": 598.84,
-          "ttftMs": 608.06,
-          "coldE2eMs": 635.27,
-          "outputTokens": 80,
-          "outputTokensPerSec": 83.01,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::s7gwf-1785505994727-98b08f766e41"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.79,
-          "tcpMs": 5.9,
-          "tlsMs": 20,
-          "ttfbMs": 639.74,
-          "ttftMs": 648.94,
-          "coldE2eMs": 675.63,
-          "outputTokens": 80,
-          "outputTokensPerSec": 52.77,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::b6vj7-1785506009790-8a9c7fd21f13"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 12.86,
-          "tcpMs": 5.71,
-          "tlsMs": 20.8,
-          "ttfbMs": 585.85,
-          "ttftMs": 595.08,
-          "coldE2eMs": 634.45,
-          "outputTokens": 94,
-          "outputTokensPerSec": 85.33,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::2wlwg-1785506024142-7da334d30e35"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 30.49,
-          "tcpMs": 5.91,
-          "tlsMs": 21.59,
-          "ttfbMs": 859.94,
-          "ttftMs": 869.08,
-          "coldE2eMs": 927.08,
-          "outputTokens": 80,
-          "outputTokensPerSec": 87.28,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::9sght-1785506035537-303a35b290d2"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.7,
-          "tcpMs": 6.16,
-          "tlsMs": 34.33,
-          "ttfbMs": 2866.06,
-          "ttftMs": 2875.73,
-          "coldE2eMs": 2916.92,
-          "outputTokens": 78,
-          "outputTokensPerSec": 82.26,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::l2jvw-1785506053390-a2017759fd2d"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 20,
-          "tcpMs": 5.83,
-          "tlsMs": 20.94,
-          "ttfbMs": 638.79,
-          "ttftMs": 648.27,
-          "coldE2eMs": 695.04,
-          "outputTokens": 76,
-          "outputTokensPerSec": 95.85,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::jb9jj-1785506069596-330d3c061ca4"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 23.79,
-          "tcpMs": 6.14,
-          "tlsMs": 22.58,
-          "ttfbMs": 670.89,
-          "ttftMs": 680.16,
-          "coldE2eMs": 732.66,
-          "outputTokens": 81,
-          "outputTokensPerSec": 95.08,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::vdpk8-1785506091959-b32397a8527b"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.7,
-          "tcpMs": 5.73,
-          "tlsMs": 21.06,
-          "ttfbMs": 1316.2,
-          "ttftMs": 1326.57,
-          "coldE2eMs": 1354.05,
-          "outputTokens": 81,
-          "outputTokensPerSec": 144.26,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::g8jcw-1785506107927-7a25c701ec2e"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 19.72,
-          "tcpMs": 5.87,
-          "tlsMs": 20.5,
-          "ttfbMs": 823.98,
-          "ttftMs": 833.3,
-          "coldE2eMs": 879.39,
-          "outputTokens": 81,
-          "outputTokensPerSec": 107.19,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::96rrb-1785506124633-281a029ef0e6"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 2.42,
-          "tcpMs": 5.83,
-          "tlsMs": 20.47,
-          "ttfbMs": 587.9,
-          "ttftMs": 596.96,
-          "coldE2eMs": 625.69,
-          "outputTokens": 89,
-          "outputTokensPerSec": 90.11,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::4lbnx-1785506137427-6bb22bbb99d9"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 17.18,
-          "tcpMs": 0.92,
-          "tlsMs": 5.27,
-          "ttfbMs": 737.13,
-          "ttftMs": 750.85,
-          "coldE2eMs": 774.22,
-          "outputTokens": 89,
-          "outputTokensPerSec": 85.93,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::qzvw5-1785506150180-e35d53beef8b"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 528.16,
-          "ttftMs": 537.63,
-          "outputTokens": 80,
-          "outputTokensPerSec": 84.7,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::ndxv7-1785506167588-16ed592e2b0e"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 555.36,
-          "ttftMs": 564.85,
-          "outputTokens": 76,
-          "outputTokensPerSec": 97.04,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::cz54s-1785506193758-62c604badd8a"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 1572.8,
-          "ttftMs": 1599.13,
-          "outputTokens": 82,
-          "outputTokensPerSec": 94.9,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::ckldd-1785506220560-b2d496e69d94"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 581.5,
-          "ttftMs": 590.68,
-          "outputTokens": 89,
-          "outputTokensPerSec": 82.28,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::xqw9b-1785506245946-0446873e9058"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 2181.73,
-          "ttftMs": 2200.83,
-          "outputTokens": 80,
-          "outputTokensPerSec": 67.07,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::rmsc2-1785506272601-f9657a22e605"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 569.14,
-          "ttftMs": 578.31,
-          "outputTokens": 89,
-          "outputTokensPerSec": 89.53,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::vf5l9-1785506299633-8a689ab20b66"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 716.94,
-          "ttftMs": 727.7,
-          "outputTokens": 81,
-          "outputTokensPerSec": 105.83,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::42rcg-1785506325552-060279b2cb4e"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 553.16,
-          "ttftMs": 562.42,
-          "outputTokens": 80,
-          "outputTokensPerSec": 77.7,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::wv274-1785506352815-a1699c0af2fe"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 823.73,
-          "ttftMs": 823.84,
-          "outputTokens": 82,
-          "outputTokensPerSec": 100.32,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::98s9h-1785506377799-14c860b77bae"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 591.3,
-          "ttftMs": 600.39,
-          "outputTokens": 81,
-          "outputTokensPerSec": 101,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::8vhfh-1785506406209-244a3c2c0865"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 569.99,
-          "ttftMs": 615.21,
-          "outputTokens": 76,
-          "outputTokensPerSec": 95.98,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::6744p-1785506432496-bb3e7c638ef9"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 827.07,
-          "ttftMs": 836.22,
-          "outputTokens": 89,
-          "outputTokensPerSec": 73.51,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::sjnnp-1785506458657-a87d12b33bb7"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 1370.21,
-          "ttftMs": 1379.59,
-          "outputTokens": 85,
-          "outputTokensPerSec": 82.99,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::9sght-1785506484784-571869feee22"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 1081.37,
-          "ttftMs": 1081.46,
-          "outputTokens": 94,
-          "outputTokensPerSec": 115.35,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::wv274-1785506517714-814d944775eb"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 4709.9,
-          "ttftMs": 4719.05,
-          "outputTokens": 79,
-          "outputTokensPerSec": 85.38,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::gbgtj-1785506550497-dae238ac4567"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 559.37,
-          "ttftMs": 568.39,
-          "outputTokens": 82,
-          "outputTokensPerSec": 100.81,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::zxjpm-1785506580876-f04e56d023e6"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 603.9,
-          "ttftMs": 613.17,
-          "outputTokens": 80,
-          "outputTokensPerSec": 68.74,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::flmff-1785506606902-a66cd89e7d15"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 2189.05,
-          "ttftMs": 2210.93,
-          "outputTokens": 82,
-          "outputTokensPerSec": 194.31,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::rhdh2-1785506640347-3056ac81cdbf"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 561.12,
-          "ttftMs": 568.86,
-          "outputTokens": 89,
-          "outputTokensPerSec": 78.27,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::dm627-1785506672857-4d15a2c91e09"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 997.59,
-          "ttftMs": 1046.59,
-          "outputTokens": 76,
-          "outputTokensPerSec": 105.53,
-          "receipts": {
-            "x-vercel-id": "iad1::iad1::sq6jp-1785506701605-1b7f35bf9ad1"
-          }
-        }
-      ],
-      "summary": {
-        "dnsMs": {
-          "median": 4.85,
-          "p95": 30.49,
-          "p99": 30.49
-        },
-        "tcpMs": {
-          "median": 5.82,
-          "p95": 6.16,
-          "p99": 6.16
-        },
-        "tlsMs": {
-          "median": 20.82,
-          "p95": 22.58,
-          "p99": 22.58
-        },
-        "coldTtfbMs": {
-          "median": 721.58,
-          "p95": 1316.2,
-          "p99": 1316.2
-        },
-        "coldTtftMs": {
-          "median": 732.12,
-          "p95": 1326.57,
-          "p99": 1326.57
-        },
-        "coldE2eMs": {
-          "median": 753.44,
-          "p95": 1354.05,
-          "p99": 1354.05
-        },
-        "warmTtfbMs": {
-          "median": 660.42,
-          "p95": 2189.05,
-          "p99": 2189.05
-        },
-        "warmTtftMs": {
-          "median": 671.45,
-          "p95": 2210.93,
-          "p99": 2210.93
-        },
-        "outputTokensPerSec": {
-          "median": 89.82,
-          "p95": 107.19,
-          "p99": 115.35
-        }
-      },
-      "compositeScore": 89.54,
-      "successRate": 1
-    },
-    {
       "provider": "pydantic-ai-gateway",
       "mode": "ai-gateway",
       "model": "claude-haiku-4-5-20251001",
@@ -3348,539 +2772,1115 @@
       "successRate": 1
     },
     {
-      "provider": "openrouter",
+      "provider": "concentrate-ai-gateway",
       "mode": "ai-gateway",
-      "model": "anthropic/claude-haiku-4.5",
+      "model": "anthropic/claude-haiku-4-5-20251001",
       "iterations": [
         {
           "mode": "cold",
-          "dnsMs": 23.76,
-          "tcpMs": 1.49,
-          "tlsMs": 5.49,
-          "ttfbMs": 867.05,
-          "ttftMs": 868.79,
-          "coldE2eMs": 899.53,
-          "outputTokens": 94,
-          "outputTokensPerSec": 83.82,
-          "receipts": {
-            "cf-ray": "a23d137b4e9e2e05-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.83,
-          "tcpMs": 1.23,
-          "tlsMs": 3.34,
-          "ttfbMs": 1225.83,
-          "ttftMs": 1228.06,
-          "coldE2eMs": 1233.47,
-          "outputTokens": 76,
-          "outputTokensPerSec": 95.63,
-          "receipts": {
-            "cf-ray": "a23d13cd890c0867-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 1.42,
-          "tcpMs": 1.04,
-          "tlsMs": 3.65,
-          "ttfbMs": 951.62,
-          "ttftMs": 952.36,
-          "coldE2eMs": 958.47,
-          "outputTokens": 89,
-          "outputTokensPerSec": 71.09,
-          "receipts": {
-            "cf-ray": "a23d141cff70cb8c-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 1.34,
-          "tcpMs": 1.03,
-          "tlsMs": 2.83,
-          "ttfbMs": 670.26,
-          "ttftMs": 671.86,
-          "coldE2eMs": 677.06,
-          "outputTokens": 80,
-          "outputTokensPerSec": 82.18,
-          "receipts": {
-            "cf-ray": "a23d14826bb7e647-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.77,
-          "tcpMs": 1.12,
-          "tlsMs": 4.33,
-          "ttfbMs": 1130.42,
-          "ttftMs": 1131.6,
-          "coldE2eMs": 1137.81,
-          "outputTokens": 76,
-          "outputTokensPerSec": 91.47,
-          "receipts": {
-            "cf-ray": "a23d14d43b76e98e-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.74,
-          "tcpMs": 1.21,
-          "tlsMs": 3.21,
-          "ttfbMs": 760.16,
-          "ttftMs": 787.08,
-          "coldE2eMs": 792.23,
-          "outputTokens": 82,
-          "outputTokensPerSec": 111.97,
-          "receipts": {
-            "cf-ray": "a23d1524d9ac0c3d-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.79,
-          "tcpMs": 0.88,
-          "tlsMs": 5.21,
-          "ttfbMs": 725.89,
-          "ttftMs": 728.77,
-          "coldE2eMs": 735.64,
-          "outputTokens": 81,
-          "outputTokensPerSec": 96.34,
-          "receipts": {
-            "cf-ray": "a23d1590a9bf1735-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.74,
-          "tcpMs": 0.96,
-          "tlsMs": 2.93,
-          "ttfbMs": 517.83,
-          "ttftMs": 519.68,
-          "coldE2eMs": 524.31,
-          "outputTokens": 80,
-          "outputTokensPerSec": 82.98,
-          "receipts": {
-            "cf-ray": "a23d15e1a89382bd-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.9,
-          "tcpMs": 1.4,
+          "dnsMs": 120.64,
+          "tcpMs": 1.83,
           "tlsMs": 5,
-          "ttfbMs": 608.77,
-          "ttftMs": 614.02,
-          "coldE2eMs": 621.32,
-          "outputTokens": 82,
-          "outputTokensPerSec": 101.94,
+          "ttfbMs": 709.23,
+          "ttftMs": 709.34,
+          "coldE2eMs": 836.81,
+          "outputTokens": 89,
+          "outputTokensPerSec": 89.38,
           "receipts": {
-            "cf-ray": "a23d163e8991f2a5-IAD"
+            "cf-ray": "a23f24b37d492d76-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.96,
+          "tcpMs": 1.27,
+          "tlsMs": 5.49,
+          "ttfbMs": 979.52,
+          "ttftMs": 984.69,
+          "coldE2eMs": 992.4,
+          "outputTokens": 80,
+          "outputTokensPerSec": 83.17,
+          "receipts": {
+            "cf-ray": "a23f24fd081f9388-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.94,
+          "tcpMs": 1.62,
+          "tlsMs": 5.7,
+          "ttfbMs": 790.86,
+          "ttftMs": 791.03,
+          "coldE2eMs": 799.29,
+          "outputTokens": 89,
+          "outputTokensPerSec": 89.78,
+          "receipts": {
+            "cf-ray": "a23f25486d4f1f57-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.93,
+          "tcpMs": 1.33,
+          "tlsMs": 5.25,
+          "ttfbMs": 756.27,
+          "ttftMs": 756.54,
+          "coldE2eMs": 764.05,
+          "outputTokens": 76,
+          "outputTokensPerSec": 84.44,
+          "receipts": {
+            "cf-ray": "a23f258f8d83fa80-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.93,
+          "tcpMs": 1.49,
+          "tlsMs": 5.89,
+          "ttfbMs": 744.86,
+          "ttftMs": 744.96,
+          "coldE2eMs": 753.28,
+          "outputTokens": 82,
+          "outputTokensPerSec": 93.88,
+          "receipts": {
+            "cf-ray": "a23f25dadfa7ca91-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 5.26,
+          "tcpMs": 1.24,
+          "tlsMs": 8.5,
+          "ttfbMs": 820.26,
+          "ttftMs": 820.37,
+          "coldE2eMs": 835.37,
+          "outputTokens": 89,
+          "outputTokensPerSec": 90.75,
+          "receipts": {
+            "cf-ray": "a23f262c98fc7ff1-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.95,
+          "tcpMs": 0.84,
+          "tlsMs": 5.35,
+          "ttfbMs": 865.41,
+          "ttftMs": 866.32,
+          "coldE2eMs": 873.46,
+          "outputTokens": 81,
+          "outputTokensPerSec": 94.05,
+          "receipts": {
+            "cf-ray": "a23f267e7f2cd67c-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.71,
+          "tcpMs": 1.26,
+          "tlsMs": 5.47,
+          "ttfbMs": 622.16,
+          "ttftMs": 622.22,
+          "coldE2eMs": 629.66,
+          "outputTokens": 82,
+          "outputTokensPerSec": 99.25,
+          "receipts": {
+            "cf-ray": "a23f26cb2e1ecf0f-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.1,
+          "tcpMs": 1.37,
+          "tlsMs": 9.42,
+          "ttfbMs": 610.17,
+          "ttftMs": 610.25,
+          "coldE2eMs": 622.14,
+          "outputTokens": 80,
+          "outputTokensPerSec": 82.87,
+          "receipts": {
+            "cf-ray": "a23f272218c02337-IAD"
           }
         },
         {
           "mode": "cold",
           "dnsMs": 0.77,
-          "tcpMs": 1.21,
-          "tlsMs": 3.59,
-          "ttfbMs": 632.05,
-          "ttftMs": 633.7,
-          "coldE2eMs": 639.27,
+          "tcpMs": 1.23,
+          "tlsMs": 5.93,
+          "ttfbMs": 897.15,
+          "ttftMs": 897.22,
+          "coldE2eMs": 905.16,
           "outputTokens": 76,
-          "outputTokensPerSec": 91.49,
+          "outputTokensPerSec": 94.01,
           "receipts": {
-            "cf-ray": "a23d16890f5473eb-IAD"
+            "cf-ray": "a23f27707d745a5d-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.7,
+          "tcpMs": 0.89,
+          "tlsMs": 4.81,
+          "ttfbMs": 1249.56,
+          "ttftMs": 1249.63,
+          "coldE2eMs": 1256.03,
+          "outputTokens": 80,
+          "outputTokensPerSec": 88.23,
+          "receipts": {
+            "cf-ray": "a23f27bcaef6dab8-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.78,
+          "tcpMs": 1.06,
+          "tlsMs": 4.36,
+          "ttfbMs": 787.77,
+          "ttftMs": 787.87,
+          "coldE2eMs": 794.07,
+          "outputTokens": 82,
+          "outputTokensPerSec": 98.62,
+          "receipts": {
+            "cf-ray": "a23f2816c94cd6d0-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.03,
+          "tcpMs": 1.01,
+          "tlsMs": 8.01,
+          "ttfbMs": 786.98,
+          "ttftMs": 787.05,
+          "coldE2eMs": 797.1,
+          "outputTokens": 76,
+          "outputTokensPerSec": 91.31,
+          "receipts": {
+            "cf-ray": "a23f28608ff681ed-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.21,
+          "tcpMs": 1.5,
+          "tlsMs": 16.41,
+          "ttfbMs": 821.73,
+          "ttftMs": 821.82,
+          "coldE2eMs": 840.93,
+          "outputTokens": 80,
+          "outputTokensPerSec": 84.06,
+          "receipts": {
+            "cf-ray": "a23f28a57fec8230-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.59,
+          "tcpMs": 1.76,
+          "tlsMs": 5.83,
+          "ttfbMs": 1614.88,
+          "ttftMs": 1646.68,
+          "coldE2eMs": 1655.87,
+          "outputTokens": 81,
+          "outputTokensPerSec": 105.16,
+          "receipts": {
+            "cf-ray": "a23f2900491a74e2-IAD"
           }
         },
         {
           "mode": "cold",
           "dnsMs": 0.87,
-          "tcpMs": 1.03,
-          "tlsMs": 3.09,
-          "ttfbMs": 575.31,
-          "ttftMs": 578.05,
-          "coldE2eMs": 583.05,
-          "outputTokens": 89,
-          "outputTokensPerSec": 88.89,
+          "tcpMs": 1.8,
+          "tlsMs": 6.76,
+          "ttfbMs": 1072.42,
+          "ttftMs": 1072.5,
+          "coldE2eMs": 1081.93,
+          "outputTokens": 81,
+          "outputTokensPerSec": 93.62,
           "receipts": {
-            "cf-ray": "a23d16e68e76e55f-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.73,
-          "tcpMs": 0.99,
-          "tlsMs": 3.85,
-          "ttfbMs": 713.47,
-          "ttftMs": 715.16,
-          "coldE2eMs": 720.74,
-          "outputTokens": 80,
-          "outputTokensPerSec": 71.35,
-          "receipts": {
-            "cf-ray": "a23d173e7f45d644-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.77,
-          "tcpMs": 1.01,
-          "tlsMs": 3.75,
-          "ttfbMs": 569.9,
-          "ttftMs": 571.25,
-          "coldE2eMs": 576.78,
-          "outputTokens": 80,
-          "outputTokensPerSec": 77.18,
-          "receipts": {
-            "cf-ray": "a23d17870f5f9c3a-IAD"
+            "cf-ray": "a23f295caba5feee-IAD"
           }
         },
         {
           "mode": "cold",
           "dnsMs": 0.79,
-          "tcpMs": 1.69,
-          "tlsMs": 5.92,
-          "ttfbMs": 1296.75,
-          "ttftMs": 1303.17,
-          "coldE2eMs": 1311.57,
-          "outputTokens": 89,
-          "outputTokensPerSec": 78.29,
-          "receipts": {
-            "cf-ray": "a23d17f17d72e713-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.91,
-          "tcpMs": 1.16,
-          "tlsMs": 4.6,
-          "ttfbMs": 581.62,
-          "ttftMs": 584.57,
-          "coldE2eMs": 591.25,
+          "tcpMs": 1.35,
+          "tlsMs": 4.16,
+          "ttfbMs": 608.95,
+          "ttftMs": 609.02,
+          "coldE2eMs": 615.32,
           "outputTokens": 80,
-          "outputTokensPerSec": 54.1,
+          "outputTokensPerSec": 82.81,
           "receipts": {
-            "cf-ray": "a23d18590bd885c0-IAD"
+            "cf-ray": "a23f29c0eaf6f27c-IAD"
           }
         },
         {
           "mode": "cold",
-          "dnsMs": 0.53,
-          "tcpMs": 0.76,
-          "tlsMs": 3.1,
-          "ttfbMs": 2166.89,
-          "ttftMs": 2197.98,
-          "coldE2eMs": 2202.38,
-          "outputTokens": 80,
-          "outputTokensPerSec": 87.65,
-          "receipts": {
-            "cf-ray": "a23d18de3d26e603-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.92,
-          "tcpMs": 0.88,
-          "tlsMs": 4.43,
-          "ttfbMs": 2099.38,
-          "ttftMs": 2105.72,
-          "coldE2eMs": 2111.94,
-          "outputTokens": 82,
-          "outputTokensPerSec": 102.81,
-          "receipts": {
-            "cf-ray": "a23d19435ee82d13-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.74,
-          "tcpMs": 0.92,
-          "tlsMs": 3.84,
-          "ttfbMs": 572.58,
-          "ttftMs": 574.51,
-          "coldE2eMs": 580.02,
+          "dnsMs": 0.97,
+          "tcpMs": 1.53,
+          "tlsMs": 4.58,
+          "ttfbMs": 858.3,
+          "ttftMs": 878.28,
+          "coldE2eMs": 885.36,
           "outputTokens": 81,
-          "outputTokensPerSec": 95.92,
+          "outputTokensPerSec": 107.26,
           "receipts": {
-            "cf-ray": "a23d19b50c34c55a-IAD"
+            "cf-ray": "a23f2a13e8e4d4c1-IAD"
           }
         },
         {
           "mode": "cold",
-          "dnsMs": 0.8,
-          "tcpMs": 0.82,
-          "tlsMs": 3.05,
-          "ttfbMs": 500.97,
-          "ttftMs": 502.11,
-          "coldE2eMs": 506.78,
+          "dnsMs": 1.32,
+          "tcpMs": 1.36,
+          "tlsMs": 5.73,
+          "ttfbMs": 955.7,
+          "ttftMs": 955.77,
+          "coldE2eMs": 964.18,
+          "outputTokens": 80,
+          "outputTokensPerSec": 82.27,
+          "receipts": {
+            "cf-ray": "a23f2a5dbc26d6a0-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.99,
+          "tcpMs": 0.93,
+          "tlsMs": 4.06,
+          "ttfbMs": 1480.87,
+          "ttftMs": 1480.95,
+          "coldE2eMs": 1486.93,
+          "outputTokens": 82,
+          "outputTokensPerSec": 107.01,
+          "receipts": {
+            "cf-ray": "a23f2aa9ab068e97-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 650.03,
+          "ttftMs": 650.68,
+          "outputTokens": 81,
+          "outputTokensPerSec": 103.91,
+          "receipts": {
+            "cf-ray": "a23f2b3f9d3ee091-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 556.22,
+          "ttftMs": 556.32,
+          "outputTokens": 76,
+          "outputTokensPerSec": 91.81,
+          "receipts": {
+            "cf-ray": "a23f2bee79ba3895-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 984.35,
+          "ttftMs": 984.45,
+          "outputTokens": 80,
+          "outputTokensPerSec": 83.37,
+          "receipts": {
+            "cf-ray": "a23f2c801ab8b114-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 603.97,
+          "ttftMs": 604.06,
+          "outputTokens": 91,
+          "outputTokensPerSec": 93.39,
+          "receipts": {
+            "cf-ray": "a23f2d137d057a77-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 600.91,
+          "ttftMs": 601,
+          "outputTokens": 80,
+          "outputTokensPerSec": 83.07,
+          "receipts": {
+            "cf-ray": "a23f2da8bcfb6d4d-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 618.24,
+          "ttftMs": 618.33,
+          "outputTokens": 80,
+          "outputTokensPerSec": 82.48,
+          "receipts": {
+            "cf-ray": "a23f2e37ea497048-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 621.07,
+          "ttftMs": 621.17,
+          "outputTokens": 80,
+          "outputTokensPerSec": 75.07,
+          "receipts": {
+            "cf-ray": "a23f2efe4b80d643-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 571.96,
+          "ttftMs": 572.05,
+          "outputTokens": 89,
+          "outputTokensPerSec": 87.52,
+          "receipts": {
+            "cf-ray": "a23f2f95c9c70fed-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 632.81,
+          "ttftMs": 632.9,
+          "outputTokens": 76,
+          "outputTokensPerSec": 95.02,
+          "receipts": {
+            "cf-ray": "a23f3028ed1905e4-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 579.95,
+          "ttftMs": 580.02,
+          "outputTokens": 89,
+          "outputTokensPerSec": 90.35,
+          "receipts": {
+            "cf-ray": "a23f30bd4e20731a-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 655.71,
+          "ttftMs": 655.8,
+          "outputTokens": 80,
+          "outputTokensPerSec": 83.39,
+          "receipts": {
+            "cf-ray": "a23f3160490a588a-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 617.44,
+          "ttftMs": 617.53,
+          "outputTokens": 82,
+          "outputTokensPerSec": 105.58,
+          "receipts": {
+            "cf-ray": "a23f31fb7b7812ce-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 585.73,
+          "ttftMs": 585.84,
+          "outputTokens": 89,
+          "outputTokensPerSec": 90.58,
+          "receipts": {
+            "cf-ray": "a23f32936f112ade-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 1130.72,
+          "ttftMs": 1130.82,
+          "outputTokens": 80,
+          "outputTokensPerSec": 81.55,
+          "receipts": {
+            "cf-ray": "a23f331cecbd150b-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 580.23,
+          "ttftMs": 580.33,
+          "outputTokens": 79,
+          "outputTokensPerSec": 53.02,
+          "receipts": {
+            "cf-ray": "a23f33c63fe47ca7-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 604.63,
+          "ttftMs": 605.05,
+          "outputTokens": 80,
+          "outputTokensPerSec": 79.99,
+          "receipts": {
+            "cf-ray": "a23f34664c619388-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 858.68,
+          "ttftMs": 858.78,
+          "outputTokens": 82,
+          "outputTokensPerSec": 142.04,
+          "receipts": {
+            "cf-ray": "a23f34ff280112f0-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 611.31,
+          "ttftMs": 611.4,
+          "outputTokens": 81,
+          "outputTokensPerSec": 100.2,
+          "receipts": {
+            "cf-ray": "a23f3591a8590814-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 637.4,
+          "ttftMs": 637.49,
           "outputTokens": 84,
-          "outputTokensPerSec": 77.11,
+          "outputTokensPerSec": 85.32,
           "receipts": {
-            "cf-ray": "a23d1a040ead609d-IAD"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 13.26,
-          "tcpMs": 1.1,
-          "tlsMs": 3.8,
-          "ttfbMs": 528.87,
-          "ttftMs": 529.81,
-          "coldE2eMs": 547.98,
-          "outputTokens": 81,
-          "outputTokensPerSec": 100.14,
-          "receipts": {
-            "cf-ray": "a23d1a557e657b0d-IAD"
+            "cf-ray": "a23f362d79208544-IAD"
           }
         },
         {
           "mode": "warm",
-          "ttfbMs": 607.1,
-          "ttftMs": 613.6,
-          "outputTokens": 94,
-          "outputTokensPerSec": 87.24,
-          "receipts": {
-            "cf-ray": "a23d1ab5ef722dfc-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 641.07,
-          "ttftMs": 642.35,
-          "outputTokens": 80,
-          "outputTokensPerSec": 83.18,
-          "receipts": {
-            "cf-ray": "a23d1b58e9f4d693-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 1148.03,
-          "ttftMs": 1150.6,
+          "ttfbMs": 599.64,
+          "ttftMs": 599.73,
           "outputTokens": 82,
-          "outputTokensPerSec": 75.23,
+          "outputTokensPerSec": 102.35,
           "receipts": {
-            "cf-ray": "a23d1bf8be5ed6e9-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 507.42,
-          "ttftMs": 508.34,
-          "outputTokens": 82,
-          "outputTokensPerSec": 104.41,
-          "receipts": {
-            "cf-ray": "a23d1ca368fcd6a5-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 512.76,
-          "ttftMs": 514.22,
-          "outputTokens": 82,
-          "outputTokensPerSec": 86.67,
-          "receipts": {
-            "cf-ray": "a23d1d46dc9ffeee-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 525.32,
-          "ttftMs": 526.76,
-          "outputTokens": 89,
-          "outputTokensPerSec": 64.7,
-          "receipts": {
-            "cf-ray": "a23d1dee1fd3d4c1-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 517.7,
-          "ttftMs": 519.29,
-          "outputTokens": 80,
-          "outputTokensPerSec": 82.66,
-          "receipts": {
-            "cf-ray": "a23d1e90bfce9bb9-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 2710.44,
-          "ttftMs": 2751.14,
-          "outputTokens": 76,
-          "outputTokensPerSec": 87.89,
-          "receipts": {
-            "cf-ray": "a23d1f2ebba1319e-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 566.99,
-          "ttftMs": 569.38,
-          "outputTokens": 81,
-          "outputTokensPerSec": 67.49,
-          "receipts": {
-            "cf-ray": "a23d1fd66f0b1315-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 858.92,
-          "ttftMs": 890.62,
-          "outputTokens": 80,
-          "outputTokensPerSec": 75.99,
-          "receipts": {
-            "cf-ray": "a23d2085e9338b1a-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 519.45,
-          "ttftMs": 521.86,
-          "outputTokens": 80,
-          "outputTokensPerSec": 81.52,
-          "receipts": {
-            "cf-ray": "a23d212c4b1544a6-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 618.62,
-          "ttftMs": 620.03,
-          "outputTokens": 76,
-          "outputTokensPerSec": 90.97,
-          "receipts": {
-            "cf-ray": "a23d21d3cd3b0ab0-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 537.67,
-          "ttftMs": 540.08,
-          "outputTokens": 82,
-          "outputTokensPerSec": 99.9,
-          "receipts": {
-            "cf-ray": "a23d22739a16f2c6-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 861.87,
-          "ttftMs": 883.18,
-          "outputTokens": 81,
-          "outputTokensPerSec": 119.87,
-          "receipts": {
-            "cf-ray": "a23d233abf97bb25-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 1077.2,
-          "ttftMs": 1093.5,
-          "outputTokens": 94,
-          "outputTokensPerSec": 91.33,
-          "receipts": {
-            "cf-ray": "a23d240dbcead6d7-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 543.24,
-          "ttftMs": 544.43,
-          "outputTokens": 76,
-          "outputTokensPerSec": 92.62,
-          "receipts": {
-            "cf-ray": "a23d24ceaf8e70c5-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 838.61,
-          "ttftMs": 840.8,
-          "outputTokens": 89,
-          "outputTokensPerSec": 67.54,
-          "receipts": {
-            "cf-ray": "a23d256d08cee60b-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 1783.67,
-          "ttftMs": 1857.39,
-          "outputTokens": 80,
-          "outputTokensPerSec": 74.53,
-          "receipts": {
-            "cf-ray": "a23d2636aadaff56-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 576.89,
-          "ttftMs": 578.49,
-          "outputTokens": 80,
-          "outputTokensPerSec": 84.23,
-          "receipts": {
-            "cf-ray": "a23d270ce9d8e53f-IAD"
-          }
-        },
-        {
-          "mode": "warm",
-          "ttfbMs": 3175.76,
-          "ttftMs": 3220.79,
-          "outputTokens": 89,
-          "outputTokensPerSec": 118.54,
-          "receipts": {
-            "cf-ray": "a23d27ac58c428bb-IAD"
+            "cf-ray": "a23f36be6da96b8a-IAD"
           }
         }
       ],
       "summary": {
         "dnsMs": {
-          "median": 0.8,
-          "p95": 13.26,
-          "p99": 13.26
+          "median": 0.96,
+          "p95": 5.26,
+          "p99": 5.26
         },
         "tcpMs": {
-          "median": 1.04,
-          "p95": 1.49,
-          "p99": 1.49
+          "median": 1.34,
+          "p95": 1.8,
+          "p99": 1.8
         },
         "tlsMs": {
-          "median": 3.78,
-          "p95": 5.49,
-          "p99": 5.49
+          "median": 5.59,
+          "p95": 9.42,
+          "p99": 9.42
         },
         "coldTtfbMs": {
-          "median": 691.87,
-          "p95": 2099.38,
-          "p99": 2099.38
+          "median": 821,
+          "p95": 1480.87,
+          "p99": 1480.87
         },
         "coldTtftMs": {
-          "median": 693.51,
-          "p95": 2105.72,
-          "p99": 2105.72
+          "median": 821.09,
+          "p95": 1480.95,
+          "p99": 1480.95
         },
         "coldE2eMs": {
-          "median": 698.9,
-          "p95": 2111.94,
-          "p99": 2111.94
+          "median": 838.87,
+          "p95": 1486.93,
+          "p99": 1486.93
         },
         "warmTtfbMs": {
-          "median": 612.86,
-          "p95": 2710.44,
-          "p99": 2710.44
+          "median": 614.38,
+          "p95": 984.35,
+          "p99": 984.35
         },
         "warmTtftMs": {
-          "median": 616.81,
-          "p95": 2751.14,
-          "p99": 2751.14
+          "median": 614.47,
+          "p95": 984.45,
+          "p99": 984.45
         },
         "outputTokensPerSec": {
-          "median": 86.95,
-          "p95": 104.41,
-          "p99": 111.97
+          "median": 90.47,
+          "p95": 105.58,
+          "p99": 107.01
         }
       },
-      "compositeScore": 88.58,
+      "compositeScore": 90.35,
+      "successRate": 1
+    },
+    {
+      "provider": "anthropic-direct",
+      "mode": "ai-gateway",
+      "model": "claude-haiku-4-5-20251001",
+      "iterations": [
+        {
+          "mode": "cold",
+          "dnsMs": 7.51,
+          "tcpMs": 0.86,
+          "tlsMs": 3.26,
+          "ttfbMs": 588.74,
+          "ttftMs": 588.94,
+          "coldE2eMs": 600.57,
+          "outputTokens": 89,
+          "outputTokensPerSec": 88.26,
+          "receipts": {
+            "cf-ray": "a23d13c2abe057da-IAD",
+            "request-id": "req_011CdaF8BpFnjLEh6bGGZndG"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.93,
+          "tcpMs": 1.26,
+          "tlsMs": 3.74,
+          "ttfbMs": 611.41,
+          "ttftMs": 611.77,
+          "coldE2eMs": 618.7,
+          "outputTokens": 76,
+          "outputTokensPerSec": 94.38,
+          "receipts": {
+            "cf-ray": "a23d141369d45946-IAD",
+            "request-id": "req_011CdaF99TeyKaNJJJqngqge"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.77,
+          "tcpMs": 1.69,
+          "tlsMs": 5.03,
+          "ttfbMs": 730.66,
+          "ttftMs": 731.03,
+          "coldE2eMs": 739.52,
+          "outputTokens": 81,
+          "outputTokensPerSec": 99.95,
+          "receipts": {
+            "cf-ray": "a23d1477fd2fc9fe-IAD",
+            "request-id": "req_011CdaFAKpXSifrwz3wHybHZ"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.8,
+          "tcpMs": 1.11,
+          "tlsMs": 3.49,
+          "ttfbMs": 531.25,
+          "ttftMs": 531.33,
+          "coldE2eMs": 536.72,
+          "outputTokens": 85,
+          "outputTokensPerSec": 86.29,
+          "receipts": {
+            "cf-ray": "a23d14c989613ad9-IAD",
+            "request-id": "req_011CdaFBHcMC7gstN3Whwnfe"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.74,
+          "tcpMs": 1.2,
+          "tlsMs": 3.21,
+          "ttfbMs": 503.42,
+          "ttftMs": 503.65,
+          "coldE2eMs": 508.79,
+          "outputTokens": 84,
+          "outputTokensPerSec": 84.58,
+          "receipts": {
+            "cf-ray": "a23d151adcc4b268-IAD",
+            "request-id": "req_011CdaFCFCmKhWxsPVEEY2ZY"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.79,
+          "tcpMs": 0.94,
+          "tlsMs": 2.21,
+          "ttfbMs": 607.02,
+          "ttftMs": 641.9,
+          "coldE2eMs": 645.84,
+          "outputTokens": 80,
+          "outputTokensPerSec": 88.76,
+          "receipts": {
+            "cf-ray": "a23d15864ee6211a-IAD",
+            "request-id": "req_011CdaFDWhx69wZP7EfYUcBe"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.85,
+          "tcpMs": 0.95,
+          "tlsMs": 2.87,
+          "ttfbMs": 784.05,
+          "ttftMs": 784.17,
+          "coldE2eMs": 788.85,
+          "outputTokens": 80,
+          "outputTokensPerSec": 82.09,
+          "receipts": {
+            "cf-ray": "a23d15d5f9d9e60b-IAD",
+            "request-id": "req_011CdaFETZxmDXgn5Q6NJWWb"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.77,
+          "tcpMs": 1.13,
+          "tlsMs": 2.63,
+          "ttfbMs": 539.08,
+          "ttftMs": 541.65,
+          "coldE2eMs": 546.17,
+          "outputTokens": 82,
+          "outputTokensPerSec": 98.36,
+          "receipts": {
+            "cf-ray": "a23d16354989e629-IAD",
+            "request-id": "req_011CdaFFaRjxem5JcNcdy8ca"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.72,
+          "tcpMs": 1.34,
+          "tlsMs": 2.98,
+          "ttfbMs": 488.69,
+          "ttftMs": 489.12,
+          "coldE2eMs": 494.16,
+          "outputTokens": 80,
+          "outputTokensPerSec": 82.47,
+          "receipts": {
+            "cf-ray": "a23d167f3c82a159-IAD",
+            "request-id": "req_011CdaFGSyoE6yeL1beKWGmg"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.87,
+          "tcpMs": 1.12,
+          "tlsMs": 3.64,
+          "ttfbMs": 464.11,
+          "ttftMs": 465.34,
+          "coldE2eMs": 470.97,
+          "outputTokens": 83,
+          "outputTokensPerSec": 96.67,
+          "receipts": {
+            "cf-ray": "a23d16dd8d09c9bc-IAD",
+            "request-id": "req_011CdaFHZZi5KcvQQMwqQ4eY"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.82,
+          "tcpMs": 1.45,
+          "tlsMs": 2.77,
+          "ttfbMs": 640.59,
+          "ttftMs": 640.69,
+          "coldE2eMs": 645.74,
+          "outputTokens": 81,
+          "outputTokensPerSec": 99.77,
+          "receipts": {
+            "cf-ray": "a23d1734bad70fbe-IAD",
+            "request-id": "req_011CdaFJbCTdFQaKTNhYyzta"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.69,
+          "tcpMs": 1.37,
+          "tlsMs": 4.04,
+          "ttfbMs": 538.98,
+          "ttftMs": 539.1,
+          "coldE2eMs": 545.19,
+          "outputTokens": 82,
+          "outputTokensPerSec": 96.88,
+          "receipts": {
+            "cf-ray": "a23d177da94096a2-IAD",
+            "request-id": "req_011CdaFKT6aeawSHtXuJXgVQ"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.05,
+          "tcpMs": 0.88,
+          "tlsMs": 5.53,
+          "ttfbMs": 533.73,
+          "ttftMs": 533.9,
+          "coldE2eMs": 541.35,
+          "outputTokens": 76,
+          "outputTokensPerSec": 90.49,
+          "receipts": {
+            "cf-ray": "a23d17e83822dddf-IAD",
+            "request-id": "req_011CdaFLhwpZDk68E11d7NSA"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.89,
+          "tcpMs": 9.87,
+          "tlsMs": 11.96,
+          "ttfbMs": 498.99,
+          "ttftMs": 499.12,
+          "coldE2eMs": 521.83,
+          "outputTokens": 82,
+          "outputTokensPerSec": 105.19,
+          "receipts": {
+            "cf-ray": "a23d18504a30c978-IAD",
+            "request-id": "req_011CdaFMw7NAHezqnG6QWNUV"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.75,
+          "tcpMs": 0.87,
+          "tlsMs": 3.27,
+          "ttfbMs": 1539.14,
+          "ttftMs": 1558.99,
+          "coldE2eMs": 1563.89,
+          "outputTokens": 82,
+          "outputTokensPerSec": 13.76,
+          "receipts": {
+            "cf-ray": "a23d18ae1eaa52d5-IAD",
+            "request-id": "req_011CdaFP3zdWnEqQRgbcXWBT"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.64,
+          "tcpMs": 0.89,
+          "tlsMs": 5.75,
+          "ttfbMs": 520.53,
+          "ttftMs": 520.64,
+          "coldE2eMs": 527.93,
+          "outputTokens": 82,
+          "outputTokensPerSec": 102.41,
+          "receipts": {
+            "cf-ray": "a23d193a5d2f059d-IAD",
+            "request-id": "req_011CdaFQhF27zDhz667e5aYM"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.73,
+          "tcpMs": 0.89,
+          "tlsMs": 2.56,
+          "ttfbMs": 816.71,
+          "ttftMs": 816.82,
+          "coldE2eMs": 821,
+          "outputTokens": 76,
+          "outputTokensPerSec": 86,
+          "receipts": {
+            "cf-ray": "a23d19a9a85e1272-IAD",
+            "request-id": "req_011CdaFS1RgQzxnbPXVRKXLZ"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.76,
+          "tcpMs": 1.19,
+          "tlsMs": 2.78,
+          "ttfbMs": 557.85,
+          "ttftMs": 560.82,
+          "coldE2eMs": 565.54,
+          "outputTokens": 80,
+          "outputTokensPerSec": 82.35,
+          "receipts": {
+            "cf-ray": "a23d19f9bd56ae7d-IAD",
+            "request-id": "req_011CdaFSx9mE9FjvbQtAhf4E"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.74,
+          "tcpMs": 1.16,
+          "tlsMs": 3.61,
+          "ttfbMs": 642.7,
+          "ttftMs": 643.65,
+          "coldE2eMs": 649.17,
+          "outputTokens": 80,
+          "outputTokensPerSec": 82.57,
+          "receipts": {
+            "cf-ray": "a23d1a4a8bf74078-IAD",
+            "request-id": "req_011CdaFTv8VsaGwLbFsLu1V7"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.88,
+          "tcpMs": 0.86,
+          "tlsMs": 2.84,
+          "ttfbMs": 719.86,
+          "ttftMs": 725.2,
+          "coldE2eMs": 730.78,
+          "outputTokens": 83,
+          "outputTokensPerSec": 90.24,
+          "receipts": {
+            "cf-ray": "a23d1a9a0cc2f2c6-IAD",
+            "request-id": "req_011CdaFUqrYah1v2ayvQ7Gxa"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 566.19,
+          "ttftMs": 566.73,
+          "outputTokens": 82,
+          "outputTokensPerSec": 104.52,
+          "receipts": {
+            "cf-ray": "a23d1b457ffcef60-IAD",
+            "request-id": "req_011CdaFWsX4rV4qbY1EsNCSZ"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 870.51,
+          "ttftMs": 870.68,
+          "outputTokens": 82,
+          "outputTokensPerSec": 102.88,
+          "receipts": {
+            "cf-ray": "a23d1be3cc313e97-IAD",
+            "request-id": "req_011CdaFYjcNB96v6SLCVXxSK"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 443.77,
+          "ttftMs": 448.47,
+          "outputTokens": 76,
+          "outputTokensPerSec": 94.33,
+          "receipts": {
+            "cf-ray": "a23d1c8ea93b9bb5-IAD",
+            "request-id": "req_011CdaFakCtbS79VrCeV3AD3"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 2122.89,
+          "ttftMs": 2207.74,
+          "outputTokens": 80,
+          "outputTokensPerSec": 92.03,
+          "receipts": {
+            "cf-ray": "a23d1d283cb288d0-IAD",
+            "request-id": "req_011CdaFcZL6sRep1TFbHBXnu"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 517.77,
+          "ttftMs": 517.95,
+          "outputTokens": 83,
+          "outputTokensPerSec": 83.89,
+          "receipts": {
+            "cf-ray": "a23d1dd82dfce613-IAD",
+            "request-id": "req_011CdaFedtzP9V7aes1EicK6"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 822.19,
+          "ttftMs": 832.24,
+          "outputTokens": 80,
+          "outputTokensPerSec": 84.67,
+          "receipts": {
+            "cf-ray": "a23d1e78bd5dd147-IAD",
+            "request-id": "req_011CdaFgXYZ1EZ8fhbnGPXAe"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 517.1,
+          "ttftMs": 517.45,
+          "outputTokens": 82,
+          "outputTokensPerSec": 105.04,
+          "receipts": {
+            "cf-ray": "a23d1f1b5a06b274-IAD",
+            "request-id": "req_011CdaFiSncZdzdetry71Qc7"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 468.9,
+          "ttftMs": 470.59,
+          "outputTokens": 80,
+          "outputTokensPerSec": 82.99,
+          "receipts": {
+            "cf-ray": "a23d1fc0e9b9aa85-IAD",
+            "request-id": "req_011CdaFkQ3U1GiANXi6WysA4"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 879.55,
+          "ttftMs": 881.12,
+          "outputTokens": 76,
+          "outputTokensPerSec": 93.5,
+          "receipts": {
+            "cf-ray": "a23d206c4ffd5e59-IAD",
+            "request-id": "req_011CdaFnRHw9jfimLqeJdkyG"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 539.55,
+          "ttftMs": 539.72,
+          "outputTokens": 81,
+          "outputTokensPerSec": 97.69,
+          "receipts": {
+            "cf-ray": "a23d2119faf4c500-IAD",
+            "request-id": "req_011CdaFpUSzfBSwAszAX2kyU"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 699.11,
+          "ttftMs": 699.26,
+          "outputTokens": 80,
+          "outputTokensPerSec": 83.33,
+          "receipts": {
+            "cf-ray": "a23d21be1ca0eb77-IAD",
+            "request-id": "req_011CdaFrQYeojurg9KE19k5L"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 492.99,
+          "ttftMs": 493.08,
+          "outputTokens": 79,
+          "outputTokensPerSec": 87.99,
+          "receipts": {
+            "cf-ray": "a23d225e0b38290e-IAD",
+            "request-id": "req_011CdaFtHo9ewFoNpXP6Pgv3"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 499.31,
+          "ttftMs": 499.44,
+          "outputTokens": 94,
+          "outputTokensPerSec": 69,
+          "receipts": {
+            "cf-ray": "a23d23197b78d653-IAD",
+            "request-id": "req_011CdaFvW2AqCeCEmzrvLGYA"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 514.95,
+          "ttftMs": 517.76,
+          "outputTokens": 79,
+          "outputTokensPerSec": 88.15,
+          "receipts": {
+            "cf-ray": "a23d23eaec86e61b-IAD",
+            "request-id": "req_011CdaFxy98a5kA1t83oXqEo"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 644.15,
+          "ttftMs": 646.95,
+          "outputTokens": 76,
+          "outputTokensPerSec": 90.17,
+          "receipts": {
+            "cf-ray": "a23d24b62a6afbb3-IAD",
+            "request-id": "req_011CdaG1NQR8fB7jRfC8AXGi"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 582.81,
+          "ttftMs": 584.67,
+          "outputTokens": 89,
+          "outputTokensPerSec": 80.8,
+          "receipts": {
+            "cf-ray": "a23d2557de5ac655-IAD",
+            "request-id": "req_011CdaG3GuKmeWMcZix3zUfq"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 583.08,
+          "ttftMs": 583.56,
+          "outputTokens": 89,
+          "outputTokensPerSec": 85.24,
+          "receipts": {
+            "cf-ray": "a23d262158afc94e-IAD",
+            "request-id": "req_011CdaG5emGzVfToWaisdMuB"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 774.99,
+          "ttftMs": 775.25,
+          "outputTokens": 80,
+          "outputTokensPerSec": 73.92,
+          "receipts": {
+            "cf-ray": "a23d26f2e8c41d4c-IAD",
+            "request-id": "req_011CdaG88c9Hpo5S7LnTFJgH"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 515.88,
+          "ttftMs": 516.06,
+          "outputTokens": 80,
+          "outputTokensPerSec": 78.3,
+          "receipts": {
+            "cf-ray": "a23d2791ae5dd42d-IAD",
+            "request-id": "req_011CdaG9zjgQwZCaXDfu7KHa"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 1086.69,
+          "ttftMs": 1113.66,
+          "outputTokens": 81,
+          "outputTokensPerSec": 90.43,
+          "receipts": {
+            "cf-ray": "a23d28475daa3c85-IAD",
+            "request-id": "req_011CdaGC9jUKC5A1qdDt5pKq"
+          }
+        }
+      ],
+      "summary": {
+        "dnsMs": {
+          "median": 0.79,
+          "p95": 1.93,
+          "p99": 1.93
+        },
+        "tcpMs": {
+          "median": 1.13,
+          "p95": 1.69,
+          "p99": 1.69
+        },
+        "tlsMs": {
+          "median": 3.27,
+          "p95": 5.75,
+          "p99": 5.75
+        },
+        "coldTtfbMs": {
+          "median": 573.3,
+          "p95": 816.71,
+          "p99": 816.71
+        },
+        "coldTtftMs": {
+          "median": 574.88,
+          "p95": 816.82,
+          "p99": 816.82
+        },
+        "coldE2eMs": {
+          "median": 583.06,
+          "p95": 821,
+          "p99": 821
+        },
+        "warmTtfbMs": {
+          "median": 574.5,
+          "p95": 1086.69,
+          "p99": 1086.69
+        },
+        "warmTtftMs": {
+          "median": 575.15,
+          "p95": 1113.66,
+          "p99": 1113.66
+        },
+        "outputTokensPerSec": {
+          "median": 88.51,
+          "p95": 102.88,
+          "p99": 104.52
+        }
+      },
+      "compositeScore": 91.09,
       "successRate": 1
     }
   ]
