@@ -184,6 +184,8 @@ export const providers: ProviderConfig[] = [
     name: 'sandbox0',
     requiredEnvVars: ['SANDBOX0_TOKEN'],
     createCompute: () => sandbox0({ token: process.env.SANDBOX0_TOKEN! }),
+    // Outlive the 10-minute DAX timeout without leaving a zombie sandbox if cleanup cannot run.
+    sandboxOptions: { hardTtl: 900 },
   },
   {
     name: 'sprites',
