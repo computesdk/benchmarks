@@ -184,8 +184,10 @@ export const providers: ProviderConfig[] = [
     name: 'sandbox0',
     requiredEnvVars: ['SANDBOX0_TOKEN'],
     createCompute: () => sandbox0({ token: process.env.SANDBOX0_TOKEN! }),
+    // TTI modes (sequential, staggered, and burst) use 128 MiB for Sandbox0.
+    // DAX overrides memory to 16 GiB while preserving this hard TTL.
     // Outlive the 10-minute DAX timeout without leaving a zombie sandbox if cleanup cannot run.
-    sandboxOptions: { hardTtl: 900 },
+    sandboxOptions: { memory: 128, hardTtl: 900 },
   },
   {
     name: 'sprites',

@@ -74,7 +74,9 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   superserve:   { templateId: 'node22-8cpu-16gb' },           // 8 vCPU / 16 GiB template built in the pre-step
   createos:     { shape: 's-8vcpu-16gb', ephemeralDiskMb: 61440 }, // 8 vCPU, 16 GiB RAM, 60 GiB disk
   opencomputer: { cpuCount: 4, memoryMB: 16384, timeout: 600_000 },
-  sandbox0:    { memory: 16384 },  // Sandbox0 exposes only `memory`
+  // Sandbox0 exposes only memory. Override the 128 MiB TTI size;
+  // getSandboxOptionsWithResources preserves hardTtl from providers.ts.
+  sandbox0:     { memory: 16384 },
 };
 
 function getSandboxOptionsWithResources(providerName: string, baseOptions?: Record<string, any>): Record<string, any> {
