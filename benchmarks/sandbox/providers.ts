@@ -1,4 +1,5 @@
 import { archil } from '@computesdk/archil';
+import { arker } from '@computesdk/arker';
 import { beam } from '@computesdk/beam';
 import { blaxel } from '@computesdk/blaxel';
 import { codesandbox } from '@computesdk/codesandbox';
@@ -42,6 +43,14 @@ export const providers: ProviderConfig[] = [
     requiredEnvVars: ['ARCHIL_API_KEY', 'ARCHIL_REGION', 'ARCHIL_DISK_ID'],
     createCompute: () => archil({ apiKey: process.env.ARCHIL_API_KEY!, region: process.env.ARCHIL_REGION! }),
     sandboxOptions: { diskId: process.env.ARCHIL_DISK_ID! }
+  },
+  {
+    // Arker sizes via `platforms` on the factory, not sandbox.create(), so like
+    // lightning it is set from the dax workflow env (ARKER_PLATFORMS=graviton4).
+    name: 'arker',
+    requiredEnvVars: ['ARKER_API_KEY'],
+    createCompute: () => arker({ apiKey: process.env.ARKER_API_KEY! }),
+    sandboxOptions: { templateId: 'ubuntu-small' },
   },
   {
     // Activated in daily + PR benchmarks once BEAM_TOKEN / BEAM_WORKSPACE_ID secrets landed.
