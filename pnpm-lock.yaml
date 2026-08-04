@@ -155,6 +155,9 @@ importers:
       '@google-cloud/storage':
         specifier: ^7.21.0
         version: 7.21.0
+      '@mosaic-sandbox/computesdk':
+        specifier: ^0.1.0
+        version: 0.1.0
       '@storagesdk/adapters':
         specifier: ^0.10.0
         version: 0.10.0(@aws-sdk/client-s3@3.1092.0)(@aws-sdk/lib-storage@3.1092.0(@aws-sdk/client-s3@3.1092.0))(@aws-sdk/s3-presigned-post@3.1092.0)(@aws-sdk/s3-request-presigner@3.1092.0)(@azure/storage-blob@12.33.0)(@google-cloud/storage@7.21.0)(@tigrisdata/storage@3.17.2)(@vercel/blob@2.6.1)(tensorlake@0.5.89(bufferutil@4.1.0)(utf-8-validate@6.0.6))
@@ -1470,6 +1473,10 @@ packages:
     resolution: {integrity: sha512-mQ2s0pYYiav+tzCDR05Zptem8Ey2v8s11lri5RKGhTtL4COVCvVCk5vtyRYNT+9L8qSfyOqqefF9UtnW8mC5jA==}
     engines: {node: '>= 20.19.0'}
 
+  '@mosaic-sandbox/computesdk@0.1.0':
+    resolution: {integrity: sha512-7eMd7tCKtKsTkGNx+DGr/JK+x9fxBwDw7BBmXkD/mBAMa7CYO9quPBITs1kY7F/E92WECViH14Gyi7ROdXODng==}
+    engines: {node: '>=24'}
+
   '@nodable/entities@3.0.0':
     resolution: {integrity: sha512-8L9xFeTYKhm49xfIypoe2W5wV1m/3Z58kT+7kR9A8OyFxcPduI4VmxaUMQyKYrRjUoLLSXv6EKKID5Tvj9cUVw==}
 
@@ -2384,6 +2391,7 @@ packages:
 
   anchorbrowser@0.16.3:
     resolution: {integrity: sha512-slz85Zmj0T3XDOKLH8n7nxcLFHcvpPJInCHcysuOyUbP2sMAyhMwMS6LiS727WqnTMaVGx4p6KgJpIJ8+FWhlw==}
+    deprecated: 'anchorbrowser 0.x.x is deprecated. Upgrade to anchorbrowser@^1.0.0 — see the migration guide: https://github.com/anchorbrowser/AnchorBrowser-SDK-Typescript/blob/main/MIGRATION.md'
 
   ansi-colors@4.1.3:
     resolution: {integrity: sha512-/6w/C21Pm1A7aZitlI5Ni/2J6FFQN8i1Cvz3kHABAAbw93v/NlvKdVOqz7CCWz/3iv/JplRSEEZ83XION15ovw==}
@@ -6363,10 +6371,10 @@ snapshots:
       - bare-abort-controller
       - react-native-b4a
 
-  '@connectrpc/connect-node@2.1.2(@bufbuild/protobuf@2.12.1)(@connectrpc/connect@2.1.2(@bufbuild/protobuf@2.13.0))':
+  '@connectrpc/connect-node@2.1.2(@bufbuild/protobuf@2.12.1)(@connectrpc/connect@2.1.2(@bufbuild/protobuf@2.12.1))':
     dependencies:
       '@bufbuild/protobuf': 2.12.1
-      '@connectrpc/connect': 2.1.2(@bufbuild/protobuf@2.13.0)
+      '@connectrpc/connect': 2.1.2(@bufbuild/protobuf@2.12.1)
 
   '@connectrpc/connect-web@2.1.2(@bufbuild/protobuf@2.13.0)(@connectrpc/connect@2.1.2(@bufbuild/protobuf@2.13.0))':
     dependencies:
@@ -6991,6 +6999,11 @@ snapshots:
       node-addon-api: 8.9.0
       prebuild-install: 7.1.3
     optional: true
+
+  '@mosaic-sandbox/computesdk@0.1.0':
+    dependencies:
+      '@computesdk/provider': 2.1.4
+      computesdk: 4.1.4
 
   '@nodable/entities@3.0.0': {}
 
@@ -7835,7 +7848,7 @@ snapshots:
     dependencies:
       '@bufbuild/protobuf': 2.12.1
       '@connectrpc/connect': 2.1.2(@bufbuild/protobuf@2.12.1)
-      '@connectrpc/connect-node': 2.1.2(@bufbuild/protobuf@2.12.1)(@connectrpc/connect@2.1.2(@bufbuild/protobuf@2.13.0))
+      '@connectrpc/connect-node': 2.1.2(@bufbuild/protobuf@2.12.1)(@connectrpc/connect@2.1.2(@bufbuild/protobuf@2.12.1))
       ws: 8.21.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
     transitivePeerDependencies:
       - bufferutil
