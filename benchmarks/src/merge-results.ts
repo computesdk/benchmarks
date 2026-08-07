@@ -1,7 +1,7 @@
 /**
  * Merge per-provider benchmark results into combined result files.
  *
- * Usage: tsx src/merge-results.ts --input <artifacts-dir> [--mode storage|snapshot-fork|browser|browser-throughput|ai-gateway]
+ * Usage: tsx src/merge-results.ts --input <artifacts-dir> [--mode storage|snapshot-fork|browser|browser-throughput|ai-gateway|git]
  *
  * By default, merges sandbox benchmark results: reads latest.json files from
  * the input directory, groups by mode (sequential/staggered/burst), computes
@@ -21,6 +21,9 @@
  * With --mode ai-gateway, merges AI gateway benchmark results: deduplicates
  * by provider, computes AI-gateway-specific composite scores, and writes
  * combined files to results/ai-gateway/latest.json.
+ *
+ * With --mode git, merges git benchmark results: deduplicates by provider
+ * and writes combined files to results/git/latest.json.
  */
 import fs from 'fs';
 import path from 'path';
@@ -34,12 +37,14 @@ import {
 } from '../browser/throughput-scoring.js';
 import { computeAIGatewayCompositeScores, sortAIGatewayByCompositeScore } from '../ai-gateway/scoring.js';
 import { printResultsTable, writeResultsJson } from '../sandbox/table.js';
+import { writeGitResultsJson } from '../git/legacy-results.js';
 import type { BenchmarkResult } from '../sandbox/types.js';
 import type { StorageBenchmarkResult } from '../storage/types.js';
 import type { SnapshotForkBenchmarkResult } from '../storage/snapshot-fork-types.js';
 import type { BrowserBenchmarkResult } from '../browser/types.js';
 import type { ThroughputBenchmarkResult } from '../browser/throughput-types.js';
 import type { AIGatewayBenchmarkResult } from '../ai-gateway/types.js';
+import type { GitBenchmarkResult } from '../git/types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '../..');
@@ -734,6 +739,85 @@ async function mainAIGateway() {
   console.log(`Copied latest: ${latestPath}`);
 }
 
+function printGitResultsTable(results: GitBenchmarkResult[]): void {
+  const sorted = [...results].sort((a, b) => (a.provider).localeCompare(b.provider));
+
+  console.log(`\n${'='.repeat(95)}`);
+  console.log('  GIT BENCHMARK RESULTS');
+  console.log('='.repeat(95));
+  console.log(
+    ['Provider', 'Clone', 'Push', 'Pull', 'Success']
+      .map((h, i) => h.padEnd([14, 12, 12, 12, 10][i]))
+      .join(' | '),
+  );
+  console.log(
+    [14, 12, 12, 12, 10].map((w) => '-'.repeat(w)).join('-+-'),
+  );
+
+  for (const r of sorted) {
+    if (r.skipped) {
+      console.log([r.provider.padEnd(14), '--'.padEnd(12), '--'.padEnd(12), '--'.padEnd(12), 'SKIPPED'.padEnd(10)].join(' | '));
+      continue;
+    }
+    const ok = r.iterations.filter((i) => !i.error).length;
+    const total = r.iterations.length;
+    const clone = (r.summary.cloneMs.median / 1000).toFixed(2) + 's';
+    const push = (r.summary.pushMs.median / 1000).toFixed(2) + 's';
+    const pull = (r.summary.pullMs.median / 1000).toFixed(2) + 's';
+    console.log([r.provider.padEnd(14), clone.padEnd(12), push.padEnd(12), pull.padEnd(12), `${ok}/${total}`.padEnd(10)].join(' | '));
+  }
+  console.log('='.repeat(95));
+}
+
+async function mainGit() {
+  const jsonFiles: string[] = [];
+  function walk(dir: string) {
+    if (!fs.existsSync(dir)) return;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name === 'latest.json') jsonFiles.push(full);
+    }
+  }
+  walk(inputDir!);
+
+  if (jsonFiles.length === 0) {
+    console.error(`No latest.json files found in ${inputDir}`);
+    process.exit(1);
+  }
+
+  console.log(`Found ${jsonFiles.length} result files`);
+
+  const seen = new Map<string, { result: GitBenchmarkResult; fromSingleProvider: boolean }>();
+
+  for (const file of jsonFiles) {
+    const raw = JSON.parse(fs.readFileSync(file, 'utf-8')) as { results: GitBenchmarkResult[] };
+    const fromSingleProvider = raw.results.length === 1;
+    for (const result of raw.results) {
+      const existing = seen.get(result.provider);
+      if (!existing || (fromSingleProvider && !existing.fromSingleProvider)) {
+        seen.set(result.provider, { result, fromSingleProvider });
+      }
+    }
+  }
+
+  const deduped = Array.from(seen.values()).map((e) => e.result);
+  console.log(`\nMerging ${deduped.length} provider results for mode: git`);
+
+  printGitResultsTable(deduped);
+
+  const timestamp = new Date().toISOString().slice(0, 10);
+  const resultsDir = path.resolve(ROOT, 'results/git');
+  fs.mkdirSync(resultsDir, { recursive: true });
+
+  const outPath = path.join(resultsDir, `${timestamp}.json`);
+  await writeGitResultsJson(deduped, outPath);
+
+  const latestPath = path.join(resultsDir, 'latest.json');
+  fs.copyFileSync(outPath, latestPath);
+  console.log(`Copied latest: ${latestPath}`);
+}
+
 const runner = mergeMode === 'storage'
   ? mainStorage
   : mergeMode === 'snapshot-fork'
@@ -744,6 +828,8 @@ const runner = mergeMode === 'storage'
   ? mainBrowserThroughput
   : mergeMode === 'ai-gateway'
   ? mainAIGateway
+  : mergeMode === 'git'
+  ? mainGit
   : main;
 runner().catch(err => {
   console.error('Merge failed:', err);

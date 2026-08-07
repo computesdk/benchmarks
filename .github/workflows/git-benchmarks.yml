@@ -1,0 +1,126 @@
+name: Git Benchmark
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'benchmarks/git/**'
+      - 'benchmarks/src/util/**'
+      - 'benchmarks/src/merge-results.ts'
+      - 'package.json'
+      - '.github/workflows/git-benchmarks.yml'
+  schedule:
+    - cron: '0 0 * * 1' # Weekly on Monday at midnight UTC
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: 'Iterations per provider'
+        required: false
+        default: '10'
+      provider:
+        description: 'Provider to run (leave empty for all)'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Run without committing results'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: git-benchmarks
+  cancel-in-progress: true
+
+jobs:
+  bench:
+    permissions:
+      contents: read
+    name: Bench ${{ matrix.provider }}
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        provider: ${{ (github.event.inputs.provider != '' && fromJson(format('["{0}"]', github.event.inputs.provider))) || fromJson('["github","gitlab","bitbucket","tensorlake"]') }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Clear stale results from checkout
+        run: rm -rf results/git/
+      - name: Run git benchmark
+        run: |
+          . benchmarks/scripts/load-vault-secrets.sh '^(GITHUB_GIT_REPO_URL|GITHUB_TOKEN|GITLAB_GIT_REPO_URL|GITLAB_TOKEN|BITBUCKET_GIT_REPO_URL|BITBUCKET_TOKEN|TENSORLAKE_GIT_REPO_URL|TENSORLAKE_API_KEY|BENCHMARKS_PLATFORM_API_KEY)$'
+
+          ITERATIONS="${{ (github.event_name == 'schedule' && '50') || github.event.inputs.iterations || '10' }}"
+
+          # Every provider job passes the same --run-key, so all matrix jobs
+          # get-or-create one shared platform run and each registers only its
+          # own participant. The attempt is in the key so workflow re-runs open
+          # fresh runs instead of rejoining the completed ones.
+          RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+
+          npx tsx packages/benchsdk-runner/dist/bin.js run benchmarks/git/git.bench.ts \
+            --provider ${{ matrix.provider }} \
+            --iterations $ITERATIONS \
+            --run-key "$RUN_KEY"
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: git-results-${{ matrix.provider }}
+          path: results/git/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  collect:
+    name: Collect Git Results
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe
+    needs: [bench]
+    if: always()
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+          pattern: git-results-*
+      - name: Merge results
+        run: npx tsx benchmarks/src/merge-results.ts --input artifacts --mode git
+      - name: Commit and push results
+        if: github.event_name != 'push' && github.event.inputs.dry_run != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add results/git/
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore: update git benchmark results [skip ci]"
+
+          branch="${GITHUB_REF#refs/heads/}"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "${branch}"
+            git rebase --autostash "origin/${branch}" || { git rebase --abort; exit 1; }
+            if git push origin "HEAD:${branch}"; then
+              echo "Pushed on attempt ${attempt}"
+              exit 0
+            fi
+            echo "Push rejected (attempt ${attempt}); will rebase and retry"
+          done
+          echo "Failed to push after multiple attempts" >&2
+          exit 1
