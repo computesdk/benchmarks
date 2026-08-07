@@ -215,7 +215,7 @@ typecheck() {
 }
 
 disk() {
-  du -sx --block-size=1 "$ROOT" | awk '{print $1}'
+  du -skx "$ROOT" | awk '{print $1 * 1024}'
 }
 
 clear_caches() {
