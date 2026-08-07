@@ -79,6 +79,7 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // Sandbox0 exposes only memory. Override the 128 MiB TTI size;
   // getSandboxOptionsWithResources preserves hardTtl from providers.ts.
   sandbox0:     { memory: 16384 },
+  sail:         { size: 'l' },
 };
 
 function getSandboxOptionsWithResources(providerName: string, baseOptions?: Record<string, any>): Record<string, any> {
