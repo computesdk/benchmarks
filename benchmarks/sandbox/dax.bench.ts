@@ -21,6 +21,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineBenchmarkConfig, defineTask, TaskError } from '@benchsdk/runner';
 import type { JsonObject, TaskStepRecord } from '@benchsdk/client';
+import { blaxel } from '@computesdk/blaxel';
 import { VMTier } from '@codesandbox/sdk';
 import { withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
@@ -35,6 +36,29 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const timeout = 600_000;
 const destroyTimeoutMs = 15_000;
 
+// DAX uses a dedicated workspace, isolated from the pooled TTI credentials.
+function requireDaxEnv(name: 'BL_DAX_API_KEY' | 'BL_DAX_WORKSPACE'): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} is required for the Blaxel DAX benchmark`);
+  return value;
+}
+
+const daxProviders: ProviderConfig[] = providers.map((provider) =>
+  provider.name === 'blaxel'
+    ? {
+        ...provider,
+        requiredEnvVars: ['BL_DAX_API_KEY', 'BL_DAX_WORKSPACE'],
+        createCompute: () =>
+          blaxel({
+            // Pass explicit values so the SDK cannot fall back to BL_*.
+            apiKey: requireDaxEnv('BL_DAX_API_KEY'),
+            workspace: requireDaxEnv('BL_DAX_WORKSPACE'),
+            region: 'us-was-1',
+          }),
+      }
+    : provider,
+);
+
 export const config = defineBenchmarkConfig({
   benchmarkSlug: 'sandbox-dax-local',
   benchmarkName: 'Dax sandbox benchmark (local)',
@@ -43,7 +67,7 @@ export const config = defineBenchmarkConfig({
   concurrency: 1,
   groupBy: 'round',
   defaultProviders: ['e2b', 'modal', 'tensorlake'],
-  participants: providers,
+  participants: daxProviders,
   onComplete: (outcome) =>
     writeDaxLegacyResults(outcome.participants, {
       resultsDir: path.resolve(__dirname, '../../results/sandbox-dax'),
@@ -66,7 +90,18 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   runloop:      { launch_parameters: { resource_size_request: 'CUSTOM_SIZE', custom_cpu_cores: 8, custom_gb_memory: 16 } },
   upstash:      { size: 'large' },                          // large = 8 cores, 16 GB
   vercel:       { resources: { vcpus: 8 } },               // no memory control
-  blaxel:       { memory: 16384 },                          // CPU derived: cores = memory_MB / 2048 = 8
+  blaxel:       {
+    memory: 16384,                                          // CPU derived: cores = memory_MB / 2048 = 8
+    timeout: 900_000,                                       // Server-side TTL backstop if client cleanup cannot run
+    volumes: [
+      {
+        name: 'dax-root',
+        type: 'ephemeral',
+        sizeMb: 8192,
+        mountPath: '/',                                     // Keep the writable root off RAM
+      },
+    ],
+  },
   beam:         { cpu: 8, memory: 16384 },                   // cpu = cores, memory = MiB
   codesandbox:  { vmTier: VMTier.Small },                  // Small = 8 CPU, 16 GiB
   daytona:      { resources: { cpu: 8, memory: 16 } },     // memory in GiB; requires image-based creation (see providers.ts)
