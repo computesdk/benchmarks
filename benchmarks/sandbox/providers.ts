@@ -101,7 +101,7 @@ export const providers: ProviderConfig[] = [
     name: 'daytona',
     requiredEnvVars: ['DAYTONA_API_KEY'],
     createCompute: () => daytona({ apiKey: process.env.DAYTONA_API_KEY! }),
-    sandboxOptions: { autoStopInterval: 15, autoDeleteInterval: 0, image: 'node:22' },
+    sandboxOptions: { autoStopInterval: 15, autoDeleteInterval: 0, snapshotId: 'daytona-8cpu-16gb' },
   },
   {
     name: 'declaw',

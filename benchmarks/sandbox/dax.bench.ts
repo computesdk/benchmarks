@@ -79,7 +79,6 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   },
   beam:         { cpu: 8, memory: 16384 },                   // cpu = cores, memory = MiB
   codesandbox:  { vmTier: VMTier.Small },                  // Small = 8 CPU, 16 GiB
-  daytona:      { resources: { cpu: 8, memory: 16 } },     // memory in GiB; requires image-based creation (see providers.ts)
   northflank:   { deploymentPlan: process.env.NORTHFLANK_DEPLOYMENT_PLAN || 'nf-compute-50', ephemeralStorageSize: 5120 },  // 5 GiB ephemeral storage
   declaw:       { templateId: 'node-large' },              // node-large template: 8 vCPU / 16 GiB RAM / 8 GiB disk
   superserve:   { templateId: 'node22-8cpu-16gb' },           // 8 vCPU / 16 GiB template built in the pre-step
