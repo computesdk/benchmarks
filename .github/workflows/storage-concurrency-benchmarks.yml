@@ -5,6 +5,7 @@ on:
     branches: [master]
     paths:
       - 'benchmarks/storage/storage-concurrency.*'
+      - 'benchmarks/storage/report-storage-concurrency.ts'
       - 'benchmarks/storage/providers.ts'
       - 'benchmarks/src/util/**'
       - 'package.json'
@@ -72,3 +73,51 @@ jobs:
           fi
 
           pnpm bench:storage-concurrency -- "${PROVIDER_ARGS[@]}"
+      - name: Upload combined results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: storage-concurrency-results
+          path: results/storage-concurrency/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  collect:
+    name: Collect Results
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    needs: benchmark
+    if: always()
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Download combined results
+        uses: actions/download-artifact@v4
+        with:
+          name: storage-concurrency-results
+          path: artifacts/storage-concurrency/
+      - name: Generate comparison report
+        run: |
+          mkdir -p results/storage-concurrency
+          cp artifacts/storage-concurrency/latest.json results/storage-concurrency/latest.json
+          pnpm report:storage-concurrency
+          cat storage-concurrency.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload comparison report
+        uses: actions/upload-artifact@v4
+        with:
+          name: storage-concurrency-report
+          path: |
+            storage-concurrency.md
+            storage-concurrency.svg
+            results/storage-concurrency/latest.json
+          retention-days: 14
