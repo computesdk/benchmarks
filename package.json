@@ -88,7 +88,9 @@
     "bench:ai-gateway:pydantic": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway.bench.ts --provider pydantic-ai-gateway",
     "bench:ai-gateway:concentrate": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway.bench.ts --provider concentrate-ai-gateway",
     "bench:ai-gateway:anthropic": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway.bench.ts --provider anthropic-direct",
-    "generate-ai-gateway-svg": "tsx benchmarks/ai-gateway/generate-svg.ts"
+    "generate-ai-gateway-svg": "tsx benchmarks/ai-gateway/generate-svg.ts",
+    "bench:database": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/database/crud.bench.ts",
+    "bench:database:postgres": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/database/crud.bench.ts --provider postgres"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1110.0",
