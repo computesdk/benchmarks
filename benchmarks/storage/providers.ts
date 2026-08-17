@@ -290,6 +290,36 @@ export const storageProviders: StorageProviderConfig[] = [
       }),
     },
   },
+  {
+    // Mosaic Object Storage is an S3-compatible service that places and
+    // replicates data itself, so `region` is 'auto' and buckets are addressed
+    // by path. Credentials come from an API key created at
+    // storage.mosaicos.com (`POST /v1/api-keys/<id>/sigv4`).
+    //
+    // No snapshotFork entry: snapshot/fork emulation churns sibling buckets,
+    // and a Mosaic account is capped at 10 buckets, so the suite runs out of
+    // buckets partway through rather than measuring anything.
+    name: 'mosaic',
+    requiredEnvVars: [
+      'MOSAIC_STORAGE_BUCKET',
+      'MOSAIC_STORAGE_ACCESS_KEY_ID',
+      'MOSAIC_STORAGE_SECRET_ACCESS_KEY',
+    ],
+    bucket: process.env.MOSAIC_STORAGE_BUCKET!,
+    createStorage: () => new Storage({
+      adapter: s3({
+        bucket: process.env.MOSAIC_STORAGE_BUCKET!,
+        region: 'auto',
+        endpoint: process.env.MOSAIC_STORAGE_ENDPOINT || 'https://storage.mosaicos.com',
+        forcePathStyle: true,
+        credentials: {
+          accessKeyId: process.env.MOSAIC_STORAGE_ACCESS_KEY_ID!,
+          secretAccessKey: process.env.MOSAIC_STORAGE_SECRET_ACCESS_KEY!,
+        },
+      }),
+    }),
+    fileSizes: [1 * 1024 * 1024, 4 * 1024 * 1024, 10 * 1024 * 1024, 16 * 1024 * 1024],
+  },
   //
   // add providers above
 ];
