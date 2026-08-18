@@ -10,6 +10,10 @@ export type {
   ParticipantRecords,
   ResolvedRunConfig,
   BenchmarkRunOutcome,
+  BenchmarkDisplayConfig,
+  BenchmarkMetricDisplay,
+  BenchmarkStepDisplay,
+  BenchmarkOverviewDisplay,
 } from './bench-config.js';
 export { NoAvailableParticipantsError } from './no-available-participants.js';
 export { runBenchmark, parseCliArgs, mergeConfig } from './runner.js';

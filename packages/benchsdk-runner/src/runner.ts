@@ -596,9 +596,10 @@ export async function runBenchmark<T extends BaseParticipant>(
     dashboardUrl = '';
   } else {
     if (identityIsOurs) {
-      const benchmarkConfig: JsonObject = config.scoring
-        ? { scoring: config.scoring as unknown as JsonObject }
-        : {};
+      const benchmarkConfig: JsonObject = {
+        ...(config.scoring ? { scoring: config.scoring as unknown as JsonObject } : {}),
+        ...(config.display ? { display: config.display as unknown as JsonObject } : {}),
+      };
       await client!.upsertBenchmark(config.benchmarkSlug, {
         name: config.benchmarkName,
         ...(Object.keys(benchmarkConfig).length > 0 ? { config: benchmarkConfig } : {}),

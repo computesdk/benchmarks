@@ -173,6 +173,55 @@ export interface ResolvedRunConfig {
   providers?: string[];
 }
 
+/** Display metadata for a single custom metric a benchmark reports via `ctx.measure`. */
+export interface BenchmarkMetricDisplay {
+  /** Stable metric key, matching the key in `ctx.measure` or `data`. */
+  key: string;
+  /** Human-readable label shown in the platform UI. */
+  label: string;
+  /** Optional unit shown after the value (e.g. `Mbps`, `/s`, `ms`). */
+  unit?: string;
+  /** Number of decimal places when formatting numeric values. Defaults to the display format. */
+  decimals?: number;
+  /** Whether higher or lower values rank better. */
+  direction?: 'higher-better' | 'lower-better';
+  /** Optional ordering hint for metric lists. */
+  order?: number;
+}
+
+/** Display metadata for a single task lifecycle step. */
+export interface BenchmarkStepDisplay {
+  /** Stable step name, matching the string passed to `ctx.step`. */
+  key: string;
+  /** Human-readable label shown in the platform UI. */
+  label: string;
+  /** Optional ordering hint for step lists. */
+  order?: number;
+}
+
+/** Display defaults for the benchmark overview page. */
+export interface BenchmarkOverviewDisplay {
+  /** Metric key to rank participants by by default (falls back to overall task latency). */
+  defaultMetric?: string;
+  /** Default overview layout. */
+  defaultLayout?: 'ranking' | 'cards' | 'chart' | 'leaderboard';
+}
+
+/**
+ * Optional platform display manifest. A `*.bench.ts` file owns not only how the
+ * benchmark runs, but how it should be rendered, without a platform code change.
+ */
+export interface BenchmarkDisplayConfig {
+  /** Optional human-readable description shown on the benchmark listing. */
+  description?: string;
+  /** Metric catalog — labels, units, and ranking direction for `ctx.measure` keys. */
+  metrics?: BenchmarkMetricDisplay[];
+  /** Step catalog — human labels for lifecycle steps reported via `ctx.step`. */
+  steps?: BenchmarkStepDisplay[];
+  /** Overview defaults. */
+  overview?: BenchmarkOverviewDisplay;
+}
+
 /**
  * Result of a benchmark run, passed to `config.onComplete`. Exposes the raw
  * per-participant records so completion hooks can write legacy local results.
@@ -266,6 +315,18 @@ export interface BenchmarkConfig<T extends BaseParticipant = BaseParticipant> {
    * from typos and report unknown flags accurately.
    */
   customCliFlags?: readonly string[];
+  /**
+   * Optional display manifest. Lets the bench author configure metric labels,
+   * step labels, and overview defaults without editing the platform.
+   */
+  display?: BenchmarkDisplayConfig;
+}
+
+function assertNonEmptyString(value: unknown, field: string): string {
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw new Error(`${field} must be a non-empty string`);
+  }
+  return value;
 }
 
 function assertPositiveInt(value: number | undefined, field: string): void {
@@ -405,6 +466,68 @@ export function defineBenchmarkConfig<T extends BaseParticipant = BaseParticipan
   if (config.customCliFlags !== undefined) {
     if (!Array.isArray(config.customCliFlags) || !config.customCliFlags.every((f) => typeof f === 'string' && f.startsWith('--'))) {
       throw new Error('customCliFlags must be an array of strings starting with "--"');
+    }
+  }
+  if (config.display !== undefined) {
+    if (typeof config.display !== 'object' || config.display === null || Array.isArray(config.display)) {
+      throw new Error('display must be an object');
+    }
+    if (config.display.metrics !== undefined) {
+      if (!Array.isArray(config.display.metrics)) {
+        throw new Error('display.metrics must be an array');
+      }
+      const seenMetricKeys = new Set<string>();
+      for (let i = 0; i < config.display.metrics.length; i++) {
+        const metric = config.display.metrics[i];
+        if (metric === null || typeof metric !== 'object' || Array.isArray(metric)) {
+          throw new Error(`display.metrics[${i}] must be an object`);
+        }
+        const key = assertNonEmptyString(metric.key, `display.metrics[${i}].key`);
+        if (seenMetricKeys.has(key)) {
+          throw new Error(`duplicate display metric key: ${key}`);
+        }
+        seenMetricKeys.add(key);
+        assertNonEmptyString(metric.label, `display.metrics[${i}].label`);
+        if (metric.direction !== undefined && metric.direction !== 'higher-better' && metric.direction !== 'lower-better') {
+          throw new Error(`display.metrics[${i}].direction must be 'higher-better' or 'lower-better'`);
+        }
+        if (metric.decimals !== undefined && (!Number.isInteger(metric.decimals) || metric.decimals < 0)) {
+          throw new Error(`display.metrics[${i}].decimals must be a non-negative integer`);
+        }
+        if (metric.order !== undefined && (!Number.isInteger(metric.order) || metric.order < 0)) {
+          throw new Error(`display.metrics[${i}].order must be a non-negative integer`);
+        }
+      }
+    }
+    if (config.display.steps !== undefined) {
+      if (!Array.isArray(config.display.steps)) {
+        throw new Error('display.steps must be an array');
+      }
+      const seenStepKeys = new Set<string>();
+      for (let i = 0; i < config.display.steps.length; i++) {
+        const step = config.display.steps[i];
+        if (step === null || typeof step !== 'object' || Array.isArray(step)) {
+          throw new Error(`display.steps[${i}] must be an object`);
+        }
+        const key = assertNonEmptyString(step.key, `display.steps[${i}].key`);
+        if (seenStepKeys.has(key)) {
+          throw new Error(`duplicate display step key: ${key}`);
+        }
+        seenStepKeys.add(key);
+        assertNonEmptyString(step.label, `display.steps[${i}].label`);
+        if (step.order !== undefined && (!Number.isInteger(step.order) || step.order < 0)) {
+          throw new Error(`display.steps[${i}].order must be a non-negative integer`);
+        }
+      }
+    }
+    if (config.display.overview !== undefined) {
+      if (typeof config.display.overview !== 'object' || config.display.overview === null || Array.isArray(config.display.overview)) {
+        throw new Error('display.overview must be an object');
+      }
+      const { defaultLayout } = config.display.overview;
+      if (defaultLayout !== undefined && !['ranking', 'cards', 'chart', 'leaderboard'].includes(defaultLayout)) {
+        throw new Error("display.overview.defaultLayout must be 'ranking', 'cards', 'chart', or 'leaderboard'");
+      }
     }
   }
   return config;

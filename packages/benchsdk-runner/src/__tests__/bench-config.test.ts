@@ -109,6 +109,49 @@ describe('defineBenchmarkConfig', () => {
       defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, shapes: { s: { slug: 'ok', staggerDelayMs: -1 } } }),
     ).toThrow('staggerDelayMs');
   });
+
+  it('carries a display manifest when valid', () => {
+    const config = defineBenchmarkConfig({
+      benchmarkSlug: 's',
+      benchmarkName: 'n',
+      participants,
+      display: {
+        description: 'A test benchmark',
+        metrics: [{ key: 'throughputMbps', label: 'Throughput', unit: 'Mbps', direction: 'higher-better' }],
+        steps: [{ key: 'create', label: 'Create sandbox' }],
+        overview: { defaultMetric: 'throughputMbps', defaultLayout: 'ranking' },
+      },
+    });
+    expect(config.display?.overview?.defaultLayout).toBe('ranking');
+    expect(config.display?.metrics?.[0].key).toBe('throughputMbps');
+  });
+
+  it('rejects an invalid display direction', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: { metrics: [{ key: 'x', label: 'X', direction: 'up' as any }] },
+      }),
+    ).toThrow('direction');
+  });
+
+  it('rejects duplicate display metric keys', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: {
+          metrics: [
+            { key: 'x', label: 'X' },
+            { key: 'x', label: 'X2' },
+          ],
+        },
+      }),
+    ).toThrow('duplicate');
+  });
 });
 
 describe('defineTask', () => {
