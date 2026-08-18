@@ -79,6 +79,13 @@ export async function run(argv: string[]): Promise<void> {
       process.exit(0);
     }
     console.error('Benchmark failed:', err instanceof Error ? err.message : err);
+    // A BenchmarkApiError's message carries only the status line; the response
+    // body holds the validation reason, so without this a failure reads as a
+    // bare "400 Bad Request".
+    const body = (err as { body?: unknown } | null)?.body;
+    if (typeof body === 'string' && body.trim()) {
+      console.error('Response body:', body.slice(0, 2000));
+    }
     process.exit(1);
   }
 }

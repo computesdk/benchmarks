@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1280" height="588" viewBox="0 0 1280 588">
+  <defs>
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f6f8fa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <style>
+    .bg { fill: #ffffff; }
+    .header-bg { fill: url(#headerGrad); }
+    .table-header-bg { fill: #f6f8fa; }
+    .table-header { font: 600 12px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #57606a; text-transform: uppercase; letter-spacing: 0.5px; }
+    .row { font: 14px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #24292f; }
+    .rank { font-weight: 700; fill: #57606a; }
+    .rank-1 { fill: #d4a000; }
+    .rank-2 { fill: #8a8a8a; }
+    .rank-3 { fill: #a0522d; }
+    .provider { font-weight: 600; fill: #0969da; }
+    .total { font-weight: 700; font-size: 15px; }
+    .fast { fill: #1a7f37; }
+    .medium { fill: #9a6700; }
+    .slow { fill: #cf222e; }
+    .status { fill: #57606a; }
+    .divider { stroke: #d0d7de; stroke-width: 1; }
+    .timestamp { font: 11px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #57606a; }
+    .title { font: bold 28px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #24292f; }
+    .subtitle { font: 14px 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; fill: #57606a; }
+  </style>
+
+  <rect class="bg" width="1280" height="588"/>
+
+  <g transform="translate(24, 24)">
+    <rect width="60" height="60" fill="#000000"/>
+    <g transform="scale(0.035) translate(0, 0)">
+      <path fill="#ffffff" d="M1036.26,1002.28h237.87l-.93,19.09c-8.38,110.32-49.81,198.3-123.82,262.07-73.09,63.31-170.84,95.43-290.48,95.43-130.81,0-235.55-44.69-311.43-133.6-74.48-87.98-112.65-209.48-112.65-361.23v-60.51c0-96.83,17.7-183.41,51.68-257.43,34.91-74.95,85.19-133.61,149.89-173.63,64.7-40.04,140.12-60.52,225.3-60.52,117.77,0,214.13,32.12,286.29,95.9,72.62,63.3,114.98,153.61,126.15,267.67l1.86,19.08h-238.34l-.93-15.83c-4.65-59.11-20.95-101.94-47.95-127.08-27-25.6-69.83-38.17-127.08-38.17-61.91,0-107.06,20.95-137.33,65.17-31.65,45.15-47.94,117.77-48.87,215.53v74.48c0,102.41,15.36,177.83,45.62,223.91,28.86,44.22,74.01,65.63,137.79,65.63,58.19,0,101.48-12.57,128.95-38.17,26.99-25.14,43.29-66.1,47.48-121.5l.93-16.3Z"/>
+    </g>
+  </g>
+
+  <text class="title" x="100" y="55">Browser Concurrent Sessions Benchmarks</text>
+  <text class="subtitle" x="100" y="78">50 concurrent sessions per round — barrier-protocol (all sessions alive before actions)</text>
+
+  <rect class="table-header-bg" y="134" width="1280" height="44"/>
+
+  <text class="table-header" x="40" y="162">#</text>
+  <text class="table-header" x="80" y="162">Provider</text>
+  <text class="table-header" x="240" y="162">Score</text>
+  <text class="table-header" x="360" y="162">Create (med)</text>
+  <text class="table-header" x="500" y="162">Loop (med)</text>
+  <text class="table-header" x="640" y="162">Loop (p95)</text>
+  <text class="table-header" x="780" y="162">Screenshot</text>
+  <text class="table-header" x="920" y="162">Per-sess APS</text>
+  <text class="table-header" x="1060" y="162">Alive</text>
+  <text class="table-header" x="1180" y="162">Success</text>
+
+  <text class="rank rank-1" x="40" y="208">1</text>
+  <text class="row provider" x="80" y="208">Browserbase</text>
+  <text class="row total" x="240" y="208">86.5</text>
+  <text class="row total fast" x="360" y="208">0.49s</text>
+  <text class="row" x="500" y="208">2.84s</text>
+  <text class="row" x="640" y="208">3.35s</text>
+  <text class="row" x="780" y="208">309ms</text>
+  <text class="row fast" x="920" y="208">3.51/s</text>
+  <text class="row" x="1060" y="208">50/50</text>
+  <text class="row status" x="1180" y="208">98%</text>
+  <line class="divider" x1="24" y1="222" x2="1256" y2="222"/>
+
+  <text class="rank rank-2" x="40" y="252">2</text>
+  <text class="row provider" x="80" y="252">Browseruse</text>
+  <text class="row total" x="240" y="252">83.7</text>
+  <text class="row total fast" x="360" y="252">0.59s</text>
+  <text class="row" x="500" y="252">3.95s</text>
+  <text class="row" x="640" y="252">4.58s</text>
+  <text class="row" x="780" y="252">307ms</text>
+  <text class="row fast" x="920" y="252">2.53/s</text>
+  <text class="row" x="1060" y="252">50/50</text>
+  <text class="row status" x="1180" y="252">98%</text>
+  <line class="divider" x1="24" y1="266" x2="1256" y2="266"/>
+
+  <text class="rank rank-3" x="40" y="296">3</text>
+  <text class="row provider" x="80" y="296">Hyperbrowser</text>
+  <text class="row total" x="240" y="296">79.2</text>
+  <text class="row total medium" x="360" y="296">1.15s</text>
+  <text class="row" x="500" y="296">5.41s</text>
+  <text class="row" x="640" y="296">7.74s</text>
+  <text class="row" x="780" y="296">468ms</text>
+  <text class="row medium" x="920" y="296">1.82/s</text>
+  <text class="row" x="1060" y="296">50/50</text>
+  <text class="row status" x="1180" y="296">98%</text>
+  <line class="divider" x1="24" y1="310" x2="1256" y2="310"/>
+
+  <text class="rank" x="40" y="340">4</text>
+  <text class="row provider" x="80" y="340">Tilion</text>
+  <text class="row total" x="240" y="340">78.3</text>
+  <text class="row total medium" x="360" y="340">2.22s</text>
+  <text class="row" x="500" y="340">5.80s</text>
+  <text class="row" x="640" y="340">6.74s</text>
+  <text class="row" x="780" y="340">470ms</text>
+  <text class="row medium" x="920" y="340">1.72/s</text>
+  <text class="row" x="1060" y="340">50/50</text>
+  <text class="row status" x="1180" y="340">98%</text>
+  <line class="divider" x1="24" y1="354" x2="1256" y2="354"/>
+
+  <text class="rank" x="40" y="384">5</text>
+  <text class="row provider" x="80" y="384">Kernel</text>
+  <text class="row total" x="240" y="384">18.0</text>
+  <text class="row total slow" x="360" y="384">--</text>
+  <text class="row" x="500" y="384">--</text>
+  <text class="row" x="640" y="384">--</text>
+  <text class="row" x="780" y="384">--</text>
+  <text class="row slow" x="920" y="384">--</text>
+  <text class="row" x="1060" y="384">10/50 *</text>
+  <text class="row status" x="1180" y="384">20%</text>
+  <line class="divider" x1="24" y1="398" x2="1256" y2="398"/>
+
+  <text class="rank" x="40" y="428">6</text>
+  <text class="row provider" x="80" y="428">Steel</text>
+  <text class="row total" x="240" y="428">7.8</text>
+  <text class="row total slow" x="360" y="428">--</text>
+  <text class="row" x="500" y="428">--</text>
+  <text class="row" x="640" y="428">--</text>
+  <text class="row" x="780" y="428">--</text>
+  <text class="row slow" x="920" y="428">--</text>
+  <text class="row" x="1060" y="428">5/50 *</text>
+  <text class="row status" x="1180" y="428">10%</text>
+  <line class="divider" x1="24" y1="442" x2="1256" y2="442"/>
+
+  <text class="rank" x="40" y="472">7</text>
+  <text class="row provider" x="80" y="472">Notte</text>
+  <text class="row total" x="240" y="472">4.7</text>
+  <text class="row total slow" x="360" y="472">--</text>
+  <text class="row" x="500" y="472">--</text>
+  <text class="row" x="640" y="472">--</text>
+  <text class="row" x="780" y="472">--</text>
+  <text class="row slow" x="920" y="472">--</text>
+  <text class="row" x="1060" y="472">8/50 *</text>
+  <text class="row status" x="1180" y="472">12%</text>
+
+  <text class="timestamp" x="1256" y="532" text-anchor="end">Last updated: Aug 18, 2026, 04:30 PM UTC</text>
+  <text class="timestamp" x="24" y="546">Each round creates 50 sessions in parallel, holds all alive (barrier), runs 10 actions on each simultaneously, then releases all. Lower latency is better.</text>
+  <text class="timestamp" x="24" y="560">-- latency withheld, load not sustained: Kernel held 10/50, Steel held 5/50, Notte held 8/50. Timings taken while most of the load was refused are not comparable.</text>
+  <text class="timestamp" x="24" y="574">* capped by an account limit rather than capacity: Kernel, Steel, Notte.</text>
+</svg>
