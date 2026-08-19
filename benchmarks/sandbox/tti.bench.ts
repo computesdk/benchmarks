@@ -39,6 +39,18 @@ export const config = defineBenchmarkConfig({
   iterations: 2,
   concurrency: 1,
   participants: providers,
+  display: {
+    description: 'Sandbox time-to-interactive from create through first successful command.',
+    metrics: [
+      { key: 'ttiMs', label: 'Time to interactive', unit: 'ms', direction: 'lower-better', decimals: 0 },
+    ],
+    steps: [
+      { key: 'create', label: 'Create sandbox' },
+      { key: 'exec.task', label: 'Run first command' },
+      { key: 'destroy', label: 'Destroy sandbox' },
+    ],
+    overview: { defaultMetric: 'ttiMs', defaultLayout: 'ranking' },
+  },
   scoring: {
     metrics: [
       { key: 'ttiMs', unit: 'ms', ceiling: 10000, weights: { median: 0.60, p95: 0.25, p99: 0.15 } },
@@ -74,6 +86,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
     ),
   );
 
+  let ttiMs: number | undefined;
   try {
     const result = await step('exec.task', async () => {
       const r = await withTimeout(
@@ -85,14 +98,20 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
         log('node -v failed', { level: 'error', meta: { exitCode: r.exitCode, stderr: r.stderr ?? null } });
         throw new Error(`Command failed with exit code ${r.exitCode}: ${r.stderr || 'Unknown error'}`);
       }
+      ttiMs = performance.now() - start;
+      measure({ ttiMs });
       return r;
     });
     log('node -v succeeded', { level: 'info', meta: { version: result.stdout?.trim() ?? null, exitCode: result.exitCode } });
-    measure({ ttiMs: performance.now() - start });
   } finally {
     await step('destroy', () =>
       withTimeout(sandbox.destroy(), participant.destroyTimeoutMs ?? DESTROY_TIMEOUT_MS, 'Destroy timeout'),
       { reportConcurrency: false },
     ).catch((err: unknown) => log('destroy failed', { level: 'warn', meta: { error: formatError(err) } }));
   }
+
+  if (ttiMs === undefined) {
+    throw new Error('exec.task did not produce a ttiMs measurement');
+  }
+  return { data: { ttiMs } };
 });

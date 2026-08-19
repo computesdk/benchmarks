@@ -43,6 +43,37 @@ export const config = defineBenchmarkConfig({
   groupBy: 'round',
   defaultProviders: ['e2b', 'modal', 'tensorlake'],
   participants: providers,
+  display: {
+    description: 'OpenCode build lifecycle latency per phase.',
+    metrics: [
+      { key: 'totalMs', label: 'Total build time', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'prepareMs', label: 'Prepare', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'cacheClearMs', label: 'Cache clear', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'bunDownloadMs', label: 'Bun download', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'bunUnpackMs', label: 'Bun unpack', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'cloneMs', label: 'Clone', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'installMs', label: 'Install', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'typecheckMs', label: 'Typecheck', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'phasesCompleted', label: 'Phases completed', direction: 'higher-better', decimals: 0 },
+      { key: 'phasesTotal', label: 'Phases total', direction: 'higher-better', decimals: 0 },
+      { key: 'diskAfterClone', label: 'Disk after clone', unit: 'bytes', direction: 'lower-better', decimals: 0 },
+      { key: 'diskAfterInstall', label: 'Disk after install', unit: 'bytes', direction: 'lower-better', decimals: 0 },
+      { key: 'diskAfterTypecheck', label: 'Disk after typecheck', unit: 'bytes', direction: 'lower-better', decimals: 0 },
+    ],
+    steps: [
+      { key: 'create', label: 'Create sandbox' },
+      { key: 'build', label: 'Build' },
+      { key: 'destroy', label: 'Destroy sandbox' },
+      { key: 'prepare', label: 'Prepare' },
+      { key: 'cache_clear', label: 'Cache clear' },
+      { key: 'bun_download', label: 'Bun download' },
+      { key: 'bun_unpack', label: 'Bun unpack' },
+      { key: 'clone', label: 'Clone' },
+      { key: 'install', label: 'Install' },
+      { key: 'typecheck', label: 'Typecheck' },
+    ],
+    overview: { defaultMetric: 'totalMs', defaultLayout: 'ranking' },
+  },
   onComplete: (outcome) =>
     writeDaxLegacyResults(outcome.participants, {
       resultsDir: path.resolve(__dirname, '../../results/sandbox-dax'),
@@ -222,7 +253,10 @@ function daxPhaseSteps(t: DaxTimingResult): TaskStepRecord[] {
   ];
   return phases
     .filter((entry): entry is [string, number] => typeof entry[1] === 'number')
-    .map(([name, latencyMs]) => ({ name, status: 'success', latencyMs }));
+    .map(([name, latencyMs]) => {
+      const metricKey = name.replace(/_(.)/g, (_, c) => c.toUpperCase()) + 'Ms';
+      return { name, status: 'success', latencyMs, data: { [metricKey]: latencyMs } };
+    });
 }
 
 export const task = defineTask<ProviderConfig>(async (ctx) => {
@@ -241,7 +275,17 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
 
   let timing: DaxTimingResult;
   try {
-    timing = await ctx.step('build', () => runDaxBuild(sandbox, p.name, p.timeout ?? timeout));
+    timing = await ctx.step('build', async () => {
+      const t = await runDaxBuild(sandbox, p.name, p.timeout ?? timeout);
+      const buildMetrics: JsonObject = { totalMs: t.totalMs };
+      if (t.phasesCompleted !== undefined) buildMetrics.phasesCompleted = t.phasesCompleted;
+      if (t.phasesTotal !== undefined) buildMetrics.phasesTotal = t.phasesTotal;
+      if (t.diskAfterClone !== undefined) buildMetrics.diskAfterClone = t.diskAfterClone;
+      if (t.diskAfterInstall !== undefined) buildMetrics.diskAfterInstall = t.diskAfterInstall;
+      if (t.diskAfterTypecheck !== undefined) buildMetrics.diskAfterTypecheck = t.diskAfterTypecheck;
+      ctx.measure(buildMetrics);
+      return t;
+    });
   } finally {
     await ctx
       .step('destroy', () => withTimeout(sandbox.destroy(), p.destroyTimeoutMs ?? destroyTimeoutMs, 'Destroy timeout'), {
