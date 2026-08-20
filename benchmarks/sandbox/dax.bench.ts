@@ -89,7 +89,6 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   miosa:        { vcpus: 8, memory: 16384 },               // maps to MIOSA size contract "large" (8 vCPU / 16 GiB)
   // Sandbox0 exposes only memory. Override the 128 MiB TTI size;
   // getSandboxOptionsWithResources preserves hardTtl from providers.ts.
-  miosa:        { vcpus: 8, memory: 16384 },
   sandbox0:     { memory: 16384 },
   sail:         { size: 'l' },
 };
