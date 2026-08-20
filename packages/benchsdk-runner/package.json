@@ -17,7 +17,7 @@
     }
   },
   "bin": {
-    "bench": "./dist/bin.cjs"
+    "bench": "./dist/bin.js"
   },
   "files": [
     "dist",
@@ -52,7 +52,8 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@benchsdk/client": "workspace:*"
+    "@benchsdk/client": "workspace:*",
+    "tsx": "^4.23.12"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
