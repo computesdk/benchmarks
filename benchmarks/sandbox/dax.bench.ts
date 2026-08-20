@@ -86,6 +86,7 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   opencomputer: { cpuCount: 4, memoryMB: 16384, timeout: 600_000 },
   microsandbox: { cpus: 8, memoryMib: 16384 },
   mosaic:       { vcpus: 8, memoryMb: 16384 },
+  miosa:        { vcpus: 8, memory: 16384 },               // maps to MIOSA size contract "large" (8 vCPU / 16 GiB)
   // Sandbox0 exposes only memory. Override the 128 MiB TTI size;
   // getSandboxOptionsWithResources preserves hardTtl from providers.ts.
   miosa:        { vcpus: 8, memory: 16384 },
