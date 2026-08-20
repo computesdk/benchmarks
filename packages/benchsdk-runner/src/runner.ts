@@ -331,7 +331,9 @@ function defaultOnResult(record: TaskResultRecord, meta: { iterations: number; p
     const data = record.data && Object.keys(record.data).length > 0 ? ` ${JSON.stringify(record.data)}` : '';
     console.log(`  [${meta.participant}] Task ${n}/${meta.iterations}: success${data}`);
   } else {
-    console.log(`  [${meta.participant}] Task ${n}/${meta.iterations}: FAILED — ${record.errorCode ?? 'unknown error'}`);
+    const errorMessage = record.data?.['errorMessage'];
+    const suffix = typeof errorMessage === 'string' ? `: ${errorMessage}` : '';
+    console.log(`  [${meta.participant}] Task ${n}/${meta.iterations}: FAILED — ${record.errorCode ?? 'unknown error'}${suffix}`);
   }
 }
 

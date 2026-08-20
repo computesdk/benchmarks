@@ -126,7 +126,11 @@
     "bench:ai-gateway-kimi:novita": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-kimi.bench.ts --provider novita",
     "bench:ai-gateway-kimi:ramp": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-kimi.bench.ts --provider ramp",
     "bench:ai-gateway-kimi:neon": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-kimi.bench.ts --provider neon",
-    "generate-ai-gateway-kimi-svg": "tsx benchmarks/ai-gateway/generate-svg.ts --dir ai-gateway-latency/kimi --title \"AI Gateway Benchmarks — Kimi\" --out ai-gateway-kimi.svg"
+    "generate-ai-gateway-kimi-svg": "tsx benchmarks/ai-gateway/generate-svg.ts --dir ai-gateway-latency/kimi --title \"AI Gateway Benchmarks — Kimi\" --out ai-gateway-kimi.svg",
+    "bench:cpu-node": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/cpu-node.bench.ts",
+    "generate-cpu-node-svg": "tsx benchmarks/sandbox/generate-cpu-node-svg.ts",
+    "smoke:cpu-node": "tsx benchmarks/scripts/smoke.ts --suite=cpu-node",
+    "test:benchmarks": "node --import tsx --test 'benchmarks/sandbox/__tests__/*.test.ts'"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1110.0",

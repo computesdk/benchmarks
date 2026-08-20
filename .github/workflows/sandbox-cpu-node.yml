@@ -1,21 +1,23 @@
-name: Cpu-node Benchmark
+name: Sandbox Cpu-node Benchmark
 
 on:
   push:
     branches: [master]
     paths:
-      - 'benchmarks/sandbox/cpu-node/**'
+      - 'benchmarks/sandbox/cpu-node.ts'
+      - 'benchmarks/sandbox/cpu-node.bench.ts'
+      - 'benchmarks/sandbox/cpu-node-legacy-results.ts'
+      - 'benchmarks/sandbox/generate-cpu-node-svg.ts'
+      - 'benchmarks/scripts/cpu-node-workload.js'
+      - 'benchmarks/scripts/cpu-node-stdout.js'
       - 'benchmarks/scripts/smoke.ts'
-      - 'benchmarks/scripts/build-bundles.ts'
-      - 'benchmarks/scripts/ensure-bundle.ts'
-      - 'benchmarks/src/run.ts'
       - 'benchmarks/scripts/load-vault-secrets.sh'
       - 'package.json'
       - '.github/workflows/sandbox-cpu-node.yml'
   workflow_dispatch:
     inputs:
-      replicas:
-        description: 'Replicates per provider'
+      iterations:
+        description: 'Iterations per provider'
         required: false
         default: '3'
       provider:
@@ -93,11 +95,6 @@ jobs:
           else
             pnpm install --frozen-lockfile
           fi
-      - name: Build bundles
-        if: |
-          github.event_name != 'workflow_dispatch' ||
-          (github.event.inputs.provider == '' || contains(format(',{0},', github.event.inputs.provider), format(',{0},', matrix.provider)))
-        run: pnpm run build:bundles
       - name: Clear stale results
         if: |
           github.event_name != 'workflow_dispatch' ||
@@ -107,13 +104,60 @@ jobs:
         if: |
           github.event_name != 'workflow_dispatch' ||
           (github.event.inputs.provider == '' || contains(format(',{0},', github.event.inputs.provider), format(',{0},', matrix.provider)))
+        env:
+          PROVIDER: ${{ matrix.provider }}
+          ITERATIONS: ${{ github.event.inputs.iterations || '3' }}
         run: |
-          . benchmarks/scripts/load-vault-secrets.sh '^(ARCHIL_API_KEY|ARCHIL_REGION|ARCHIL_DISK_ID|BEAM_TOKEN|BEAM_WORKSPACE_ID|BL_API_KEY|BL_WORKSPACE|CLOUD_RUN_SANDBOX_URL|CLOUD_RUN_SANDBOX_SECRET|CLOUDFLARE_SANDBOX_URL|CLOUDFLARE_SANDBOX_SECRET|CSB_API_KEY|CREATEOS_SANDBOX_API_KEY|DAYTONA_API_KEY|DECLAW_API_KEY|E2B_API_KEY|HOPX_API_KEY|ISORUN_API_KEY|LIGHTNING_API_KEY|MIOSA_API_KEY|MODAL_TOKEN_ID|MODAL_TOKEN_SECRET|MSB_API_KEY|MOSAIC_API_URL|MOSAIC_API_TOKEN|NSC_TOKEN|NORTHFLANK_TOKEN|NORTHFLANK_PROJECT_ID|OPENCOMPUTER_API_KEY|OPENCOMPUTER_API_URL|RUN_CLOUD_API_KEY|RUNLOOP_API_KEY|SAIL_API_KEY|SANDBOX0_TOKEN|SPRITES_TOKEN|SUPERSERVE_API_KEY|TENKI_API_KEY|TENSORLAKE_API_KEY|UPSTASH_BOX_API_KEY|VERCEL_TOKEN|VERCEL_TEAM_ID|VERCEL_PROJECT_ID|BENCHMARKS_PLATFORM_API_KEY)'
+          COMMON_KEYS='BENCHMARKS_PLATFORM_API_KEY'
+          case "$PROVIDER" in
+            archil) PROVIDER_KEYS='ARCHIL_API_KEY|ARCHIL_REGION|ARCHIL_DISK_ID' ;;
+            arker) PROVIDER_KEYS='ARKER_API_KEY' ;;
+            beam) PROVIDER_KEYS='BEAM_TOKEN|BEAM_WORKSPACE_ID' ;;
+            blaxel) PROVIDER_KEYS='BL_API_KEY|BL_WORKSPACE' ;;
+            cloud-run) PROVIDER_KEYS='CLOUD_RUN_SANDBOX_URL|CLOUD_RUN_SANDBOX_SECRET' ;;
+            cloudflare) PROVIDER_KEYS='CLOUDFLARE_SANDBOX_URL|CLOUDFLARE_SANDBOX_SECRET' ;;
+            codesandbox) PROVIDER_KEYS='CSB_API_KEY' ;;
+            createos) PROVIDER_KEYS='CREATEOS_SANDBOX_API_KEY' ;;
+            daytona) PROVIDER_KEYS='DAYTONA_API_KEY' ;;
+            declaw) PROVIDER_KEYS='DECLAW_API_KEY' ;;
+            e2b) PROVIDER_KEYS='E2B_API_KEY' ;;
+            hopx) PROVIDER_KEYS='HOPX_API_KEY' ;;
+            isorun) PROVIDER_KEYS='ISORUN_API_KEY' ;;
+            lightning) PROVIDER_KEYS='LIGHTNING_API_KEY' ;;
+            modal) PROVIDER_KEYS='MODAL_TOKEN_ID|MODAL_TOKEN_SECRET' ;;
+            microsandbox) PROVIDER_KEYS='MSB_API_KEY' ;;
+            miosa) PROVIDER_KEYS='MIOSA_API_KEY' ;;
+            mosaic) PROVIDER_KEYS='MOSAIC_API_URL|MOSAIC_API_TOKEN' ;;
+            namespace) PROVIDER_KEYS='NSC_TOKEN' ;;
+            northflank) PROVIDER_KEYS='NORTHFLANK_TOKEN|NORTHFLANK_PROJECT_ID' ;;
+            opencomputer) PROVIDER_KEYS='OPENCOMPUTER_API_KEY|OPENCOMPUTER_API_URL' ;;
+            run-cloud) PROVIDER_KEYS='RUN_CLOUD_API_KEY' ;;
+            runloop) PROVIDER_KEYS='RUNLOOP_API_KEY' ;;
+            sail) PROVIDER_KEYS='SAIL_API_KEY' ;;
+            sandbox0) PROVIDER_KEYS='SANDBOX0_TOKEN' ;;
+            sprites) PROVIDER_KEYS='SPRITES_TOKEN' ;;
+            superserve) PROVIDER_KEYS='SUPERSERVE_API_KEY' ;;
+            tenki) PROVIDER_KEYS='TENKI_API_KEY' ;;
+            tensorlake) PROVIDER_KEYS='TENSORLAKE_API_KEY' ;;
+            upstash) PROVIDER_KEYS='UPSTASH_BOX_API_KEY' ;;
+            vercel) PROVIDER_KEYS='VERCEL_TOKEN|VERCEL_TEAM_ID|VERCEL_PROJECT_ID' ;;
+            *) PROVIDER_KEYS='' ;;
+          esac
+          if [ -n "$PROVIDER_KEYS" ]; then
+            KEYS="^(${COMMON_KEYS}|${PROVIDER_KEYS})="
+          else
+            KEYS="^(${COMMON_KEYS})="
+          fi
+          . benchmarks/scripts/load-vault-secrets.sh "$KEYS"
 
-          pnpm run bench -- \
-            --provider ${{ matrix.provider }} \
-            --mode cpu-node \
-            --replicas ${{ github.event.inputs.replicas || '3' }}
+          # All matrix jobs for this workflow run share a single platform run. The
+          # attempt number is included so re-runs do not rejoin completed runs.
+          RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          pnpm exec -- tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/cpu-node.bench.ts \
+            --provider "$PROVIDER" \
+            --iterations "$ITERATIONS" \
+            --run-key "$RUN_KEY" \
+            ${{ (github.event_name == 'push' || github.event.inputs.dry_run == 'true') && '--no-ingest' || '' }}
       - name: Upload results
         if: |
           always() && (

@@ -60,6 +60,9 @@ eval "$(nsc vault export --envdef /tmp/vault.envdef --shell=bash)"
 # masked here. Multi-line values like PEM keys register as one `::add-mask::`
 # call; GH Actions splits the value internally so each line gets masked.
 awk -F= '{print $1}' /tmp/vault.envdef | while IFS= read -r key; do
+  [ -n "$key" ] || continue
   v="${!key-}"
-  [ -n "$v" ] && echo "::add-mask::$v"
+  if [ -n "$v" ]; then
+    echo "::add-mask::$v"
+  fi
 done
