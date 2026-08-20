@@ -88,6 +88,7 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   mosaic:       { vcpus: 8, memoryMb: 16384 },
   // Sandbox0 exposes only memory. Override the 128 MiB TTI size;
   // getSandboxOptionsWithResources preserves hardTtl from providers.ts.
+  miosa:        { vcpus: 8, memory: 16384 },
   sandbox0:     { memory: 16384 },
   sail:         { size: 'l' },
 };
