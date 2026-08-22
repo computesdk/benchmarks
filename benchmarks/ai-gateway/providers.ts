@@ -91,6 +91,21 @@ export const providers: AIGatewayProviderConfig[] = [
     }),
   },
   {
+    // BlazeRail: OpenAI-compatible /v1/chat/completions; the gateway translates
+    // Anthropic-'s native SSE to OpenAI chunks internally. anthropic/claude-haiku-4.5
+    // is BlazeRail-s public id; it is served by Anthropic direct and DeepInfra,
+    // routed by measured health/price - the product behavior being benchmarked.
+    name: 'blazerail',
+    requiredEnvVars: ['BLAZERAIL_API_KEY'],
+    wireFormat: 'openai',
+    model: 'anthropic/claude-haiku-4.5',
+    host: 'api.blazerail.com',
+    path: '/v1/chat/completions',
+    buildHeaders: () => ({
+      Authorization: `Bearer ${process.env.BLAZERAIL_API_KEY}`,
+    }),
+  },
+  {
     // `anthropic/` here is LLM Gateway's provider-pinning syntax (provider/model),
     // so requests route to Anthropic itself — the same underlying model and
     // deployment as the other participants, addressed in this gateway's own

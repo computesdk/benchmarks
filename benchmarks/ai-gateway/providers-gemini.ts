@@ -204,6 +204,21 @@ export const providers: AIGatewayProviderConfig[] = [
       buf.match(/"model"\s*:\s*"([^"/]+)\/[^"]*"/)?.[1],
   },
   {
+    // BlazeRail: OpenAI-compatible /v1/chat/completions surface, same shape
+    // as the llmgateway entry. google/gemini-3.6-flash is served by exactly
+    // one upstream on BlazeRail (Google AI Studio direct), so the route is
+    // deterministic without a provider-order pin.
+    name: 'blazerail',
+    requiredEnvVars: ['BLAZERAIL_API_KEY'],
+    wireFormat: 'openai',
+    model: 'google/gemini-3.6-flash',
+    host: 'api.blazerail.com',
+    path: '/v1/chat/completions',
+    buildHeaders: () => ({
+      Authorization: `Bearer ${process.env.BLAZERAIL_API_KEY}`,
+    }),
+  },
+  {
     // No-gateway baseline/control. Gemini's native `streamGenerateContent`
     // endpoint (not the OpenAI-compatibility shim Google also exposes) —
     // `contents`/`parts` request shape, `usageMetadata.candidatesTokenCount`
