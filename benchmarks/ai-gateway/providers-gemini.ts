@@ -217,6 +217,10 @@ export const providers: AIGatewayProviderConfig[] = [
     buildHeaders: () => ({
       Authorization: `Bearer ${process.env.BLAZERAIL_API_KEY}`,
     }),
+    extractResolvedProvider: (buf) =>
+      buf.match(/"resolvedProvider"\s*:\s*"([^"]+)"/)?.[1] ??
+      buf.match(/"provider"\s*:\s*"([^"]+)"/)?.[1] ??
+      buf.match(/"model"\s*:\s*"([^"/]+)\/[^"]*"/)?.[1],
   },
   {
     // No-gateway baseline/control. Gemini's native `streamGenerateContent`

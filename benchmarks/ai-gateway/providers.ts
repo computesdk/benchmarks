@@ -104,6 +104,10 @@ export const providers: AIGatewayProviderConfig[] = [
     buildHeaders: () => ({
       Authorization: `Bearer ${process.env.BLAZERAIL_API_KEY}`,
     }),
+    extractResolvedProvider: (buf) =>
+      buf.match(/"resolvedProvider"\s*:\s*"([^"]+)"/)?.[1] ??
+      buf.match(/"provider"\s*:\s*"([^"]+)"/)?.[1] ??
+      buf.match(/"model"\s*:\s*"([^"/]+)\/[^"]*"/)?.[1],
   },
   {
     // `anthropic/` here is LLM Gateway's provider-pinning syntax (provider/model),
