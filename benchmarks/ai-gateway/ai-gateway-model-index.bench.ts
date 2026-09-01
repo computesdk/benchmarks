@@ -16,6 +16,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineBenchmarkConfig, defineTask } from '@benchsdk/runner';
+import type { BenchmarkRunOutcome } from '@benchsdk/runner';
 import type { JsonObject } from '@benchsdk/api';
 import { modelIndexProviders } from './model-index-providers.js';
 import { runModelIndexTask } from './model-index-task.js';
@@ -23,10 +24,28 @@ import type { AIGatewayModelIndexProviderResult } from './types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-function writeModelIndexResults(
-  results: AIGatewayModelIndexProviderResult[],
-  resultsDir: string,
-): void {
+function gatherResults(outcome: BenchmarkRunOutcome): AIGatewayModelIndexProviderResult[] {
+  return outcome.participants
+    .flatMap((p) => p.records)
+    .map((r) => r.data as JsonObject | undefined)
+    .filter((d): d is JsonObject => !!d)
+    .map((d) => d as unknown as AIGatewayModelIndexProviderResult);
+}
+
+function isFilteredRun(outcome: BenchmarkRunOutcome): boolean {
+  const selected = outcome.config.providers;
+  if (!selected || selected.length === 0) return false;
+  return selected.length < modelIndexProviders.length;
+}
+
+function providerSuffix(outcome: BenchmarkRunOutcome): string {
+  const selected = outcome.config.providers;
+  if (!selected || selected.length === 0) return '';
+  return `-${selected.join('+')}`;
+}
+
+function writeModelIndexResults(outcome: BenchmarkRunOutcome, resultsDir: string): void {
+  const results = gatherResults(outcome);
   fs.mkdirSync(resultsDir, { recursive: true });
 
   const timestamp = new Date().toISOString();
@@ -42,8 +61,9 @@ function writeModelIndexResults(
   };
 
   const date = timestamp.slice(0, 10);
-  const datedPath = path.join(resultsDir, `${date}.json`);
-  const latestPath = path.join(resultsDir, 'latest.json');
+  const suffix = isFilteredRun(outcome) ? providerSuffix(outcome) : '';
+  const datedPath = path.join(resultsDir, `${date}${suffix}.json`);
+  const latestPath = path.join(resultsDir, `latest${suffix}.json`);
 
   fs.writeFileSync(datedPath, JSON.stringify(payload, null, 2));
   fs.writeFileSync(latestPath, JSON.stringify(payload, null, 2));
@@ -57,14 +77,8 @@ export const config = defineBenchmarkConfig({
   iterations: 1,
   participants: modelIndexProviders,
   onComplete: (outcome) => {
-    const results = outcome.participants
-      .flatMap((p) => p.records)
-      .map((r) => r.data as JsonObject | undefined)
-      .filter((d): d is JsonObject => !!d)
-      .map((d) => d as unknown as AIGatewayModelIndexProviderResult);
-
     writeModelIndexResults(
-      results,
+      outcome,
       path.resolve(__dirname, '../../results/ai-gateway-model-index'),
     );
   },

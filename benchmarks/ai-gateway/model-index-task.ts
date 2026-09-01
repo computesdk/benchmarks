@@ -41,10 +41,22 @@ function providerFromId(id: string): string[] | undefined {
   return undefined;
 }
 
+function extractOwnedBy(model: AnyModel): string | undefined {
+  if (typeof model.owned_by === 'string') return model.owned_by;
+
+  const id = model.id;
+  if (typeof id === 'string') {
+    const fromId = providerFromId(id);
+    if (fromId && fromId.length > 0) return fromId[0];
+  }
+
+  return undefined;
+}
+
 function extractProviders(model: AnyModel): string[] | undefined {
   const rawProviders = model.providers;
   if (Array.isArray(rawProviders) && rawProviders.length > 0) {
-    return rawProviders
+    const providers = rawProviders
       .map((p) => {
         if (typeof p === 'string') return p;
         if (p && typeof p === 'object') {
@@ -58,18 +70,8 @@ function extractProviders(model: AnyModel): string[] | undefined {
         return undefined;
       })
       .filter((p): p is string => typeof p === 'string');
+    if (providers.length > 0) return providers;
   }
-
-  const topProvider =
-    (model.top_provider as AnyModel | undefined)?.provider ??
-    (model.top_provider as AnyModel | undefined)?.provider_name;
-  if (typeof topProvider === 'string') return [topProvider];
-
-  const ownedBy = model.owned_by;
-  if (typeof ownedBy === 'string') return [ownedBy];
-
-  const id = model.id;
-  if (typeof id === 'string') return providerFromId(id);
 
   return undefined;
 }
@@ -100,8 +102,7 @@ function normalizeModel(model: AnyModel): AIGatewayModelIndexEntry | undefined {
   if (typeof id !== 'string' || !id) return undefined;
 
   const providers = extractProviders(model);
-  const ownedBy =
-    typeof model.owned_by === 'string' ? model.owned_by : providers?.[0];
+  const ownedBy = extractOwnedBy(model);
 
   return {
     id,
@@ -154,6 +155,14 @@ interface FetchResult {
 function fetchModelList(config: AIGatewayModelIndexProviderConfig): Promise<FetchResult> {
   return new Promise((resolve) => {
     const startedAt = Date.now();
+    let settled = false;
+
+    function settle(result: FetchResult) {
+      if (settled) return;
+      settled = true;
+      resolve(result);
+    }
+
     const req = https.request(
       {
         method: 'GET',
@@ -168,32 +177,56 @@ function fetchModelList(config: AIGatewayModelIndexProviderConfig): Promise<Fetc
       (res) => {
         let body = '';
         res.setEncoding('utf8');
+
         res.on('data', (chunk) => {
           body += chunk;
         });
+
+        res.on('error', (err) => {
+          settle({ statusCode: res.statusCode, responseMs: Date.now() - startedAt, error: err.message });
+        });
+
+        res.on('aborted', () => {
+          settle({ statusCode: res.statusCode, responseMs: Date.now() - startedAt, error: 'Response aborted' });
+        });
+
         res.on('end', () => {
           const responseMs = Date.now() - startedAt;
-          if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
-            const parsed = parseJson(body);
-            resolve({ statusCode: res.statusCode, body: parsed, responseMs });
-          } else {
-            resolve({
-              statusCode: res.statusCode,
-              responseMs,
-              error: `HTTP ${res.statusCode}: ${body.slice(0, 500)}`,
-            });
+          if (!res.statusCode || res.statusCode < 200 || res.statusCode >= 300) {
+            settle({ statusCode: res.statusCode, responseMs, error: `HTTP ${res.statusCode}: ${body.slice(0, 500)}` });
+            return;
           }
+
+          const parsed = parseJson(body);
+          if (parsed === undefined) {
+            settle({ statusCode: res.statusCode, responseMs, error: 'Invalid JSON response' });
+            return;
+          }
+
+          const data = (parsed as AnyModel).data;
+          if (!Array.isArray(data)) {
+            settle({ statusCode: res.statusCode, responseMs, error: 'Response did not contain a model list' });
+            return;
+          }
+
+          settle({ statusCode: res.statusCode, body: parsed, responseMs });
         });
       },
     );
 
     req.on('error', (err) => {
-      resolve({ responseMs: Date.now() - startedAt, error: err.message });
+      settle({ responseMs: Date.now() - startedAt, error: err.message });
     });
 
     req.on('timeout', () => {
       req.destroy();
-      resolve({ responseMs: Date.now() - startedAt, error: 'Request timed out' });
+      settle({ responseMs: Date.now() - startedAt, error: 'Request timed out' });
+    });
+
+    req.on('close', () => {
+      if (!settled) {
+        settle({ responseMs: Date.now() - startedAt, error: 'Request closed unexpectedly' });
+      }
     });
 
     req.end();
