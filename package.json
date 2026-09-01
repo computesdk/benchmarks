@@ -131,7 +131,19 @@
     "bench:ai-gateway-kimi:neon": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-kimi.bench.ts --provider neon",
     "bench:ai-gateway-kimi:ngrok": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-kimi.bench.ts --provider ngrok",
     "bench:ai-gateway-kimi:llmapi": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-kimi.bench.ts --provider llmapi",
-    "generate-ai-gateway-kimi-svg": "tsx benchmarks/ai-gateway/generate-svg.ts --dir ai-gateway-latency/kimi --title \"AI Gateway Benchmarks — Kimi\" --out ai-gateway-kimi.svg"
+    "generate-ai-gateway-kimi-svg": "tsx benchmarks/ai-gateway/generate-svg.ts --dir ai-gateway-latency/kimi --title \"AI Gateway Benchmarks — Kimi\" --out ai-gateway-kimi.svg",
+    "bench:ai-gateway-model-index": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-model-index.bench.ts",
+    "bench:ai-gateway-model-index:openrouter": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-model-index.bench.ts --provider openrouter",
+    "bench:ai-gateway-model-index:vercel": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-model-index.bench.ts --provider vercel-ai-gateway",
+    "bench:ai-gateway-model-index:cloudflare": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-model-index.bench.ts --provider cloudflare-ai-gateway",
+    "bench:ai-gateway-model-index:blazerail": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-model-index.bench.ts --provider blazerail",
+    "bench:ai-gateway-model-index:llmgateway": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-model-index.bench.ts --provider llmgateway",
+    "bench:ai-gateway-model-index:pydantic": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-model-index.bench.ts --provider pydantic-ai-gateway",
+    "bench:ai-gateway-model-index:concentrate": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-model-index.bench.ts --provider concentrate-ai-gateway",
+    "bench:ai-gateway-model-index:ramp": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-model-index.bench.ts --provider ramp",
+    "bench:ai-gateway-model-index:neon": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-model-index.bench.ts --provider neon",
+    "bench:ai-gateway-model-index:ngrok": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-model-index.bench.ts --provider ngrok",
+    "bench:ai-gateway-model-index:llmapi": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-model-index.bench.ts --provider llmapi"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1115.0",

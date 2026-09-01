@@ -116,3 +116,42 @@ export interface AIGatewayBenchmarkResult {
   skipped?: boolean;
   skipReason?: string;
 }
+
+export type AIGatewayModelListFormat = 'openai' | 'openrouter' | 'anthropic';
+
+export interface AIGatewayModelIndexProviderConfig {
+  /** Provider name */
+  name: string;
+  /** Environment variables that must all be set to run this participant */
+  requiredEnvVars: string[];
+  /** Hostname to connect to over TLS (port 443) */
+  host: string;
+  /** Request path for the model list endpoint */
+  modelsPath: string;
+  /** Auth (and any gateway-specific) headers. Evaluated per-request so env vars can be read lazily. */
+  buildHeaders: () => Record<string, string>;
+  /** Expected response schema for the model list endpoint */
+  modelListFormat: AIGatewayModelListFormat;
+}
+
+export interface AIGatewayModelIndexEntry {
+  id: string;
+  name?: string;
+  displayName?: string;
+  ownedBy?: string;
+  /** Routing/upstream provider options exposed by the gateway for this model */
+  providers?: string[];
+  contextLength?: number;
+  maxOutputTokens?: number;
+  createdAt?: string;
+}
+
+export interface AIGatewayModelIndexProviderResult {
+  provider: string;
+  statusCode?: number;
+  /** Gateway response time (request sent -> body parsed) in milliseconds */
+  responseMs: number;
+  modelCount: number;
+  models: AIGatewayModelIndexEntry[];
+  error?: string;
+}

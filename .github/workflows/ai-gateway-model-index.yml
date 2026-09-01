@@ -1,0 +1,113 @@
+name: AI Gateway Model Index
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'benchmarks/ai-gateway/**'
+      - 'benchmarks/src/util/**'
+      - 'package.json'
+      - '.github/workflows/ai-gateway-model-index.yml'
+  schedule:
+    - cron: '0 9 * * 1' # Weekly on Monday at 9am UTC (4am CDT)
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: 'Gateway to run (leave empty for full roster)'
+        required: false
+        default: ''
+        type: choice
+        options:
+          - ''
+          - openrouter
+          - vercel-ai-gateway
+          - cloudflare-ai-gateway
+          - blazerail
+          - llmgateway
+          - pydantic-ai-gateway
+          - concentrate-ai-gateway
+          - ramp
+          - neon
+          - ngrok
+          - llmapi
+      dry_run:
+        description: 'Run without ingesting or committing results'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: ai-gateway-model-index
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  model-index:
+    name: AI Gateway Model Index
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      - uses: namespacelabs/nscloud-setup@v0
+      - name: Install dependencies
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            pnpm update --ignore-scripts
+          else
+            pnpm install --frozen-lockfile --ignore-scripts
+          fi
+      - name: Build workspace packages
+        run: pnpm -r --filter './packages/**' run build
+      - name: Run AI gateway model index
+        env:
+          PROVIDER: ${{ github.event.inputs.provider }}
+        run: |
+          . benchmarks/scripts/load-vault-secrets.sh '^(OPENROUTER_API_KEY|VERCEL_AI_GATEWAY_API_KEY|CLOUDFLARE_AI_GATEWAY_ACCOUNT_ID|CLOUDFLARE_AI_GATEWAY_GATEWAY_ID|CLOUDFLARE_AI_GATEWAY_TOKEN|OPENAI_API_KEY|BLAZERAIL_API_KEY|LLM_GATEWAY_API_KEY|PYDANTIC_AI_GATEWAY_API_KEY|CONCENTRATE_AI_GATEWAY_API_KEY|RAMP_ROUTER_API_KEY|NEON_AI_GATEWAY_BASE_URL|NEON_AI_GATEWAY_TOKEN|NGROK_AI_GATEWAY_API_KEY|LLMAPI_API_KEY|BENCHMARKS_PLATFORM_API_KEY)'
+
+          provider_args=()
+          if [ -n "$PROVIDER" ]; then
+            provider_args=(--provider "$PROVIDER")
+          fi
+
+          npx tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-model-index.bench.ts "${provider_args[@]}" \
+            ${{ (github.event_name == 'push' || github.event.inputs.dry_run == 'true') && '--no-ingest' || '' }}
+      - name: Upload results as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-gateway-model-index-results
+          path: results/ai-gateway-model-index/
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Commit and push
+        if: github.event_name != 'push' && github.event.inputs.dry_run != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add results/ai-gateway-model-index/
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore: update ai gateway model index [skip ci]"
+
+          branch="${GITHUB_REF#refs/heads/}"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "${branch}"
+            git rebase --autostash "origin/${branch}" || { git rebase --abort; exit 1; }
+            if git push origin "HEAD:${branch}"; then
+              echo "Pushed on attempt ${attempt}"
+              exit 0
+            fi
+            echo "Push rejected (attempt ${attempt}); will rebase and retry"
+          done
+          echo "Failed to push after multiple attempts" >&2
+          exit 1
