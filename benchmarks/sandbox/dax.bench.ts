@@ -62,6 +62,7 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   tenki:        { cpuCores: 8, memoryMb: 16384, diskSizeGb: 20 }, // default disk cannot hold the OpenCode install
   tensorlake:   { cpus: 8, memoryMb: 16384 },
   isorun:       { vcpus: 8, memMiB: 16384 },
+  givemeanode:  { vcpus: 8, memMiB: 16384 },
   runloop:      { launch_parameters: { resource_size_request: 'CUSTOM_SIZE', custom_cpu_cores: 8, custom_gb_memory: 16 } },
   upstash:      { size: 'large' },                          // large = 8 cores, 16 GB
   vercel:       { resources: { vcpus: 8 } },               // no memory control

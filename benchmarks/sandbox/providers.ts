@@ -12,6 +12,7 @@ import { declaw } from '@computesdk/declaw';
 import { e2b } from '@computesdk/e2b';
 import { freestyle } from '@computesdk/freestyle';
 import { hopx } from '@computesdk/hopx';
+import { givemeanode } from '@computesdk/givemeanode';
 import { isorun } from '@computesdk/isorun';
 // import { lelantos } from '@computesdk/lelantos';
 import { lightning } from '@computesdk/lightning';
@@ -126,6 +127,11 @@ export const providers: ProviderConfig[] = [
     name: 'hopx',
     requiredEnvVars: ['HOPX_API_KEY'],
     createCompute: () => hopx({ apiKey: process.env.HOPX_API_KEY! }),
+  },
+  {
+    name: 'givemeanode',
+    requiredEnvVars: ['GMN_TOKEN'],
+    createCompute: () => givemeanode({ apiKey: process.env.GMN_TOKEN! }),
   },
   {
     name: 'isorun',
