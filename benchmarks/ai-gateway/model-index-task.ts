@@ -84,8 +84,36 @@ function extractContextLength(model: AnyModel): number | undefined {
   return undefined;
 }
 
+function providerOutputLimits(model: AnyModel): number[] {
+  const rawProviders = model.providers;
+  if (!Array.isArray(rawProviders)) return [];
+
+  const limits: number[] = [];
+  for (const p of rawProviders) {
+    if (!p || typeof p !== 'object') continue;
+    const provider = p as AnyModel;
+    const candidates = [
+      provider.max_output,
+      provider.max_output_tokens,
+      provider.maxOutputTokens,
+      provider.max_tokens,
+      provider.max_completion_tokens,
+    ];
+    for (const v of candidates) {
+      if (typeof v === 'number' && Number.isFinite(v) && v > 0) {
+        limits.push(v);
+        break;
+      }
+    }
+  }
+  return limits;
+}
+
 function extractMaxOutputTokens(model: AnyModel): number | undefined {
   const topProvider = asModel(model.top_provider);
+  const providerLimits = providerOutputLimits(model);
+  const maxProviderLimit = providerLimits.length > 0 ? Math.max(...providerLimits) : undefined;
+
   const candidates = [
     model.max_completion_tokens,
     model.max_tokens,
@@ -95,6 +123,7 @@ function extractMaxOutputTokens(model: AnyModel): number | undefined {
     topProvider?.max_tokens,
     topProvider?.maxOutputTokens,
     topProvider?.max_output_tokens,
+    maxProviderLimit,
   ];
   for (const v of candidates) {
     if (typeof v === 'number' && Number.isFinite(v) && v > 0) return v;
