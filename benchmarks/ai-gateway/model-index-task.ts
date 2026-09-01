@@ -85,11 +85,16 @@ function extractContextLength(model: AnyModel): number | undefined {
 }
 
 function extractMaxOutputTokens(model: AnyModel): number | undefined {
+  const topProvider = asModel(model.top_provider);
   const candidates = [
     model.max_completion_tokens,
     model.max_tokens,
     model.maxOutputTokens,
     model.max_output_tokens,
+    topProvider?.max_completion_tokens,
+    topProvider?.max_tokens,
+    topProvider?.maxOutputTokens,
+    topProvider?.max_output_tokens,
   ];
   for (const v of candidates) {
     if (typeof v === 'number' && Number.isFinite(v) && v > 0) return v;
