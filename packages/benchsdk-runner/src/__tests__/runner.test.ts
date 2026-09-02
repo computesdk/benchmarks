@@ -10,6 +10,10 @@ vi.mock('@benchsdk/api', () => ({
 
 vi.mock('@benchsdk/worker', () => ({
   BenchmarkReporter: { claim: (...args: unknown[]) => reporterClaim(...args) },
+  createSystemMetricsCollector: () => ({
+    sample: () => ({ ts: new Date().toISOString() }),
+    stop: () => {},
+  }),
   filterParticipantsByEnv: (ps: any[]) => {
     const available: any[] = [];
     const skipped: { name: string; missing: string[] }[] = [];
@@ -689,6 +693,38 @@ describe('runBenchmark', () => {
     expect(runWorker).not.toHaveBeenCalled();
     expect(fakeClient.planWorkers).toHaveBeenCalledTimes(2);
     expect(calls.planWorkers[0][3]).toMatchObject({ workerCount: 1, targetConcurrency: 2 });
+  });
+
+  it('groupBy round: uploads a system-metrics artifact alongside coordinator.log', async () => {
+    const uploads: Record<string, { kind: string; body: string }[]> = { e2b: [], modal: [] };
+    reporterClaim.mockImplementation(async (cfg: any) => ({
+      taskIndexStart: 0,
+      recordResult: () => {},
+      uploadArtifact: async (input: { kind: string; body: string }) => {
+        uploads[cfg.participantSlug].push(input);
+        return {};
+      },
+      setProgress: () => {},
+      heartbeat: async () => {},
+      finish: async () => {},
+    }));
+
+    const task = vi.fn(async () => ({ data: { ok: true } }));
+
+    await runBenchmark(
+      { benchmarkSlug: 'ai-gateway-local', benchmarkName: 'AI GW', iterations: 2, groupBy: 'round', participants },
+      defineTask(task),
+      [],
+    );
+
+    for (const slug of ['e2b', 'modal']) {
+      const metrics = uploads[slug].find((u) => u.kind === 'system-metrics');
+      expect(metrics).toMatchObject({ kind: 'system-metrics', name: 'metrics.jsonl', contentType: 'application/x-ndjson' });
+      // Baseline sample at claim + one per round (2 rounds here).
+      const lines = metrics!.body.trim().split('\n');
+      expect(lines).toHaveLength(3);
+      for (const line of lines) expect(() => JSON.parse(line)).not.toThrow();
+    }
   });
 
   it('groupBy round: a task with no explicit steps records a single implicit "task" step', async () => {

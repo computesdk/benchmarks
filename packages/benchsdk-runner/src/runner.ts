@@ -19,10 +19,12 @@ import os from 'node:os';
 import { createBenchmarkClient } from '@benchsdk/api';
 import {
   BenchmarkReporter,
+  createSystemMetricsCollector,
   filterParticipantsByEnv,
   runWorker,
   selectParticipants,
 } from '@benchsdk/worker';
+import type { BenchmarkSystemMetricsCollector, BenchmarkSystemMetricsSample } from '@benchsdk/worker';
 import { NoAvailableParticipantsError } from './no-available-participants.js';
 import { higherIsBetter, lowerIsBetter, score, ScoringSpecError, scoringConfigToSpec } from './scoring.js';
 import type {
@@ -824,6 +826,12 @@ async function runGroupedByRound<T extends BaseParticipant>(
   const logBuffers = new Map<string, LogBuffer>();
   const failed = new Map<string, boolean>();
   const recordsByParticipant = new Map<string, TaskResultRecord[]>();
+  // One collector per participant, scoped the same way `runWorker` scopes its
+  // own (a fresh baseline at the start of that participant's execution slice),
+  // even though every participant shares this one Node process here. Created
+  // only when there's a reporter to upload to — nothing else would read it.
+  const metricsCollectors = new Map<string, BenchmarkSystemMetricsCollector>();
+  const metricsSamples = new Map<string, BenchmarkSystemMetricsSample[]>();
 
   for (const participant of available) {
     logBuffers.set(participant.name, new LogBuffer());
@@ -858,6 +866,10 @@ async function runGroupedByRound<T extends BaseParticipant>(
       console.warn(`  ${participant.name}: could not claim a platform worker — running without platform reporting.`);
     }
     reporters.set(participant.name, reporter);
+    if (reporter) {
+      metricsCollectors.set(participant.name, createSystemMetricsCollector());
+      metricsSamples.set(participant.name, [metricsCollectors.get(participant.name)!.sample()]);
+    }
   }
 
   console.log(`Interleaving ${available.length} participant(s), ${schedule.length} round(s) each.\n`);
@@ -897,6 +909,11 @@ async function runGroupedByRound<T extends BaseParticipant>(
           total: schedule.length,
         });
         await reporter.heartbeat();
+        // Sampled once per round rather than on a wall-clock timer: round mode
+        // runs everything sequentially in this one loop, so a round boundary
+        // is the natural, already-existing cadence (same one heartbeat uses).
+        const collector = metricsCollectors.get(participant.name);
+        if (collector) metricsSamples.get(participant.name)!.push(collector.sample());
       }
     }
   }
@@ -907,6 +924,19 @@ async function runGroupedByRound<T extends BaseParticipant>(
     if (reporter && !logBuffer.isEmpty()) {
       await reporter
         .uploadArtifact({ kind: 'coordinator.log', contentType: 'text/plain', name: 'worker.log', body: logBuffer.toText() })
+        .catch(() => {});
+    }
+    const collector = metricsCollectors.get(participant.name);
+    collector?.stop();
+    const samples = metricsSamples.get(participant.name);
+    if (reporter && samples && samples.length > 0) {
+      await reporter
+        .uploadArtifact({
+          kind: 'system-metrics',
+          contentType: 'application/x-ndjson',
+          name: 'metrics.jsonl',
+          body: samples.map((sample) => JSON.stringify(sample)).join('\n') + '\n',
+        })
         .catch(() => {});
     }
     await reporter?.finish(failed.get(participant.name) ?? false);
