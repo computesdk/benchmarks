@@ -20,10 +20,12 @@ import { createBenchmarkClient } from '@benchsdk/api';
 import { resolveAuth } from '@benchsdk/cli';
 import {
   BenchmarkReporter,
+  createSystemMetricsCollector,
   filterParticipantsByEnv,
   runWorker,
   selectParticipants,
 } from '@benchsdk/worker';
+import type { BenchmarkSystemMetricsCollector, BenchmarkSystemMetricsSample } from '@benchsdk/worker';
 import { NoAvailableParticipantsError } from './no-available-participants.js';
 import { higherIsBetter, lowerIsBetter, score, ScoringSpecError, scoringConfigToSpec } from './scoring.js';
 import type {
@@ -812,6 +814,17 @@ async function runGroupedByRound<T extends BaseParticipant>(
   const logBuffers = new Map<string, LogBuffer>();
   const failed = new Map<string, boolean>();
   const recordsByParticipant = new Map<string, TaskResultRecord[]>();
+  // A single collector for the whole run: round mode interleaves every
+  // participant in this one shared Node process, so per-participant CPU/memory
+  // can't be isolated — a sample reflects the whole process, not one slice of
+  // it. We therefore sample once per round (not once per participant) and
+  // upload a single `system-metrics` artifact, rather than N duplicates that
+  // would falsely imply isolated per-participant usage. (Separate artifacts
+  // only make sense when workers genuinely run on separate VMs, one per
+  // participant, as the client `runWorker` path does.) Created only when at
+  // least one participant has a reporter to upload to — nothing else reads it.
+  let metricsCollector: BenchmarkSystemMetricsCollector | undefined;
+  const metricsSamples: BenchmarkSystemMetricsSample[] = [];
 
   for (const participant of available) {
     logBuffers.set(participant.name, new LogBuffer());
@@ -849,6 +862,13 @@ async function runGroupedByRound<T extends BaseParticipant>(
       console.warn(`  ${participant.name}: could not claim a platform worker — running without platform reporting.`);
     }
     reporters.set(participant.name, reporter);
+    // First reporter to appear starts the one shared collector, with an
+    // immediate baseline sample so a run that finishes inside one round still
+    // uploads metrics.
+    if (reporter && !metricsCollector) {
+      metricsCollector = createSystemMetricsCollector();
+      metricsSamples.push(metricsCollector.sample());
+    }
   }
 
   console.log(`Interleaving ${available.length} participant(s), ${schedule.length} round(s) each.\n`);
@@ -890,6 +910,35 @@ async function runGroupedByRound<T extends BaseParticipant>(
         await reporter.heartbeat();
       }
     }
+    // Sampled once per round rather than on a wall-clock timer: round mode runs
+    // everything sequentially in this one loop, so a round boundary is the
+    // natural, already-existing cadence. Taken after the whole round (not per
+    // participant) since the sample covers the shared process, not one slice.
+    if (metricsCollector) metricsSamples.push(metricsCollector.sample());
+  }
+
+  // One shared collector for the whole process — a final sample (before stop,
+  // which disables the event-loop monitor), then upload a single
+  // `system-metrics` artifact via any one reporter (all participants ran in
+  // this process, so the metrics belong to the run, not to any one of them).
+  if (metricsCollector) metricsSamples.push(metricsCollector.sample());
+  metricsCollector?.stop();
+  // The SDK only has a worker-scoped artifact API, so this single artifact is
+  // necessarily filed under one reporter's worker. Tag it as process-scoped
+  // with the full participant list so consumers don't mistake it for that one
+  // participant's isolated usage — the metrics cover every participant that ran
+  // in this shared process, not just the reporter it happened to upload through.
+  const metricsReporter = available.map((p) => reporters.get(p.name)).find((r): r is BenchmarkReporter => Boolean(r));
+  if (metricsReporter && metricsSamples.length > 0) {
+    await metricsReporter
+      .uploadArtifact({
+        kind: 'system-metrics',
+        contentType: 'application/x-ndjson',
+        name: 'metrics.jsonl',
+        metadata: { scope: 'shared-process', participants: available.map((p) => p.name) },
+        body: metricsSamples.map((sample) => JSON.stringify(sample)).join('\n') + '\n',
+      })
+      .catch(() => {});
   }
 
   for (const participant of available) {

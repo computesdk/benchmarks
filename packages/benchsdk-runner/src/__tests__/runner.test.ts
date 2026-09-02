@@ -10,6 +10,10 @@ vi.mock('@benchsdk/api', () => ({
 
 vi.mock('@benchsdk/worker', () => ({
   BenchmarkReporter: { claim: (...args: unknown[]) => reporterClaim(...args) },
+  createSystemMetricsCollector: () => ({
+    sample: () => ({ ts: new Date().toISOString() }),
+    stop: () => {},
+  }),
   filterParticipantsByEnv: (ps: any[]) => {
     const available: any[] = [];
     const skipped: { name: string; missing: string[] }[] = [];
@@ -732,6 +736,44 @@ describe('runBenchmark', () => {
     expect(runWorker).not.toHaveBeenCalled();
     expect(fakeClient.planWorkers).toHaveBeenCalledTimes(2);
     expect(calls.planWorkers[0][3]).toMatchObject({ workerCount: 1, targetConcurrency: 2 });
+  });
+
+  it('groupBy round: uploads a single shared system-metrics artifact (not one per participant)', async () => {
+    const uploads: Record<string, { kind: string; body: string; metadata?: Record<string, unknown> }[]> = { e2b: [], modal: [] };
+    reporterClaim.mockImplementation(async (cfg: any) => ({
+      taskIndexStart: 0,
+      recordResult: () => {},
+      uploadArtifact: async (input: { kind: string; body: string; metadata?: Record<string, unknown> }) => {
+        uploads[cfg.participantSlug].push(input);
+        return {};
+      },
+      setProgress: () => {},
+      heartbeat: async () => {},
+      finish: async () => {},
+    }));
+
+    const task = vi.fn(async () => ({ data: { ok: true } }));
+
+    await runBenchmark(
+      { benchmarkSlug: 'ai-gateway-local', benchmarkName: 'AI GW', iterations: 2, groupBy: 'round', participants },
+      defineTask(task),
+      [],
+    );
+
+    // Every participant runs in this one shared process, so metrics belong to
+    // the run — a single artifact via one reporter, not a duplicate per slug.
+    const metricsUploads = [...uploads.e2b, ...uploads.modal].filter((u) => u.kind === 'system-metrics');
+    expect(metricsUploads).toHaveLength(1);
+    const metrics = metricsUploads[0];
+    expect(metrics).toMatchObject({ kind: 'system-metrics', name: 'metrics.jsonl', contentType: 'application/x-ndjson' });
+    // Tagged process-scoped with every participant, so it's not misread as the
+    // uploading participant's isolated usage (the SDK's only artifact API is
+    // worker-scoped, so it's necessarily filed under one reporter's worker).
+    expect(metrics.metadata).toEqual({ scope: 'shared-process', participants: ['e2b', 'modal'] });
+    // Baseline sample at claim + one per round (2 rounds) + one final sample.
+    const lines = metrics.body.trim().split('\n');
+    expect(lines).toHaveLength(4);
+    for (const line of lines) expect(() => JSON.parse(line)).not.toThrow();
   });
 
   it('groupBy round: a task with no explicit steps records a single implicit "task" step', async () => {
