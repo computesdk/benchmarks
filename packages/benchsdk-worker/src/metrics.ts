@@ -110,43 +110,114 @@ function hostCpuUsageSince(baseline: number[] | null, current: number[] | null):
   return { usedUs: Math.round(usedUs), totalUs: Math.round(totalUs) };
 }
 
+// The process's own control files aren't always at the cgroup fs root: under a
+// nested cgroup (no namespacing) they live at `<root>/<relative>/...`. Parse
+// the relative path per controller from /proc/self/cgroup, defaulting to the
+// root so hosts that *do* namespace the cgroup (relative path "/") still work.
+// A limit set on any ancestor also constrains us, so callers walk up the tree
+// and take the tightest — reading only the leaf would miss a parent's ceiling.
+function cgroupRelativePaths(): { v2: string; controllers: Map<string, string> } {
+  const controllers = new Map<string, string>();
+  let v2 = '';
+  try {
+    const data = fs.readFileSync('/proc/self/cgroup', 'utf-8');
+    for (const line of data.split('\n')) {
+      // Format: hierarchy-id:controller-list:relative-path
+      const idx = line.indexOf(':');
+      if (idx < 0) continue;
+      const rest = line.slice(idx + 1);
+      const sep = rest.indexOf(':');
+      if (sep < 0) continue;
+      const controllerList = rest.slice(0, sep);
+      const relPath = rest.slice(sep + 1);
+      if (controllerList === '') {
+        // The cgroup v2 unified hierarchy (empty controller field).
+        v2 = relPath;
+      } else {
+        for (const c of controllerList.split(',')) controllers.set(c, relPath);
+      }
+    }
+  } catch {
+    // No /proc/self/cgroup (non-Linux) — fall back to the fs root for everything.
+  }
+  return { v2, controllers };
+}
+
+// Every directory from the process's own cgroup up to (and including) the fs
+// root. The effective limit is the tightest set anywhere along this ancestry,
+// so callers read each level and take the minimum; order doesn't matter.
+function cgroupDirsToRoot(mountRoot: string, relPath: string): string[] {
+  const dirs: string[] = [mountRoot];
+  let current = mountRoot;
+  for (const seg of relPath.split('/').filter((s) => s.length > 0)) {
+    current = `${current}/${seg}`;
+    dirs.push(current);
+  }
+  return dirs;
+}
+
+// The tightest (minimum) of a and b, treating null as "no limit at this level".
+function tighter(a: number | null, b: number | null): number | null {
+  if (a === null) return b;
+  if (b === null) return a;
+  return Math.min(a, b);
+}
+
 function readCgroupMemLimitMb(): number | null {
-  try {
-    const raw = fs.readFileSync('/sys/fs/cgroup/memory.max', 'utf-8').trim();
-    if (raw === 'max') return null;
-    const bytes = Number.parseInt(raw, 10);
-    return Number.isFinite(bytes) ? Math.round(bytes / 1024 / 1024) : null;
-  } catch {
-    // Not cgroup v2 (or not in a cgroup at all) — fall through to v1.
+  const { v2, controllers } = cgroupRelativePaths();
+  let limit: number | null = null;
+  for (const dir of cgroupDirsToRoot('/sys/fs/cgroup', v2)) {
+    try {
+      const raw = fs.readFileSync(`${dir}/memory.max`, 'utf-8').trim();
+      if (raw === 'max') continue; // unlimited here — an ancestor may still cap us.
+      const bytes = Number.parseInt(raw, 10);
+      if (Number.isFinite(bytes)) limit = tighter(limit, Math.round(bytes / 1024 / 1024));
+    } catch {
+      // No memory.max at this level — try the next ancestor, then fall to v1.
+    }
   }
-  try {
-    const bytes = Number.parseInt(fs.readFileSync('/sys/fs/cgroup/memory/memory.limit_in_bytes', 'utf-8').trim(), 10);
-    // v1 has no "unlimited" string; it reports a near-2^63 sentinel instead.
-    if (!Number.isFinite(bytes) || bytes > 1e15) return null;
-    return Math.round(bytes / 1024 / 1024);
-  } catch {
-    return null;
+  if (limit !== null) return limit;
+  const relPath = controllers.get('memory') ?? '';
+  for (const dir of cgroupDirsToRoot('/sys/fs/cgroup/memory', relPath)) {
+    try {
+      const bytes = Number.parseInt(fs.readFileSync(`${dir}/memory.limit_in_bytes`, 'utf-8').trim(), 10);
+      // v1 has no "unlimited" string; it reports a near-2^63 sentinel instead.
+      if (!Number.isFinite(bytes) || bytes > 1e15) continue;
+      limit = tighter(limit, Math.round(bytes / 1024 / 1024));
+    } catch {
+      // No limit file at this level — keep walking up toward the root.
+    }
   }
+  return limit;
 }
 
 function readCgroupCpuLimitCores(): number | null {
-  try {
-    const [quotaRaw, periodRaw] = fs.readFileSync('/sys/fs/cgroup/cpu.max', 'utf-8').trim().split(/\s+/);
-    if (quotaRaw === 'max') return null;
-    const quota = Number.parseInt(quotaRaw, 10);
-    const period = Number.parseInt(periodRaw, 10);
-    return Number.isFinite(quota) && period > 0 ? quota / period : null;
-  } catch {
-    // Not cgroup v2 (or not in a cgroup at all) — fall through to v1.
+  const { v2, controllers } = cgroupRelativePaths();
+  let limit: number | null = null;
+  for (const dir of cgroupDirsToRoot('/sys/fs/cgroup', v2)) {
+    try {
+      const [quotaRaw, periodRaw] = fs.readFileSync(`${dir}/cpu.max`, 'utf-8').trim().split(/\s+/);
+      if (quotaRaw === 'max') continue; // unlimited here — an ancestor may still cap us.
+      const quota = Number.parseInt(quotaRaw, 10);
+      const period = Number.parseInt(periodRaw, 10);
+      if (Number.isFinite(quota) && period > 0) limit = tighter(limit, quota / period);
+    } catch {
+      // No cpu.max at this level — try the next ancestor, then fall to v1.
+    }
   }
-  try {
-    const quota = Number.parseInt(fs.readFileSync('/sys/fs/cgroup/cpu/cpu.cfs_quota_us', 'utf-8').trim(), 10);
-    if (!Number.isFinite(quota) || quota <= 0) return null;
-    const period = Number.parseInt(fs.readFileSync('/sys/fs/cgroup/cpu/cpu.cfs_period_us', 'utf-8').trim(), 10);
-    return period > 0 ? quota / period : null;
-  } catch {
-    return null;
+  if (limit !== null) return limit;
+  const relPath = controllers.get('cpu') ?? '';
+  for (const dir of cgroupDirsToRoot('/sys/fs/cgroup/cpu', relPath)) {
+    try {
+      const quota = Number.parseInt(fs.readFileSync(`${dir}/cpu.cfs_quota_us`, 'utf-8').trim(), 10);
+      if (!Number.isFinite(quota) || quota <= 0) continue; // -1 == unlimited here.
+      const period = Number.parseInt(fs.readFileSync(`${dir}/cpu.cfs_period_us`, 'utf-8').trim(), 10);
+      if (period > 0) limit = tighter(limit, quota / period);
+    } catch {
+      // No quota file at this level — keep walking up toward the root.
+    }
   }
+  return limit;
 }
 
 export function createSystemMetricsCollector(): BenchmarkSystemMetricsCollector {
