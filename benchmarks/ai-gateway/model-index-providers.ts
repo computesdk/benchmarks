@@ -34,6 +34,7 @@ export const modelIndexProviders: AIGatewayModelIndexProviderConfig[] = [
     requiredEnvVars: [
       'CLOUDFLARE_AI_GATEWAY_ACCOUNT_ID',
       'CLOUDFLARE_AI_GATEWAY_GATEWAY_ID',
+      'OPENAI_API_KEY',
     ],
     host: 'gateway.ai.cloudflare.com',
     modelsPath: `/v1/${process.env.CLOUDFLARE_AI_GATEWAY_ACCOUNT_ID}/${process.env.CLOUDFLARE_AI_GATEWAY_GATEWAY_ID}/openai/v1/models`,
@@ -84,6 +85,14 @@ export const modelIndexProviders: AIGatewayModelIndexProviderConfig[] = [
     buildHeaders: () => ({
       Authorization: `Bearer ${process.env.CONCENTRATE_AI_GATEWAY_API_KEY}`,
     }),
+    pricingCatalog: {
+      format: 'concentrate',
+      host: 'api.concentrate.ai',
+      pathTemplate: '/v1/models/{model}',
+      buildHeaders: () => ({
+        Authorization: `Bearer ${process.env.CONCENTRATE_AI_GATEWAY_API_KEY}`,
+      }),
+    },
   },
   {
     name: 'ramp',
@@ -104,6 +113,12 @@ export const modelIndexProviders: AIGatewayModelIndexProviderConfig[] = [
     buildHeaders: () => ({
       Authorization: `Bearer ${process.env.NEON_AI_GATEWAY_TOKEN}`,
     }),
+    pricingCatalog: {
+      format: 'neon',
+      host: 'neon.com',
+      path: '/models.json',
+      buildHeaders: () => ({}),
+    },
   },
   {
     name: 'ngrok',

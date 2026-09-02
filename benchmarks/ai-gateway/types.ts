@@ -132,6 +132,10 @@ export interface AIGatewayModelIndexProviderConfig {
   buildHeaders: () => Record<string, string>;
   /** Expected response schema for the model list endpoint */
   modelListFormat: AIGatewayModelListFormat;
+  /** Optional separate pricing catalog used to enrich model-list entries. */
+  pricingCatalog?:
+    | { format: 'concentrate'; host: string; pathTemplate: string; buildHeaders: () => Record<string, string> }
+    | { format: 'neon'; host: string; path: string; buildHeaders: () => Record<string, string> };
 }
 
 export interface AIGatewayModelPricing {

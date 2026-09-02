@@ -83,6 +83,39 @@ function asPricing(value: unknown): AIGatewayModelPricing | undefined {
   return Object.keys(obj).length > 0 ? (obj as AIGatewayModelPricing) : undefined;
 }
 
+const flatPricingKeys = [
+  'input_cost',
+  'output_cost',
+  'input_cost_per_token',
+  'output_cost_per_token',
+  'cost_input',
+  'cost_output',
+  'price_input',
+  'price_output',
+  'token_cost',
+  'per_token',
+];
+
+function extractPricingFromObject(model: AnyModel): AIGatewayModelPricing | undefined {
+  const router = asModel(model.router);
+  const pricing = {
+    ...(asPricing(model.pricing) ?? {}),
+    ...(asPricing(router?.pricing) ?? {}),
+  };
+  const cost = asPricing(model.cost);
+  const flat = Object.fromEntries(
+    flatPricingKeys
+      .filter((key) => model[key] !== undefined)
+      .map((key) => [key, model[key]]),
+  );
+  const result = {
+    ...pricing,
+    ...(cost ? { cost } : {}),
+    ...flat,
+  };
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
 function extractProviderPricing(model: AnyModel): Record<string, AIGatewayModelPricing> | undefined {
   const rawProviders = model.providers;
   if (!Array.isArray(rawProviders) || rawProviders.length === 0) return undefined;
@@ -93,7 +126,7 @@ function extractProviderPricing(model: AnyModel): Record<string, AIGatewayModelP
     if (!raw || typeof raw !== 'object') continue;
     const provider = raw as AnyModel;
     const providerId = providerNameFromProviderObject(provider);
-    const pricing = asPricing(provider.pricing) ?? asPricing(provider.cost);
+    const pricing = extractPricingFromObject(provider);
     if (providerId && pricing) {
       providerPricing[providerId] = pricing;
       hasAny = true;
@@ -103,7 +136,7 @@ function extractProviderPricing(model: AnyModel): Record<string, AIGatewayModelP
 }
 
 function extractPricing(model: AnyModel): AIGatewayModelPricing | undefined {
-  return asPricing(model.pricing) ?? asPricing(model.cost);
+  return extractPricingFromObject(model);
 }
 
 function extractContextLength(model: AnyModel): number | undefined {
@@ -224,7 +257,7 @@ function normalizePydanticRoutes(routes: unknown[]): AIGatewayModelIndexEntry[] 
         ? route.provider
         : undefined;
     const provider = typeof route.provider === 'string' ? route.provider : routeName;
-    const routePricing = asPricing(route.pricing) ?? asPricing(route.cost);
+    const routePricing = extractPricing(route);
     const providerPricing = provider && routePricing ? { [provider]: routePricing } : undefined;
 
     const chatModels = Array.isArray(route.models) ? route.models : [];
@@ -304,7 +337,11 @@ interface FetchResult {
   error?: string;
 }
 
-function fetchModelList(config: AIGatewayModelIndexProviderConfig): Promise<FetchResult> {
+function fetchJson(
+  host: string,
+  requestPath: string,
+  headers: Record<string, string>,
+): Promise<FetchResult> {
   return new Promise((resolve) => {
     const startedAt = Date.now();
     let settled = false;
@@ -318,71 +355,157 @@ function fetchModelList(config: AIGatewayModelIndexProviderConfig): Promise<Fetc
     const req = https.request(
       {
         method: 'GET',
-        hostname: config.host,
-        path: config.modelsPath,
-        headers: {
-          Accept: 'application/json',
-          ...config.buildHeaders(),
-        },
+        hostname: host,
+        path: requestPath,
+        headers: { Accept: 'application/json', ...headers },
         timeout: REQUEST_TIMEOUT_MS,
       },
       (res) => {
         let body = '';
         res.setEncoding('utf8');
-
-        res.on('data', (chunk) => {
-          body += chunk;
-        });
-
+        res.on('data', (chunk) => { body += chunk; });
         res.on('error', (err) => {
           settle({ statusCode: res.statusCode, responseMs: Date.now() - startedAt, error: err.message });
         });
-
         res.on('aborted', () => {
           settle({ statusCode: res.statusCode, responseMs: Date.now() - startedAt, error: 'Response aborted' });
         });
-
         res.on('end', () => {
           const responseMs = Date.now() - startedAt;
           if (!res.statusCode || res.statusCode < 200 || res.statusCode >= 300) {
             settle({ statusCode: res.statusCode, responseMs, error: `HTTP ${res.statusCode}: ${body.slice(0, 500)}` });
             return;
           }
-
           const parsed = parseJson(body);
-          if (parsed === undefined) {
-            settle({ statusCode: res.statusCode, responseMs, error: 'Invalid JSON response' });
-            return;
-          }
-
-          const isPydantic = config.modelListFormat === 'pydantic';
-          const data = isPydantic ? parsed : (parsed as AnyModel).data;
-          if (!Array.isArray(data)) {
-            settle({ statusCode: res.statusCode, responseMs, error: 'Response did not contain a model list' });
-            return;
-          }
-
-          settle({ statusCode: res.statusCode, body: parsed, responseMs });
+          settle(parsed === undefined
+            ? { statusCode: res.statusCode, responseMs, error: 'Invalid JSON response' }
+            : { statusCode: res.statusCode, body: parsed, responseMs });
         });
       },
     );
 
-    req.on('error', (err) => {
-      settle({ responseMs: Date.now() - startedAt, error: err.message });
-    });
-
+    req.on('error', (err) => settle({ responseMs: Date.now() - startedAt, error: err.message }));
     req.on('timeout', () => {
       req.destroy();
       settle({ responseMs: Date.now() - startedAt, error: 'Request timed out' });
     });
-
     req.on('close', () => {
-      if (!settled) {
-        settle({ responseMs: Date.now() - startedAt, error: 'Request closed unexpectedly' });
-      }
+      if (!settled) settle({ responseMs: Date.now() - startedAt, error: 'Request closed unexpectedly' });
     });
-
     req.end();
+  });
+}
+
+function fetchModelList(config: AIGatewayModelIndexProviderConfig): Promise<FetchResult> {
+  return fetchJson(config.host, config.modelsPath, config.buildHeaders()).then((result) => {
+    if (result.error || result.body === undefined) return result;
+    const data = config.modelListFormat === 'pydantic' ? result.body : (result.body as AnyModel).data;
+    return Array.isArray(data) ? result : { ...result, error: 'Response did not contain a model list' };
+  });
+}
+
+const PRICING_REQUEST_CONCURRENCY = 8;
+
+function priceUsd(value: unknown): unknown {
+  return asModel(asModel(value)?.price)?.USD;
+}
+
+function extractConcentratePricing(value: unknown): AIGatewayModelPricing | undefined {
+  const pricing = asModel(value);
+  if (!pricing) return undefined;
+
+  const result: AnyModel = { ...pricing };
+  const tokens = asModel(pricing.tokens);
+  const cache = asModel(tokens?.cache);
+  const cacheWrite = asModel(cache?.write);
+  const tokenPricing: Record<string, unknown> = {
+    input: priceUsd(tokens?.input),
+    output: priceUsd(tokens?.output),
+    cache_read: priceUsd(cache?.read),
+    cache_write_5m: priceUsd(cacheWrite?.ephemeral_5m_input_tokens),
+    cache_write_1h: priceUsd(cacheWrite?.ephemeral_1h_input_tokens),
+  };
+
+  for (const [key, price] of Object.entries(tokenPricing)) {
+    if (price !== undefined) result[key] = price;
+  }
+  return result as AIGatewayModelPricing;
+}
+
+function enrichConcentrateModel(
+  model: AIGatewayModelIndexEntry,
+  body: unknown,
+): AIGatewayModelIndexEntry {
+  const providers = asModel(asModel(body)?.providers);
+  if (!providers) return model;
+
+  const providerPricing = Object.fromEntries(
+    Object.entries(providers)
+      .map(([provider, value]) => [provider, extractConcentratePricing(asModel(value)?.pricing)])
+      .filter((entry): entry is [string, AIGatewayModelPricing] => !!entry[1]),
+  );
+  const firstPricing = Object.values(providerPricing)[0];
+  return {
+    ...model,
+    pricing: firstPricing ?? model.pricing,
+    providerPricing: Object.keys(providerPricing).length > 0 ? providerPricing : model.providerPricing,
+  };
+}
+
+function enrichNeonModel(
+  model: AIGatewayModelIndexEntry,
+  catalog: AnyModel,
+): AIGatewayModelIndexEntry {
+  const catalogModel = asModel(asModel(catalog.neon)?.models)?.[model.id];
+  const cost = asModel(asModel(catalogModel)?.cost);
+  if (!cost) return model;
+
+  const pricing: AnyModel = { ...cost };
+  if (cost.input !== undefined) pricing.input = cost.input;
+  if (cost.output !== undefined) pricing.output = cost.output;
+  const provider = asModel(catalogModel)?.provider;
+  return {
+    ...model,
+    pricing: pricing as AIGatewayModelPricing,
+    providerPricing: typeof provider === 'string'
+      ? { [provider]: pricing as AIGatewayModelPricing }
+      : model.providerPricing,
+  };
+}
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  mapper: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  async function worker(): Promise<void> {
+    while (next < items.length) {
+      const index = next++;
+      results[index] = await mapper(items[index]);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
+
+async function enrichModels(
+  config: AIGatewayModelIndexProviderConfig,
+  models: AIGatewayModelIndexEntry[],
+): Promise<AIGatewayModelIndexEntry[]> {
+  const catalog = config.pricingCatalog;
+  if (!catalog) return models;
+
+  if (catalog.format === 'neon') {
+    const result = await fetchJson(catalog.host, catalog.path, catalog.buildHeaders());
+    return result.body ? models.map((model) => enrichNeonModel(model, result.body as AnyModel)) : models;
+  }
+
+  return mapWithConcurrency(models, PRICING_REQUEST_CONCURRENCY, async (model) => {
+    const requestPath = catalog.pathTemplate.replace('{model}', encodeURIComponent(model.id));
+    const result = await fetchJson(catalog.host, requestPath, catalog.buildHeaders());
+    return result.body ? enrichConcentrateModel(model, result.body) : model;
   });
 }
 
@@ -406,7 +529,7 @@ export async function runModelIndexTask(
     return { data: result as unknown as JsonObject, latencyMs: responseMs };
   }
 
-  const models = normalizeModels(config.modelListFormat, body);
+  const models = await enrichModels(config, normalizeModels(config.modelListFormat, body));
   const result: AIGatewayModelIndexProviderResult = {
     provider: config.name,
     statusCode,
