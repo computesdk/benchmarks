@@ -77,10 +77,27 @@ function extractProviders(model: AnyModel): string[] | undefined {
   return undefined;
 }
 
+function asPricing(value: unknown): AIGatewayModelPricing | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const obj = value as AnyModel;
+  return Object.keys(obj).length > 0 ? (obj as AIGatewayModelPricing) : undefined;
+}
+
+function providerPricing(model: AnyModel): AIGatewayModelPricing | undefined {
+  const rawProviders = model.providers;
+  if (!Array.isArray(rawProviders)) return undefined;
+
+  for (const raw of rawProviders) {
+    if (!raw || typeof raw !== 'object') continue;
+    const provider = raw as AnyModel;
+    const pricing = asPricing(provider.pricing) ?? asPricing(provider.cost);
+    if (pricing) return pricing;
+  }
+  return undefined;
+}
+
 function extractPricing(model: AnyModel): AIGatewayModelPricing | undefined {
-  const pricing = model.pricing;
-  if (!pricing || typeof pricing !== 'object' || Array.isArray(pricing)) return undefined;
-  return pricing as AIGatewayModelPricing;
+  return asPricing(model.pricing) ?? asPricing(model.cost) ?? providerPricing(model);
 }
 
 function extractContextLength(model: AnyModel): number | undefined {
