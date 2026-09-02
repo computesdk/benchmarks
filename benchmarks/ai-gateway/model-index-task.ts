@@ -183,12 +183,20 @@ function normalizePydanticModel(
 }
 
 function normalizePydanticRoutes(routes: unknown[]): AIGatewayModelIndexEntry[] {
-  const entries: AIGatewayModelIndexEntry[] = [];
+  const byId = new Map<
+    string,
+    AIGatewayModelIndexEntry & { _providers: Set<string> }
+  >();
+
   for (const raw of routes) {
     const route = asModel(raw);
     if (!route) continue;
 
-    const routeName = typeof route.route === 'string' ? route.route : undefined;
+    const routeName = typeof route.route === 'string'
+      ? route.route
+      : typeof route.provider === 'string'
+        ? route.provider
+        : undefined;
     const provider = typeof route.provider === 'string' ? route.provider : routeName;
 
     const chatModels = Array.isArray(route.models) ? route.models : [];
@@ -198,10 +206,31 @@ function normalizePydanticRoutes(routes: unknown[]): AIGatewayModelIndexEntry[] 
       const model = asModel(rawModel);
       if (!model) continue;
       const entry = normalizePydanticModel(routeName, provider, model);
-      if (entry) entries.push(entry);
+      if (!entry) continue;
+
+      const existing = byId.get(entry.id);
+      if (!existing) {
+        byId.set(entry.id, { ...entry, _providers: new Set(entry.providers ?? []) });
+        continue;
+      }
+
+      // Merge route options; for other metadata keep the first non-undefined
+      // value so the result is deterministic across routes.
+      for (const p of entry.providers ?? []) existing._providers.add(p);
+      existing.ownedBy ??= entry.ownedBy;
+      existing.name ??= entry.name;
+      existing.displayName ??= entry.displayName;
+      existing.contextLength ??= entry.contextLength;
+      existing.maxOutputTokens ??= entry.maxOutputTokens;
+      existing.createdAt ??= entry.createdAt;
+      existing.pricing ??= entry.pricing;
     }
   }
-  return entries;
+
+  return Array.from(byId.values()).map((e) => ({
+    ...e,
+    providers: e._providers.size > 0 ? Array.from(e._providers) : undefined,
+  }));
 }
 
 function normalizeModels(
