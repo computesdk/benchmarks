@@ -109,7 +109,7 @@ jobs:
             svgScript: generate-ai-gateway-kimi-svg
             svgFile: ai-gateway-kimi.svg
             timeout: 150
-            iterations: 50
+            iterations: 25
     # Manual runs can scope to one family via the `family` input; push/schedule
     # triggers always run all four.
     timeout-minutes: ${{ matrix.family.timeout }}
