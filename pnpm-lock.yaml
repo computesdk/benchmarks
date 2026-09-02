@@ -108,8 +108,8 @@ importers:
         specifier: ^0.1.2
         version: 0.1.2
       '@computesdk/miosa':
-        specifier: ^1.0.3
-        version: 1.0.3
+        specifier: ^1.0.4
+        version: 1.0.4
       '@computesdk/modal':
         specifier: ^1.9.5
         version: 1.9.5
@@ -806,8 +806,8 @@ packages:
     resolution: {integrity: sha512-UZExZDT9I5KU9nJeuWbVL88/00HM1WKPKnCkFlNCr4K4+/SdsT2aghwVOxyizq+47ufCSjjbtXFEP9+QS1ReBQ==}
     engines: {node: '>=22'}
 
-  '@computesdk/miosa@1.0.3':
-    resolution: {integrity: sha512-htd05N0KOfdesjqnf5UPMj+liUw4RX7IgVUPpEKRG3MZsOvRQbm0pNNH3LZ8OjrgX6jvH6JeLVHtcB7eqfRxpw==}
+  '@computesdk/miosa@1.0.4':
+    resolution: {integrity: sha512-74nFk4+5Wc6px716U6/A0nLqvQcefzWJrccst2BUsp/FRZ+n9HUl7PRTe1aIagF6y9KTJV8YP87RnjaZ5dQdhQ==}
 
   '@computesdk/modal@1.9.5':
     resolution: {integrity: sha512-WTZZwN73htUFrkRTkCEtNofxS4tmYQwzPPYvdQ4MysjLwq2nZP8gYZk6awloV051o/dG1miZDPBnRHfz9gw/vA==}
@@ -6483,7 +6483,7 @@ snapshots:
       computesdk: 4.1.4
       microsandbox: 0.6.12
 
-  '@computesdk/miosa@1.0.3':
+  '@computesdk/miosa@1.0.4':
     dependencies:
       '@computesdk/provider': 2.1.5
       computesdk: 4.1.4
