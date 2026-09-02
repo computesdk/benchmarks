@@ -695,7 +695,7 @@ describe('runBenchmark', () => {
     expect(calls.planWorkers[0][3]).toMatchObject({ workerCount: 1, targetConcurrency: 2 });
   });
 
-  it('groupBy round: uploads a system-metrics artifact alongside coordinator.log', async () => {
+  it('groupBy round: uploads a single shared system-metrics artifact (not one per participant)', async () => {
     const uploads: Record<string, { kind: string; body: string }[]> = { e2b: [], modal: [] };
     reporterClaim.mockImplementation(async (cfg: any) => ({
       taskIndexStart: 0,
@@ -717,14 +717,16 @@ describe('runBenchmark', () => {
       [],
     );
 
-    for (const slug of ['e2b', 'modal']) {
-      const metrics = uploads[slug].find((u) => u.kind === 'system-metrics');
-      expect(metrics).toMatchObject({ kind: 'system-metrics', name: 'metrics.jsonl', contentType: 'application/x-ndjson' });
-      // Baseline sample at claim + one per round (2 rounds here).
-      const lines = metrics!.body.trim().split('\n');
-      expect(lines).toHaveLength(3);
-      for (const line of lines) expect(() => JSON.parse(line)).not.toThrow();
-    }
+    // Every participant runs in this one shared process, so metrics belong to
+    // the run — a single artifact via one reporter, not a duplicate per slug.
+    const metricsUploads = [...uploads.e2b, ...uploads.modal].filter((u) => u.kind === 'system-metrics');
+    expect(metricsUploads).toHaveLength(1);
+    const metrics = metricsUploads[0];
+    expect(metrics).toMatchObject({ kind: 'system-metrics', name: 'metrics.jsonl', contentType: 'application/x-ndjson' });
+    // Baseline sample at claim + one per round (2 rounds) + one final sample.
+    const lines = metrics.body.trim().split('\n');
+    expect(lines).toHaveLength(4);
+    for (const line of lines) expect(() => JSON.parse(line)).not.toThrow();
   });
 
   it('groupBy round: a task with no explicit steps records a single implicit "task" step', async () => {

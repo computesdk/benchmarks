@@ -826,12 +826,17 @@ async function runGroupedByRound<T extends BaseParticipant>(
   const logBuffers = new Map<string, LogBuffer>();
   const failed = new Map<string, boolean>();
   const recordsByParticipant = new Map<string, TaskResultRecord[]>();
-  // One collector per participant, scoped the same way `runWorker` scopes its
-  // own (a fresh baseline at the start of that participant's execution slice),
-  // even though every participant shares this one Node process here. Created
-  // only when there's a reporter to upload to — nothing else would read it.
-  const metricsCollectors = new Map<string, BenchmarkSystemMetricsCollector>();
-  const metricsSamples = new Map<string, BenchmarkSystemMetricsSample[]>();
+  // A single collector for the whole run: round mode interleaves every
+  // participant in this one shared Node process, so per-participant CPU/memory
+  // can't be isolated — a sample reflects the whole process, not one slice of
+  // it. We therefore sample once per round (not once per participant) and
+  // upload a single `system-metrics` artifact, rather than N duplicates that
+  // would falsely imply isolated per-participant usage. (Separate artifacts
+  // only make sense when workers genuinely run on separate VMs, one per
+  // participant, as the client `runWorker` path does.) Created only when at
+  // least one participant has a reporter to upload to — nothing else reads it.
+  let metricsCollector: BenchmarkSystemMetricsCollector | undefined;
+  const metricsSamples: BenchmarkSystemMetricsSample[] = [];
 
   for (const participant of available) {
     logBuffers.set(participant.name, new LogBuffer());
@@ -866,9 +871,12 @@ async function runGroupedByRound<T extends BaseParticipant>(
       console.warn(`  ${participant.name}: could not claim a platform worker — running without platform reporting.`);
     }
     reporters.set(participant.name, reporter);
-    if (reporter) {
-      metricsCollectors.set(participant.name, createSystemMetricsCollector());
-      metricsSamples.set(participant.name, [metricsCollectors.get(participant.name)!.sample()]);
+    // First reporter to appear starts the one shared collector, with an
+    // immediate baseline sample so a run that finishes inside one round still
+    // uploads metrics.
+    if (reporter && !metricsCollector) {
+      metricsCollector = createSystemMetricsCollector();
+      metricsSamples.push(metricsCollector.sample());
     }
   }
 
@@ -909,13 +917,31 @@ async function runGroupedByRound<T extends BaseParticipant>(
           total: schedule.length,
         });
         await reporter.heartbeat();
-        // Sampled once per round rather than on a wall-clock timer: round mode
-        // runs everything sequentially in this one loop, so a round boundary
-        // is the natural, already-existing cadence (same one heartbeat uses).
-        const collector = metricsCollectors.get(participant.name);
-        if (collector) metricsSamples.get(participant.name)!.push(collector.sample());
       }
     }
+    // Sampled once per round rather than on a wall-clock timer: round mode runs
+    // everything sequentially in this one loop, so a round boundary is the
+    // natural, already-existing cadence. Taken after the whole round (not per
+    // participant) since the sample covers the shared process, not one slice.
+    if (metricsCollector) metricsSamples.push(metricsCollector.sample());
+  }
+
+  // One shared collector for the whole process — a final sample (before stop,
+  // which disables the event-loop monitor), then upload a single
+  // `system-metrics` artifact via any one reporter (all participants ran in
+  // this process, so the metrics belong to the run, not to any one of them).
+  if (metricsCollector) metricsSamples.push(metricsCollector.sample());
+  metricsCollector?.stop();
+  const metricsReporter = available.map((p) => reporters.get(p.name)).find((r): r is BenchmarkReporter => Boolean(r));
+  if (metricsReporter && metricsSamples.length > 0) {
+    await metricsReporter
+      .uploadArtifact({
+        kind: 'system-metrics',
+        contentType: 'application/x-ndjson',
+        name: 'metrics.jsonl',
+        body: metricsSamples.map((sample) => JSON.stringify(sample)).join('\n') + '\n',
+      })
+      .catch(() => {});
   }
 
   for (const participant of available) {
@@ -924,19 +950,6 @@ async function runGroupedByRound<T extends BaseParticipant>(
     if (reporter && !logBuffer.isEmpty()) {
       await reporter
         .uploadArtifact({ kind: 'coordinator.log', contentType: 'text/plain', name: 'worker.log', body: logBuffer.toText() })
-        .catch(() => {});
-    }
-    const collector = metricsCollectors.get(participant.name);
-    collector?.stop();
-    const samples = metricsSamples.get(participant.name);
-    if (reporter && samples && samples.length > 0) {
-      await reporter
-        .uploadArtifact({
-          kind: 'system-metrics',
-          contentType: 'application/x-ndjson',
-          name: 'metrics.jsonl',
-          body: samples.map((sample) => JSON.stringify(sample)).join('\n') + '\n',
-        })
         .catch(() => {});
     }
     await reporter?.finish(failed.get(participant.name) ?? false);
