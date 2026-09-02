@@ -159,6 +159,8 @@ export interface AIGatewayModelIndexEntry {
   createdAt?: string;
   /** Input/output/completion pricing per token when the gateway exposes it in the catalog. */
   pricing?: AIGatewayModelPricing;
+  /** Per-provider/routing-option pricing when the gateway exposes different prices per provider. */
+  providerPricing?: Record<string, AIGatewayModelPricing>;
 }
 
 export interface AIGatewayModelIndexProviderResult {

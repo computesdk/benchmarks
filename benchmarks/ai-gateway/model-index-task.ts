@@ -54,6 +54,11 @@ function extractOwnedBy(model: AnyModel): string | undefined {
   return undefined;
 }
 
+function providerNameFromProviderObject(p: AnyModel): string | undefined {
+  const name = p.providerId ?? p.provider ?? p.id ?? p.name;
+  return typeof name === 'string' ? name : undefined;
+}
+
 function extractProviders(model: AnyModel): string[] | undefined {
   const rawProviders = model.providers;
   if (Array.isArray(rawProviders) && rawProviders.length > 0) {
@@ -61,12 +66,7 @@ function extractProviders(model: AnyModel): string[] | undefined {
       .map((p) => {
         if (typeof p === 'string') return p;
         if (p && typeof p === 'object') {
-          const provider =
-            (p as AnyModel).providerId ??
-            (p as AnyModel).provider ??
-            (p as AnyModel).id ??
-            (p as AnyModel).name;
-          if (typeof provider === 'string') return provider;
+          return providerNameFromProviderObject(p as AnyModel);
         }
         return undefined;
       })
@@ -83,21 +83,27 @@ function asPricing(value: unknown): AIGatewayModelPricing | undefined {
   return Object.keys(obj).length > 0 ? (obj as AIGatewayModelPricing) : undefined;
 }
 
-function providerPricing(model: AnyModel): AIGatewayModelPricing | undefined {
+function extractProviderPricing(model: AnyModel): Record<string, AIGatewayModelPricing> | undefined {
   const rawProviders = model.providers;
-  if (!Array.isArray(rawProviders)) return undefined;
+  if (!Array.isArray(rawProviders) || rawProviders.length === 0) return undefined;
 
+  const providerPricing: Record<string, AIGatewayModelPricing> = {};
+  let hasAny = false;
   for (const raw of rawProviders) {
     if (!raw || typeof raw !== 'object') continue;
     const provider = raw as AnyModel;
+    const providerId = providerNameFromProviderObject(provider);
     const pricing = asPricing(provider.pricing) ?? asPricing(provider.cost);
-    if (pricing) return pricing;
+    if (providerId && pricing) {
+      providerPricing[providerId] = pricing;
+      hasAny = true;
+    }
   }
-  return undefined;
+  return hasAny ? providerPricing : undefined;
 }
 
 function extractPricing(model: AnyModel): AIGatewayModelPricing | undefined {
-  return asPricing(model.pricing) ?? asPricing(model.cost) ?? providerPricing(model);
+  return asPricing(model.pricing) ?? asPricing(model.cost);
 }
 
 function extractContextLength(model: AnyModel): number | undefined {
@@ -173,6 +179,7 @@ function normalizeModel(model: AnyModel): AIGatewayModelIndexEntry | undefined {
     maxOutputTokens: extractMaxOutputTokens(model),
     createdAt: normalizeTimestamp(model.created ?? model.created_at ?? model.release_date),
     pricing: extractPricing(model),
+    providerPricing: extractProviderPricing(model),
   };
 }
 
@@ -180,6 +187,7 @@ function normalizePydanticModel(
   routeName: string | undefined,
   provider: string | undefined,
   model: AnyModel,
+  providerPricing?: Record<string, AIGatewayModelPricing>,
 ): AIGatewayModelIndexEntry | undefined {
   const id = model.id;
   if (typeof id !== 'string' || !id) return undefined;
@@ -196,13 +204,14 @@ function normalizePydanticModel(
     maxOutputTokens: extractMaxOutputTokens(model),
     createdAt: normalizeTimestamp(model.created ?? model.created_at ?? model.release_date),
     pricing: extractPricing(model),
+    providerPricing,
   };
 }
 
 function normalizePydanticRoutes(routes: unknown[]): AIGatewayModelIndexEntry[] {
   const byId = new Map<
     string,
-    AIGatewayModelIndexEntry & { _providers: Set<string> }
+    AIGatewayModelIndexEntry & { _providers: Set<string>; _providerPricing: Record<string, AIGatewayModelPricing> }
   >();
 
   for (const raw of routes) {
@@ -215,6 +224,8 @@ function normalizePydanticRoutes(routes: unknown[]): AIGatewayModelIndexEntry[] 
         ? route.provider
         : undefined;
     const provider = typeof route.provider === 'string' ? route.provider : routeName;
+    const routePricing = asPricing(route.pricing) ?? asPricing(route.cost);
+    const providerPricing = provider && routePricing ? { [provider]: routePricing } : undefined;
 
     const chatModels = Array.isArray(route.models) ? route.models : [];
     const embeddingModels = Array.isArray(route.embedding_models) ? route.embedding_models : [];
@@ -222,12 +233,12 @@ function normalizePydanticRoutes(routes: unknown[]): AIGatewayModelIndexEntry[] 
     for (const rawModel of [...chatModels, ...embeddingModels]) {
       const model = asModel(rawModel);
       if (!model) continue;
-      const entry = normalizePydanticModel(routeName, provider, model);
+      const entry = normalizePydanticModel(routeName, provider, model, providerPricing);
       if (!entry) continue;
 
       const existing = byId.get(entry.id);
       if (!existing) {
-        byId.set(entry.id, { ...entry, _providers: new Set(entry.providers ?? []) });
+        byId.set(entry.id, { ...entry, _providers: new Set(entry.providers ?? []), _providerPricing: entry.providerPricing ?? {} });
         continue;
       }
 
@@ -241,12 +252,16 @@ function normalizePydanticRoutes(routes: unknown[]): AIGatewayModelIndexEntry[] 
       existing.maxOutputTokens ??= entry.maxOutputTokens;
       existing.createdAt ??= entry.createdAt;
       existing.pricing ??= entry.pricing;
+      for (const [providerId, pricing] of Object.entries(entry.providerPricing ?? {})) {
+        existing._providerPricing[providerId] ??= pricing;
+      }
     }
   }
 
-  return Array.from(byId.values()).map(({ _providers, ...entry }) => ({
+  return Array.from(byId.values()).map(({ _providers, _providerPricing, ...entry }) => ({
     ...entry,
     providers: _providers.size > 0 ? Array.from(_providers) : undefined,
+    providerPricing: Object.keys(_providerPricing).length > 0 ? _providerPricing : undefined,
   }));
 }
 
