@@ -238,7 +238,7 @@ function normalizePydanticRoutes(routes: unknown[]): AIGatewayModelIndexEntry[] 
 
       const existing = byId.get(entry.id);
       if (!existing) {
-        byId.set(entry.id, { ...entry, _providers: new Set(entry.providers ?? []), _providerPricing: entry.providerPricing ?? {} });
+        byId.set(entry.id, { ...entry, _providers: new Set(entry.providers ?? []), _providerPricing: { ...(entry.providerPricing ?? {}) } });
         continue;
       }
 
