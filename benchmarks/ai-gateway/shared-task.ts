@@ -51,8 +51,8 @@ export function parseIntFlag(argv: string[], flag: string): number | undefined {
  */
 export function resolveAIGatewayPhases(argv: string[]): Array<{ name: string; iterations: number }> {
   const iterationsOverride = parseIntFlag(argv, '--iterations');
-  const iterationsCold = parseIntFlag(argv, '--ai-gateway-iterations-cold') ?? iterationsOverride ?? 50;
-  const iterationsWarm = parseIntFlag(argv, '--ai-gateway-iterations-warm') ?? iterationsOverride ?? 50;
+  const iterationsCold = parseIntFlag(argv, '--ai-gateway-iterations-cold') ?? iterationsOverride ?? 10;
+  const iterationsWarm = parseIntFlag(argv, '--ai-gateway-iterations-warm') ?? iterationsOverride ?? 10;
   return [
     { name: 'cold', iterations: iterationsCold },
     { name: 'warm', iterations: iterationsWarm },

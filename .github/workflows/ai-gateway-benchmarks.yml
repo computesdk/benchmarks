@@ -25,7 +25,7 @@ on:
           - gemini
           - kimi
       iterations:
-        description: 'Cold + warm iterations per gateway (leave empty for family default or 50)'
+        description: 'Cold + warm iterations per gateway (leave empty for family default or 30)'
         required: false
         default: ''
       provider:
@@ -149,13 +149,17 @@ jobs:
           . benchmarks/scripts/load-vault-secrets.sh '^(ANTHROPIC_API_KEY|OPENAI_API_KEY|GEMINI_API_KEY|KIMI_API_KEY|NOVITA_API_KEY|NEON_AI_GATEWAY_BASE_URL|NEON_AI_GATEWAY_TOKEN|NGROK_AI_GATEWAY_API_KEY|LLMAPI_API_KEY|CLOUDFLARE_AI_GATEWAY_ACCOUNT_ID|CLOUDFLARE_AI_GATEWAY_GATEWAY_ID|CLOUDFLARE_AI_GATEWAY_TOKEN|LLM_GATEWAY_API_KEY|OPENROUTER_API_KEY|PYDANTIC_AI_GATEWAY_API_KEY|VERCEL_AI_GATEWAY_API_KEY|CONCENTRATE_AI_GATEWAY_API_KEY|BLAZERAIL_API_KEY|BENCHMARKS_PLATFORM_API_KEY)'
 
           if [ "${{ github.event_name }}" = "push" ] || [ "${{ github.event_name }}" = "schedule" ]; then
-            ITERATIONS="50"
+            if [ "${{ matrix.family.slug }}" = "kimi" ]; then
+              ITERATIONS="25"
+            else
+              ITERATIONS="50"
+            fi
           elif [ -n "$INPUT_ITERATIONS" ]; then
             ITERATIONS="$INPUT_ITERATIONS"
           elif [ -n "$FAMILY_ITERATIONS" ]; then
             ITERATIONS="$FAMILY_ITERATIONS"
           else
-            ITERATIONS="50"
+            ITERATIONS="30"
           fi
 
           provider_args=()
