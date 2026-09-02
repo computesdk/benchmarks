@@ -84,6 +84,44 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Runs an array of async functions with a bounded concurrency limit.
+ * Results are returned in the same order as the input array.
+ */
+function runWithConcurrency<T>(fns: Array<() => Promise<T>>, limit: number): Promise<T[]> {
+  if (limit >= fns.length || fns.length === 0) {
+    return Promise.all(fns.map((fn) => fn()));
+  }
+
+  const results = new Array<T>(fns.length);
+  let running = 0;
+  let completed = 0;
+  let nextIndex = 0;
+
+  return new Promise((resolve, reject) => {
+    const runNext = () => {
+      if (completed === fns.length) {
+        resolve(results);
+        return;
+      }
+      while (running < limit && nextIndex < fns.length) {
+        const index = nextIndex++;
+        running++;
+        fns[index]().then(
+          (value) => {
+            results[index] = value;
+            running--;
+            completed++;
+            runNext();
+          },
+          (error) => reject(error),
+        );
+      }
+    };
+    runNext();
+  });
+}
+
 function getErrorCode(error: unknown): string {
   if (error instanceof Error && 'code' in error && typeof (error as { code: unknown }).code === 'string' && (error as { code: string }).code) {
     return (error as { code: string }).code;
@@ -530,7 +568,7 @@ export async function runBenchmark<T extends BaseParticipant>(
   const schedule = buildSchedule(config, resolved, task);
   const totalTasks = schedule.length;
 
-  const concurrencyLabel = resolved.groupBy === 'round' ? 'n/a (round mode)' : String(resolved.concurrency);
+  const concurrencyLabel = String(resolved.concurrency);
   console.log(`${config.benchmarkName} (self-contained)`);
   console.log(`Date: ${new Date().toISOString()}`);
   if (noIngest) {
@@ -829,6 +867,7 @@ async function runGroupedByRound<T extends BaseParticipant>(
   for (const participant of available) {
     logBuffers.set(participant.name, new LogBuffer());
     failed.set(participant.name, false);
+    recordsByParticipant.set(participant.name, []);
     if (noIngest || !client) {
       reporters.set(participant.name, null);
       continue;
@@ -879,7 +918,7 @@ async function runGroupedByRound<T extends BaseParticipant>(
     if (resolved.staggerDelayMs > 0 && i > 0) {
       await sleep(resolved.staggerDelayMs);
     }
-    for (const participant of available) {
+    const roundFns = available.map((participant) => async () => {
       const reporter = reporters.get(participant.name) ?? null;
       const logBuffer = logBuffers.get(participant.name)!;
       const record = await runTaskRecord(
@@ -893,9 +932,6 @@ async function runGroupedByRound<T extends BaseParticipant>(
       if (record.status !== 'success') failed.set(participant.name, true);
       onResult(record, { iterations: schedule.length, participant: participant.name });
       reporter?.recordResult(record);
-      if (!recordsByParticipant.has(participant.name)) {
-        recordsByParticipant.set(participant.name, []);
-      }
       const participantRecords = recordsByParticipant.get(participant.name)!;
       participantRecords.push(record);
       // Round mode drives the worker by hand, so nothing reports progress
@@ -909,7 +945,8 @@ async function runGroupedByRound<T extends BaseParticipant>(
         });
         await reporter.heartbeat();
       }
-    }
+    });
+    await runWithConcurrency(roundFns, resolved.concurrency);
     // Sampled once per round rather than on a wall-clock timer: round mode runs
     // everything sequentially in this one loop, so a round boundary is the
     // natural, already-existing cadence. Taken after the whole round (not per
