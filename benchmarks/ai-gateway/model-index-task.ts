@@ -227,9 +227,9 @@ function normalizePydanticRoutes(routes: unknown[]): AIGatewayModelIndexEntry[] 
     }
   }
 
-  return Array.from(byId.values()).map((e) => ({
-    ...e,
-    providers: e._providers.size > 0 ? Array.from(e._providers) : undefined,
+  return Array.from(byId.values()).map(({ _providers, ...entry }) => ({
+    ...entry,
+    providers: _providers.size > 0 ? Array.from(_providers) : undefined,
   }));
 }
 
