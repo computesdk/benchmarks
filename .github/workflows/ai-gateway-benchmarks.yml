@@ -148,12 +148,14 @@ jobs:
         run: |
           . benchmarks/scripts/load-vault-secrets.sh '^(ANTHROPIC_API_KEY|OPENAI_API_KEY|GEMINI_API_KEY|KIMI_API_KEY|NOVITA_API_KEY|NEON_AI_GATEWAY_BASE_URL|NEON_AI_GATEWAY_TOKEN|NGROK_AI_GATEWAY_API_KEY|LLMAPI_API_KEY|CLOUDFLARE_AI_GATEWAY_ACCOUNT_ID|CLOUDFLARE_AI_GATEWAY_GATEWAY_ID|CLOUDFLARE_AI_GATEWAY_TOKEN|LLM_GATEWAY_API_KEY|OPENROUTER_API_KEY|PYDANTIC_AI_GATEWAY_API_KEY|VERCEL_AI_GATEWAY_API_KEY|CONCENTRATE_AI_GATEWAY_API_KEY|BLAZERAIL_API_KEY|BENCHMARKS_PLATFORM_API_KEY)'
 
-          if [ "${{ github.event_name }}" = "push" ] || [ "${{ github.event_name }}" = "schedule" ]; then
+          if [ "${{ github.event_name }}" = "schedule" ]; then
             if [ "${{ matrix.family.slug }}" = "kimi" ]; then
               ITERATIONS="25"
             else
               ITERATIONS="50"
             fi
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            ITERATIONS="10"
           elif [ -n "$INPUT_ITERATIONS" ]; then
             ITERATIONS="$INPUT_ITERATIONS"
           elif [ -n "$FAMILY_ITERATIONS" ]; then
