@@ -578,6 +578,7 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
     if (logFlush) clearInterval(logFlush);
     await uploadWorkerLogArtifact(true);
     if (metricsInterval) clearInterval(metricsInterval);
+    if (systemMetricsCollector) systemMetricsSamples.push(systemMetricsCollector.sample());
     systemMetricsCollector?.stop();
     await uploadSystemMetricsArtifact();
     clearInterval(heartbeat);
