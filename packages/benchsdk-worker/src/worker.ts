@@ -154,7 +154,6 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
   if (options.metricsIntervalMs !== undefined && (!Number.isInteger(options.metricsIntervalMs) || options.metricsIntervalMs < 0)) {
     throw new Error('Benchmark metricsIntervalMs must be a non-negative integer.');
   }
-  }
 
   const logLevel: BenchmarkLogLevel = options.logLevel ?? parseLogLevel(
     typeof process !== 'undefined' ? process.env.BENCHMARK_LOG_LEVEL : undefined,
