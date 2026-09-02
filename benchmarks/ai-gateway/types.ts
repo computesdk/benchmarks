@@ -134,6 +134,19 @@ export interface AIGatewayModelIndexProviderConfig {
   modelListFormat: AIGatewayModelListFormat;
 }
 
+export interface AIGatewayModelPricing {
+  /** Cost per input/prompt token (or per unit) as a string, when exposed by the gateway. */
+  input?: string;
+  /** Cost per output/completion token (or per unit) as a string, when exposed by the gateway. */
+  output?: string;
+  /** OpenRouter-style prompt token cost. */
+  prompt?: string;
+  /** OpenRouter-style completion token cost. */
+  completion?: string;
+  /** Any other provider-specific pricing fields (image, audio, tiers, cache read/write, ...). */
+  [key: string]: unknown;
+}
+
 export interface AIGatewayModelIndexEntry {
   id: string;
   name?: string;
@@ -144,6 +157,8 @@ export interface AIGatewayModelIndexEntry {
   contextLength?: number;
   maxOutputTokens?: number;
   createdAt?: string;
+  /** Input/output/completion pricing per token when the gateway exposes it in the catalog. */
+  pricing?: AIGatewayModelPricing;
 }
 
 export interface AIGatewayModelIndexProviderResult {

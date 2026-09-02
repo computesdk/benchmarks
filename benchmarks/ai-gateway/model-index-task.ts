@@ -6,6 +6,7 @@ import type {
   AIGatewayModelIndexProviderConfig,
   AIGatewayModelIndexProviderResult,
   AIGatewayModelListFormat,
+  AIGatewayModelPricing,
 } from './types.js';
 
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -74,6 +75,12 @@ function extractProviders(model: AnyModel): string[] | undefined {
   }
 
   return undefined;
+}
+
+function extractPricing(model: AnyModel): AIGatewayModelPricing | undefined {
+  const pricing = model.pricing;
+  if (!pricing || typeof pricing !== 'object' || Array.isArray(pricing)) return undefined;
+  return pricing as AIGatewayModelPricing;
 }
 
 function extractContextLength(model: AnyModel): number | undefined {
@@ -148,6 +155,7 @@ function normalizeModel(model: AnyModel): AIGatewayModelIndexEntry | undefined {
     contextLength: extractContextLength(model),
     maxOutputTokens: extractMaxOutputTokens(model),
     createdAt: normalizeTimestamp(model.created ?? model.created_at ?? model.release_date),
+    pricing: extractPricing(model),
   };
 }
 
