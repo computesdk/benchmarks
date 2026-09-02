@@ -151,8 +151,9 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
   if (options.logFlushIntervalMs !== undefined && options.logFlushIntervalMs < 0) {
     throw new Error('Benchmark logFlushIntervalMs must be a non-negative integer.');
   }
-  if (options.metricsIntervalMs !== undefined && options.metricsIntervalMs < 0) {
+  if (options.metricsIntervalMs !== undefined && (!Number.isInteger(options.metricsIntervalMs) || options.metricsIntervalMs < 0)) {
     throw new Error('Benchmark metricsIntervalMs must be a non-negative integer.');
+  }
   }
 
   const logLevel: BenchmarkLogLevel = options.logLevel ?? parseLogLevel(
