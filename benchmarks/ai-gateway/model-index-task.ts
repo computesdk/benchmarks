@@ -159,10 +159,59 @@ function normalizeModel(model: AnyModel): AIGatewayModelIndexEntry | undefined {
   };
 }
 
+function normalizePydanticModel(
+  routeName: string | undefined,
+  provider: string | undefined,
+  model: AnyModel,
+): AIGatewayModelIndexEntry | undefined {
+  const id = model.id;
+  if (typeof id !== 'string' || !id) return undefined;
+
+  const name = typeof model.name === 'string' ? model.name : undefined;
+
+  return {
+    id,
+    name,
+    displayName: name ?? id,
+    ownedBy: provider,
+    providers: routeName ? [routeName] : undefined,
+    contextLength: extractContextLength(model),
+    maxOutputTokens: extractMaxOutputTokens(model),
+    createdAt: normalizeTimestamp(model.created ?? model.created_at ?? model.release_date),
+    pricing: extractPricing(model),
+  };
+}
+
+function normalizePydanticRoutes(routes: unknown[]): AIGatewayModelIndexEntry[] {
+  const entries: AIGatewayModelIndexEntry[] = [];
+  for (const raw of routes) {
+    const route = asModel(raw);
+    if (!route) continue;
+
+    const routeName = typeof route.route === 'string' ? route.route : undefined;
+    const provider = typeof route.provider === 'string' ? route.provider : routeName;
+
+    const chatModels = Array.isArray(route.models) ? route.models : [];
+    const embeddingModels = Array.isArray(route.embedding_models) ? route.embedding_models : [];
+
+    for (const rawModel of [...chatModels, ...embeddingModels]) {
+      const model = asModel(rawModel);
+      if (!model) continue;
+      const entry = normalizePydanticModel(routeName, provider, model);
+      if (entry) entries.push(entry);
+    }
+  }
+  return entries;
+}
+
 function normalizeModels(
   format: AIGatewayModelListFormat,
   body: unknown,
 ): AIGatewayModelIndexEntry[] {
+  if (format === 'pydantic' && Array.isArray(body)) {
+    return normalizePydanticRoutes(body);
+  }
+
   const data = (body as AnyModel)?.data;
   if (!Array.isArray(data)) return [];
 
@@ -245,7 +294,8 @@ function fetchModelList(config: AIGatewayModelIndexProviderConfig): Promise<Fetc
             return;
           }
 
-          const data = (parsed as AnyModel).data;
+          const isPydantic = config.modelListFormat === 'pydantic';
+          const data = isPydantic ? parsed : (parsed as AnyModel).data;
           if (!Array.isArray(data)) {
             settle({ statusCode: res.statusCode, responseMs, error: 'Response did not contain a model list' });
             return;

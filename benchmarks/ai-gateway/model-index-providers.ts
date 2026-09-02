@@ -69,8 +69,8 @@ export const modelIndexProviders: AIGatewayModelIndexProviderConfig[] = [
     name: 'pydantic-ai-gateway',
     requiredEnvVars: ['PYDANTIC_AI_GATEWAY_API_KEY'],
     host: 'gateway-us.pydantic.dev',
-    modelsPath: '/v1/models',
-    modelListFormat: 'openai',
+    modelsPath: '/proxy/models',
+    modelListFormat: 'pydantic',
     buildHeaders: () => ({
       Authorization: `Bearer ${process.env.PYDANTIC_AI_GATEWAY_API_KEY}`,
     }),

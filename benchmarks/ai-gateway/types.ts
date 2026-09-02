@@ -117,7 +117,7 @@ export interface AIGatewayBenchmarkResult {
   skipReason?: string;
 }
 
-export type AIGatewayModelListFormat = 'openai' | 'openrouter' | 'anthropic';
+export type AIGatewayModelListFormat = 'openai' | 'openrouter' | 'anthropic' | 'pydantic';
 
 export interface AIGatewayModelIndexProviderConfig {
   /** Provider name */
