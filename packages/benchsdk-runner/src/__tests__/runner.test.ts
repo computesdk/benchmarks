@@ -696,11 +696,11 @@ describe('runBenchmark', () => {
   });
 
   it('groupBy round: uploads a single shared system-metrics artifact (not one per participant)', async () => {
-    const uploads: Record<string, { kind: string; body: string }[]> = { e2b: [], modal: [] };
+    const uploads: Record<string, { kind: string; body: string; metadata?: Record<string, unknown> }[]> = { e2b: [], modal: [] };
     reporterClaim.mockImplementation(async (cfg: any) => ({
       taskIndexStart: 0,
       recordResult: () => {},
-      uploadArtifact: async (input: { kind: string; body: string }) => {
+      uploadArtifact: async (input: { kind: string; body: string; metadata?: Record<string, unknown> }) => {
         uploads[cfg.participantSlug].push(input);
         return {};
       },
@@ -723,6 +723,10 @@ describe('runBenchmark', () => {
     expect(metricsUploads).toHaveLength(1);
     const metrics = metricsUploads[0];
     expect(metrics).toMatchObject({ kind: 'system-metrics', name: 'metrics.jsonl', contentType: 'application/x-ndjson' });
+    // Tagged process-scoped with every participant, so it's not misread as the
+    // uploading participant's isolated usage (the SDK's only artifact API is
+    // worker-scoped, so it's necessarily filed under one reporter's worker).
+    expect(metrics.metadata).toEqual({ scope: 'shared-process', participants: ['e2b', 'modal'] });
     // Baseline sample at claim + one per round (2 rounds) + one final sample.
     const lines = metrics.body.trim().split('\n');
     expect(lines).toHaveLength(4);

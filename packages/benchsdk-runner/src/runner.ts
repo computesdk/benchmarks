@@ -932,6 +932,11 @@ async function runGroupedByRound<T extends BaseParticipant>(
   // this process, so the metrics belong to the run, not to any one of them).
   if (metricsCollector) metricsSamples.push(metricsCollector.sample());
   metricsCollector?.stop();
+  // The SDK only has a worker-scoped artifact API, so this single artifact is
+  // necessarily filed under one reporter's worker. Tag it as process-scoped
+  // with the full participant list so consumers don't mistake it for that one
+  // participant's isolated usage — the metrics cover every participant that ran
+  // in this shared process, not just the reporter it happened to upload through.
   const metricsReporter = available.map((p) => reporters.get(p.name)).find((r): r is BenchmarkReporter => Boolean(r));
   if (metricsReporter && metricsSamples.length > 0) {
     await metricsReporter
@@ -939,6 +944,7 @@ async function runGroupedByRound<T extends BaseParticipant>(
         kind: 'system-metrics',
         contentType: 'application/x-ndjson',
         name: 'metrics.jsonl',
+        metadata: { scope: 'shared-process', participants: available.map((p) => p.name) },
         body: metricsSamples.map((sample) => JSON.stringify(sample)).join('\n') + '\n',
       })
       .catch(() => {});
