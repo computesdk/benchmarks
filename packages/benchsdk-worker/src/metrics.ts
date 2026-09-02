@@ -146,6 +146,13 @@ function cgroupRelativePaths(): { v2: string; controllers: Map<string, string> }
 // Every directory from the process's own cgroup up to (and including) the fs
 // root. The effective limit is the tightest set anywhere along this ancestry,
 // so callers read each level and take the minimum; order doesn't matter.
+//
+// Known limitation: callers pass the conventional mount points (`/sys/fs/cgroup`
+// for v2, `/sys/fs/cgroup/<controller>` for v1) rather than discovering them
+// from /proc/self/mountinfo. Relocated, co-mounted, or subtree-mounted
+// controllers therefore read as null (unknown) — a safe degrade, never a wrong
+// number. Parsing mountinfo would generalize this but risks resolving the wrong
+// directory on a parse slip, so it's intentionally left out.
 function cgroupDirsToRoot(mountRoot: string, relPath: string): string[] {
   const dirs: string[] = [mountRoot];
   let current = mountRoot;
