@@ -1086,8 +1086,9 @@ describe('runWorker lifecycle and task execution', () => {
     const { calls, fetchMock } = recordingClient(responder);
     const client = createBenchmarkClient({ baseUrl: BASE, apiKey: 'k', fetch: fetchMock });
     // metricsIntervalMs left at its default (30000, on by default) — the task
-    // finishes well inside that window, so only the immediate baseline
-    // sample (taken alongside the first heartbeat) should be uploaded.
+    // finishes well inside that window, so no interval sample fires. The
+    // baseline (taken alongside the first heartbeat) and the final sample (in
+    // the finish path) are still captured, so the artifact is never empty.
     await client.runWorker({
       benchmarkSlug: 'scale', runId: 'run_1', participantSlug: 'e2b',
       task: async () => ({ ok: true }),
@@ -1099,9 +1100,11 @@ describe('runWorker lifecycle and task execution', () => {
 
     const upload = calls.find((c) => c.url === 'https://upload.test/metrics' && c.method === 'PUT');
     expect(upload).toBeDefined();
-    // A single sample is valid NDJSON *and* valid JSON on its own, so
-    // parseBody's JSON.parse already turned it into an object here.
-    expect(upload!.body).toMatchObject({ loadavg1m: expect.any(Number), memRssMb: expect.any(Number) });
+    // Multiple samples make the body multi-line NDJSON (not a lone JSON object),
+    // so parseBody leaves it as a string here — parse the first line ourselves.
+    const lines = String(upload!.body).trim().split('\n');
+    expect(lines.length).toBeGreaterThanOrEqual(1);
+    expect(JSON.parse(lines[0])).toMatchObject({ loadavg1m: expect.any(Number), memRssMb: expect.any(Number) });
   });
 
 });
