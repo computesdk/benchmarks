@@ -205,7 +205,8 @@ clone_repo() {
 
 install_dependencies() {
   cd "$ROOT/repo"
-  bun install
+  # phase() calls this under `set +e`; the trailing git diff would otherwise supply the status.
+  bun install || return
   git diff --exit-code -- bun.lock package.json
 }
 
@@ -215,7 +216,8 @@ typecheck() {
 }
 
 disk() {
-  du -skx "$ROOT" | awk '{print $1 * 1024}'
+  # mawk renders above INT_MAX as %.6g; the consumer parseInts this field.
+  du -skx "$ROOT" | awk '{printf "%.0f\n", $1 * 1024}'
 }
 
 clear_caches() {
