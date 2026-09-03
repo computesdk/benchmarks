@@ -899,7 +899,7 @@ describe('createBenchmarkClient', () => {
     expect(artifactPost?.body).toMatchObject({ kind: 'coordinator.log', name: 'worker.log', contentType: 'application/gzip' });
 
     const upload = seen.find((entry) => entry.url === 'https://upload.test');
-    const decompressed = gunzipSync(Buffer.from(upload?.body as ArrayBufferView));
+    const decompressed = gunzipSync(Buffer.from(upload?.body as Uint8Array));
     expect(decompressed.toString()).toContain('compressed entry');
   });
 
