@@ -87,6 +87,10 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   microsandbox: { cpus: 8, memoryMib: 16384 },
   mosaic:       { vcpus: 8, memoryMb: 16384 },
   miosa:        { vcpus: 8, memory: 16384 },               // maps to MIOSA size contract "large" (8 vCPU / 16 GiB)
+  // givemeanode has no 8 vCPU / 16 GiB named shape; asking for 8 vCPU and 16 GiB
+  // selects sandbox-lg (8 vCPU / 32 GiB). The actual memory is reported by the
+  // benchmark script, so the mismatch is visible in results.
+  givemeanode:  { vcpus: 8, memoryMiB: 16384 },
   // Sandbox0 exposes only memory. Override the 128 MiB TTI size;
   // getSandboxOptionsWithResources preserves hardTtl from providers.ts.
   sandbox0:     { memory: 16384 },
