@@ -232,9 +232,24 @@ export function createSystemMetricsCollector(): BenchmarkSystemMetricsCollector 
 
   // Capture the host CPU baseline once at creation time so cumulative host
   // CPU usage covers the full collector lifetime, not just from the first sample.
-  const hostCpuBaselinePromise: Promise<number[] | null> = readHostCpuJiffies().catch(() => null);
-  let hostCpuBaseline: number[] | null = null;
-  let hostCpuBaselineReady = false;
+  // If the creation-time read fails, the first successful sample read is used as
+  // the baseline. All samples share the same init promise so overlapping calls
+  // cannot read the current CPU snapshot before the baseline is established.
+  const creationHostCpuBaselinePromise: Promise<number[] | null> = readHostCpuJiffies().catch(() => null);
+  let hostCpuBaselineInitPromise: Promise<number[] | null> | null = null;
+  function getHostCpuBaseline(): Promise<number[] | null> {
+    if (hostCpuBaselineInitPromise) return hostCpuBaselineInitPromise;
+    hostCpuBaselineInitPromise = (async () => {
+      const creationBaseline = await creationHostCpuBaselinePromise;
+      if (creationBaseline) return creationBaseline;
+      // Creation read failed; establish the baseline from the first successful
+      // sample read. The current read for this sample will happen after this
+      // baseline read completes, so the two snapshots are still ordered.
+      return readHostCpuJiffies();
+    })();
+    return hostCpuBaselineInitPromise;
+  }
+
   let cgroupPaths: CgroupPaths | null = null;
   let cachedCgroupMemLimitMb: number | null | undefined;
   let cachedCgroupCpuLimitCores: number | null | undefined;
@@ -245,18 +260,11 @@ export function createSystemMetricsCollector(): BenchmarkSystemMetricsCollector 
       const memory = process.memoryUsage();
       const loadavg = os.loadavg();
 
-      // On the first sample, await the creation-time baseline before reading the
-      // current /proc/stat snapshot so the two reads are correctly ordered and
-      // the first delta cannot be negative. If that creation read failed, we
-      // fall back to using the first successful sample read as the baseline and
-      // skip reporting a delta until a second ordered snapshot exists.
-      if (!hostCpuBaselineReady) {
-        hostCpuBaselineReady = true;
-        const creationBaseline = await hostCpuBaselinePromise;
-        if (creationBaseline) {
-          hostCpuBaseline = creationBaseline;
-        }
-      }
+      // Await the shared baseline init before reading the current CPU snapshot.
+      // This guarantees the baseline read completes first, preventing negative
+      // deltas, and lets a later successful sample recover from a transient
+      // creation-time failure.
+      const hostCpuBaseline = await getHostCpuBaseline();
 
       const [hostMem, hostCpuJiffies, openFds, sockstat] = await Promise.all([
         readHostMemInfo(),
@@ -265,14 +273,7 @@ export function createSystemMetricsCollector(): BenchmarkSystemMetricsCollector 
         readSockstat(),
       ]);
 
-      let hostCpu: { usedUs: number; totalUs: number } | null = null;
-      if (hostCpuBaseline) {
-        if (hostCpuJiffies) {
-          hostCpu = hostCpuUsageSince(hostCpuBaseline, hostCpuJiffies);
-        }
-      } else if (hostCpuJiffies) {
-        hostCpuBaseline = hostCpuJiffies;
-      }
+      const hostCpu = hostCpuBaseline && hostCpuJiffies ? hostCpuUsageSince(hostCpuBaseline, hostCpuJiffies) : null;
 
       if (!cgroupPaths) {
         cgroupPaths = await cgroupRelativePaths();
