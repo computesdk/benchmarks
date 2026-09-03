@@ -18,7 +18,8 @@ import { resolve } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { run as runPlatformCli } from '@benchsdk/cli';
+import { run as runPlatformCli, resolveAuth } from '@benchsdk/cli';
+import type { CliAuth } from '@benchsdk/cli';
 import { createBenchmarkClient, type BenchmarkClient, type BenchmarkClientConfig } from '@benchsdk/api';
 import { filterParticipantsByEnv, selectParticipants } from '@benchsdk/worker';
 import { parseCliArgs, runBenchmark, type CliArgs } from './runner.js';
@@ -97,7 +98,7 @@ function shiftConfigFlag(argv: string[]): { configPath?: string; argv: string[] 
 }
 
 async function loadConfigFile(fullPath: string): Promise<BenchSdkConfig> {
-  if (fullPath.endsWith('.json')) {
+  if (fullPath.endsWith('.json') || fullPath.endsWith('.benchrc')) {
     const raw = await readFile(fullPath, 'utf-8');
     return JSON.parse(raw) as BenchSdkConfig;
   }
@@ -160,20 +161,24 @@ export async function runCheck(argv: string[]): Promise<void> {
     throw new BenchmarkConfigError(configIssues);
   }
 
-  const baseUrl = getFlag(flags, 'base-url') ?? projectConfig.baseUrl ?? process.env.BENCHMARKS_PLATFORM_URL;
-  const apiKey = getFlag(flags, 'api-key') ?? resolveApiKey(projectConfig) ?? process.env.BENCHMARKS_PLATFORM_API_KEY;
-
-  const apiConfig: BenchmarkClientConfig = {};
-  if (baseUrl) apiConfig.baseUrl = baseUrl;
-  if (apiKey) apiConfig.apiKey = apiKey;
-
   const dryRun = flags.includes('--dry-run') || flags.includes('--no-ingest') || projectConfig.dryRun;
 
   let client: BenchmarkClient | undefined;
   let apiOk = dryRun;
-  if (!dryRun && apiConfig.apiKey) {
+  let auth: CliAuth | null = null;
+  if (!dryRun) {
     try {
-      client = createBenchmarkClient(apiConfig);
+      auth = await resolveAuth({
+        baseUrl: getFlag(flags, 'base-url') ?? projectConfig.baseUrl,
+        apiKey: getFlag(flags, 'api-key') ?? resolveApiKey(projectConfig),
+      });
+      client = createBenchmarkClient({
+        baseUrl: auth.apiBaseUrl,
+        apiKey: auth.apiKey,
+        token: auth.token,
+        orgSlug: auth.orgSlug,
+        orgId: auth.orgId,
+      });
       await client.listBenchmarks({ limit: 1 });
       apiOk = true;
     } catch (err) {
@@ -208,10 +213,9 @@ export async function runCheck(argv: string[]): Promise<void> {
 
   const missingEnv = dryRun
     ? []
-    : [
-        ['BENCHMARKS_PLATFORM_URL', baseUrl],
-        ['BENCHMARKS_PLATFORM_API_KEY', apiKey],
-      ].filter(([, v]) => !v);
+    : auth
+      ? []
+      : [['BENCHMARKS_PLATFORM_API_KEY or BENCHMARKS_PLATFORM_TOKEN', undefined]];
 
   for (const [name] of missingEnv) {
     console.warn(`[benchsdk] ${name} is not set`);
