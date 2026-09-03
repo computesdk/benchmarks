@@ -84,8 +84,8 @@ importers:
         specifier: ^0.2.0
         version: 0.2.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@computesdk/givemeanode':
-        specifier: ^1.0.1
-        version: 1.0.1
+        specifier: ^1.0.2
+        version: 1.0.2
       '@computesdk/hopx':
         specifier: ^0.2.28
         version: 0.2.28(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -159,8 +159,8 @@ importers:
         specifier: ^0.2.2
         version: 0.2.2
       '@computesdk/tenki':
-        specifier: ^0.1.4
-        version: 0.1.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        specifier: ^0.1.5
+        version: 0.1.5(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@computesdk/tensorlake':
         specifier: ^0.1.10
         version: 0.1.10(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -781,8 +781,8 @@ packages:
   '@computesdk/freestyle@0.2.0':
     resolution: {integrity: sha512-TBQ6zEAbTWQ6+4cgMzFHKQyqqtvjGplPM22F4HV0q886X2P9cc8Z8zqwkXKSNg0TQzzppyJXJLumjGG1SAoaGQ==}
 
-  '@computesdk/givemeanode@1.0.1':
-    resolution: {integrity: sha512-vR2yKu2OSG/c2Gn2URg2/8n0dOqDXi09aTZIa3/4NqLFI+me6aYhrrgaDHcoSXCvA8OMXuM5/kUCwqDsvhJRsg==}
+  '@computesdk/givemeanode@1.0.2':
+    resolution: {integrity: sha512-PDHDqBRzi920jgqYdSUdaUdKWYCRBN8ZCHwZmQm4hNC/cNfmhz6VKquru/Vni1DU2Vp8CWWJVwvoQsRnep7Z6w==}
 
   '@computesdk/hopx@0.2.28':
     resolution: {integrity: sha512-NGkqEitBw7VtJJcwKw6E82kB9tpSMdmlKE2RA2CJfOeJdPIMyO/RuxvprVAZW1Xl5H0zIexhyzwrtO6tnfQ62w==}
@@ -870,8 +870,8 @@ packages:
   '@computesdk/superserve@0.2.2':
     resolution: {integrity: sha512-lEH9SHEC23H3LFox08EBMHxgUn/ugcmxg5iBGV55PyNAfjzgfM9O0LTJuw7yAX6gqbKRf9C2Wvs7k9kxwJNFmQ==}
 
-  '@computesdk/tenki@0.1.4':
-    resolution: {integrity: sha512-1/hPy7R1l/LLhLKeHnf182d2x7q4q5BPog+PGSF6NTD00bZ9Orv28e+Iu/zE3Flhkbeg+i4i6XVXgBROQPlGjA==}
+  '@computesdk/tenki@0.1.5':
+    resolution: {integrity: sha512-dYM1p+gWYh7exMfy1F8bL6r/5Uh/BBcu0PLqXGF61xhxlbn5uaVAu2a51qIqs+RqVfZddO//2qRXgcrYRpEAVg==}
     engines: {node: '>=20'}
 
   '@computesdk/tensorlake@0.1.10':
@@ -2411,8 +2411,8 @@ packages:
   '@superserve/sdk@0.8.2':
     resolution: {integrity: sha512-U7aBzhd+cSMeeuKsFOMAyzodtq2Iph/FbOfu1fAGxdPprSfNTUHPxYb6BhHPn9tKL8nBBpKhTJU7nUIVWobLIA==}
 
-  '@tenkicloud/sandbox@0.5.4':
-    resolution: {integrity: sha512-U/oV8TAB1rjpXHuo9DIrpxnd2tlO2MojNjzLjqKgx4+zkD4NjgpR6QzRv5awoXib0DND3bnu0qoQCIgsfcXTCw==}
+  '@tenkicloud/sandbox@1.0.4':
+    resolution: {integrity: sha512-YynN84EEPfm9YeYIX6tMJ/qI2RCp0xmg1W8WIS8VO4df69IRlBaONgVgiak0ZB77hDQhj5nYHnkeEnvWOb+QPg==}
     engines: {node: '>=18'}
 
   '@tigrisdata/storage@3.18.0':
@@ -6420,7 +6420,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@computesdk/givemeanode@1.0.1':
+  '@computesdk/givemeanode@1.0.2':
     dependencies:
       '@computesdk/provider': 2.1.5
       computesdk: 4.1.4
@@ -6616,10 +6616,10 @@ snapshots:
       '@superserve/sdk': 0.7.8
       computesdk: 4.1.4
 
-  '@computesdk/tenki@0.1.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
+  '@computesdk/tenki@0.1.5(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
     dependencies:
       '@computesdk/provider': 2.1.5
-      '@tenkicloud/sandbox': 0.5.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      '@tenkicloud/sandbox': 1.0.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       computesdk: 4.1.4
     transitivePeerDependencies:
       - bufferutil
@@ -8158,7 +8158,7 @@ snapshots:
 
   '@superserve/sdk@0.8.2': {}
 
-  '@tenkicloud/sandbox@0.5.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
+  '@tenkicloud/sandbox@1.0.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
     dependencies:
       '@bufbuild/protobuf': 2.12.1
       '@connectrpc/connect': 2.1.2(@bufbuild/protobuf@2.12.1)
