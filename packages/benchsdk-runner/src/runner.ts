@@ -17,12 +17,15 @@
 import { execSync } from 'node:child_process';
 import os from 'node:os';
 import { createBenchmarkClient } from '@benchsdk/api';
+import { resolveAuth } from '@benchsdk/cli';
 import {
   BenchmarkReporter,
+  createSystemMetricsCollector,
   filterParticipantsByEnv,
   runWorker,
   selectParticipants,
 } from '@benchsdk/worker';
+import type { BenchmarkSystemMetricsCollector, BenchmarkSystemMetricsSample } from '@benchsdk/worker';
 import { NoAvailableParticipantsError } from './no-available-participants.js';
 import { higherIsBetter, lowerIsBetter, score, ScoringSpecError, scoringConfigToSpec } from './scoring.js';
 import type {
@@ -72,10 +75,6 @@ export interface CliArgs {
   noIngest?: boolean;
 }
 
-// Matches @benchsdk/api's DEFAULT_BASE_URL origin. `resolvePlatform()`
-// appends `/api/v1`. Override for local development via BENCHMARKS_PLATFORM_URL.
-const DEFAULT_PLATFORM_URL = 'https://platform.computesdk.com';
-
 function isEnvNoIngest(): boolean {
   const v = process.env.BENCHSDK_NO_INGEST;
   return v === '1' || v?.toLowerCase() === 'true';
@@ -83,6 +82,44 @@ function isEnvNoIngest(): boolean {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Runs an array of async functions with a bounded concurrency limit.
+ * Results are returned in the same order as the input array.
+ */
+function runWithConcurrency<T>(fns: Array<() => Promise<T>>, limit: number): Promise<T[]> {
+  if (limit >= fns.length || fns.length === 0) {
+    return Promise.all(fns.map((fn) => fn()));
+  }
+
+  const results = new Array<T>(fns.length);
+  let running = 0;
+  let completed = 0;
+  let nextIndex = 0;
+
+  return new Promise((resolve, reject) => {
+    const runNext = () => {
+      if (completed === fns.length) {
+        resolve(results);
+        return;
+      }
+      while (running < limit && nextIndex < fns.length) {
+        const index = nextIndex++;
+        running++;
+        fns[index]().then(
+          (value) => {
+            results[index] = value;
+            running--;
+            completed++;
+            runNext();
+          },
+          (error) => reject(error),
+        );
+      }
+    };
+    runNext();
+  });
 }
 
 function getErrorCode(error: unknown): string {
@@ -405,21 +442,6 @@ function defaultOnResult(record: TaskResultRecord, meta: { iterations: number; p
   }
 }
 
-function resolvePlatform(): { baseUrl: string; apiKey: string } {
-  const root = (process.env.BENCHMARKS_PLATFORM_URL || DEFAULT_PLATFORM_URL).replace(/\/+$/, '');
-  const apiKey = process.env.BENCHMARKS_PLATFORM_API_KEY;
-  if (!apiKey) {
-    throw new Error(
-      'An API key is required. Set BENCHMARKS_PLATFORM_API_KEY in your environment. Create an org-scoped API key in your ' +
-        'organization settings on the platform.'
-    );
-  }
-  return {
-    baseUrl: `${root}/api/v1`,
-    apiKey,
-  };
-}
-
 /**
  * Resolves `--shape <name>` against the config's declared `shapes`. Throws with
  * the known names if the shape is unknown, so a typo fails loudly instead of
@@ -531,20 +553,22 @@ export async function runBenchmark<T extends BaseParticipant>(
   const shaped = applyShape(fileConfig, resolveShape(fileConfig, args.shape));
   const config = applyIdentityOverrides(shaped, args);
   const resolved = mergeConfig(config, args);
-  const available = resolveParticipants(config, resolved);
 
-  let baseUrl = '';
-  let apiKey = '';
-  let client: BenchmarkClient | null = null;
-  if (!noIngest) {
-    ({ baseUrl, apiKey } = resolvePlatform());
-    client = createBenchmarkClient({ baseUrl, apiKey });
-  }
+  const auth = await resolveAuth();
+  const client = createBenchmarkClient({
+    baseUrl: auth.apiBaseUrl,
+    apiKey: auth.apiKey,
+    token: auth.token,
+    orgSlug: auth.orgSlug,
+    orgId: auth.orgId,
+  });
+
+  const available = resolveParticipants(config, resolved);
 
   const schedule = buildSchedule(config, resolved, task);
   const totalTasks = schedule.length;
 
-  const concurrencyLabel = resolved.groupBy === 'round' ? 'n/a (round mode)' : String(resolved.concurrency);
+  const concurrencyLabel = String(resolved.concurrency);
   console.log(`${config.benchmarkName} (self-contained)`);
   console.log(`Date: ${new Date().toISOString()}`);
   if (noIngest) {
@@ -595,7 +619,7 @@ export async function runBenchmark<T extends BaseParticipant>(
         config: runConfig,
       });
       runId = run.id;
-      dashboardUrl = dashboardUrlFor(baseUrl, organizationSlug, config.benchmarkSlug, run.id);
+      dashboardUrl = dashboardUrlFor(auth.apiBaseUrl, organizationSlug, config.benchmarkSlug, run.id);
       for (const participant of available) {
         await client!.upsertParticipant(config.benchmarkSlug, runId, participant.name, { totalTasks });
       }
@@ -609,7 +633,7 @@ export async function runBenchmark<T extends BaseParticipant>(
         config: runConfig,
       });
       runId = run.id;
-      dashboardUrl = dashboardUrlFor(baseUrl, organizationSlug, config.benchmarkSlug, run.id);
+      dashboardUrl = dashboardUrlFor(auth.apiBaseUrl, organizationSlug, config.benchmarkSlug, run.id);
       console.log(`Run created: ${run.name} (${runId})`);
       console.log(`View at: ${dashboardUrl}\n`);
     }
@@ -619,9 +643,9 @@ export async function runBenchmark<T extends BaseParticipant>(
 
   let participantRecords: ParticipantRecords[];
   if (resolved.groupBy === 'round') {
-    participantRecords = await runGroupedByRound(config, schedule, available, resolved, client, runId, baseUrl, apiKey, onResult, noIngest);
+    participantRecords = await runGroupedByRound(config, schedule, available, resolved, client, runId, auth.apiBaseUrl, auth.apiKey, auth.token, auth.orgSlug, auth.orgId, onResult, noIngest);
   } else {
-    participantRecords = await runGroupedByParticipant(config, schedule, available, resolved, client, runId, onResult);
+    participantRecords = await runGroupedByParticipant(config, schedule, available, resolved, client, runId, onResult, noIngest);
   }
 
   console.log(`All done. ${noIngest ? 'No platform run created.' : `View at: ${dashboardUrl}`}`);
@@ -631,7 +655,7 @@ export async function runBenchmark<T extends BaseParticipant>(
     participants: participantRecords,
     config: resolved,
   };
-  if (client && (config.onScore || config.scoring)) {
+  if (!noIngest && (config.onScore || config.scoring)) {
     try {
       const spec = config.onScore
         ? await config.onScore(lowerIsBetter, higherIsBetter)
@@ -697,6 +721,7 @@ async function runGroupedByParticipant<T extends BaseParticipant>(
   client: BenchmarkClient | null,
   runId: string,
   onResult: OnResult,
+  noIngest: boolean,
 ): Promise<ParticipantRecords[]> {
   const participantRecords: ParticipantRecords[] = [];
   for (const participant of available) {
@@ -705,7 +730,7 @@ async function runGroupedByParticipant<T extends BaseParticipant>(
     console.log('='.repeat(70));
 
     // When running without platform ingest, execute the schedule locally.
-    if (!client) {
+    if (noIngest || !client) {
       const records: TaskResultRecord[] = [];
       let rampStartMs: number | undefined;
       let nextIndex = 0;
@@ -816,7 +841,10 @@ async function runGroupedByRound<T extends BaseParticipant>(
   client: BenchmarkClient | null,
   runId: string,
   baseUrl: string,
-  apiKey: string,
+  apiKey: string | undefined,
+  token: string | undefined,
+  orgSlug: string | undefined,
+  orgId: string | undefined,
   onResult: OnResult,
   noIngest: boolean = false,
 ): Promise<ParticipantRecords[]> {
@@ -824,10 +852,22 @@ async function runGroupedByRound<T extends BaseParticipant>(
   const logBuffers = new Map<string, LogBuffer>();
   const failed = new Map<string, boolean>();
   const recordsByParticipant = new Map<string, TaskResultRecord[]>();
+  // A single collector for the whole run: round mode interleaves every
+  // participant in this one shared Node process, so per-participant CPU/memory
+  // can't be isolated — a sample reflects the whole process, not one slice of
+  // it. We therefore sample once per round (not once per participant) and
+  // upload a single `system-metrics` artifact, rather than N duplicates that
+  // would falsely imply isolated per-participant usage. (Separate artifacts
+  // only make sense when workers genuinely run on separate VMs, one per
+  // participant, as the client `runWorker` path does.) Created only when at
+  // least one participant has a reporter to upload to — nothing else reads it.
+  let metricsCollector: BenchmarkSystemMetricsCollector | undefined;
+  const metricsSamples: BenchmarkSystemMetricsSample[] = [];
 
   for (const participant of available) {
     logBuffers.set(participant.name, new LogBuffer());
     failed.set(participant.name, false);
+    recordsByParticipant.set(participant.name, []);
     if (noIngest || !client) {
       reporters.set(participant.name, null);
       continue;
@@ -845,6 +885,9 @@ async function runGroupedByRound<T extends BaseParticipant>(
       reporter = await BenchmarkReporter.claim({
         baseUrl,
         apiKey,
+        token,
+        orgSlug,
+        orgId,
         benchmarkSlug: config.benchmarkSlug,
         runId: runId,
         participantSlug: participant.name,
@@ -858,6 +901,13 @@ async function runGroupedByRound<T extends BaseParticipant>(
       console.warn(`  ${participant.name}: could not claim a platform worker — running without platform reporting.`);
     }
     reporters.set(participant.name, reporter);
+    // First reporter to appear starts the one shared collector, with an
+    // immediate baseline sample so a run that finishes inside one round still
+    // uploads metrics.
+    if (reporter && !metricsCollector) {
+      metricsCollector = createSystemMetricsCollector();
+      metricsSamples.push(metricsCollector.sample());
+    }
   }
 
   console.log(`Interleaving ${available.length} participant(s), ${schedule.length} round(s) each.\n`);
@@ -868,7 +918,7 @@ async function runGroupedByRound<T extends BaseParticipant>(
     if (resolved.staggerDelayMs > 0 && i > 0) {
       await sleep(resolved.staggerDelayMs);
     }
-    for (const participant of available) {
+    const roundFns = available.map((participant) => async () => {
       const reporter = reporters.get(participant.name) ?? null;
       const logBuffer = logBuffers.get(participant.name)!;
       const record = await runTaskRecord(
@@ -882,9 +932,6 @@ async function runGroupedByRound<T extends BaseParticipant>(
       if (record.status !== 'success') failed.set(participant.name, true);
       onResult(record, { iterations: schedule.length, participant: participant.name });
       reporter?.recordResult(record);
-      if (!recordsByParticipant.has(participant.name)) {
-        recordsByParticipant.set(participant.name, []);
-      }
       const participantRecords = recordsByParticipant.get(participant.name)!;
       participantRecords.push(record);
       // Round mode drives the worker by hand, so nothing reports progress
@@ -898,7 +945,37 @@ async function runGroupedByRound<T extends BaseParticipant>(
         });
         await reporter.heartbeat();
       }
-    }
+    });
+    await runWithConcurrency(roundFns, resolved.concurrency);
+    // Sampled once per round rather than on a wall-clock timer: round mode runs
+    // everything sequentially in this one loop, so a round boundary is the
+    // natural, already-existing cadence. Taken after the whole round (not per
+    // participant) since the sample covers the shared process, not one slice.
+    if (metricsCollector) metricsSamples.push(metricsCollector.sample());
+  }
+
+  // One shared collector for the whole process — a final sample (before stop,
+  // which disables the event-loop monitor), then upload a single
+  // `system-metrics` artifact via any one reporter (all participants ran in
+  // this process, so the metrics belong to the run, not to any one of them).
+  if (metricsCollector) metricsSamples.push(metricsCollector.sample());
+  metricsCollector?.stop();
+  // The SDK only has a worker-scoped artifact API, so this single artifact is
+  // necessarily filed under one reporter's worker. Tag it as process-scoped
+  // with the full participant list so consumers don't mistake it for that one
+  // participant's isolated usage — the metrics cover every participant that ran
+  // in this shared process, not just the reporter it happened to upload through.
+  const metricsReporter = available.map((p) => reporters.get(p.name)).find((r): r is BenchmarkReporter => Boolean(r));
+  if (metricsReporter && metricsSamples.length > 0) {
+    await metricsReporter
+      .uploadArtifact({
+        kind: 'system-metrics',
+        contentType: 'application/x-ndjson',
+        name: 'metrics.jsonl',
+        metadata: { scope: 'shared-process', participants: available.map((p) => p.name) },
+        body: metricsSamples.map((sample) => JSON.stringify(sample)).join('\n') + '\n',
+      })
+      .catch(() => {});
   }
 
   for (const participant of available) {

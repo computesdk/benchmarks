@@ -23,19 +23,22 @@ If you are working inside this repo, you can run any `*.bench.ts` file directly:
 # 1. Build the workspace packages once (packages/*/dist is not committed)
 pnpm -r --filter "./packages/**" build
 
-# 2. Run a benchmark without uploading to the platform
-pnpm exec bench run examples/01-hello.bench.ts --dry-run
+# 2. Run a benchmark locally without uploading to the platform
+BENCHMARKS_PLATFORM_API_KEY=bp-... pnpm exec bench run examples/01-hello.bench.ts --dry-run
 ```
 
 ## Platform credentials
 
-To report results to the platform instead of running dry, set:
+To report results to the platform, authenticate with one of:
 
-- `BENCHMARKS_PLATFORM_API_KEY` — a ComputeSDK benchmarks platform API key.
+- `BENCHMARKS_PLATFORM_API_KEY` — a ComputeSDK benchmarks platform API key (an org-scoped `bp_...` key).
+- `BENCHMARKS_PLATFORM_TOKEN` — an OAuth session/bearer token (used by the CLI and low-level client).
+
+You can also log in interactively with `bench auth login` to store an OAuth token in `~/.benchsdk/credentials.json`.
 
 To point at a different platform endpoint (for example, a staging environment or local development proxy), also set `BENCHMARKS_PLATFORM_URL` to the root URL (no `/api/v1` suffix; the runner appends it). The default is `https://platform.computesdk.com`.
 
-`--dry-run` / `--no-ingest` / `BENCHSDK_NO_INGEST=1` skip platform reporting entirely.
+`--dry-run` / `--no-ingest` / `BENCHSDK_NO_INGEST=1` skip platform uploading/reporting, but a platform API key or OAuth token is still required for every `bench run` invocation.
 
 ## Anatomy of a benchmark file
 
@@ -398,7 +401,7 @@ bench run <file.bench.ts> [flags]
 
 | Flag | Description |
 |------|-------------|
-| `--dry-run`, `--no-ingest` | Run locally without platform reporting. |
+| `--dry-run`, `--no-ingest` | Skip uploading to the platform (still requires auth). |
 | `--provider a,b` | Run only the named participants. Repeatable. |
 | `--iterations N` | Override total iterations (per phase when phases exist). |
 | `--concurrency N` | Override max in-flight tasks. |
@@ -454,10 +457,10 @@ See the [`examples/`](./examples) directory for runnable benchmarks covering eve
 10. `10-shared-run.bench.ts` — `--run-key`.
 11. `11-logging.bench.ts` — structured `log` levels, step output capture, and `captureOutput`.
 
-Run any example in dry-run mode:
+Run any example locally:
 
 ```bash
-pnpm exec bench run examples/01-hello.bench.ts --dry-run
+BENCHMARKS_PLATFORM_API_KEY=bp-... pnpm exec bench run examples/01-hello.bench.ts --dry-run
 ```
 
 ## Common gotchas

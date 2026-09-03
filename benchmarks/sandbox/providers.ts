@@ -11,8 +11,8 @@ import { daytona } from '@computesdk/daytona';
 import { declaw } from '@computesdk/declaw';
 import { e2b } from '@computesdk/e2b';
 import { freestyle } from '@computesdk/freestyle';
-import { hopx } from '@computesdk/hopx';
 import { givemeanode } from '@computesdk/givemeanode';
+import { hopx } from '@computesdk/hopx';
 import { isorun } from '@computesdk/isorun';
 // import { lelantos } from '@computesdk/lelantos';
 import { lightning } from '@computesdk/lightning';
@@ -124,14 +124,14 @@ export const providers: ProviderConfig[] = [
     createCompute: () => freestyle({ apiKey: process.env.FREESTYLE_API_KEY! }),
   },
   {
+    name: 'givemeanode',
+    requiredEnvVars: ['GMN_TOKEN'],
+    createCompute: () => givemeanode({ apiKey: process.env.GMN_TOKEN!, baseUrl: process.env.GMN_API_HOST }),
+  },
+  {
     name: 'hopx',
     requiredEnvVars: ['HOPX_API_KEY'],
     createCompute: () => hopx({ apiKey: process.env.HOPX_API_KEY! }),
-  },
-  {
-    name: 'givemeanode',
-    requiredEnvVars: ['GMAN_TOKEN'],
-    createCompute: () => givemeanode({ apiKey: process.env.GMAN_TOKEN! }),
   },
   {
     name: 'isorun',

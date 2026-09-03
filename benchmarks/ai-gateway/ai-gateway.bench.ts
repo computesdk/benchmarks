@@ -52,6 +52,10 @@ export const config = defineBenchmarkConfig({
   phases,
   groupBy: 'round',
   participants: providers,
+  // Run every gateway in a round concurrently while keeping rounds sequential.
+  // This preserves the per-round fairness of round-robin ordering without
+  // multiplying runtime by the number of gateways.
+  concurrency: providers.length,
   customCliFlags: ['--ai-gateway-iterations-cold', '--ai-gateway-iterations-warm'],
   scoring: {
     metrics: [

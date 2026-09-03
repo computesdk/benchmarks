@@ -52,6 +52,7 @@ export const config = defineBenchmarkConfig({
   phases,
   groupBy: 'round',
   participants: providers,
+  concurrency: providers.length,
   customCliFlags: ['--ai-gateway-iterations-cold', '--ai-gateway-iterations-warm'],
   scoring: {
     metrics: [

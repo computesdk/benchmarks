@@ -174,6 +174,8 @@ round 2: openrouter → vercel-ai-gateway → cloudflare-ai-gateway → llmgatew
 
 This is purely about **execution order in time**. Instead of running all of one gateway's iterations back-to-back and then moving to the next gateway (where the last gateway tested could be unfairly affected by, say, a network blip or a provider's load spike five minutes into the run), every gateway gets its Nth iteration at roughly the same point in time as every other gateway's Nth iteration. No gateway's numbers are systematically favored by running earlier, later, or during a different network condition than the others.
 
+Within each round the gateways run concurrently up to `concurrency: providers.length`, while the rounds themselves stay sequential. This keeps the per-round fairness intact but removes the multiplicative runtime cost of the number of gateways, so iteration counts can be raised for better statistics without a proportional wall-clock increase.
+
 Round-robin only interleaves *which gateway's turn it is next*; it never affects what "warm" means for any individual gateway.
 
 ### What one warm iteration actually does

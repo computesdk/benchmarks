@@ -15,6 +15,12 @@ npm install @benchsdk/client
 > [`@benchsdk/runner`](../benchsdk-runner). This package is REST transport plus
 > the worker engine only.
 
+## Authentication
+
+`createBenchmarkClient` requires a platform API key or OAuth token. Provide
+`apiKey`/`token` directly, or set `BENCHMARKS_PLATFORM_API_KEY` or
+`BENCHMARKS_PLATFORM_TOKEN` in the environment.
+
 ## Run A Worker
 
 ```ts

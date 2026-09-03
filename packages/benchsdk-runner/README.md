@@ -56,6 +56,8 @@ Run it with the CLI (flags override the config knobs):
 bench run benchmarks/sandbox/sandbox-tti.bench.ts --iterations 100 --concurrency 20 --provider e2b,modal
 ```
 
+`bench run` requires platform auth — `BENCHMARKS_PLATFORM_API_KEY`, `BENCHMARKS_PLATFORM_TOKEN`, or a token saved via `bench auth login` — even for `--dry-run` / `--no-ingest` / `BENCHSDK_NO_INGEST=1`; those flags only skip uploading, they do not skip auth.
+
 To load a TypeScript benchmark without a build step, run the CLI under a TS loader:
 
 ```sh

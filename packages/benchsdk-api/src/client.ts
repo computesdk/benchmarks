@@ -84,6 +84,7 @@ function getApiKey(input?: string): string | undefined {
 
 function getAuthToken(config: BenchmarkClientConfig): string | undefined {
   if (config.token) return config.token;
+  if (config.apiKey) return config.apiKey;
   if (typeof process !== 'undefined' && process.env.BENCHMARKS_PLATFORM_TOKEN) {
     return process.env.BENCHMARKS_PLATFORM_TOKEN;
   }
@@ -175,6 +176,12 @@ async function downloadArtifactBody(
 export function createBenchmarkClient(config: BenchmarkClientConfig = {}): BenchmarkClient {
   const baseUrl = trimTrailingSlash(config.baseUrl ?? DEFAULT_BASE_URL);
   const authToken = getAuthToken(config);
+  if (!authToken) {
+    throw new Error(
+      'A platform API key or OAuth token is required. Set BENCHMARKS_PLATFORM_API_KEY or BENCHMARKS_PLATFORM_TOKEN in your environment, or pass apiKey/token to createBenchmarkClient. Create an API key at https://platform.computesdk.com in your organization settings (Settings → API keys).'
+    );
+  }
+
   const fetchImpl = config.fetch ?? (typeof fetch !== 'undefined' ? fetch : undefined);
 
   if (!fetchImpl) {

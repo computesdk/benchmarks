@@ -35,7 +35,8 @@ The CLI tries credentials in this order:
 4. OAuth tokens from `~/.benchsdk/credentials.json` (from `bench auth login`)
 
 API keys and tokens are useful for non-interactive environments. OAuth is
-interactive and stores a refresh token under `~/.benchsdk`.
+interactive and stores a refresh token under `~/.benchsdk`. At least one
+credential is required for any command that touches the platform.
 
 ### Device-code login
 
@@ -151,8 +152,7 @@ export BENCHMARKS_PLATFORM_API_KEY=bp_...
 bench benchmarks list --json --limit 100
 ```
 
-If no credentials are present and `CI` is set or stdin is not a TTY, the CLI
-fails fast with an `AuthError`.
+If no credentials are present, the CLI fails fast with an `AuthError`.
 
 ## Environment variables
 

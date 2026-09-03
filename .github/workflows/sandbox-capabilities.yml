@@ -53,6 +53,7 @@ jobs:
           - daytona
           - declaw
           - e2b
+          - givemeanode
           - hopx
           - isorun
           - lightning
@@ -113,6 +114,7 @@ jobs:
             daytona) PROVIDER_KEYS='DAYTONA_API_KEY' ;;
             declaw) PROVIDER_KEYS='DECLAW_API_KEY' ;;
             e2b) PROVIDER_KEYS='E2B_API_KEY' ;;
+            givemeanode) PROVIDER_KEYS='GMN_API_HOST|GMN_TOKEN' ;;
             hopx) PROVIDER_KEYS='HOPX_API_KEY' ;;
             isorun) PROVIDER_KEYS='ISORUN_API_KEY' ;;
             lightning) PROVIDER_KEYS='LIGHTNING_API_KEY' ;;
