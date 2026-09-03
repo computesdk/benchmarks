@@ -76,8 +76,8 @@ function writeModelIndexResults(outcome: BenchmarkRunOutcome, resultsDir: string
 }
 
 export const config = defineBenchmarkConfig({
-  benchmarkSlug: 'ai-gateway-model-index-local',
-  benchmarkName: 'AI Gateway Model Index local',
+  benchmarkSlug: 'ai-gateway-model-index',
+  benchmarkName: 'AI Gateway Model Index',
   iterations: 1,
   participants: modelIndexProviders,
   onComplete: (outcome) => {
