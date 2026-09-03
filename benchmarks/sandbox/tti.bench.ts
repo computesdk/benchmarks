@@ -53,7 +53,7 @@ export const config = defineBenchmarkConfig({
   },
   scoring: {
     metrics: [
-      { key: 'ttiMs', unit: 'ms', ceiling: 10000, weights: { median: 0.60, p95: 0.25, p99: 0.15 } },
+      { key: 'ttiMs', ceiling: 10000, weights: { median: 0.60, p95: 0.25, p99: 0.15 } },
     ],
   },
   // Legacy JSON labels a burst run 'concurrent' (see merge-results /

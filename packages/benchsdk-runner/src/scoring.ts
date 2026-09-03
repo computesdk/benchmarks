@@ -6,7 +6,7 @@ export type MetricValue = string | ((record: TaskResultRecord) => number | numbe
 export interface MetricScoring {
   name: string;
   value?: MetricValue;
-  unit: string;
+  unit?: string;
   ceiling: number;
   floor?: number;
   higherIsBetter?: boolean;
@@ -23,7 +23,7 @@ export interface BenchmarkScoringWeights {
 export interface BenchmarkScoringMetric {
   key: string;
   label?: string;
-  unit: string;
+  unit?: string;
   ceiling: number;
   floor?: number;
   higherIsBetter?: boolean;
@@ -74,7 +74,7 @@ export interface BenchmarkScoreResult {
 export type LowerIsBetter = (
   name: string,
   opts: {
-    unit: string;
+    unit?: string;
     ceiling: number;
     value?: MetricValue;
     weights: { median: number; p95: number; p99: number };
@@ -85,7 +85,7 @@ export type LowerIsBetter = (
 export type HigherIsBetter = (
   name: string,
   opts: {
-    unit: string;
+    unit?: string;
     floor?: number;
     ceiling: number;
     value?: MetricValue;
@@ -253,7 +253,7 @@ function scoreGroup(
       metric.weights.p99 * scoreStat(p99, metric);
     metricScoresSum += metricScore;
 
-    metrics.push({ name: metric.name, unit: metric.unit, median, p95, p99 });
+    metrics.push({ name: metric.name, unit: metric.unit ?? '', median, p95, p99 });
   }
 
   const compositeScore = successRate === 0 ? 0 : Math.round(metricScoresSum * successRate * 100) / 100;
@@ -297,8 +297,10 @@ export function score(outcome: BenchmarkRunOutcome, spec: ScoringSpec): Benchmar
 export function scoringConfigToSpec(
   config: BenchmarkScoringConfig,
   dimensions?: Record<string, unknown>,
+  display?: { metrics?: { key: string; unit?: string }[] },
 ): ScoringSpec {
   const success = config.success;
+  const unitByMetric = new Map(display?.metrics?.map((m) => [m.key, m.unit]));
   return {
     ...(dimensions ? { dimensions: toJsonObject(dimensions) } : {}),
     ...(config.groupBy ? { groupBy: config.groupBy } : {}),
@@ -312,7 +314,7 @@ export function scoringConfigToSpec(
     metrics: config.metrics.map((metric) => ({
       name: metric.key,
       value: metric.key,
-      unit: metric.unit,
+      unit: (display?.metrics === undefined ? metric.unit : (unitByMetric.get(metric.key) ?? metric.unit)) ?? '',
       ceiling: metric.ceiling,
       floor: metric.floor,
       higherIsBetter: metric.higherIsBetter,

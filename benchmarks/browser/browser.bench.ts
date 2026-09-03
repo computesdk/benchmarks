@@ -45,8 +45,8 @@ export const config = defineBenchmarkConfig({
   },
   scoring: {
     metrics: [
-      { key: 'totalMs', unit: 'ms', ceiling: 10000, weights: { median: 0.40, p95: 0.20, p99: 0.10 } },
-      { key: 'createMs', unit: 'ms', ceiling: 10000, weights: { median: 0.30, p95: 0, p99: 0 } },
+      { key: 'totalMs', ceiling: 10000, weights: { median: 0.40, p95: 0.20, p99: 0.10 } },
+      { key: 'createMs', ceiling: 10000, weights: { median: 0.30, p95: 0, p99: 0 } },
     ],
   },
   onComplete: (outcome) =>

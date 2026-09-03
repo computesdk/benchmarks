@@ -199,6 +199,37 @@ describe('defineBenchmarkConfig', () => {
     expect(config.display?.overview?.defaultMetric).toBe('x');
   });
 
+  it('accepts scoring without unit when display.metrics declares it', () => {
+    const config = defineBenchmarkConfig({
+      benchmarkSlug: 's',
+      benchmarkName: 'n',
+      participants,
+      display: {
+        metrics: [{ key: 'ttiMs', label: 'Time to interactive', unit: 'ms' }],
+      },
+      scoring: {
+        metrics: [{ key: 'ttiMs', ceiling: 10000, weights: { median: 1, p95: 0, p99: 0 } }],
+      },
+    });
+    expect(config.scoring?.metrics[0].unit).toBeUndefined();
+  });
+
+  it('rejects a scoring unit that conflicts with display.metrics', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: {
+          metrics: [{ key: 'ttiMs', label: 'Time to interactive', unit: 'ms' }],
+        },
+        scoring: {
+          metrics: [{ key: 'ttiMs', unit: 's', ceiling: 10000, weights: { median: 1, p95: 0, p99: 0 } }],
+        },
+      }),
+    ).toThrow("scoring.metrics[0].unit 's' conflicts with display.metrics[0].unit 'ms'");
+  });
+
   it('allows a display defaultMetric when metrics is omitted', () => {
     const config = defineBenchmarkConfig({
       benchmarkSlug: 's',

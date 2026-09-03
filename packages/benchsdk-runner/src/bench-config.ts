@@ -343,7 +343,7 @@ function assertFiniteNumber(value: unknown, field: string): number {
   return value;
 }
 
-function validateBenchmarkScoringConfig(scoring: BenchmarkScoringConfig): void {
+function validateBenchmarkScoringConfig(scoring: BenchmarkScoringConfig, display?: BenchmarkDisplayConfig): void {
   if (!Array.isArray(scoring.metrics) || scoring.metrics.length === 0) {
     throw new Error('scoring.metrics must be a non-empty array');
   }
@@ -379,8 +379,18 @@ function validateBenchmarkScoringConfig(scoring: BenchmarkScoringConfig): void {
       throw new Error(`duplicate scoring metric key: ${key}`);
     }
     seen.add(key);
-    if (typeof metric.unit !== 'string' || metric.unit.trim() === '') {
-      throw new Error(`scoring.metrics[${i}].unit must be a non-empty string`);
+    // Unit is optional; when display.metrics is also declared it is the
+    // canonical source and the scoring metric's unit must not contradict it.
+    const displayMetric = display?.metrics?.find((m) => m.key === key);
+    if (metric.unit !== undefined) {
+      if (typeof metric.unit !== 'string') {
+        throw new Error(`scoring.metrics[${i}].unit must be a string`);
+      }
+      if (displayMetric?.unit !== undefined && metric.unit !== displayMetric.unit) {
+        throw new Error(
+          `scoring.metrics[${i}].unit '${metric.unit}' conflicts with display.metrics[${i}].unit '${displayMetric.unit}' for key '${key}'`,
+        );
+      }
     }
     assertFiniteNumber(metric.ceiling, `scoring.metrics[${i}].ceiling`);
     if (metric.floor !== undefined) {
@@ -461,7 +471,7 @@ export function defineBenchmarkConfig<T extends BaseParticipant = BaseParticipan
     }
   }
   if (config.scoring !== undefined) {
-    validateBenchmarkScoringConfig(config.scoring);
+    validateBenchmarkScoringConfig(config.scoring, config.display);
   }
   if (config.customCliFlags !== undefined) {
     if (!Array.isArray(config.customCliFlags) || !config.customCliFlags.every((f) => typeof f === 'string' && f.startsWith('--'))) {
