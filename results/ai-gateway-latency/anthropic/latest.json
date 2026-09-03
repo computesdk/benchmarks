@@ -1,16 +1,2672 @@
 {
   "version": "1.0",
-  "timestamp": "2026-09-03T23:37:58.927Z",
+  "timestamp": "2026-09-03T23:55:55.000Z",
   "environment": {
     "node": "v24.20.0",
     "platform": "linux",
     "arch": "x64"
   },
   "config": {
-    "iterations": 10,
+    "iterations": 20,
     "timeoutMs": 45000
   },
   "results": [
+    {
+      "provider": "openrouter",
+      "mode": "ai-gateway",
+      "model": "anthropic/claude-haiku-4.5",
+      "iterations": [
+        {
+          "mode": "cold",
+          "dnsMs": 6.03,
+          "tcpMs": 1.72,
+          "tlsMs": 4.46,
+          "ttfbMs": 1013.11,
+          "ttftMs": 1013.99,
+          "coldE2eMs": 1026.2,
+          "outputTokens": 84,
+          "outputTokensPerSec": 40.15,
+          "resolvedProvider": "Anthropic",
+          "receipts": {
+            "cf-ray": "a358a1095ed4c98c-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.06,
+          "tcpMs": 1.31,
+          "tlsMs": 3.92,
+          "ttfbMs": 1812.35,
+          "ttftMs": 1814,
+          "coldE2eMs": 1820.29,
+          "outputTokens": 84,
+          "outputTokensPerSec": 29.98,
+          "resolvedProvider": "Anthropic",
+          "receipts": {
+            "cf-ray": "a358a1a7a8b8d6c5-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.22,
+          "tcpMs": 1.43,
+          "tlsMs": 3.15,
+          "ttfbMs": 1061.71,
+          "ttftMs": 1064.36,
+          "coldE2eMs": 1070.15,
+          "outputTokens": 84,
+          "outputTokensPerSec": 38.91,
+          "resolvedProvider": "Anthropic",
+          "receipts": {
+            "cf-ray": "a358a236fa902fa3-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.27,
+          "tcpMs": 1.09,
+          "tlsMs": 5.46,
+          "ttfbMs": 813.72,
+          "ttftMs": 814.99,
+          "coldE2eMs": 822.81,
+          "outputTokens": 84,
+          "outputTokensPerSec": 44.88,
+          "resolvedProvider": "Anthropic",
+          "receipts": {
+            "cf-ray": "a358a2cdbb84d678-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 2.23,
+          "tcpMs": 1.51,
+          "tlsMs": 4.09,
+          "ttfbMs": 610.68,
+          "ttftMs": 612.17,
+          "coldE2eMs": 619.99,
+          "outputTokens": 84,
+          "outputTokensPerSec": 50.51,
+          "resolvedProvider": "Anthropic",
+          "receipts": {
+            "cf-ray": "a358a354ad3d703c-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 4.95,
+          "tcpMs": 1.64,
+          "tlsMs": 4.64,
+          "ttfbMs": 638.57,
+          "ttftMs": 638.94,
+          "coldE2eMs": 650.16,
+          "outputTokens": 84,
+          "outputTokensPerSec": 49.46,
+          "resolvedProvider": "Anthropic",
+          "receipts": {
+            "cf-ray": "a358a3e03a885774-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 2.06,
+          "tcpMs": 1.24,
+          "tlsMs": 4.16,
+          "ttfbMs": 629.39,
+          "ttftMs": 629.74,
+          "coldE2eMs": 637.19,
+          "outputTokens": 84,
+          "outputTokensPerSec": 49.88,
+          "resolvedProvider": "Anthropic",
+          "receipts": {
+            "cf-ray": "a358a4782d1d1715-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 4.16,
+          "tcpMs": 1.32,
+          "tlsMs": 4.11,
+          "ttfbMs": 1350.54,
+          "ttftMs": 1352.17,
+          "coldE2eMs": 1361.77,
+          "outputTokens": 84,
+          "outputTokensPerSec": 34.88,
+          "resolvedProvider": "Anthropic",
+          "receipts": {
+            "cf-ray": "a358a4f6bdfad648-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.56,
+          "tcpMs": 1.25,
+          "tlsMs": 4.62,
+          "ttfbMs": 1307.06,
+          "ttftMs": 1307.92,
+          "coldE2eMs": 1315.36,
+          "outputTokens": 84,
+          "outputTokensPerSec": 35.45,
+          "resolvedProvider": "Anthropic",
+          "receipts": {
+            "cf-ray": "a358a582ed073916-IAD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.36,
+          "tcpMs": 9.11,
+          "tlsMs": 6.98,
+          "ttfbMs": 589.27,
+          "ttftMs": 595.44,
+          "coldE2eMs": 612.88,
+          "outputTokens": 84,
+          "outputTokensPerSec": 50.48,
+          "resolvedProvider": "Anthropic",
+          "receipts": {
+            "cf-ray": "a358a61e5a50e60b-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 495.36,
+          "ttftMs": 496.09,
+          "outputTokens": 84,
+          "outputTokensPerSec": 53.88,
+          "resolvedProvider": "Anthropic",
+          "receipts": {
+            "cf-ray": "a358a6b62bf2e5b6-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 526.25,
+          "ttftMs": 528.44,
+          "outputTokens": 84,
+          "outputTokensPerSec": 53.18,
+          "resolvedProvider": "Anthropic",
+          "receipts": {
+            "cf-ray": "a358a79d29e8e60b-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 538.5,
+          "ttftMs": 539.03,
+          "outputTokens": 84,
+          "outputTokensPerSec": 52.36,
+          "resolvedProvider": "Anthropic",
+          "receipts": {
+            "cf-ray": "a358a88349542d14-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 627.86,
+          "ttftMs": 635.72,
+          "outputTokens": 84,
+          "outputTokensPerSec": 49.97,
+          "resolvedProvider": "Anthropic",
+          "receipts": {
+            "cf-ray": "a358a9855c991f5e-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 780.13,
+          "ttftMs": 780.48,
+          "outputTokens": 84,
+          "outputTokensPerSec": 49.24,
+          "resolvedProvider": "Anthropic",
+          "receipts": {
+            "cf-ray": "a358aa75dc27dfee-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 507.8,
+          "ttftMs": 508.03,
+          "outputTokens": 84,
+          "outputTokensPerSec": 54.02,
+          "resolvedProvider": "Anthropic",
+          "receipts": {
+            "cf-ray": "a358ab5b6d9effd7-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 514.86,
+          "ttftMs": 515.71,
+          "outputTokens": 84,
+          "outputTokensPerSec": 53.16,
+          "resolvedProvider": "Anthropic",
+          "receipts": {
+            "cf-ray": "a358ac4bda215813-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 533.93,
+          "ttftMs": 535.36,
+          "outputTokens": 84,
+          "outputTokensPerSec": 52.41,
+          "resolvedProvider": "Anthropic",
+          "receipts": {
+            "cf-ray": "a358ad2b2b305d13-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 591.79,
+          "ttftMs": 592.37,
+          "outputTokens": 84,
+          "outputTokensPerSec": 50.2,
+          "resolvedProvider": "Anthropic",
+          "receipts": {
+            "cf-ray": "a358ae0d0aa3198a-IAD"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 479.99,
+          "ttftMs": 480.19,
+          "outputTokens": 84,
+          "outputTokensPerSec": 54.77,
+          "resolvedProvider": "Anthropic",
+          "receipts": {
+            "cf-ray": "a358aeeccca5601f-IAD"
+          }
+        }
+      ],
+      "summary": {
+        "dnsMs": {
+          "median": 1.81,
+          "p95": 6.03,
+          "p99": 6.03
+        },
+        "tcpMs": {
+          "median": 1.38,
+          "p95": 9.11,
+          "p99": 9.11
+        },
+        "tlsMs": {
+          "median": 4.31,
+          "p95": 6.98,
+          "p99": 6.98
+        },
+        "coldTtfbMs": {
+          "median": 913.42,
+          "p95": 1812.35,
+          "p99": 1812.35
+        },
+        "coldTtftMs": {
+          "median": 914.49,
+          "p95": 1814,
+          "p99": 1814
+        },
+        "coldE2eMs": {
+          "median": 924.51,
+          "p95": 1820.29,
+          "p99": 1820.29
+        },
+        "warmTtfbMs": {
+          "median": 530.09,
+          "p95": 780.13,
+          "p99": 780.13
+        },
+        "warmTtftMs": {
+          "median": 531.9,
+          "p95": 780.48,
+          "p99": 780.48
+        },
+        "outputTokensPerSec": {
+          "median": 50.08,
+          "p95": 54.02,
+          "p99": 54.02
+        }
+      },
+      "compositeScore": 88.18,
+      "successRate": 1
+    },
+    {
+      "provider": "vercel-ai-gateway",
+      "mode": "ai-gateway",
+      "model": "anthropic/claude-haiku-4.5",
+      "iterations": [
+        {
+          "mode": "cold",
+          "dnsMs": 83.13,
+          "tcpMs": 6.78,
+          "tlsMs": 21.79,
+          "ttfbMs": 1933.95,
+          "ttftMs": 1943.12,
+          "coldE2eMs": 2054.82,
+          "outputTokens": 76,
+          "outputTokensPerSec": 27.32,
+          "resolvedProvider": "anthropic",
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::6dqr4-1788479138572-6d43e790b1a4"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.6,
+          "tcpMs": 6.2,
+          "tlsMs": 35.83,
+          "ttfbMs": 760.59,
+          "ttftMs": 769.77,
+          "coldE2eMs": 813.41,
+          "outputTokens": 81,
+          "outputTokensPerSec": 51.21,
+          "resolvedProvider": "anthropic",
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::zffq9-1788479164533-175e6893e7a2"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 2.59,
+          "tcpMs": 6.22,
+          "tlsMs": 21.05,
+          "ttfbMs": 1421.69,
+          "ttftMs": 1438.75,
+          "coldE2eMs": 1468.61,
+          "outputTokens": 91,
+          "outputTokensPerSec": 38.21,
+          "resolvedProvider": "anthropic",
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::bqn57-1788479186879-dbdb45b6e87a"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 66.45,
+          "tcpMs": 6.63,
+          "tlsMs": 22.38,
+          "ttfbMs": 827.67,
+          "ttftMs": 836.9,
+          "coldE2eMs": 932.36,
+          "outputTokens": 89,
+          "outputTokensPerSec": 47.81,
+          "resolvedProvider": "anthropic",
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::s8t2m-1788479210699-769f52c512dd"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.37,
+          "tcpMs": 5.9,
+          "tlsMs": 21.66,
+          "ttfbMs": 835.25,
+          "ttftMs": 844.12,
+          "coldE2eMs": 873.05,
+          "outputTokens": 82,
+          "outputTokensPerSec": 50.9,
+          "resolvedProvider": "anthropic",
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::kpxvt-1788479232001-e48ca15a1395"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.65,
+          "tcpMs": 2.01,
+          "tlsMs": 8.35,
+          "ttfbMs": 1550.89,
+          "ttftMs": 1560.67,
+          "coldE2eMs": 1572.69,
+          "outputTokens": 89,
+          "outputTokensPerSec": 35.07,
+          "resolvedProvider": "anthropic",
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::qxnws-1788479254365-9a17207041f8"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 27.24,
+          "tcpMs": 2.29,
+          "tlsMs": 6.7,
+          "ttfbMs": 653.98,
+          "ttftMs": 663.14,
+          "coldE2eMs": 699.37,
+          "outputTokens": 81,
+          "outputTokensPerSec": 56.97,
+          "resolvedProvider": "anthropic",
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::tch25-1788479278674-9363dafbadce"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 2.07,
+          "tcpMs": 6.35,
+          "tlsMs": 21.06,
+          "ttfbMs": 775.85,
+          "ttftMs": 786.93,
+          "coldE2eMs": 816.42,
+          "outputTokens": 81,
+          "outputTokensPerSec": 50.13,
+          "resolvedProvider": "anthropic",
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::pkhpd-1788479299651-b828a35e010c"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.48,
+          "tcpMs": 6.39,
+          "tlsMs": 21.55,
+          "ttfbMs": 1130.46,
+          "ttftMs": 1141.71,
+          "coldE2eMs": 1171.14,
+          "outputTokens": 80,
+          "outputTokensPerSec": 38.07,
+          "resolvedProvider": "anthropic",
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::5rvrp-1788479322064-1772a357afa6"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 3.71,
+          "tcpMs": 6.09,
+          "tlsMs": 22.48,
+          "ttfbMs": 553.51,
+          "ttftMs": 570.26,
+          "coldE2eMs": 602.54,
+          "outputTokens": 76,
+          "outputTokensPerSec": 56,
+          "resolvedProvider": "anthropic",
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::xx6c9-1788479346208-7b9d7d7c8fb2"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 784.61,
+          "ttftMs": 794.05,
+          "outputTokens": 82,
+          "outputTokensPerSec": 52.78,
+          "resolvedProvider": "anthropic",
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::6crpc-1788479371823-10115b152028"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 572.46,
+          "ttftMs": 581.63,
+          "outputTokens": 89,
+          "outputTokensPerSec": 56.48,
+          "resolvedProvider": "anthropic",
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::lw5zt-1788479408848-30c3388115b6"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 458.67,
+          "ttftMs": 469.49,
+          "outputTokens": 76,
+          "outputTokensPerSec": 56.52,
+          "resolvedProvider": "anthropic",
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::krqfz-1788479446014-5139d4b1b092"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 530.52,
+          "ttftMs": 540.04,
+          "outputTokens": 76,
+          "outputTokensPerSec": 55.99,
+          "resolvedProvider": "anthropic",
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::rvkvf-1788479486962-146b8c545028"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 643.6,
+          "ttftMs": 653.44,
+          "outputTokens": 80,
+          "outputTokensPerSec": 45.53,
+          "resolvedProvider": "anthropic",
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::xt65r-1788479525569-d1c7ee0c9e4e"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 463.35,
+          "ttftMs": 472.48,
+          "outputTokens": 81,
+          "outputTokensPerSec": 48.93,
+          "resolvedProvider": "anthropic",
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::5dxn4-1788479562223-cdd1a54a0232"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 517.03,
+          "ttftMs": 526.33,
+          "outputTokens": 82,
+          "outputTokensPerSec": 62.41,
+          "resolvedProvider": "anthropic",
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::qvn2f-1788479600891-31b161e64c2b"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 441.16,
+          "ttftMs": 450.59,
+          "outputTokens": 80,
+          "outputTokensPerSec": 55.91,
+          "resolvedProvider": "anthropic",
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::45srj-1788479636311-29ab74824988"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 575.57,
+          "ttftMs": 584.64,
+          "outputTokens": 89,
+          "outputTokensPerSec": 56.75,
+          "resolvedProvider": "anthropic",
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::2qjfg-1788479672634-fc194be1fd00"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 545.79,
+          "ttftMs": 567.18,
+          "outputTokens": 82,
+          "outputTokensPerSec": 64.11,
+          "resolvedProvider": "anthropic",
+          "receipts": {
+            "x-vercel-id": "iad1::iad1::gct6f-1788479708483-7bbcc316f345"
+          }
+        }
+      ],
+      "summary": {
+        "dnsMs": {
+          "median": 2.33,
+          "p95": 83.13,
+          "p99": 83.13
+        },
+        "tcpMs": {
+          "median": 6.21,
+          "p95": 6.78,
+          "p99": 6.78
+        },
+        "tlsMs": {
+          "median": 21.61,
+          "p95": 35.83,
+          "p99": 35.83
+        },
+        "coldTtfbMs": {
+          "median": 831.46,
+          "p95": 1933.95,
+          "p99": 1933.95
+        },
+        "coldTtftMs": {
+          "median": 840.51,
+          "p95": 1943.12,
+          "p99": 1943.12
+        },
+        "coldE2eMs": {
+          "median": 902.7,
+          "p95": 2054.82,
+          "p99": 2054.82
+        },
+        "warmTtfbMs": {
+          "median": 538.16,
+          "p95": 784.61,
+          "p99": 784.61
+        },
+        "warmTtftMs": {
+          "median": 553.61,
+          "p95": 794.05,
+          "p99": 794.05
+        },
+        "outputTokensPerSec": {
+          "median": 52,
+          "p95": 62.41,
+          "p99": 62.41
+        }
+      },
+      "compositeScore": 88.09,
+      "successRate": 1
+    },
+    {
+      "provider": "cloudflare-ai-gateway",
+      "mode": "ai-gateway",
+      "model": "claude-haiku-4-5-20251001",
+      "iterations": [
+        {
+          "mode": "cold",
+          "dnsMs": 2.76,
+          "tcpMs": 1.4,
+          "tlsMs": 9.71,
+          "ttfbMs": 885.95,
+          "ttftMs": 886.37,
+          "coldE2eMs": 900.24,
+          "outputTokens": 84,
+          "outputTokensPerSec": 42.27,
+          "receipts": {
+            "cf-ray": "a358a129ae59093d-IAD",
+            "request-id": "req_011CehPx8XLANSS5xz8jFUXY"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 4.54,
+          "tcpMs": 1.45,
+          "tlsMs": 6.98,
+          "ttfbMs": 796.8,
+          "ttftMs": 796.95,
+          "coldE2eMs": 809.92,
+          "outputTokens": 84,
+          "outputTokensPerSec": 46.18,
+          "receipts": {
+            "cf-ray": "a358a1c50c5fda52-IAD",
+            "request-id": "req_011CehPyxkWxUuSJpuywHAcY"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.87,
+          "tcpMs": 1.48,
+          "tlsMs": 4.17,
+          "ttfbMs": 1135.3,
+          "ttftMs": 1135.41,
+          "coldE2eMs": 1142.92,
+          "outputTokens": 84,
+          "outputTokensPerSec": 38.52,
+          "receipts": {
+            "cf-ray": "a358a255983b706f-IAD",
+            "request-id": "req_011CehQ1hRLFLAzX4YJvkc2f"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.65,
+          "tcpMs": 1.22,
+          "tlsMs": 5.68,
+          "ttfbMs": 728.39,
+          "ttftMs": 728.56,
+          "coldE2eMs": 737.12,
+          "outputTokens": 84,
+          "outputTokensPerSec": 48,
+          "receipts": {
+            "cf-ray": "a358a2e6cb1d1980-IAD",
+            "request-id": "req_011CehQ3P1cUwKqsWv3RtYKD"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 0.95,
+          "tcpMs": 1.16,
+          "tlsMs": 4.88,
+          "ttfbMs": 1386.12,
+          "ttftMs": 1386.25,
+          "coldE2eMs": 1393.24,
+          "outputTokens": 84,
+          "outputTokensPerSec": 34.62,
+          "receipts": {
+            "cf-ray": "a358a36acd2a0dda-IAD",
+            "request-id": "req_011CehQ4yEvmL1MaWhMMVo31"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.55,
+          "tcpMs": 1.15,
+          "tlsMs": 4.23,
+          "ttfbMs": 1510.76,
+          "ttftMs": 1510.93,
+          "coldE2eMs": 1517.87,
+          "outputTokens": 84,
+          "outputTokensPerSec": 34.05,
+          "receipts": {
+            "cf-ray": "a358a3fc8d2e2c58-IAD",
+            "request-id": "req_011CehQ6hAqv67EwCJ4QJNSd"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 2.24,
+          "tcpMs": 1.22,
+          "tlsMs": 8.01,
+          "ttfbMs": 679.81,
+          "ttftMs": 680.06,
+          "coldE2eMs": 691.54,
+          "outputTokens": 84,
+          "outputTokensPerSec": 49.15,
+          "receipts": {
+            "cf-ray": "a358a48d69df5292-IAD",
+            "request-id": "req_011CehQ8MhNmvEXTBxQ2ufdL"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 4.36,
+          "tcpMs": 1.46,
+          "tlsMs": 4.61,
+          "ttfbMs": 1271.62,
+          "ttftMs": 1271.82,
+          "coldE2eMs": 1282.25,
+          "outputTokens": 84,
+          "outputTokensPerSec": 35.7,
+          "receipts": {
+            "cf-ray": "a358a51988490d9d-IAD",
+            "request-id": "req_011CehQA1s51gLupykHYmae7"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.68,
+          "tcpMs": 1.48,
+          "tlsMs": 7.46,
+          "ttfbMs": 1463.08,
+          "ttftMs": 1463.29,
+          "coldE2eMs": 1473.91,
+          "outputTokens": 84,
+          "outputTokensPerSec": 33.77,
+          "receipts": {
+            "cf-ray": "a358a5a0e9ed2514-IAD",
+            "request-id": "req_011CehQBfaEzLCGcUSUtBn2Z"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.15,
+          "tcpMs": 1.12,
+          "tlsMs": 10.23,
+          "ttfbMs": 928.9,
+          "ttftMs": 929.18,
+          "coldE2eMs": 941.68,
+          "outputTokens": 84,
+          "outputTokensPerSec": 40.88,
+          "receipts": {
+            "cf-ray": "a358a63359f52426-IAD",
+            "request-id": "req_011CehQDMPf3H5vFrsyEVtyQ"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 950.73,
+          "ttftMs": 950.93,
+          "outputTokens": 84,
+          "outputTokensPerSec": 42.6,
+          "receipts": {
+            "cf-ray": "a358a6e07dda0d60-IAD",
+            "request-id": "req_011CehQFP4vJzVCDzcb2if8X"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 594.79,
+          "ttftMs": 594.98,
+          "outputTokens": 84,
+          "outputTokensPerSec": 51.65,
+          "receipts": {
+            "cf-ray": "a358a7c72b54bb25-IAD",
+            "request-id": "req_011CehQJ6UcG8nsgTGu7KBQx"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 571.82,
+          "ttftMs": 572.02,
+          "outputTokens": 84,
+          "outputTokensPerSec": 49.81,
+          "receipts": {
+            "cf-ray": "a358a8b16bd12424-IAD",
+            "request-id": "req_011CehQLrTaqqfsRPTaaeFrZ"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 609.91,
+          "ttftMs": 610.04,
+          "outputTokens": 84,
+          "outputTokensPerSec": 51.22,
+          "receipts": {
+            "cf-ray": "a358a9ae0ff220a0-IAD",
+            "request-id": "req_011CehQPqQApeqSahsvkzoEX"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 707.45,
+          "ttftMs": 707.56,
+          "outputTokens": 84,
+          "outputTokensPerSec": 46.75,
+          "receipts": {
+            "cf-ray": "a358aaa29e2fd6b5-IAD",
+            "request-id": "req_011CehQSj8y6FExr75vugLTX"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 749.24,
+          "ttftMs": 749.37,
+          "outputTokens": 84,
+          "outputTokensPerSec": 47.21,
+          "receipts": {
+            "cf-ray": "a358ab859cede602-IAD",
+            "request-id": "req_011CehQVPikendyFkPwuqd4N"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 543.27,
+          "ttftMs": 543.43,
+          "outputTokens": 84,
+          "outputTokensPerSec": 53.51,
+          "receipts": {
+            "cf-ray": "a358ac750eb1dff2-IAD",
+            "request-id": "req_011CehQYDYej2XqvVjoZ34Qb"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 580.47,
+          "ttftMs": 580.62,
+          "outputTokens": 84,
+          "outputTokensPerSec": 52.25,
+          "receipts": {
+            "cf-ray": "a358ad554bbcd6d0-IAD",
+            "request-id": "req_011CehQas8eycVZYLy1cVTsV"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 577.94,
+          "ttftMs": 579.79,
+          "outputTokens": 84,
+          "outputTokensPerSec": 52.8,
+          "receipts": {
+            "cf-ray": "a358ae392e63201c-IAD",
+            "request-id": "req_011CehQdYyLt6LeE73WgAEzo"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 619.07,
+          "ttftMs": 620.13,
+          "outputTokens": 84,
+          "outputTokensPerSec": 53.09,
+          "receipts": {
+            "cf-ray": "a358af14fe9dea3a-IAD",
+            "request-id": "req_011CehQg9Ax1xBH3AY8DYq4S"
+          }
+        }
+      ],
+      "summary": {
+        "dnsMs": {
+          "median": 1.78,
+          "p95": 4.54,
+          "p99": 4.54
+        },
+        "tcpMs": {
+          "median": 1.31,
+          "p95": 1.48,
+          "p99": 1.48
+        },
+        "tlsMs": {
+          "median": 6.33,
+          "p95": 10.23,
+          "p99": 10.23
+        },
+        "coldTtfbMs": {
+          "median": 1032.1,
+          "p95": 1510.76,
+          "p99": 1510.76
+        },
+        "coldTtftMs": {
+          "median": 1032.29,
+          "p95": 1510.93,
+          "p99": 1510.93
+        },
+        "coldE2eMs": {
+          "median": 1042.3,
+          "p95": 1517.87,
+          "p99": 1517.87
+        },
+        "warmTtfbMs": {
+          "median": 602.35,
+          "p95": 950.73,
+          "p99": 950.73
+        },
+        "warmTtftMs": {
+          "median": 602.51,
+          "p95": 950.93,
+          "p99": 950.93
+        },
+        "outputTokensPerSec": {
+          "median": 46.98,
+          "p95": 53.09,
+          "p99": 53.09
+        }
+      },
+      "compositeScore": 87.83,
+      "successRate": 1
+    },
+    {
+      "provider": "blazerail",
+      "mode": "ai-gateway",
+      "model": "anthropic/claude-haiku-4.5",
+      "iterations": [
+        {
+          "mode": "cold",
+          "dnsMs": 85.62,
+          "tcpMs": 73.7,
+          "tlsMs": 75.35,
+          "ttfbMs": 3182.27,
+          "ttftMs": 3182.8,
+          "coldE2eMs": 3417.47,
+          "outputTokens": 84,
+          "outputTokensPerSec": 19.95,
+          "resolvedProvider": "anthropic"
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 6.85,
+          "tcpMs": 76.06,
+          "tlsMs": 74.63,
+          "ttfbMs": 1203.98,
+          "ttftMs": 1204.2,
+          "coldE2eMs": 1361.74,
+          "outputTokens": 84,
+          "outputTokensPerSec": 37.7,
+          "resolvedProvider": "anthropic"
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 61.95,
+          "tcpMs": 2.48,
+          "tlsMs": 4.76,
+          "ttfbMs": 2335.59,
+          "ttftMs": 2335.88,
+          "coldE2eMs": 2405.06,
+          "outputTokens": 84,
+          "outputTokensPerSec": 24.97,
+          "resolvedProvider": "anthropic"
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 65.77,
+          "tcpMs": 1.82,
+          "tlsMs": 3.72,
+          "ttfbMs": 1720.28,
+          "ttftMs": 1808.89,
+          "coldE2eMs": 1880.21,
+          "outputTokens": 84,
+          "outputTokensPerSec": 28.74,
+          "resolvedProvider": "anthropic"
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 12.62,
+          "tcpMs": 2.43,
+          "tlsMs": 3.93,
+          "ttfbMs": 925.09,
+          "ttftMs": 925.24,
+          "coldE2eMs": 944.22,
+          "outputTokens": 84,
+          "outputTokensPerSec": 43.32,
+          "resolvedProvider": "anthropic"
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 15.92,
+          "tcpMs": 2.03,
+          "tlsMs": 5.05,
+          "ttfbMs": 1843.37,
+          "ttftMs": 1843.61,
+          "coldE2eMs": 1866.61,
+          "outputTokens": 84,
+          "outputTokensPerSec": 29.2,
+          "resolvedProvider": "anthropic"
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 6.28,
+          "tcpMs": 2.14,
+          "tlsMs": 3.35,
+          "ttfbMs": 1027.9,
+          "ttftMs": 1028.2,
+          "coldE2eMs": 1039.97,
+          "outputTokens": 84,
+          "outputTokensPerSec": 40.82,
+          "resolvedProvider": "anthropic"
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 122.27,
+          "tcpMs": 2.24,
+          "tlsMs": 4.83,
+          "ttfbMs": 821.16,
+          "ttftMs": 821.46,
+          "coldE2eMs": 950.8,
+          "outputTokens": 84,
+          "outputTokensPerSec": 45.2,
+          "resolvedProvider": "anthropic"
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 65.58,
+          "tcpMs": 1.72,
+          "tlsMs": 3.67,
+          "ttfbMs": 1164.97,
+          "ttftMs": 1165.31,
+          "coldE2eMs": 1236.28,
+          "outputTokens": 84,
+          "outputTokensPerSec": 38.3,
+          "resolvedProvider": "anthropic"
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 66.36,
+          "tcpMs": 74.59,
+          "tlsMs": 75.55,
+          "ttfbMs": 3836.67,
+          "ttftMs": 3836.84,
+          "coldE2eMs": 4053.33,
+          "outputTokens": 84,
+          "outputTokensPerSec": 17.28,
+          "resolvedProvider": "anthropic"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 594.6,
+          "ttftMs": 595.09,
+          "outputTokens": 84,
+          "outputTokensPerSec": 51.75,
+          "resolvedProvider": "anthropic"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 789.39,
+          "ttftMs": 789.79,
+          "outputTokens": 84,
+          "outputTokensPerSec": 46.14,
+          "resolvedProvider": "anthropic"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 646.36,
+          "ttftMs": 646.48,
+          "outputTokens": 84,
+          "outputTokensPerSec": 50.47,
+          "resolvedProvider": "anthropic"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 602.84,
+          "ttftMs": 603.25,
+          "outputTokens": 84,
+          "outputTokensPerSec": 51.47,
+          "resolvedProvider": "anthropic"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 587.33,
+          "ttftMs": 587.54,
+          "outputTokens": 84,
+          "outputTokensPerSec": 50.38,
+          "resolvedProvider": "anthropic"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 610.04,
+          "ttftMs": 611.29,
+          "outputTokens": 84,
+          "outputTokensPerSec": 50.95,
+          "resolvedProvider": "anthropic"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 606.41,
+          "ttftMs": 606.57,
+          "outputTokens": 84,
+          "outputTokensPerSec": 51.3,
+          "resolvedProvider": "anthropic"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 565.31,
+          "ttftMs": 565.51,
+          "outputTokens": 84,
+          "outputTokensPerSec": 52.68,
+          "resolvedProvider": "anthropic"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 595.5,
+          "ttftMs": 598.47,
+          "outputTokens": 84,
+          "outputTokensPerSec": 50.54,
+          "resolvedProvider": "anthropic"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 603.04,
+          "ttftMs": 603.11,
+          "outputTokens": 84,
+          "outputTokensPerSec": 51.45,
+          "resolvedProvider": "anthropic"
+        }
+      ],
+      "summary": {
+        "dnsMs": {
+          "median": 63.76,
+          "p95": 122.27,
+          "p99": 122.27
+        },
+        "tcpMs": {
+          "median": 2.33,
+          "p95": 76.06,
+          "p99": 76.06
+        },
+        "tlsMs": {
+          "median": 4.8,
+          "p95": 75.55,
+          "p99": 75.55
+        },
+        "coldTtfbMs": {
+          "median": 1462.13,
+          "p95": 3836.67,
+          "p99": 3836.67
+        },
+        "coldTtftMs": {
+          "median": 1506.55,
+          "p95": 3836.84,
+          "p99": 3836.84
+        },
+        "coldE2eMs": {
+          "median": 1614.17,
+          "p95": 4053.33,
+          "p99": 4053.33
+        },
+        "warmTtfbMs": {
+          "median": 602.94,
+          "p95": 789.39,
+          "p99": 789.39
+        },
+        "warmTtftMs": {
+          "median": 603.18,
+          "p95": 789.79,
+          "p99": 789.79
+        },
+        "outputTokensPerSec": {
+          "median": 45.67,
+          "p95": 51.75,
+          "p99": 51.75
+        }
+      },
+      "compositeScore": 85.13,
+      "successRate": 1
+    },
+    {
+      "provider": "llmgateway",
+      "mode": "ai-gateway",
+      "model": "anthropic/claude-haiku-4-5",
+      "iterations": [
+        {
+          "mode": "cold",
+          "dnsMs": 4.61,
+          "tcpMs": 2.06,
+          "tlsMs": 7.04,
+          "ttfbMs": 131.42,
+          "ttftMs": 932.59,
+          "coldE2eMs": 946.3,
+          "outputTokens": 84,
+          "outputTokensPerSec": 42.86
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.24,
+          "tcpMs": 1.8,
+          "tlsMs": 6.16,
+          "ttfbMs": 308.87,
+          "ttftMs": 949.28,
+          "coldE2eMs": 958.48,
+          "outputTokens": 84,
+          "outputTokensPerSec": 42.12
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.24,
+          "tcpMs": 1.66,
+          "tlsMs": 6.51,
+          "ttfbMs": 175.68,
+          "ttftMs": 741.86,
+          "coldE2eMs": 751.27,
+          "outputTokens": 84,
+          "outputTokensPerSec": 45.09
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 2.25,
+          "tcpMs": 1.69,
+          "tlsMs": 6.04,
+          "ttfbMs": 181.28,
+          "ttftMs": 722.74,
+          "coldE2eMs": 732.72,
+          "outputTokens": 84,
+          "outputTokensPerSec": 43.24
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.49,
+          "tcpMs": 1.3,
+          "tlsMs": 6.65,
+          "ttfbMs": 86.42,
+          "ttftMs": 640.47,
+          "coldE2eMs": 649.91,
+          "outputTokens": 84,
+          "outputTokensPerSec": 50.5
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.84,
+          "tcpMs": 2.03,
+          "tlsMs": 6.41,
+          "ttfbMs": 127.94,
+          "ttftMs": 750,
+          "coldE2eMs": 760.29,
+          "outputTokens": 84,
+          "outputTokensPerSec": 47.08
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 5.35,
+          "tcpMs": 2.21,
+          "tlsMs": 4.7,
+          "ttfbMs": 247.86,
+          "ttftMs": 847.7,
+          "coldE2eMs": 859.95,
+          "outputTokens": 84,
+          "outputTokensPerSec": 44.74
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.36,
+          "tcpMs": 1.59,
+          "tlsMs": 5.51,
+          "ttfbMs": 120.63,
+          "ttftMs": 670.16,
+          "coldE2eMs": 678.62,
+          "outputTokens": 84,
+          "outputTokensPerSec": 49.31
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.48,
+          "tcpMs": 2.34,
+          "tlsMs": 6.35,
+          "ttfbMs": 345.46,
+          "ttftMs": 986.44,
+          "coldE2eMs": 996.6,
+          "outputTokens": 84,
+          "outputTokensPerSec": 42.41
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.86,
+          "tcpMs": 2.24,
+          "tlsMs": 6.3,
+          "ttfbMs": 149.82,
+          "ttftMs": 785.78,
+          "coldE2eMs": 796.17,
+          "outputTokens": 84,
+          "outputTokensPerSec": 45.97
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 133.24,
+          "ttftMs": 639.1,
+          "outputTokens": 84,
+          "outputTokensPerSec": 50.27
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 78.72,
+          "ttftMs": 624.78,
+          "outputTokens": 84,
+          "outputTokensPerSec": 48.49
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 82.32,
+          "ttftMs": 728.92,
+          "outputTokens": 84,
+          "outputTokensPerSec": 49.05
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 84.85,
+          "ttftMs": 834.65,
+          "outputTokens": 84,
+          "outputTokensPerSec": 44.99
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 126.26,
+          "ttftMs": 646.84,
+          "outputTokens": 84,
+          "outputTokensPerSec": 50.24
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 136.14,
+          "ttftMs": 648.41,
+          "outputTokens": 84,
+          "outputTokensPerSec": 46.89
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 123.12,
+          "ttftMs": 688.88,
+          "outputTokens": 84,
+          "outputTokensPerSec": 49.29
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 151.24,
+          "ttftMs": 804.97,
+          "outputTokens": 84,
+          "outputTokensPerSec": 45.83
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 80.41,
+          "ttftMs": 621.53,
+          "outputTokens": 84,
+          "outputTokensPerSec": 50.91
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 78.6,
+          "ttftMs": 657.66,
+          "outputTokens": 84,
+          "outputTokensPerSec": 51
+        }
+      ],
+      "summary": {
+        "dnsMs": {
+          "median": 1.67,
+          "p95": 5.35,
+          "p99": 5.35
+        },
+        "tcpMs": {
+          "median": 1.91,
+          "p95": 2.34,
+          "p99": 2.34
+        },
+        "tlsMs": {
+          "median": 6.32,
+          "p95": 7.04,
+          "p99": 7.04
+        },
+        "coldTtfbMs": {
+          "median": 162.75,
+          "p95": 345.46,
+          "p99": 345.46
+        },
+        "coldTtftMs": {
+          "median": 767.89,
+          "p95": 986.44,
+          "p99": 986.44
+        },
+        "coldE2eMs": {
+          "median": 778.23,
+          "p95": 996.6,
+          "p99": 996.6
+        },
+        "warmTtfbMs": {
+          "median": 103.98,
+          "p95": 151.24,
+          "p99": 151.24
+        },
+        "warmTtftMs": {
+          "median": 653.03,
+          "p95": 834.65,
+          "p99": 834.65
+        },
+        "outputTokensPerSec": {
+          "median": 46.98,
+          "p95": 50.91,
+          "p99": 50.91
+        }
+      },
+      "compositeScore": 88.63,
+      "successRate": 1
+    },
+    {
+      "provider": "pydantic-ai-gateway",
+      "mode": "ai-gateway",
+      "model": "claude-haiku-4-5-20251001",
+      "iterations": [
+        {
+          "mode": "cold",
+          "dnsMs": 4.83,
+          "tcpMs": 1.98,
+          "tlsMs": 5.47,
+          "ttfbMs": 1265.83,
+          "ttftMs": 1266.21,
+          "coldE2eMs": 1278.5,
+          "outputTokens": 84,
+          "outputTokensPerSec": 36.14,
+          "receipts": {
+            "cf-ray": "a358a1612ae66665-IAD",
+            "request-id": "req_011CehPxocZxyK5eThSZGjvc"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.5,
+          "tcpMs": 1.98,
+          "tlsMs": 6.15,
+          "ttfbMs": 844.11,
+          "ttftMs": 844.67,
+          "coldE2eMs": 854.29,
+          "outputTokens": 84,
+          "outputTokensPerSec": 43.71,
+          "receipts": {
+            "cf-ray": "a358a1ee5f1eb4a7-IAD",
+            "request-id": "req_011CehPzT9Zo2G2yesz9zSaA"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.23,
+          "tcpMs": 309.96,
+          "tlsMs": 6.11,
+          "ttfbMs": 1039.93,
+          "ttftMs": 1040.37,
+          "coldE2eMs": 1357.67,
+          "outputTokens": 84,
+          "outputTokensPerSec": 40.23,
+          "receipts": {
+            "cf-ray": "a358a288cf9ba471-IAD",
+            "request-id": "req_011CehQ2Gh5RqimS8MxTvx4X"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 2.17,
+          "tcpMs": 1.69,
+          "tlsMs": 5.54,
+          "ttfbMs": 909.53,
+          "ttftMs": 909.92,
+          "coldE2eMs": 919.32,
+          "outputTokens": 84,
+          "outputTokensPerSec": 42.98,
+          "receipts": {
+            "cf-ray": "a358a3149901841f-IAD",
+            "request-id": "req_011CehQ3vUTgjoTfagyrtUc1"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.04,
+          "tcpMs": 1.96,
+          "tlsMs": 5.1,
+          "ttfbMs": 682.13,
+          "ttftMs": 682.36,
+          "coldE2eMs": 690.46,
+          "outputTokens": 84,
+          "outputTokensPerSec": 46.89,
+          "receipts": {
+            "cf-ray": "a358a3937c70beb1-IAD",
+            "request-id": "req_011CehQ5QfspPb1RjB7DCz5t"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.44,
+          "tcpMs": 1.88,
+          "tlsMs": 6.48,
+          "ttfbMs": 829.63,
+          "ttftMs": 829.88,
+          "coldE2eMs": 839.67,
+          "outputTokens": 84,
+          "outputTokensPerSec": 44.62,
+          "receipts": {
+            "cf-ray": "a358a42c49732c24-IAD",
+            "request-id": "req_011CehQ7DoLRKkfE6RYgtdgK"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 2.41,
+          "tcpMs": 2.25,
+          "tlsMs": 6.16,
+          "ttfbMs": 658.61,
+          "ttftMs": 659.14,
+          "coldE2eMs": 669.96,
+          "outputTokens": 84,
+          "outputTokensPerSec": 49.27,
+          "receipts": {
+            "cf-ray": "a358a4b42a6ed670-IAD",
+            "request-id": "req_011CehQ8ohJyrYZQtDTsvW31"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.61,
+          "tcpMs": 1.88,
+          "tlsMs": 5.38,
+          "ttfbMs": 671.11,
+          "ttftMs": 671.45,
+          "coldE2eMs": 680.32,
+          "outputTokens": 84,
+          "outputTokensPerSec": 48.73,
+          "receipts": {
+            "cf-ray": "a358a541bfabf4b5-IAD",
+            "request-id": "req_011CehQAUwkNfjYH92ZYEHGE"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.36,
+          "tcpMs": 2.15,
+          "tlsMs": 6.09,
+          "ttfbMs": 1176.58,
+          "ttftMs": 1177.16,
+          "coldE2eMs": 1186.75,
+          "outputTokens": 84,
+          "outputTokensPerSec": 37.74,
+          "receipts": {
+            "cf-ray": "a358a5cf491e3eac-IAD",
+            "request-id": "req_011CehQCBLPoyJXHFJ97xP1f"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.44,
+          "tcpMs": 1.85,
+          "tlsMs": 6.44,
+          "ttfbMs": 693.51,
+          "ttftMs": 694.12,
+          "coldE2eMs": 703.85,
+          "outputTokens": 84,
+          "outputTokensPerSec": 48.28,
+          "receipts": {
+            "cf-ray": "a358a66e3bd13eea-IAD",
+            "request-id": "req_011CehQE2foZhsiurxbfGHeH"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 613.28,
+          "ttftMs": 613.76,
+          "outputTokens": 84,
+          "outputTokensPerSec": 50.96,
+          "receipts": {
+            "cf-ray": "a358a727ef042440-IAD",
+            "request-id": "req_011CehQGDLJoF68DNqwqxs5W"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 616.11,
+          "ttftMs": 616.62,
+          "outputTokens": 84,
+          "outputTokensPerSec": 49.56,
+          "receipts": {
+            "cf-ray": "a358a80eff54d6b0-IAD",
+            "request-id": "req_011CehQJw84pRwGe6TWaeTtb"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 523.6,
+          "ttftMs": 524.18,
+          "outputTokens": 84,
+          "outputTokensPerSec": 53.4,
+          "receipts": {
+            "cf-ray": "a358a8f5fdf688d0-IAD",
+            "request-id": "req_011CehQMfKdgFNL5a68uHPT9"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 824.15,
+          "ttftMs": 826.4,
+          "outputTokens": 84,
+          "outputTokensPerSec": 44.21,
+          "receipts": {
+            "cf-ray": "a358aa029e98d6d1-IAD",
+            "request-id": "req_011CehQQqtDU5R51Mdhs39y7"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 605.93,
+          "ttftMs": 606.58,
+          "outputTokens": 84,
+          "outputTokensPerSec": 50.68,
+          "receipts": {
+            "cf-ray": "a358aaea4c4bd147-IAD",
+            "request-id": "req_011CehQTZpf81eyyNTxVamxE"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 489.63,
+          "ttftMs": 490.53,
+          "outputTokens": 84,
+          "outputTokensPerSec": 54.82,
+          "receipts": {
+            "cf-ray": "a358abd679276cf9-IAD",
+            "request-id": "req_011CehQWLwbYskhBtBfcTVv8"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 529.83,
+          "ttftMs": 530.05,
+          "outputTokens": 84,
+          "outputTokensPerSec": 53.29,
+          "receipts": {
+            "cf-ray": "a358acbcfd182434-IAD",
+            "request-id": "req_011CehQZ4denAtAQ5Tc5TXZb"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 629.23,
+          "ttftMs": 629.89,
+          "outputTokens": 84,
+          "outputTokensPerSec": 50.03,
+          "receipts": {
+            "cf-ray": "a358ad9d6a331342-IAD",
+            "request-id": "req_011CehQbiZzWR1EsEJ3LxBFm"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 501.55,
+          "ttftMs": 502.4,
+          "outputTokens": 84,
+          "outputTokensPerSec": 54.05,
+          "receipts": {
+            "cf-ray": "a358ae7c6d71e977-IAD",
+            "request-id": "req_011CehQeLkuFUxzgnxxvMS19"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 469.82,
+          "ttftMs": 470.16,
+          "outputTokens": 84,
+          "outputTokensPerSec": 54.7,
+          "receipts": {
+            "cf-ray": "a358af5a6cffd65f-IAD",
+            "request-id": "req_011CehQgxZkKTGVX7sTm3GjP"
+          }
+        }
+      ],
+      "summary": {
+        "dnsMs": {
+          "median": 1.47,
+          "p95": 4.83,
+          "p99": 4.83
+        },
+        "tcpMs": {
+          "median": 1.97,
+          "p95": 309.96,
+          "p99": 309.96
+        },
+        "tlsMs": {
+          "median": 6.1,
+          "p95": 6.48,
+          "p99": 6.48
+        },
+        "coldTtfbMs": {
+          "median": 836.87,
+          "p95": 1265.83,
+          "p99": 1265.83
+        },
+        "coldTtftMs": {
+          "median": 837.27,
+          "p95": 1266.21,
+          "p99": 1266.21
+        },
+        "coldE2eMs": {
+          "median": 846.98,
+          "p95": 1357.67,
+          "p99": 1357.67
+        },
+        "warmTtfbMs": {
+          "median": 567.88,
+          "p95": 824.15,
+          "p99": 824.15
+        },
+        "warmTtftMs": {
+          "median": 568.31,
+          "p95": 826.4,
+          "p99": 826.4
+        },
+        "outputTokensPerSec": {
+          "median": 49,
+          "p95": 54.7,
+          "p99": 54.7
+        }
+      },
+      "compositeScore": 88.5,
+      "successRate": 1
+    },
+    {
+      "provider": "concentrate-ai-gateway",
+      "mode": "ai-gateway",
+      "model": "anthropic/claude-haiku-4-5-20251001",
+      "iterations": [
+        {
+          "mode": "cold",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "coldE2eMs": 380,
+          "error": "HTTP 402: {\"error\":{\"code\":\"insufficient_credits\",\"message\":\"Insufficient funds for request. Check the billing page at https://concentrate.ai/organization/billing or contact your organization's owner to deposit"
+        },
+        {
+          "mode": "cold",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "coldE2eMs": 278,
+          "error": "HTTP 402: {\"error\":{\"code\":\"insufficient_credits\",\"message\":\"Insufficient funds for request. Check the billing page at https://concentrate.ai/organization/billing or contact your organization's owner to deposit"
+        },
+        {
+          "mode": "cold",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "coldE2eMs": 330,
+          "error": "HTTP 402: {\"error\":{\"code\":\"insufficient_credits\",\"message\":\"Insufficient funds for request. Check the billing page at https://concentrate.ai/organization/billing or contact your organization's owner to deposit"
+        },
+        {
+          "mode": "cold",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "coldE2eMs": 400,
+          "error": "HTTP 402: {\"error\":{\"code\":\"insufficient_credits\",\"message\":\"Insufficient funds for request. Check the billing page at https://concentrate.ai/organization/billing or contact your organization's owner to deposit"
+        },
+        {
+          "mode": "cold",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "coldE2eMs": 267,
+          "error": "HTTP 402: {\"error\":{\"code\":\"insufficient_credits\",\"message\":\"Insufficient funds for request. Check the billing page at https://concentrate.ai/organization/billing or contact your organization's owner to deposit"
+        },
+        {
+          "mode": "cold",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "coldE2eMs": 293,
+          "error": "HTTP 402: {\"error\":{\"code\":\"insufficient_credits\",\"message\":\"Insufficient funds for request. Check the billing page at https://concentrate.ai/organization/billing or contact your organization's owner to deposit"
+        },
+        {
+          "mode": "cold",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "coldE2eMs": 336,
+          "error": "HTTP 402: {\"error\":{\"code\":\"insufficient_credits\",\"message\":\"Insufficient funds for request. Check the billing page at https://concentrate.ai/organization/billing or contact your organization's owner to deposit"
+        },
+        {
+          "mode": "cold",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "coldE2eMs": 284,
+          "error": "HTTP 402: {\"error\":{\"code\":\"insufficient_credits\",\"message\":\"Insufficient funds for request. Check the billing page at https://concentrate.ai/organization/billing or contact your organization's owner to deposit"
+        },
+        {
+          "mode": "cold",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "coldE2eMs": 182,
+          "error": "HTTP 402: {\"error\":{\"code\":\"insufficient_credits\",\"message\":\"Insufficient funds for request. Check the billing page at https://concentrate.ai/organization/billing or contact your organization's owner to deposit"
+        },
+        {
+          "mode": "cold",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "coldE2eMs": 326,
+          "error": "HTTP 402: {\"error\":{\"code\":\"insufficient_credits\",\"message\":\"Insufficient funds for request. Check the billing page at https://concentrate.ai/organization/billing or contact your organization's owner to deposit"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "error": "HTTP 402: {\"error\":{\"code\":\"insufficient_credits\",\"message\":\"Insufficient funds for request. Check the billing page at https://concentrate.ai/organization/billing or contact your organization's owner to deposit"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "error": "HTTP 402: {\"error\":{\"code\":\"insufficient_credits\",\"message\":\"Insufficient funds for request. Check the billing page at https://concentrate.ai/organization/billing or contact your organization's owner to deposit"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "error": "HTTP 402: {\"error\":{\"code\":\"insufficient_credits\",\"message\":\"Insufficient funds for request. Check the billing page at https://concentrate.ai/organization/billing or contact your organization's owner to deposit"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "error": "HTTP 402: {\"error\":{\"code\":\"insufficient_credits\",\"message\":\"Insufficient funds for request. Check the billing page at https://concentrate.ai/organization/billing or contact your organization's owner to deposit"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "error": "HTTP 402: {\"error\":{\"code\":\"insufficient_credits\",\"message\":\"Insufficient funds for request. Check the billing page at https://concentrate.ai/organization/billing or contact your organization's owner to deposit"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "error": "HTTP 402: {\"error\":{\"code\":\"insufficient_credits\",\"message\":\"Insufficient funds for request. Check the billing page at https://concentrate.ai/organization/billing or contact your organization's owner to deposit"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "error": "HTTP 402: {\"error\":{\"code\":\"insufficient_credits\",\"message\":\"Insufficient funds for request. Check the billing page at https://concentrate.ai/organization/billing or contact your organization's owner to deposit"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "error": "HTTP 402: {\"error\":{\"code\":\"insufficient_credits\",\"message\":\"Insufficient funds for request. Check the billing page at https://concentrate.ai/organization/billing or contact your organization's owner to deposit"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "error": "HTTP 402: {\"error\":{\"code\":\"insufficient_credits\",\"message\":\"Insufficient funds for request. Check the billing page at https://concentrate.ai/organization/billing or contact your organization's owner to deposit"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "error": "HTTP 402: {\"error\":{\"code\":\"insufficient_credits\",\"message\":\"Insufficient funds for request. Check the billing page at https://concentrate.ai/organization/billing or contact your organization's owner to deposit"
+        }
+      ],
+      "summary": {
+        "dnsMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "tcpMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "tlsMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "coldTtfbMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "coldTtftMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "coldE2eMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "warmTtfbMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "warmTtftMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "outputTokensPerSec": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        }
+      },
+      "compositeScore": 0,
+      "successRate": 0
+    },
+    {
+      "provider": "neon",
+      "mode": "ai-gateway",
+      "model": "claude-haiku-4-5",
+      "iterations": [
+        {
+          "mode": "cold",
+          "dnsMs": 30.36,
+          "tcpMs": 18.42,
+          "tlsMs": 38.61,
+          "ttfbMs": 742.89,
+          "ttftMs": 743.02,
+          "coldE2eMs": 830.41,
+          "outputTokens": 76,
+          "outputTokensPerSec": 52.48,
+          "receipts": {
+            "x-request-id": "neon-platform-aigateway-7f488fb446-jpxzv/lVKFdtOuBi-139372"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 2.59,
+          "tcpMs": 18.54,
+          "tlsMs": 38.3,
+          "ttfbMs": 1228.08,
+          "ttftMs": 1228.3,
+          "coldE2eMs": 1287.72,
+          "outputTokens": 76,
+          "outputTokensPerSec": 39.2,
+          "receipts": {
+            "x-request-id": "neon-platform-aigateway-7f488fb446-nz8pr/coASe44BgE-139393"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.45,
+          "tcpMs": 19.74,
+          "tlsMs": 40.68,
+          "ttfbMs": 1345.44,
+          "ttftMs": 1345.64,
+          "coldE2eMs": 1407.52,
+          "outputTokens": 76,
+          "outputTokensPerSec": 36.72,
+          "receipts": {
+            "x-request-id": "neon-platform-aigateway-7f488fb446-nz8pr/coASe44BgE-139410"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 3.71,
+          "tcpMs": 12.06,
+          "tlsMs": 27.42,
+          "ttfbMs": 708.2,
+          "ttftMs": 708.37,
+          "coldE2eMs": 751.57,
+          "outputTokens": 76,
+          "outputTokensPerSec": 53.89,
+          "receipts": {
+            "x-request-id": "neon-platform-aigateway-7f488fb446-nz8pr/coASe44BgE-139428"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.46,
+          "tcpMs": 11.95,
+          "tlsMs": 25.21,
+          "ttfbMs": 770.62,
+          "ttftMs": 770.76,
+          "coldE2eMs": 809.37,
+          "outputTokens": 76,
+          "outputTokensPerSec": 50.57,
+          "receipts": {
+            "x-request-id": "neon-platform-aigateway-7f488fb446-jpxzv/lVKFdtOuBi-139434"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 64.28,
+          "tcpMs": 23.78,
+          "tlsMs": 48.31,
+          "ttfbMs": 941.56,
+          "ttftMs": 941.68,
+          "coldE2eMs": 1078.05,
+          "outputTokens": 76,
+          "outputTokensPerSec": 45.27,
+          "receipts": {
+            "x-request-id": "neon-platform-aigateway-7f488fb446-jpxzv/lVKFdtOuBi-139452"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.89,
+          "tcpMs": 24.65,
+          "tlsMs": 50.8,
+          "ttfbMs": 767.79,
+          "ttftMs": 767.91,
+          "coldE2eMs": 845.26,
+          "outputTokens": 76,
+          "outputTokensPerSec": 51.43,
+          "receipts": {
+            "x-request-id": "neon-platform-aigateway-7f488fb446-nz8pr/coASe44BgE-139475"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 32.32,
+          "tcpMs": 17.29,
+          "tlsMs": 36.35,
+          "ttfbMs": 1038.23,
+          "ttftMs": 1038.34,
+          "coldE2eMs": 1124.29,
+          "outputTokens": 76,
+          "outputTokensPerSec": 42.67,
+          "receipts": {
+            "x-request-id": "neon-platform-aigateway-7f488fb446-jpxzv/lVKFdtOuBi-139485"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.56,
+          "tcpMs": 17.94,
+          "tlsMs": 37.86,
+          "ttfbMs": 716.06,
+          "ttftMs": 716.2,
+          "coldE2eMs": 773.56,
+          "outputTokens": 76,
+          "outputTokensPerSec": 52.76,
+          "receipts": {
+            "x-request-id": "neon-platform-aigateway-7f488fb446-nz8pr/coASe44BgE-139506"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.19,
+          "tcpMs": 18.56,
+          "tlsMs": 38.45,
+          "ttfbMs": 764.37,
+          "ttftMs": 764.56,
+          "coldE2eMs": 822.75,
+          "outputTokens": 76,
+          "outputTokensPerSec": 52.09,
+          "receipts": {
+            "x-request-id": "neon-platform-aigateway-7f488fb446-jpxzv/lVKFdtOuBi-139519"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 954.92,
+          "ttftMs": 955.06,
+          "outputTokens": 76,
+          "outputTokensPerSec": 43.87,
+          "receipts": {
+            "x-request-id": "neon-platform-aigateway-7f488fb446-nz8pr/coASe44BgE-139548"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 809.78,
+          "ttftMs": 809.91,
+          "outputTokens": 76,
+          "outputTokensPerSec": 48.64,
+          "receipts": {
+            "x-request-id": "neon-platform-aigateway-7f488fb446-nz8pr/coASe44BgE-139572"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 895.11,
+          "ttftMs": 895.3,
+          "outputTokens": 76,
+          "outputTokensPerSec": 47.56,
+          "receipts": {
+            "x-request-id": "neon-platform-aigateway-7f488fb446-jpxzv/lVKFdtOuBi-139595"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 674.88,
+          "ttftMs": 675.04,
+          "outputTokens": 76,
+          "outputTokensPerSec": 55.2,
+          "receipts": {
+            "x-request-id": "neon-platform-aigateway-7f488fb446-nz8pr/coASe44BgE-139630"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 660.98,
+          "ttftMs": 661.17,
+          "outputTokens": 76,
+          "outputTokensPerSec": 55.46,
+          "receipts": {
+            "x-request-id": "neon-platform-aigateway-7f488fb446-jpxzv/lVKFdtOuBi-139650"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 1712.11,
+          "ttftMs": 1712.24,
+          "outputTokens": 76,
+          "outputTokensPerSec": 31.44,
+          "receipts": {
+            "x-request-id": "neon-platform-aigateway-7f488fb446-jpxzv/lVKFdtOuBi-139677"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 956.48,
+          "ttftMs": 956.6,
+          "outputTokens": 76,
+          "outputTokensPerSec": 45.73,
+          "receipts": {
+            "x-request-id": "neon-platform-aigateway-7f488fb446-nz8pr/coASe44BgE-139708"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 690.53,
+          "ttftMs": 690.72,
+          "outputTokens": 76,
+          "outputTokensPerSec": 54.49,
+          "receipts": {
+            "x-request-id": "neon-platform-aigateway-7f488fb446-nz8pr/coASe44BgE-139733"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 753.3,
+          "ttftMs": 753.39,
+          "outputTokens": 76,
+          "outputTokensPerSec": 52.65,
+          "receipts": {
+            "x-request-id": "neon-platform-aigateway-7f488fb446-jpxzv/lVKFdtOuBi-139755"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 681.68,
+          "ttftMs": 681.78,
+          "outputTokens": 76,
+          "outputTokensPerSec": 54.5,
+          "receipts": {
+            "x-request-id": "neon-platform-aigateway-7f488fb446-jpxzv/lVKFdtOuBi-139779"
+          }
+        }
+      ],
+      "summary": {
+        "dnsMs": {
+          "median": 2.24,
+          "p95": 64.28,
+          "p99": 64.28
+        },
+        "tcpMs": {
+          "median": 18.48,
+          "p95": 24.65,
+          "p99": 24.65
+        },
+        "tlsMs": {
+          "median": 38.38,
+          "p95": 50.8,
+          "p99": 50.8
+        },
+        "coldTtfbMs": {
+          "median": 769.2,
+          "p95": 1345.44,
+          "p99": 1345.44
+        },
+        "coldTtftMs": {
+          "median": 769.33,
+          "p95": 1345.64,
+          "p99": 1345.64
+        },
+        "coldE2eMs": {
+          "median": 837.83,
+          "p95": 1407.52,
+          "p99": 1407.52
+        },
+        "warmTtfbMs": {
+          "median": 781.54,
+          "p95": 1712.11,
+          "p99": 1712.11
+        },
+        "warmTtftMs": {
+          "median": 781.65,
+          "p95": 1712.24,
+          "p99": 1712.24
+        },
+        "outputTokensPerSec": {
+          "median": 51,
+          "p95": 55.2,
+          "p99": 55.2
+        }
+      },
+      "compositeScore": 87.59,
+      "successRate": 1
+    },
+    {
+      "provider": "ngrok",
+      "mode": "ai-gateway",
+      "model": "claude-haiku-4-5",
+      "iterations": [
+        {
+          "mode": "cold",
+          "dnsMs": 86.77,
+          "tcpMs": 23.5,
+          "tlsMs": 27.46,
+          "ttfbMs": 738.47,
+          "ttftMs": 738.75,
+          "coldE2eMs": 876.49,
+          "outputTokens": 84,
+          "outputTokensPerSec": 47.47
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.55,
+          "tcpMs": 24.84,
+          "tlsMs": 28.6,
+          "ttfbMs": 627.04,
+          "ttftMs": 627.34,
+          "coldE2eMs": 682.33,
+          "outputTokens": 84,
+          "outputTokensPerSec": 47.65
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.22,
+          "tcpMs": 22.79,
+          "tlsMs": 25.09,
+          "ttfbMs": 574.07,
+          "ttftMs": 574.36,
+          "coldE2eMs": 623.46,
+          "outputTokens": 84,
+          "outputTokensPerSec": 52.54
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 81.65,
+          "tcpMs": 24.68,
+          "tlsMs": 28.28,
+          "ttfbMs": 736.38,
+          "ttftMs": 736.56,
+          "coldE2eMs": 871.17,
+          "outputTokens": 84,
+          "outputTokensPerSec": 47.69
+        },
+        {
+          "mode": "cold",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "coldE2eMs": 3860,
+          "error": "HTTP 502: {\"type\":\"error\",\"error\":{\"type\":\"api_error\",\"message\":\"[ERR_NGROK_27222] Upstream provider returned an unexpected status: status 520: \\u003c!DOCTYPE html\\u003e\\n\\u003c!--[if lt IE 7]\\u003e \\u003chtml "
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 2.45,
+          "tcpMs": 21.81,
+          "tlsMs": 25.31,
+          "ttfbMs": 570.51,
+          "ttftMs": 570.91,
+          "coldE2eMs": 620.49,
+          "outputTokens": 84,
+          "outputTokensPerSec": 52.28
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 191.44,
+          "tcpMs": 17.79,
+          "tlsMs": 20.98,
+          "ttfbMs": 944.84,
+          "ttftMs": 945.07,
+          "coldE2eMs": 1175.29,
+          "outputTokens": 84,
+          "outputTokensPerSec": 42.54
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.56,
+          "tcpMs": 16.63,
+          "tlsMs": 19.78,
+          "ttfbMs": 548.36,
+          "ttftMs": 548.6,
+          "coldE2eMs": 586.58,
+          "outputTokens": 84,
+          "outputTokensPerSec": 53.41
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.23,
+          "tcpMs": 18.85,
+          "tlsMs": 20.81,
+          "ttfbMs": 556.73,
+          "ttftMs": 556.9,
+          "coldE2eMs": 597.8,
+          "outputTokens": 84,
+          "outputTokensPerSec": 48.55
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 66.02,
+          "tcpMs": 16.97,
+          "tlsMs": 19.86,
+          "ttfbMs": 729.29,
+          "ttftMs": 741.07,
+          "coldE2eMs": 843.92,
+          "outputTokens": 84,
+          "outputTokensPerSec": 47.93
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 522.36,
+          "ttftMs": 522.52,
+          "outputTokens": 84,
+          "outputTokensPerSec": 54.27
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 560.16,
+          "ttftMs": 560.33,
+          "outputTokens": 84,
+          "outputTokensPerSec": 52.68
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 746.39,
+          "ttftMs": 746.53,
+          "outputTokens": 84,
+          "outputTokensPerSec": 41
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 612.78,
+          "ttftMs": 612.93,
+          "outputTokens": 84,
+          "outputTokensPerSec": 51.23
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 850.78,
+          "ttftMs": 863.02,
+          "outputTokens": 84,
+          "outputTokensPerSec": 45.26
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 538.8,
+          "ttftMs": 538.96,
+          "outputTokens": 84,
+          "outputTokensPerSec": 53.72
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 520.35,
+          "ttftMs": 520.5,
+          "outputTokens": 84,
+          "outputTokensPerSec": 54.34
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 565.25,
+          "ttftMs": 565.37,
+          "outputTokens": 84,
+          "outputTokensPerSec": 52.78
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 531.59,
+          "ttftMs": 531.75,
+          "outputTokens": 84,
+          "outputTokensPerSec": 53.85
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 494.11,
+          "ttftMs": 515.74,
+          "outputTokens": 84,
+          "outputTokensPerSec": 48.33
+        }
+      ],
+      "summary": {
+        "dnsMs": {
+          "median": 2.45,
+          "p95": 191.44,
+          "p99": 191.44
+        },
+        "tcpMs": {
+          "median": 21.81,
+          "p95": 24.84,
+          "p99": 24.84
+        },
+        "tlsMs": {
+          "median": 25.09,
+          "p95": 28.6,
+          "p99": 28.6
+        },
+        "coldTtfbMs": {
+          "median": 627.04,
+          "p95": 944.84,
+          "p99": 944.84
+        },
+        "coldTtftMs": {
+          "median": 627.34,
+          "p95": 945.07,
+          "p99": 945.07
+        },
+        "coldE2eMs": {
+          "median": 682.33,
+          "p95": 1175.29,
+          "p99": 1175.29
+        },
+        "warmTtfbMs": {
+          "median": 549.48,
+          "p95": 850.78,
+          "p99": 850.78
+        },
+        "warmTtftMs": {
+          "median": 549.65,
+          "p95": 863.02,
+          "p99": 863.02
+        },
+        "outputTokensPerSec": {
+          "median": 51.23,
+          "p95": 54.34,
+          "p99": 54.34
+        }
+      },
+      "compositeScore": 84.54,
+      "successRate": 0.95
+    },
+    {
+      "provider": "llmapi",
+      "mode": "ai-gateway",
+      "model": "anthropic/claude-haiku-4-5-20251001",
+      "iterations": [
+        {
+          "mode": "cold",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "coldE2eMs": 331,
+          "error": "HTTP 402: {\"error\":{\"message\":\"Bonus credits cannot be used with provider \\\"anthropic\\\". Add paid credits or choose a model served by a bonus-eligible provider.\",\"type\":\"insufficient_quota\",\"param\":null,\"code\":"
+        },
+        {
+          "mode": "cold",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "coldE2eMs": 262,
+          "error": "HTTP 402: {\"error\":{\"message\":\"Bonus credits cannot be used with provider \\\"anthropic\\\". Add paid credits or choose a model served by a bonus-eligible provider.\",\"type\":\"insufficient_quota\",\"param\":null,\"code\":"
+        },
+        {
+          "mode": "cold",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "coldE2eMs": 273,
+          "error": "HTTP 402: {\"error\":{\"message\":\"Bonus credits cannot be used with provider \\\"anthropic\\\". Add paid credits or choose a model served by a bonus-eligible provider.\",\"type\":\"insufficient_quota\",\"param\":null,\"code\":"
+        },
+        {
+          "mode": "cold",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "coldE2eMs": 326,
+          "error": "HTTP 402: {\"error\":{\"message\":\"Bonus credits cannot be used with provider \\\"anthropic\\\". Add paid credits or choose a model served by a bonus-eligible provider.\",\"type\":\"insufficient_quota\",\"param\":null,\"code\":"
+        },
+        {
+          "mode": "cold",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "coldE2eMs": 259,
+          "error": "HTTP 402: {\"error\":{\"message\":\"Bonus credits cannot be used with provider \\\"anthropic\\\". Add paid credits or choose a model served by a bonus-eligible provider.\",\"type\":\"insufficient_quota\",\"param\":null,\"code\":"
+        },
+        {
+          "mode": "cold",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "coldE2eMs": 274,
+          "error": "HTTP 402: {\"error\":{\"message\":\"Bonus credits cannot be used with provider \\\"anthropic\\\". Add paid credits or choose a model served by a bonus-eligible provider.\",\"type\":\"insufficient_quota\",\"param\":null,\"code\":"
+        },
+        {
+          "mode": "cold",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "coldE2eMs": 393,
+          "error": "HTTP 402: {\"error\":{\"message\":\"Bonus credits cannot be used with provider \\\"anthropic\\\". Add paid credits or choose a model served by a bonus-eligible provider.\",\"type\":\"insufficient_quota\",\"param\":null,\"code\":"
+        },
+        {
+          "mode": "cold",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "coldE2eMs": 287,
+          "error": "HTTP 402: {\"error\":{\"message\":\"Bonus credits cannot be used with provider \\\"anthropic\\\". Add paid credits or choose a model served by a bonus-eligible provider.\",\"type\":\"insufficient_quota\",\"param\":null,\"code\":"
+        },
+        {
+          "mode": "cold",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "coldE2eMs": 262,
+          "error": "HTTP 402: {\"error\":{\"message\":\"Bonus credits cannot be used with provider \\\"anthropic\\\". Add paid credits or choose a model served by a bonus-eligible provider.\",\"type\":\"insufficient_quota\",\"param\":null,\"code\":"
+        },
+        {
+          "mode": "cold",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "coldE2eMs": 345,
+          "error": "HTTP 402: {\"error\":{\"message\":\"Bonus credits cannot be used with provider \\\"anthropic\\\". Add paid credits or choose a model served by a bonus-eligible provider.\",\"type\":\"insufficient_quota\",\"param\":null,\"code\":"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "error": "HTTP 402: {\"error\":{\"message\":\"Bonus credits cannot be used with provider \\\"anthropic\\\". Add paid credits or choose a model served by a bonus-eligible provider.\",\"type\":\"insufficient_quota\",\"param\":null,\"code\":"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "error": "HTTP 402: {\"error\":{\"message\":\"Bonus credits cannot be used with provider \\\"anthropic\\\". Add paid credits or choose a model served by a bonus-eligible provider.\",\"type\":\"insufficient_quota\",\"param\":null,\"code\":"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "error": "HTTP 402: {\"error\":{\"message\":\"Bonus credits cannot be used with provider \\\"anthropic\\\". Add paid credits or choose a model served by a bonus-eligible provider.\",\"type\":\"insufficient_quota\",\"param\":null,\"code\":"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "error": "HTTP 402: {\"error\":{\"message\":\"Bonus credits cannot be used with provider \\\"anthropic\\\". Add paid credits or choose a model served by a bonus-eligible provider.\",\"type\":\"insufficient_quota\",\"param\":null,\"code\":"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "error": "HTTP 402: {\"error\":{\"message\":\"Bonus credits cannot be used with provider \\\"anthropic\\\". Add paid credits or choose a model served by a bonus-eligible provider.\",\"type\":\"insufficient_quota\",\"param\":null,\"code\":"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "error": "HTTP 402: {\"error\":{\"message\":\"Bonus credits cannot be used with provider \\\"anthropic\\\". Add paid credits or choose a model served by a bonus-eligible provider.\",\"type\":\"insufficient_quota\",\"param\":null,\"code\":"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "error": "HTTP 402: {\"error\":{\"message\":\"Bonus credits cannot be used with provider \\\"anthropic\\\". Add paid credits or choose a model served by a bonus-eligible provider.\",\"type\":\"insufficient_quota\",\"param\":null,\"code\":"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "error": "HTTP 402: {\"error\":{\"message\":\"Bonus credits cannot be used with provider \\\"anthropic\\\". Add paid credits or choose a model served by a bonus-eligible provider.\",\"type\":\"insufficient_quota\",\"param\":null,\"code\":"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "error": "HTTP 402: {\"error\":{\"message\":\"Bonus credits cannot be used with provider \\\"anthropic\\\". Add paid credits or choose a model served by a bonus-eligible provider.\",\"type\":\"insufficient_quota\",\"param\":null,\"code\":"
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 0,
+          "ttftMs": 0,
+          "error": "HTTP 402: {\"error\":{\"message\":\"Bonus credits cannot be used with provider \\\"anthropic\\\". Add paid credits or choose a model served by a bonus-eligible provider.\",\"type\":\"insufficient_quota\",\"param\":null,\"code\":"
+        }
+      ],
+      "summary": {
+        "dnsMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "tcpMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "tlsMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "coldTtfbMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "coldTtftMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "coldE2eMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "warmTtfbMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "warmTtftMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "outputTokensPerSec": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        }
+      },
+      "compositeScore": 0,
+      "successRate": 0
+    },
     {
       "provider": "github-copilot",
       "mode": "ai-gateway",
@@ -18,183 +2674,629 @@
       "iterations": [
         {
           "mode": "cold",
-          "dnsMs": 144.14,
-          "tcpMs": 1.6,
-          "tlsMs": 7.08,
-          "ttfbMs": 1203.02,
-          "ttftMs": 1246.94,
-          "coldE2eMs": 1399.76,
-          "outputTokens": 84,
-          "outputTokensPerSec": 37.23,
-          "receipts": {
-            "x-request-id": "00000-0f5e9c80-9baf-4303-98f7-95b14f055b6d",
-            "x-github-request-id": "5330:3AE10F:1554B2:1B960F:6A9A04B8"
-          }
-        },
-        {
-          "mode": "cold",
-          "dnsMs": 0.81,
+          "dnsMs": 22.3,
           "tcpMs": 1.23,
-          "tlsMs": 7.49,
-          "ttfbMs": 580.52,
-          "ttftMs": 625.43,
-          "coldE2eMs": 634.96,
+          "tlsMs": 8.39,
+          "ttfbMs": 999.55,
+          "ttftMs": 1044.02,
+          "coldE2eMs": 1075.93,
           "outputTokens": 84,
-          "outputTokensPerSec": 52.39,
+          "outputTokensPerSec": 41.03,
           "receipts": {
-            "x-request-id": "00000-b6d0b3af-e892-4e30-a11e-f05a01257e99",
-            "x-github-request-id": "939D:1161D3:1517FA:1B5B73:6A9A04BB"
+            "x-request-id": "00000-b325328e-6842-4d85-a708-184d335bb4cd",
+            "x-github-request-id": "9921:353B46:18C9BF:203F6B:6A9A06B4"
           }
         },
         {
           "mode": "cold",
-          "dnsMs": 0.91,
-          "tcpMs": 1.22,
-          "tlsMs": 10.34,
-          "ttfbMs": 759.77,
-          "ttftMs": 760.54,
-          "coldE2eMs": 773.02,
+          "dnsMs": 1.86,
+          "tcpMs": 1.05,
+          "tlsMs": 7.35,
+          "ttfbMs": 1307.84,
+          "ttftMs": 1350.74,
+          "coldE2eMs": 1361.01,
           "outputTokens": 84,
-          "outputTokensPerSec": 46.39,
+          "outputTokensPerSec": 35.39,
           "receipts": {
-            "x-request-id": "00000-c1c32af4-f1f1-4e87-97f4-1902a0922a9e",
-            "x-github-request-id": "63C0:5BED4:146D1A:1AB3A7:6A9A04BD"
+            "x-request-id": "00000-756605e0-32d8-4c13-8b12-dc9ee8645a8a",
+            "x-github-request-id": "C338:F2C39:1603437:18AA5D6:6A9A06CB"
           }
         },
         {
           "mode": "cold",
-          "dnsMs": 0.81,
-          "tcpMs": 1,
-          "tlsMs": 6.91,
-          "ttfbMs": 589.15,
-          "ttftMs": 632.99,
-          "coldE2eMs": 641.71,
+          "dnsMs": 1.69,
+          "tcpMs": 1.14,
+          "tlsMs": 6.41,
+          "ttfbMs": 1286.95,
+          "ttftMs": 1328.92,
+          "coldE2eMs": 1338.15,
           "outputTokens": 84,
-          "outputTokensPerSec": 50.72,
+          "outputTokensPerSec": 35.81,
           "receipts": {
-            "x-request-id": "00000-3461ab95-689c-4c0f-bea3-56208babce3b",
-            "x-github-request-id": "717E:2728C3:156601:1BAB74:6A9A04BF"
+            "x-request-id": "00000-cf9edabd-5c61-4ebc-8a21-64fa21ef83eb",
+            "x-github-request-id": "C137:146054:1545814:17EE5EB:6A9A06E4"
           }
         },
         {
           "mode": "cold",
-          "dnsMs": 0.81,
-          "tcpMs": 1.19,
-          "tlsMs": 6.98,
-          "ttfbMs": 569.04,
-          "ttftMs": 612.74,
-          "coldE2eMs": 621.72,
+          "dnsMs": 1.89,
+          "tcpMs": 1.43,
+          "tlsMs": 7.03,
+          "ttfbMs": 804.17,
+          "ttftMs": 846.44,
+          "coldE2eMs": 856.79,
           "outputTokens": 84,
-          "outputTokensPerSec": 51.78,
+          "outputTokensPerSec": 45.05,
           "receipts": {
-            "x-request-id": "00000-f44e3f07-0226-4b31-8c88-18312ac77479",
-            "x-github-request-id": "DC27:21C81D:153ED3:1B8654:6A9A04C1"
+            "x-request-id": "00000-37602873-982f-4b09-aec1-391ea08d163e",
+            "x-github-request-id": "16D1:DA7DC:153AB5F:17E48A1:6A9A06FA"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.07,
+          "tcpMs": 1.38,
+          "tlsMs": 7.75,
+          "ttfbMs": 665.09,
+          "ttftMs": 708.53,
+          "coldE2eMs": 718.72,
+          "outputTokens": 84,
+          "outputTokensPerSec": 48.93,
+          "receipts": {
+            "x-request-id": "00000-3f2424e4-9670-4a21-bd6a-4c332d511b73",
+            "x-github-request-id": "6483:1D761E:1AD17A:227E8E:6A9A0710"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.11,
+          "tcpMs": 1.5,
+          "tlsMs": 7.74,
+          "ttfbMs": 2699.44,
+          "ttftMs": 2741.98,
+          "coldE2eMs": 2752.33,
+          "outputTokens": 84,
+          "outputTokensPerSec": 22.41,
+          "receipts": {
+            "x-request-id": "00000-cf226778-aa9e-4f49-88bd-3137770aa14c",
+            "x-github-request-id": "949C:56A71:1A415C:21FBAB:6A9A0727"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.8,
+          "tcpMs": 1.16,
+          "tlsMs": 7.09,
+          "ttfbMs": 818.09,
+          "ttftMs": 859.85,
+          "coldE2eMs": 869.89,
+          "outputTokens": 84,
+          "outputTokensPerSec": 45,
+          "receipts": {
+            "x-request-id": "00000-e8bbc27b-fc2e-40e8-92ef-814eeacd0fb2",
+            "x-github-request-id": "167E:372631:18270ED:1AD179C:6A9A073C"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.21,
+          "tcpMs": 2.19,
+          "tlsMs": 8.31,
+          "ttfbMs": 689.72,
+          "ttftMs": 731.77,
+          "coldE2eMs": 743.48,
+          "outputTokens": 84,
+          "outputTokensPerSec": 48.23,
+          "receipts": {
+            "x-request-id": "00000-390fca1b-33c3-44fe-a318-0a8b97bec343",
+            "x-github-request-id": "370C:3F5CD5:1864E24:1B0F846:6A9A0753"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.74,
+          "tcpMs": 1.03,
+          "tlsMs": 6.7,
+          "ttfbMs": 2471.1,
+          "ttftMs": 2515.51,
+          "coldE2eMs": 2524.98,
+          "outputTokens": 84,
+          "outputTokensPerSec": 23.84,
+          "receipts": {
+            "x-request-id": "00000-796b8d8a-60e0-4766-9881-4011e7c4bdba",
+            "x-github-request-id": "2808:372631:1832205:1ADE24F:6A9A076A"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.91,
+          "tcpMs": 1.1,
+          "tlsMs": 7.14,
+          "ttfbMs": 632.02,
+          "ttftMs": 674.72,
+          "coldE2eMs": 684.87,
+          "outputTokens": 84,
+          "outputTokensPerSec": 49.8,
+          "receipts": {
+            "x-request-id": "00000-5c0970b0-06a6-46ec-8a3b-1fe8e814db68",
+            "x-github-request-id": "4166:159D3A:18C56D8:1B71890:6A9A0783"
           }
         },
         {
           "mode": "warm",
-          "ttfbMs": 516.01,
-          "ttftMs": 560.15,
+          "ttfbMs": 1173.6,
+          "ttftMs": 1217.93,
           "outputTokens": 84,
-          "outputTokensPerSec": 51.32,
+          "outputTokensPerSec": 37.73,
           "receipts": {
-            "x-request-id": "00000-d06b1a9f-9fa4-4c7e-a8bc-922f7907aac7",
-            "x-github-request-id": "CC06:239DCC:13FD61:1A46F0:6A9A04C5"
+            "x-request-id": "00000-1a095d9a-30fe-474f-9bc9-a7a609abd529",
+            "x-github-request-id": "183C:56FEA:1B4E85:2357F5:6A9A07A5"
           }
         },
         {
           "mode": "warm",
-          "ttfbMs": 668.64,
-          "ttftMs": 710.21,
+          "ttfbMs": 559.15,
+          "ttftMs": 600.46,
           "outputTokens": 84,
-          "outputTokensPerSec": 48.59,
+          "outputTokensPerSec": 52.22,
           "receipts": {
-            "x-request-id": "00000-151dff48-bbb8-41ab-a2e5-c973780a9eb1",
-            "x-github-request-id": "D122:53579:159497:1BE1C8:6A9A04C8"
+            "x-request-id": "00000-3d2c84f7-03ba-4dcf-b936-a94c516d963f",
+            "x-github-request-id": "21CB:1CBD3:19E8C8:22080A:6A9A07CB"
           }
         },
         {
           "mode": "warm",
-          "ttfbMs": 735.08,
-          "ttftMs": 778.61,
+          "ttfbMs": 742.33,
+          "ttftMs": 785.52,
           "outputTokens": 84,
-          "outputTokensPerSec": 47.02,
+          "outputTokensPerSec": 46.9,
           "receipts": {
-            "x-request-id": "00000-45a90f08-5349-4932-9abf-33fc943bc4a9",
-            "x-github-request-id": "E8ED:107344:15341A:1B815A:6A9A04CC"
+            "x-request-id": "00000-db4a6cea-3e6a-465f-a1b3-174cdc9c037a",
+            "x-github-request-id": "5B71:3EBC8F:183E655:1AEED6E:6A9A07F1"
           }
         },
         {
           "mode": "warm",
-          "ttfbMs": 557.56,
-          "ttftMs": 601.54,
+          "ttfbMs": 662.32,
+          "ttftMs": 705.02,
           "outputTokens": 84,
-          "outputTokensPerSec": 52.08,
+          "outputTokensPerSec": 48.97,
           "receipts": {
-            "x-request-id": "00000-15b487bb-aa3b-4675-b6c4-84f33f07960a",
-            "x-github-request-id": "80F7:224251:144CFC:1A9CF3:6A9A04CF"
+            "x-request-id": "00000-70280142-1e2e-49e0-822d-2f258eb94e32",
+            "x-github-request-id": "EEA8:C7C47:1574615:1828FA7:6A9A081B"
           }
         },
         {
           "mode": "warm",
-          "ttfbMs": 817.62,
-          "ttftMs": 861.21,
+          "ttfbMs": 696.96,
+          "ttftMs": 697.4,
           "outputTokens": 84,
-          "outputTokensPerSec": 44.7,
+          "outputTokensPerSec": 48.26,
           "receipts": {
-            "x-request-id": "00000-0b24397f-3c6a-416d-bfa8-cc9dbbc32e6d",
-            "x-github-request-id": "4837:107344:1542BA:1B942E:6A9A04D3"
+            "x-request-id": "00000-363233ca-f470-444f-bb25-3d04d23109f3",
+            "x-github-request-id": "52A1:3CCB9A:169398D:194888D:6A9A083F"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 718.17,
+          "ttftMs": 998.73,
+          "outputTokens": 84,
+          "outputTokensPerSec": 43.7,
+          "receipts": {
+            "x-request-id": "00000-ea07dbc5-4815-4354-994a-80a7a081a9ed",
+            "x-github-request-id": "E7A3:2F9987:1CCC3D:254835:6A9A0866"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 683.28,
+          "ttftMs": 724.81,
+          "outputTokens": 84,
+          "outputTokensPerSec": 48.4,
+          "receipts": {
+            "x-request-id": "00000-1962516b-7645-41dc-b059-02bb7406424a",
+            "x-github-request-id": "0934:ADB07:18782F4:1B2E973:6A9A088A"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 633.23,
+          "ttftMs": 676.46,
+          "outputTokens": 84,
+          "outputTokensPerSec": 50.16,
+          "receipts": {
+            "x-request-id": "00000-7d852c7e-2b80-4cd7-b54f-e9c2f51c5bb2",
+            "x-github-request-id": "6DF8:2C4040:18BA727:1B715A1:6A9A08AE"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 630.06,
+          "ttftMs": 670.81,
+          "outputTokens": 84,
+          "outputTokensPerSec": 50.25,
+          "receipts": {
+            "x-request-id": "00000-8ce518b3-041e-4e38-8337-247b7fbe277d",
+            "x-github-request-id": "8C84:39ACEF:1901C19:1BBA273:6A9A08D2"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 471.57,
+          "ttftMs": 515.2,
+          "outputTokens": 84,
+          "outputTokensPerSec": 55.35,
+          "receipts": {
+            "x-request-id": "00000-aeb64b38-80cc-49a3-adad-42cabc82d640",
+            "x-github-request-id": "0661:1CBD3:1C0127:24D54E:6A9A08F5"
           }
         }
       ],
       "summary": {
         "dnsMs": {
-          "median": 0.81,
-          "p95": 144.14,
-          "p99": 144.14
+          "median": 1.77,
+          "p95": 22.3,
+          "p99": 22.3
         },
         "tcpMs": {
-          "median": 1.22,
-          "p95": 1.6,
-          "p99": 1.6
+          "median": 1.19,
+          "p95": 2.19,
+          "p99": 2.19
         },
         "tlsMs": {
-          "median": 7.08,
-          "p95": 10.34,
-          "p99": 10.34
+          "median": 7.24,
+          "p95": 8.39,
+          "p99": 8.39
         },
         "coldTtfbMs": {
-          "median": 589.15,
-          "p95": 1203.02,
-          "p99": 1203.02
+          "median": 908.82,
+          "p95": 2699.44,
+          "p99": 2699.44
         },
         "coldTtftMs": {
-          "median": 632.99,
-          "p95": 1246.94,
-          "p99": 1246.94
+          "median": 951.94,
+          "p95": 2741.98,
+          "p99": 2741.98
         },
         "coldE2eMs": {
-          "median": 641.71,
-          "p95": 1399.76,
-          "p99": 1399.76
+          "median": 972.91,
+          "p95": 2752.33,
+          "p99": 2752.33
         },
         "warmTtfbMs": {
-          "median": 668.64,
-          "p95": 817.62,
-          "p99": 817.62
+          "median": 672.8,
+          "p95": 1173.6,
+          "p99": 1173.6
         },
         "warmTtftMs": {
-          "median": 710.21,
-          "p95": 861.21,
-          "p99": 861.21
+          "median": 701.21,
+          "p95": 1217.93,
+          "p99": 1217.93
         },
         "outputTokensPerSec": {
-          "median": 49.66,
-          "p95": 52.39,
-          "p99": 52.39
+          "median": 47.57,
+          "p95": 52.22,
+          "p99": 52.22
         }
       },
-      "compositeScore": 88.57,
+      "compositeScore": 86.69,
+      "successRate": 1
+    },
+    {
+      "provider": "anthropic-direct",
+      "mode": "ai-gateway",
+      "model": "claude-haiku-4-5-20251001",
+      "iterations": [
+        {
+          "mode": "cold",
+          "dnsMs": 1.86,
+          "tcpMs": 1.18,
+          "tlsMs": 8.62,
+          "ttfbMs": 998.66,
+          "ttftMs": 998.88,
+          "coldE2eMs": 1010.53,
+          "outputTokens": 84,
+          "outputTokensPerSec": 40.74,
+          "receipts": {
+            "cf-ray": "a358a198bd5c1734-IAD",
+            "request-id": "req_011CehPyTaLMcDXWGfuaMfFg"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.87,
+          "tcpMs": 1.67,
+          "tlsMs": 4.1,
+          "ttfbMs": 1093.58,
+          "ttftMs": 1093.89,
+          "coldE2eMs": 1101.53,
+          "outputTokens": 84,
+          "outputTokensPerSec": 39.63,
+          "receipts": {
+            "cf-ray": "a358a228cbd5b788-IAD",
+            "request-id": "req_011CehQ1AS1vQhL24Qym3nYX"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.56,
+          "tcpMs": 1.02,
+          "tlsMs": 2.93,
+          "ttfbMs": 654.11,
+          "ttftMs": 658.83,
+          "coldE2eMs": 664.34,
+          "outputTokens": 84,
+          "outputTokensPerSec": 50.03,
+          "receipts": {
+            "cf-ray": "a358a2c25dd2d46e-IAD",
+            "request-id": "req_011CehQ2wVSyEAn7c7m8jchZ"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 2.46,
+          "tcpMs": 1.21,
+          "tlsMs": 3.25,
+          "ttfbMs": 575.43,
+          "ttftMs": 575.62,
+          "coldE2eMs": 582.54,
+          "outputTokens": 84,
+          "outputTokensPerSec": 50.48,
+          "receipts": {
+            "cf-ray": "a358a3495c33e646-IAD",
+            "request-id": "req_011CehQ4Xk1HcCT6YAk99SAf"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.52,
+          "tcpMs": 1.21,
+          "tlsMs": 3.28,
+          "ttfbMs": 857.65,
+          "ttftMs": 857.85,
+          "coldE2eMs": 863.87,
+          "outputTokens": 84,
+          "outputTokensPerSec": 44.6,
+          "receipts": {
+            "cf-ray": "a358a3d3387909e5-IAD",
+            "request-id": "req_011CehQ6B94kTBBUw8xNNPcj"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.54,
+          "tcpMs": 1.44,
+          "tlsMs": 4.06,
+          "ttfbMs": 677.2,
+          "ttftMs": 677.34,
+          "coldE2eMs": 684.39,
+          "outputTokens": 84,
+          "outputTokensPerSec": 48.79,
+          "receipts": {
+            "cf-ray": "a358a46c6985c6d1-IAD",
+            "request-id": "req_011CehQ7y2MnhuqG9mVNYqrN"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.82,
+          "tcpMs": 1.59,
+          "tlsMs": 4.31,
+          "ttfbMs": 815.12,
+          "ttftMs": 815.88,
+          "coldE2eMs": 823.6,
+          "outputTokens": 84,
+          "outputTokensPerSec": 45.62,
+          "receipts": {
+            "cf-ray": "a358a4e90a6fbae3-IAD",
+            "request-id": "req_011CehQ9T37mUVb9XkSm3Kmn"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 1.45,
+          "tcpMs": 1.16,
+          "tlsMs": 6.24,
+          "ttfbMs": 847.94,
+          "ttftMs": 848.07,
+          "coldE2eMs": 856.92,
+          "outputTokens": 84,
+          "outputTokensPerSec": 44.89,
+          "receipts": {
+            "cf-ray": "a358a5764fba824b-IAD",
+            "request-id": "req_011CehQB7XAxtyPVGdrHUs9S"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 2.3,
+          "tcpMs": 1.24,
+          "tlsMs": 4,
+          "ttfbMs": 1136.64,
+          "ttftMs": 1136.89,
+          "coldE2eMs": 1144.43,
+          "outputTokens": 84,
+          "outputTokensPerSec": 37.64,
+          "receipts": {
+            "cf-ray": "a358a60f6b6a379a-IAD",
+            "request-id": "req_011CehQCwMJ6MXAtNg1ahQ2y"
+          }
+        },
+        {
+          "mode": "cold",
+          "dnsMs": 2.97,
+          "tcpMs": 1.51,
+          "tlsMs": 4.33,
+          "ttfbMs": 686.14,
+          "ttftMs": 686.4,
+          "coldE2eMs": 695.2,
+          "outputTokens": 84,
+          "outputTokensPerSec": 49.15,
+          "receipts": {
+            "cf-ray": "a358a6a0bddbd641-IAD",
+            "request-id": "req_011CehQEd4292EmVoW7cBAwE"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 605.98,
+          "ttftMs": 606.27,
+          "outputTokens": 84,
+          "outputTokensPerSec": 48.03,
+          "receipts": {
+            "cf-ray": "a358a786bbd7e091-IAD",
+            "request-id": "req_011CehQHLKmo52AtKAvGYpVs"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 494.38,
+          "ttftMs": 494.83,
+          "outputTokens": 84,
+          "outputTokensPerSec": 53.74,
+          "receipts": {
+            "cf-ray": "a358a86e3b4fd10e-IAD",
+            "request-id": "req_011CehQL4GDUHiT9vBAhgoPA"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 3604.66,
+          "ttftMs": 3607.73,
+          "outputTokens": 84,
+          "outputTokensPerSec": 18.01,
+          "receipts": {
+            "cf-ray": "a358a95c6fd3ca91-IAD",
+            "request-id": "req_011CehQP2kWcHZnkbi6FQuT3"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 807.64,
+          "ttftMs": 807.86,
+          "outputTokens": 84,
+          "outputTokensPerSec": 45.69,
+          "receipts": {
+            "cf-ray": "a358aa5f1c1f0a90-IAD",
+            "request-id": "req_011CehQRvyau4ykd7rchQxEF"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 635.33,
+          "ttftMs": 635.53,
+          "outputTokens": 84,
+          "outputTokensPerSec": 48.72,
+          "receipts": {
+            "cf-ray": "a358ab454a70207e-IAD",
+            "request-id": "req_011CehQUdfrymo5woeUc4ZSU"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 500.32,
+          "ttftMs": 500.48,
+          "outputTokens": 84,
+          "outputTokensPerSec": 54.81,
+          "receipts": {
+            "cf-ray": "a358ac37881ad663-IAD",
+            "request-id": "req_011CehQXVM8z9Uf9MfaxWmTh"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 550.79,
+          "ttftMs": 551.83,
+          "outputTokens": 84,
+          "outputTokensPerSec": 53.78,
+          "receipts": {
+            "cf-ray": "a358ad169a29f27a-IAD",
+            "request-id": "req_011CehQa815hQhPZdv181QTW"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 575.45,
+          "ttftMs": 575.61,
+          "outputTokens": 84,
+          "outputTokensPerSec": 52.47,
+          "receipts": {
+            "cf-ray": "a358adf7ba17dfc2-IAD",
+            "request-id": "req_011CehQcn3Ncw3J5Nt1W7Y5C"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 584.62,
+          "ttftMs": 584.8,
+          "outputTokens": 84,
+          "outputTokensPerSec": 52.13,
+          "receipts": {
+            "cf-ray": "a358aed7bc3d3e6c-IAD",
+            "request-id": "req_011CehQfRCL1FhUrHJtHc7pG"
+          }
+        },
+        {
+          "mode": "warm",
+          "ttfbMs": 525.14,
+          "ttftMs": 525.27,
+          "outputTokens": 84,
+          "outputTokensPerSec": 53.89,
+          "receipts": {
+            "cf-ray": "a358afb33a1f2de1-IAD",
+            "request-id": "req_011CehQi1KU96Nmet8dpMzEb"
+          }
+        }
+      ],
+      "summary": {
+        "dnsMs": {
+          "median": 1.84,
+          "p95": 2.97,
+          "p99": 2.97
+        },
+        "tcpMs": {
+          "median": 1.23,
+          "p95": 1.67,
+          "p99": 1.67
+        },
+        "tlsMs": {
+          "median": 4.08,
+          "p95": 8.62,
+          "p99": 8.62
+        },
+        "coldTtfbMs": {
+          "median": 831.53,
+          "p95": 1136.64,
+          "p99": 1136.64
+        },
+        "coldTtftMs": {
+          "median": 831.97,
+          "p95": 1136.89,
+          "p99": 1136.89
+        },
+        "coldE2eMs": {
+          "median": 840.26,
+          "p95": 1144.43,
+          "p99": 1144.43
+        },
+        "warmTtfbMs": {
+          "median": 580.04,
+          "p95": 3604.66,
+          "p99": 3604.66
+        },
+        "warmTtftMs": {
+          "median": 580.21,
+          "p95": 3607.73,
+          "p99": 3607.73
+        },
+        "outputTokensPerSec": {
+          "median": 48.76,
+          "p95": 53.89,
+          "p99": 53.89
+        }
+      },
+      "compositeScore": 86.55,
       "successRate": 1
     }
   ]
