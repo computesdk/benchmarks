@@ -42,8 +42,8 @@ permissions:
 jobs:
   bench:
     name: Bench ${{ matrix.provider }}
-    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe
-    # runs-on: self-hosted
+    # runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe
+    runs-on: self-hosted
     timeout-minutes: 60
     env:
       # A single-provider dispatch still starts every matrix job; the ones that
