@@ -381,7 +381,8 @@ function validateBenchmarkScoringConfig(scoring: BenchmarkScoringConfig, display
     seen.add(key);
     // Unit is optional; when display.metrics is also declared it is the
     // canonical source and the scoring metric's unit must not contradict it.
-    const displayMetric = display?.metrics?.find((m) => m.key === key);
+    const displayMetrics = Array.isArray(display?.metrics) ? display!.metrics : undefined;
+    const displayMetric = displayMetrics?.find((m) => m?.key === key);
     if (metric.unit !== undefined) {
       if (typeof metric.unit !== 'string') {
         throw new Error(`scoring.metrics[${i}].unit must be a string`);

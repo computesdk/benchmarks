@@ -230,6 +230,21 @@ describe('defineBenchmarkConfig', () => {
     ).toThrow("scoring.metrics[0].unit 's' conflicts with display.metrics[0].unit 'ms'");
   });
 
+  it('does not throw a TypeError when display.metrics is malformed', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        // @ts-expect-error intentionally malformed
+        display: { metrics: 'not-an-array' },
+        scoring: {
+          metrics: [{ key: 'ttiMs', ceiling: 10000, weights: { median: 1, p95: 0, p99: 0 } }],
+        },
+      }),
+    ).toThrow('display.metrics must be an array');
+  });
+
   it('allows a display defaultMetric when metrics is omitted', () => {
     const config = defineBenchmarkConfig({
       benchmarkSlug: 's',
