@@ -230,7 +230,9 @@ export function createSystemMetricsCollector(): BenchmarkSystemMetricsCollector 
   const eventLoop = monitorEventLoopDelay({ resolution: 20 });
   eventLoop.enable();
 
-  let hostCpuBaseline: number[] | null = null;
+  // Capture the host CPU baseline once at creation time so cumulative host
+  // CPU usage covers the full collector lifetime, not just from the first sample.
+  const hostCpuBaselinePromise: Promise<number[] | null> = readHostCpuJiffies().catch(() => null);
   let cgroupPaths: CgroupPaths | null = null;
   let cachedCgroupMemLimitMb: number | null | undefined;
   let cachedCgroupCpuLimitCores: number | null | undefined;
@@ -241,21 +243,15 @@ export function createSystemMetricsCollector(): BenchmarkSystemMetricsCollector 
       const memory = process.memoryUsage();
       const loadavg = os.loadavg();
 
-      const [hostMem, hostCpuJiffies, openFds, sockstat] = await Promise.all([
+      const [hostMem, hostCpuJiffies, openFds, sockstat, hostCpuBaseline] = await Promise.all([
         readHostMemInfo(),
         readHostCpuJiffies(),
         countOpenFds(),
         readSockstat(),
+        hostCpuBaselinePromise,
       ]);
 
-      let hostCpu: { usedUs: number; totalUs: number } | null = null;
-      if (hostCpuJiffies) {
-        if (hostCpuBaseline) {
-          hostCpu = hostCpuUsageSince(hostCpuBaseline, hostCpuJiffies);
-        } else {
-          hostCpuBaseline = hostCpuJiffies;
-        }
-      }
+      const hostCpu = hostCpuBaseline && hostCpuJiffies ? hostCpuUsageSince(hostCpuBaseline, hostCpuJiffies) : null;
 
       if (!cgroupPaths) {
         cgroupPaths = await cgroupRelativePaths();

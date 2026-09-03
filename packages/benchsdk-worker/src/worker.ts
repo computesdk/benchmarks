@@ -405,14 +405,20 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
   // socket counts — not the sandbox/VM's total resource usage.
   const systemMetricsCollector = metricsIntervalMs > 0 ? createSystemMetricsCollector() : undefined;
   const systemMetricsSamples: BenchmarkSystemMetricsSample[] = [];
-  const takeSystemMetricsSample = async () => {
-    if (!systemMetricsCollector) return;
-    try {
-      systemMetricsSamples.push(await systemMetricsCollector.sample());
-    } catch {
-      // Best-effort: never fail the run over metrics collection.
-    }
-  };
+  const metricsInFlight = new Set<Promise<void>>();
+  function takeSystemMetricsSample(): Promise<void> {
+    if (!systemMetricsCollector) return Promise.resolve();
+    const promise = (async () => {
+      try {
+        systemMetricsSamples.push(await systemMetricsCollector.sample());
+      } catch {
+        // Best-effort: never fail the run over metrics collection.
+      }
+    })();
+    metricsInFlight.add(promise);
+    promise.then(() => metricsInFlight.delete(promise)).catch(() => metricsInFlight.delete(promise));
+    return promise;
+  }
   const metricsInterval =
     systemMetricsCollector && metricsIntervalMs > 0
       ? setInterval(() => {
@@ -585,6 +591,7 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
     if (logFlush) clearInterval(logFlush);
     await uploadWorkerLogArtifact(true);
     if (metricsInterval) clearInterval(metricsInterval);
+    await Promise.all([...metricsInFlight]);
     await takeSystemMetricsSample();
     systemMetricsCollector?.stop();
     await uploadSystemMetricsArtifact();
