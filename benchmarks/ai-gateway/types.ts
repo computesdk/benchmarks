@@ -151,6 +151,16 @@ export interface AIGatewayModelPricing {
   [key: string]: unknown;
 }
 
+export type AIGatewayModelPricingUnit =
+  | 'per_token'
+  | 'per_1m_tokens'
+  | 'per_1k_characters'
+  | 'per_minute'
+  | 'per_second'
+  | 'per_image'
+  | 'per_request'
+  | 'unknown';
+
 export interface AIGatewayModelIndexEntry {
   id: string;
   name?: string;
@@ -161,8 +171,10 @@ export interface AIGatewayModelIndexEntry {
   contextLength?: number;
   maxOutputTokens?: number;
   createdAt?: string;
-  /** Input/output/completion pricing per token when the gateway exposes it in the catalog. */
+  /** Raw input/output/completion pricing from the gateway catalog. */
   pricing?: AIGatewayModelPricing;
+  /** Unit for the primary input/output pricing fields. */
+  pricingUnit?: AIGatewayModelPricingUnit;
   /** Per-provider/routing-option pricing when the gateway exposes different prices per provider. */
   providerPricing?: Record<string, AIGatewayModelPricing>;
 }

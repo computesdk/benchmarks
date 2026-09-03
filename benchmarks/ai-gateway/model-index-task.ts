@@ -7,6 +7,7 @@ import type {
   AIGatewayModelIndexProviderResult,
   AIGatewayModelListFormat,
   AIGatewayModelPricing,
+  AIGatewayModelPricingUnit,
 } from './types.js';
 
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -298,19 +299,31 @@ function normalizePydanticRoutes(routes: unknown[]): AIGatewayModelIndexEntry[] 
   }));
 }
 
+function isAutoRouteModel(model: Pick<AIGatewayModelIndexEntry, 'id' | 'name' | 'displayName'>): boolean {
+  const id = model.id.trim().toLowerCase();
+  if (id === 'openrouter/auto-beta' || id === 'openrouter/fusion') return true;
+  return [model.id, model.name, model.displayName].some((value) =>
+    typeof value === 'string' && /^(?:auto|auto[-_ ]?route|auto[-_ ]?router)(?:\s*\(beta\))?$/i.test(value.trim()),
+  );
+}
+
+function filterAutoRouteModels(models: AIGatewayModelIndexEntry[]): AIGatewayModelIndexEntry[] {
+  return models.filter((model) => !isAutoRouteModel(model));
+}
+
 function normalizeModels(
   format: AIGatewayModelListFormat,
   body: unknown,
 ): AIGatewayModelIndexEntry[] {
   if (format === 'pydantic' && Array.isArray(body)) {
-    return normalizePydanticRoutes(body);
+    return filterAutoRouteModels(normalizePydanticRoutes(body));
   }
 
   const data = (body as AnyModel)?.data;
   if (!Array.isArray(data)) return [];
 
   if (format === 'anthropic') {
-    return data
+    return filterAutoRouteModels(data
       .map(asModel)
       .filter((m): m is AnyModel => !!m)
       .map((m) => ({
@@ -320,14 +333,14 @@ function normalizeModels(
         providers: ['anthropic'],
         createdAt: typeof m.created_at === 'string' ? m.created_at : undefined,
       }))
-      .filter((m) => m.id);
+      .filter((m) => m.id));
   }
 
-  return data
+  return filterAutoRouteModels(data
     .map(asModel)
     .filter((m): m is AnyModel => !!m)
     .map(normalizeModel)
-    .filter((m): m is AIGatewayModelIndexEntry => !!m);
+    .filter((m): m is AIGatewayModelIndexEntry => !!m));
 }
 
 interface FetchResult {
@@ -509,6 +522,71 @@ async function enrichModels(
   });
 }
 
+const NON_TOKEN_MODEL_PATTERN = /(?:^|[-_\s])(transcribe|transcription|whisper)(?:[-_\s]|$)/i;
+const AMBIGUOUS_TTS_PATTERN = /(?:^|[-_\s])tts(?:[-_\s]|$)/i;
+const PRICING_UNIT_KEYS: Record<string, AIGatewayModelPricingUnit> = {
+  video_output_per_second: 'per_second',
+  video_output_per_second_by_resolution: 'per_second',
+  video_duration_pricing: 'per_second',
+  per_second: 'per_second',
+  transcription_duration_cost_per_second: 'per_second',
+  realtime_session_duration_cost_per_second: 'per_second',
+  speech_input_character_cost: 'per_1k_characters',
+  image_generation: 'per_image',
+  per_image: 'per_image',
+  ocr_page: 'per_request',
+};
+
+function findPricingUnit(value: unknown): AIGatewayModelPricingUnit | undefined {
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const unit = findPricingUnit(item);
+      if (unit) return unit;
+    }
+    return undefined;
+  }
+  if (!value || typeof value !== 'object') return undefined;
+  for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
+    const unit = PRICING_UNIT_KEYS[key];
+    if (unit) return unit;
+    const nestedUnit = findPricingUnit(nested);
+    if (nestedUnit) return nestedUnit;
+  }
+  return undefined;
+}
+
+function inferPricingUnit(
+  gateway: string,
+  model: AIGatewayModelIndexEntry,
+): AIGatewayModelPricingUnit {
+  if (['ramp', 'neon', 'concentrate-ai-gateway'].includes(gateway)) return 'per_1m_tokens';
+
+  const source = model.pricing ?? (model.providerPricing ? Object.values(model.providerPricing)[0] : undefined);
+  const identity = `${model.id} ${model.name ?? ''}`.toLowerCase();
+  const providerNames = (model.providers ?? []).map((provider) => provider.toLowerCase());
+  const explicitUnit = findPricingUnit(source);
+  const rawOutput = source && typeof source === 'object' ? (source as Record<string, unknown>).output ?? (source as Record<string, unknown>).completion : undefined;
+
+  const outputNumber = typeof rawOutput === 'number' ? rawOutput : typeof rawOutput === 'string' ? Number(rawOutput) : undefined;
+  if (gateway === 'llmapi' && AMBIGUOUS_TTS_PATTERN.test(identity) && outputNumber === 0) return 'unknown';
+  if (explicitUnit === 'per_second') return explicitUnit;
+  if (explicitUnit === 'per_1k_characters') return explicitUnit;
+  if (explicitUnit === 'per_image') return explicitUnit;
+  if (explicitUnit === 'per_request') return explicitUnit;
+  if (providerNames.includes('deepgram') || providerNames.includes('elevenlabs') || providerNames.includes('assemblyai')) {
+    return 'per_1k_characters';
+  }
+  if (NON_TOKEN_MODEL_PATTERN.test(identity)) return 'per_minute';
+  return 'per_token';
+}
+
+function addPricingUnits(
+  gateway: string,
+  models: AIGatewayModelIndexEntry[],
+): AIGatewayModelIndexEntry[] {
+  return models.map((model) => ({ ...model, pricingUnit: inferPricingUnit(gateway, model) }));
+}
+
 export async function runModelIndexTask(
   ctx: TaskContext<AIGatewayModelIndexProviderConfig>,
 ): Promise<TaskResult> {
@@ -529,7 +607,10 @@ export async function runModelIndexTask(
     return { data: result as unknown as JsonObject, latencyMs: responseMs };
   }
 
-  const models = await enrichModels(config, normalizeModels(config.modelListFormat, body));
+  const models = addPricingUnits(
+    config.name,
+    await enrichModels(config, normalizeModels(config.modelListFormat, body)),
+  );
   const result: AIGatewayModelIndexProviderResult = {
     provider: config.name,
     statusCode,
