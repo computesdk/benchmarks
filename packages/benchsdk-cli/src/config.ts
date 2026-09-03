@@ -5,6 +5,7 @@ import { join } from 'node:path';
 export interface Credentials {
   baseUrl?: string;
   token?: string;
+  apiKey?: string;
   refreshToken?: string;
   tokenExpiresAt?: number;
   refreshExpiresAt?: number;

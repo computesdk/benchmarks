@@ -80,6 +80,9 @@ importers:
       '@computesdk/e2b':
         specifier: ^1.7.53
         version: 1.7.53
+      '@computesdk/freestyle':
+        specifier: ^0.2.0
+        version: 0.2.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@computesdk/hopx':
         specifier: ^0.2.28
         version: 0.2.28(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -105,8 +108,8 @@ importers:
         specifier: ^0.1.2
         version: 0.1.2
       '@computesdk/miosa':
-        specifier: ^1.0.3
-        version: 1.0.3
+        specifier: ^1.0.4
+        version: 1.0.4
       '@computesdk/modal':
         specifier: ^1.9.5
         version: 1.9.5
@@ -123,8 +126,8 @@ importers:
         specifier: ^0.3.7
         version: 0.3.7(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@computesdk/opencomputer':
-        specifier: ^1.0.3
-        version: 1.0.3
+        specifier: ^1.0.4
+        version: 1.0.4
       '@computesdk/quilt':
         specifier: ^1.0.3
         version: 1.0.3
@@ -769,6 +772,9 @@ packages:
   '@computesdk/e2b@1.7.53':
     resolution: {integrity: sha512-gvF3bCjtH63Dzb5XwsLuubieoMEtviQERlhlcoQibdL6GBi+ntXcp3v7fg6QdumMZ10ceOyH3qxflaIZ8euDdg==}
 
+  '@computesdk/freestyle@0.2.0':
+    resolution: {integrity: sha512-TBQ6zEAbTWQ6+4cgMzFHKQyqqtvjGplPM22F4HV0q886X2P9cc8Z8zqwkXKSNg0TQzzppyJXJLumjGG1SAoaGQ==}
+
   '@computesdk/hopx@0.2.28':
     resolution: {integrity: sha512-NGkqEitBw7VtJJcwKw6E82kB9tpSMdmlKE2RA2CJfOeJdPIMyO/RuxvprVAZW1Xl5H0zIexhyzwrtO6tnfQ62w==}
 
@@ -797,8 +803,8 @@ packages:
     resolution: {integrity: sha512-UZExZDT9I5KU9nJeuWbVL88/00HM1WKPKnCkFlNCr4K4+/SdsT2aghwVOxyizq+47ufCSjjbtXFEP9+QS1ReBQ==}
     engines: {node: '>=22'}
 
-  '@computesdk/miosa@1.0.3':
-    resolution: {integrity: sha512-htd05N0KOfdesjqnf5UPMj+liUw4RX7IgVUPpEKRG3MZsOvRQbm0pNNH3LZ8OjrgX6jvH6JeLVHtcB7eqfRxpw==}
+  '@computesdk/miosa@1.0.4':
+    resolution: {integrity: sha512-74nFk4+5Wc6px716U6/A0nLqvQcefzWJrccst2BUsp/FRZ+n9HUl7PRTe1aIagF6y9KTJV8YP87RnjaZ5dQdhQ==}
 
   '@computesdk/modal@1.9.5':
     resolution: {integrity: sha512-WTZZwN73htUFrkRTkCEtNofxS4tmYQwzPPYvdQ4MysjLwq2nZP8gYZk6awloV051o/dG1miZDPBnRHfz9gw/vA==}
@@ -815,8 +821,8 @@ packages:
   '@computesdk/notte@0.3.7':
     resolution: {integrity: sha512-BRF+nlF0WkPQV/FTx8uBYuDfe0mYcIV4+J8+DlXMuuJk9avca9pKa2eJW8Jh4WwYloTG8lzJH9sfkYAdV8WBHw==}
 
-  '@computesdk/opencomputer@1.0.3':
-    resolution: {integrity: sha512-Y34k/HLwDmD46gY2XD1un0WChV2qriL1OHeU5ojongqWsJ3xDXdAC+26tMA3kjJfVg0NWJ4BLkHXLxiiCFsgAg==}
+  '@computesdk/opencomputer@1.0.4':
+    resolution: {integrity: sha512-il6kyMeoUaaLL69V7rM2dgZHPw5CC34uuL2zZm7ooVngVQBKW3VaKhmUbP63JWAWD+iruBaFglWkFuSrEkwQlA==}
 
   '@computesdk/provider@2.1.4':
     resolution: {integrity: sha512-abTZS8kpif4QpLZ7Jzo6hmlje2b3YB4VRC8hVkrb/tKXwt0QcU7Nao7tM1phRru0HxVrfHycb/vZtdJSlNFGeA==}
@@ -1621,8 +1627,8 @@ packages:
   '@onkernel/sdk@0.49.0':
     resolution: {integrity: sha512-nsq5OfkaNKxRTCdXQF8BSTj/Wl0iBIqyWoI/ATgQt15pV+59E22MsZ+IHPiVwwb33tXLtnOqUe5ffOxm7l3GHg==}
 
-  '@opencomputer/sdk@0.15.6':
-    resolution: {integrity: sha512-4FLK2Mjz1iqxWSloPXbDXoJLKnEk3rI1jcojzAEpAoR2hO8S7CjjL8yck0GHaaQjn7vob80doMFLWVUMsHzKgg==}
+  '@opencomputer/sdk@0.15.7':
+    resolution: {integrity: sha512-KbwjN0sYbLBnjWJmHpu9nEUIT0gS1Pad58y2bsZ5TP7itm4H5tMsflvkbNi38QjXIn1OdCuR0GyRNcejxyHnEA==}
     engines: {node: '>=18'}
 
   '@opentelemetry/api-logs@0.217.0':
@@ -3510,6 +3516,10 @@ packages:
   forwarded@0.2.0:
     resolution: {integrity: sha512-buRG0fpBtRHSTCOASe6hD258tEubFoRLb4ZNA6NxMVHNw2gOcwHo9wyablzMzOA5z9xA9L1KNjk/Nt6MT9aYow==}
     engines: {node: '>= 0.6'}
+
+  freestyle@0.2.7:
+    resolution: {integrity: sha512-fTISd4+LyrGB1so1HNhtbfUSaqbMue95lu9Pov7xap3WPNC+NLsXATwpsYuy7dJa7pcj/qIum/aXGgUSV+/CPg==}
+    hasBin: true
 
   fresh@2.0.0:
     resolution: {integrity: sha512-Rx/WycZ60HOaqLKAi6cHRKKI7zxWbJ31MhntmtwMoaTeF7XFH9hhBp8vITaMidfljRQ6eYWCKkaTK+ykVJHP2A==}
@@ -6392,6 +6402,15 @@ snapshots:
       computesdk: 4.1.4
       e2b: 2.45.0
 
+  '@computesdk/freestyle@0.2.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
+    dependencies:
+      '@computesdk/provider': 2.1.5
+      computesdk: 4.1.4
+      freestyle: 0.2.7(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   '@computesdk/hopx@0.2.28(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
     dependencies:
       '@computesdk/provider': 2.1.5
@@ -6461,7 +6480,7 @@ snapshots:
       computesdk: 4.1.4
       microsandbox: 0.6.12
 
-  '@computesdk/miosa@1.0.3':
+  '@computesdk/miosa@1.0.4':
     dependencies:
       '@computesdk/provider': 2.1.5
       computesdk: 4.1.4
@@ -6501,10 +6520,10 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@computesdk/opencomputer@1.0.3':
+  '@computesdk/opencomputer@1.0.4':
     dependencies:
       '@computesdk/provider': 2.1.5
-      '@opencomputer/sdk': 0.15.6
+      '@opencomputer/sdk': 0.15.7
       computesdk: 4.1.4
 
   '@computesdk/provider@2.1.4':
@@ -7262,7 +7281,7 @@ snapshots:
 
   '@onkernel/sdk@0.49.0': {}
 
-  '@opencomputer/sdk@0.15.6':
+  '@opencomputer/sdk@0.15.7':
     dependencies:
       undici: 7.29.0
 
@@ -9454,6 +9473,15 @@ snapshots:
   forwarded-parse@2.1.2: {}
 
   forwarded@0.2.0: {}
+
+  freestyle@0.2.7(bufferutil@4.1.0)(utf-8-validate@6.0.6):
+    dependencies:
+      dotenv: 17.4.2
+      ws: 8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      yargs: 17.7.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
   fresh@2.0.0: {}
 

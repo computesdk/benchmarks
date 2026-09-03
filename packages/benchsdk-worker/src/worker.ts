@@ -3,6 +3,8 @@ import { gzip as gzipCallback } from 'node:zlib';
 import { promisify } from 'node:util';
 
 const gzip = promisify(gzipCallback);
+import { createSystemMetricsCollector } from './metrics.js';
+import type { BenchmarkSystemMetricsSample } from './metrics.js';
 import type {
   BenchmarkClient,
   BenchmarkAssignment,
@@ -27,6 +29,10 @@ const DEFAULT_READY_POLL_INTERVAL_MS = 1000;
 const DEFAULT_LOG_LEVEL: BenchmarkLogLevel = 'info';
 const DEFAULT_LOG_FLUSH_INTERVAL_MS = 0;
 const DEFAULT_MAX_LOG_LINES = 100_000;
+// On by default (unlike log flushing): this is the worker's only source of
+// system metrics, so leaving it opt-in would silently reproduce the gap
+// where no benchmark on this path collected any resource data at all.
+const DEFAULT_METRICS_INTERVAL_MS = 30_000;
 const MAX_TASK_RESULT_RECORDS = 5000;
 const MAX_TASK_RECORD_STEPS = 100;
 const MAX_HEARTBEAT_CONCURRENCY_SAMPLES = 20;
@@ -154,6 +160,9 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
   if (options.logFlushIntervalMs !== undefined && options.logFlushIntervalMs < 0) {
     throw new Error('Benchmark logFlushIntervalMs must be a non-negative integer.');
   }
+  if (options.metricsIntervalMs !== undefined && (!Number.isInteger(options.metricsIntervalMs) || options.metricsIntervalMs < 0)) {
+    throw new Error('Benchmark metricsIntervalMs must be a non-negative integer.');
+  }
 
   const logLevel: BenchmarkLogLevel = options.logLevel ?? parseLogLevel(
     typeof process !== 'undefined' ? process.env.BENCHMARK_LOG_LEVEL : undefined,
@@ -164,6 +173,11 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
   const logCompression: 'gzip' | false =
     options.logCompression ??
     (typeof process !== 'undefined' && process.env.BENCHMARK_LOG_COMPRESSION === 'gzip' ? 'gzip' : false);
+  // 0 disables, same as logFlushIntervalMs, but the default is on: unlike log
+  // flushing (a mid-run nicety for a stream that uploads in full at the end
+  // regardless), this is the only place samples are ever taken — skipping a
+  // sample at this interval loses it for good.
+  const metricsIntervalMs = options.metricsIntervalMs ?? parseEnvInt('BENCHMARK_METRICS_INTERVAL_MS', DEFAULT_METRICS_INTERVAL_MS);
 
   const processKey = options.processKey ?? os.hostname();
   const assignment = await client.claimWorker(options.benchmarkSlug, options.runId, options.participantSlug, {
@@ -396,8 +410,42 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
       : undefined;
   logFlush?.unref?.();
 
+  // Sampled on an interval and uploaded once as a `system-metrics` artifact
+  // at finish, mirroring how the worker log is buffered and uploaded. Samples
+  // are this worker process's own CPU/memory plus host-wide load average and
+  // socket counts — not the sandbox/VM's total resource usage.
+  const systemMetricsCollector = metricsIntervalMs > 0 ? createSystemMetricsCollector() : undefined;
+  const systemMetricsSamples: BenchmarkSystemMetricsSample[] = [];
+  const metricsInterval =
+    systemMetricsCollector && metricsIntervalMs > 0
+      ? setInterval(() => {
+          systemMetricsSamples.push(systemMetricsCollector.sample());
+        }, metricsIntervalMs)
+      : undefined;
+  metricsInterval?.unref?.();
+
+  async function uploadSystemMetricsArtifact(): Promise<void> {
+    if (systemMetricsSamples.length === 0) return;
+    try {
+      const body = systemMetricsSamples.map((sample) => JSON.stringify(sample)).join('\n') + '\n';
+      await client.uploadWorkerArtifact(options.benchmarkSlug, options.runId, claimed.workerId, {
+        attemptId: claimed.attemptId,
+        kind: 'system-metrics',
+        contentType: 'application/x-ndjson',
+        name: 'metrics.jsonl',
+        body,
+      });
+    } catch {
+      // Metrics upload is best-effort; never fail the run over it.
+    }
+  }
+
   try {
     await sendHeartbeat().catch((error) => handleTelemetryError(options.onTelemetryError, 'heartbeat', error));
+    // An immediate baseline sample, same reasoning as the heartbeat above: a
+    // worker that finishes inside one metricsIntervalMs window would
+    // otherwise upload no metrics artifact at all.
+    if (systemMetricsCollector) systemMetricsSamples.push(systemMetricsCollector.sample());
 
     await mapPool(taskIndices, workerConcurrency, async (taskIndex) => {
       inFlightCount += 1;
@@ -539,6 +587,10 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
   } finally {
     if (logFlush) clearInterval(logFlush);
     await uploadWorkerLogArtifact(true);
+    if (metricsInterval) clearInterval(metricsInterval);
+    if (systemMetricsCollector) systemMetricsSamples.push(systemMetricsCollector.sample());
+    systemMetricsCollector?.stop();
+    await uploadSystemMetricsArtifact();
     clearInterval(heartbeat);
     clearInterval(resultFlush);
   }

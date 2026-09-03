@@ -1,8 +1,23 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { gzipSync, gunzipSync } from 'node:zlib';
 import { createBenchmarkClient } from '../client';
 import { BenchmarkApiError, BenchmarkReporter, createSystemMetricsCollector } from '../index';
 import type { BenchmarkAssignment } from '../index';
+
+let originalApiKey: string | undefined;
+
+beforeAll(() => {
+  originalApiKey = process.env.BENCHMARKS_PLATFORM_API_KEY;
+  process.env.BENCHMARKS_PLATFORM_API_KEY = 'k';
+});
+
+afterAll(() => {
+  if (originalApiKey === undefined) {
+    delete process.env.BENCHMARKS_PLATFORM_API_KEY;
+  } else {
+    process.env.BENCHMARKS_PLATFORM_API_KEY = originalApiKey;
+  }
+});
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {

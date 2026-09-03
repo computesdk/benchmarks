@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import * as runnerBarrel from '@benchsdk/runner';
 
 import * as barrel from '../index';
@@ -194,6 +194,21 @@ type _PublicTypeSurface = [
 
 const BASE = 'https://platform.test/api/v1';
 const DEFAULT_BASE_URL = 'https://platform.computesdk.com/api/v1';
+
+let originalApiKey: string | undefined;
+
+beforeAll(() => {
+  originalApiKey = process.env.BENCHMARKS_PLATFORM_API_KEY;
+  process.env.BENCHMARKS_PLATFORM_API_KEY = 'k';
+});
+
+afterAll(() => {
+  if (originalApiKey === undefined) {
+    delete process.env.BENCHMARKS_PLATFORM_API_KEY;
+  } else {
+    process.env.BENCHMARKS_PLATFORM_API_KEY = originalApiKey;
+  }
+});
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -891,6 +906,7 @@ describe('runWorker lifecycle and task execution', () => {
     await client.runWorker({
       benchmarkSlug: 'scale', runId: 'run_1', participantSlug: 'e2b',
       heartbeatIntervalMs: HEARTBEAT_MS,
+      metricsIntervalMs: 0, // isolates the flush interval; metrics sampling also defaults to 30000ms
       task: async () => ({ ok: true }),
     });
 
@@ -931,6 +947,7 @@ describe('runWorker lifecycle and task execution', () => {
     await client.runWorker({
       benchmarkSlug: 'scale', runId: 'run_1', participantSlug: 'e2b',
       heartbeatIntervalMs: HEARTBEAT_MS,
+      metricsIntervalMs: 0, // isolates the flush interval; metrics sampling also defaults to 30000ms
       task: async () => ({ ok: true }),
     });
 
@@ -997,7 +1014,9 @@ describe('runWorker lifecycle and task execution', () => {
     const { calls, fetchMock } = recordingClient(lifecycleResponder({ taskRange: { start: 0, end: 0, count: 1 } }));
     const client = createBenchmarkClient({ baseUrl: BASE, apiKey: 'k', fetch: fetchMock });
     await client.runWorker({ benchmarkSlug: 'scale', runId: 'run_1', participantSlug: 'e2b', task: async () => ({ ok: true }) });
-    expect(calls.at(-1)!.url).toContain('/complete');
+    // Not asserted as the *last* call: the system-metrics upload (on by
+    // default) can land after /complete in the finally block.
+    expect(calls.some((c) => c.url.endsWith('/complete'))).toBe(true);
   });
 
   it('VAL-SDK-057: runs onFinish before completing/failing the worker', async () => {
@@ -1031,6 +1050,7 @@ describe('runWorker lifecycle and task execution', () => {
     const client = createBenchmarkClient({ baseUrl: BASE, apiKey: 'k', fetch: fetchMock });
     await expect(client.runWorker({
       benchmarkSlug: 'scale', runId: 'run_1', participantSlug: 'e2b',
+      metricsIntervalMs: 0, // isolates this to the heartbeat + resultFlush intervals under test
       task: async () => ({ ok: true }),
       onFinish,
     })).rejects.toBeInstanceOf(BenchmarkApiError);
@@ -1067,6 +1087,40 @@ describe('runWorker lifecycle and task execution', () => {
     const record = (calls.find((c) => c.url.endsWith('/events'))!.body as { records: TaskResultRecord[] }).records[0];
     expect(record.steps![0]).toMatchObject({ name: 'boom', status: 'error', errorCode: 'RangeError' });
     expect(record.errorCode).toBe('RangeError');
+  });
+
+  it('VAL-SDK-061: uploads a system-metrics artifact with at least a baseline sample', async () => {
+    const responder = (url: string) => {
+      if (url.endsWith('/workers/claim')) return jsonResponse({ assignment: makeAssignment({ taskRange: { start: 0, end: 0, count: 1 } }) });
+      if (url.endsWith('/events')) return jsonResponse({ accepted: 1 }, 202);
+      if (url.endsWith('/heartbeat')) return jsonResponse(lifecycleResponse());
+      if (url.endsWith('/complete')) return jsonResponse(lifecycleResponse());
+      if (url.endsWith('/workers/worker_1/artifacts')) return jsonResponse({ artifactId: 'artifact_1', uploadUrl: 'https://upload.test/metrics' });
+      if (url === 'https://upload.test/metrics') return new Response(null, { status: 200 });
+      throw new Error(`unexpected request: ${url}`);
+    };
+    const { calls, fetchMock } = recordingClient(responder);
+    const client = createBenchmarkClient({ baseUrl: BASE, apiKey: 'k', fetch: fetchMock });
+    // metricsIntervalMs left at its default (30000, on by default) — the task
+    // finishes well inside that window, so no interval sample fires. The
+    // baseline (taken alongside the first heartbeat) and the final sample (in
+    // the finish path) are still captured, so the artifact is never empty.
+    await client.runWorker({
+      benchmarkSlug: 'scale', runId: 'run_1', participantSlug: 'e2b',
+      task: async () => ({ ok: true }),
+    });
+
+    const create = calls.find((c) => c.url.endsWith('/workers/worker_1/artifacts') && c.method === 'POST');
+    expect(create).toBeDefined();
+    expect(create!.body).toMatchObject({ kind: 'system-metrics', name: 'metrics.jsonl', contentType: 'application/x-ndjson' });
+
+    const upload = calls.find((c) => c.url === 'https://upload.test/metrics' && c.method === 'PUT');
+    expect(upload).toBeDefined();
+    // Multiple samples make the body multi-line NDJSON (not a lone JSON object),
+    // so parseBody leaves it as a string here — parse the first line ourselves.
+    const lines = String(upload!.body).trim().split('\n');
+    expect(lines.length).toBeGreaterThanOrEqual(1);
+    expect(JSON.parse(lines[0])).toMatchObject({ loadavg1m: expect.any(Number), memRssMb: expect.any(Number) });
   });
 
 });
@@ -1338,6 +1392,23 @@ describe('BenchmarkReporter', () => {
       vi.useRealTimers();
     }
   });
+
+  it('returns null instead of rejecting when credentials are missing', async () => {
+    const prevApiKey = process.env.BENCHMARKS_PLATFORM_API_KEY;
+    const prevToken = process.env.BENCHMARKS_PLATFORM_TOKEN;
+    try {
+      delete process.env.BENCHMARKS_PLATFORM_API_KEY;
+      delete process.env.BENCHMARKS_PLATFORM_TOKEN;
+      const { fetchMock } = recordingClient(() => jsonResponse({ assignment: makeAssignment() }));
+      const reporter = await BenchmarkReporter.claim({ ...reporterConfig, fetch: fetchMock });
+      expect(reporter).toBeNull();
+    } finally {
+      if (prevApiKey === undefined) delete process.env.BENCHMARKS_PLATFORM_API_KEY;
+      else process.env.BENCHMARKS_PLATFORM_API_KEY = prevApiKey;
+      if (prevToken === undefined) delete process.env.BENCHMARKS_PLATFORM_TOKEN;
+      else process.env.BENCHMARKS_PLATFORM_TOKEN = prevToken;
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -1348,14 +1419,16 @@ describe('createSystemMetricsCollector', () => {
     'ts', 'uptimeMs', 'cpuUserUs', 'cpuSystemUs', 'memRssMb', 'memHeapUsedMb', 'memHeapTotalMb',
     'memExternalMb', 'eventLoopP50Ms', 'eventLoopP99Ms', 'eventLoopMaxMs', 'loadavg1m', 'loadavg5m',
     'loadavg15m', 'openFds', 'sockstat',
+    'hostMemTotalMb', 'hostMemAvailableMb', 'hostCpuUsedUs', 'hostCpuTotalUs',
+    'cgroupMemLimitMb', 'cgroupCpuLimitCores',
   ];
 
-  it('VAL-SDK-086: sample() returns a complete 16-field BenchmarkSystemMetricsSample', () => {
+  it('VAL-SDK-086: sample() returns a complete 22-field BenchmarkSystemMetricsSample', () => {
     const collector = createSystemMetricsCollector();
     const sample = collector.sample();
     collector.stop();
     expect(Object.keys(sample).sort()).toEqual([...SAMPLE_KEYS].sort());
-    expect(Object.keys(sample)).toHaveLength(16);
+    expect(Object.keys(sample)).toHaveLength(22);
     expect(sample.ts).toEqual(expect.any(String));
     expect(sample.memRssMb).toBeGreaterThan(0);
     expect(sample.eventLoopP99Ms).toEqual(expect.any(Number));
@@ -1378,12 +1451,18 @@ describe('createSystemMetricsCollector', () => {
     expect(typeof collector.stop).toBe('function');
   });
 
-  it('VAL-SDK-089: sockstat and openFds gracefully degrade (number|null / object|null)', () => {
+  it('VAL-SDK-089: sockstat, openFds, and the /proc- and cgroup-derived fields gracefully degrade to null off Linux', () => {
     const collector = createSystemMetricsCollector();
     const sample = collector.sample();
     collector.stop();
     expect(sample.openFds === null || typeof sample.openFds === 'number').toBe(true);
     expect(sample.sockstat === null || typeof sample.sockstat === 'object').toBe(true);
+    for (const key of [
+      'hostMemTotalMb', 'hostMemAvailableMb', 'hostCpuUsedUs', 'hostCpuTotalUs',
+      'cgroupMemLimitMb', 'cgroupCpuLimitCores',
+    ] as const) {
+      expect(sample[key] === null || typeof sample[key] === 'number').toBe(true);
+    }
   });
 });
 

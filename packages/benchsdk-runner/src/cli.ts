@@ -19,7 +19,7 @@ import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { run as runPlatformCli } from '@benchsdk/cli';
-import { createBenchmarkClient, type BenchmarkClientConfig } from '@benchsdk/api';
+import { createBenchmarkClient, type BenchmarkClient, type BenchmarkClientConfig } from '@benchsdk/api';
 import { filterParticipantsByEnv, selectParticipants } from '@benchsdk/worker';
 import { parseCliArgs, runBenchmark, type CliArgs } from './runner.js';
 import { NoAvailableParticipantsError } from './no-available-participants.js';
@@ -169,11 +169,11 @@ export async function runCheck(argv: string[]): Promise<void> {
 
   const dryRun = flags.includes('--dry-run') || flags.includes('--no-ingest') || projectConfig.dryRun;
 
-  const client = createBenchmarkClient(apiConfig);
-
+  let client: BenchmarkClient | undefined;
   let apiOk = dryRun;
-  if (!dryRun) {
+  if (!dryRun && apiConfig.apiKey) {
     try {
+      client = createBenchmarkClient(apiConfig);
       await client.listBenchmarks({ limit: 1 });
       apiOk = true;
     } catch (err) {

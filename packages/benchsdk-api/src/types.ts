@@ -646,6 +646,15 @@ export interface RunWorkerOptions {
    * dropped telemetry observable.
    */
   onTelemetryError?: (error: unknown, operation: string) => void;
+  /**
+   * Interval in ms to sample system metrics (this process's CPU/memory, event
+   * loop lag, host load average and socket counts), uploaded as a
+   * `system-metrics` artifact once at finish. `0` disables sampling entirely.
+   * Defaults to `BENCHMARK_METRICS_INTERVAL_MS` env or 30000 — unlike log
+   * flushing, this is on by default since sampling is the only way these
+   * values are ever captured.
+   */
+  metricsIntervalMs?: number;
   task: TaskFunction;
 }
 

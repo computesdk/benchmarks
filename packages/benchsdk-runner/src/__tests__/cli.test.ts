@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { runBenchmarkFile } from '../cli';
 import { NoAvailableParticipantsError } from '../no-available-participants.js';
+import { AuthError } from '@benchsdk/cli';
 
 const fixture = (name: string) => `src/__tests__/fixtures/${name}`;
 
@@ -29,12 +30,25 @@ describe('runBenchmarkFile', () => {
   });
 
   it('imports a valid module and drives the run, surfacing NoAvailableParticipantsError', async () => {
-    // The fixture's participant requires an env var that is never set, so the
-    // run env-gates to zero participants before any network call. Extra CLI
-    // flags after the file are forwarded to the runner without error.
+    process.env.BENCHMARKS_PLATFORM_API_KEY = 'test-key';
+    try {
+      // The fixture's participant requires an env var that is never set, so the
+      // run env-gates to zero participants after auth is validated. Extra CLI
+      // flags after the file are forwarded to the runner without error.
+      await expect(
+        runBenchmarkFile(['run', fixture('good.bench.ts'), '--iterations', '3']),
+      ).rejects.toBeInstanceOf(NoAvailableParticipantsError);
+    } finally {
+      delete process.env.BENCHMARKS_PLATFORM_API_KEY;
+    }
+  });
+
+  it('rejects before checking participants when no platform credentials are set', async () => {
+    delete process.env.BENCHMARKS_PLATFORM_API_KEY;
+    delete process.env.BENCHMARKS_PLATFORM_TOKEN;
     await expect(
       runBenchmarkFile(['run', fixture('good.bench.ts'), '--iterations', '3']),
-    ).rejects.toBeInstanceOf(NoAvailableParticipantsError);
+    ).rejects.toBeInstanceOf(AuthError);
   });
 
   it('validates a benchmark with --check instead of executing tasks', async () => {

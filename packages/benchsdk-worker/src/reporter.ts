@@ -90,8 +90,8 @@ export class BenchmarkReporter {
   }
 
   static async claim(cfg: BenchmarkReporterConfig): Promise<BenchmarkReporter | null> {
-    const client = createBenchmarkClient(cfg);
     try {
+      const client = createBenchmarkClient(cfg);
       const assignment = await client.claimWorker(cfg.benchmarkSlug, cfg.runId, cfg.participantSlug, {
         processKind: cfg.processKind,
         processKey: cfg.processKey ?? os.hostname(),

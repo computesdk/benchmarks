@@ -10,6 +10,7 @@ import { createosSandbox } from '@computesdk/createos-sandbox';
 import { daytona } from '@computesdk/daytona';
 import { declaw } from '@computesdk/declaw';
 import { e2b } from '@computesdk/e2b';
+import { freestyle } from '@computesdk/freestyle';
 import { hopx } from '@computesdk/hopx';
 import { isorun } from '@computesdk/isorun';
 // import { lelantos } from '@computesdk/lelantos';
@@ -115,6 +116,11 @@ export const providers: ProviderConfig[] = [
     requiredEnvVars: ['E2B_API_KEY'],
     createCompute: () => e2b({ apiKey: process.env.E2B_API_KEY! }),
     sandboxOptions: { templateId: 'base-8cpu-16gb', timeout: 600_000 },
+  },
+  {
+    name: 'freestyle',
+    requiredEnvVars: ['FREESTYLE_API_KEY'],
+    createCompute: () => freestyle({ apiKey: process.env.FREESTYLE_API_KEY! }),
   },
   {
     name: 'hopx',

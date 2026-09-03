@@ -34,11 +34,6 @@ function apiKeyFromEnvironment(): string | undefined {
   return process.env.BENCHMARKS_PLATFORM_API_KEY;
 }
 
-function isNonInteractive(): boolean {
-  if (typeof process === 'undefined') return false;
-  return !!process.env.CI || process.stdin.isTTY === false;
-}
-
 function computeTokenExpiry(expiresInSeconds: number): number {
   return Date.now() + expiresInSeconds * 1000;
 }
@@ -105,31 +100,54 @@ export async function resolveAuth(override?: {
     org: override?.org,
   });
 
-  const platformUrl = mergedConfig.baseUrl ?? credentials.baseUrl ?? getPlatformBaseUrl();
-  const apiBaseUrl = getApiBaseUrl(platformUrl);
-  const authBaseUrl = getAuthBaseUrl(platformUrl);
-  const orgSlug = override?.org ?? credentials.orgSlug ?? config.org;
-  const orgId = credentials.orgId;
-  const format = config.format;
+  const envApiKey = apiKeyFromEnvironment();
+  const envToken = tokenFromEnvironment();
 
-  let token = tokenFromEnvironment() ?? credentials.token;
-  let apiKey = override?.apiKey;
-  let refreshToken = credentials.refreshToken;
-  let tokenExpiresAt = credentials.tokenExpiresAt;
-  let refreshExpiresAt = credentials.refreshExpiresAt;
+  let token: string | undefined;
+  let apiKey: string | undefined;
+  let refreshToken: string | undefined;
+  let tokenExpiresAt: number | undefined;
+  let refreshExpiresAt: number | undefined;
+  let platformUrl: string;
+  let orgSlug: string | undefined;
+  let orgId: string | undefined;
 
-  if (apiKey) {
+  if (override?.apiKey) {
+    apiKey = override.apiKey;
     token = undefined;
     refreshToken = undefined;
-  } else if (apiKeyFromEnvironment()) {
-    apiKey = apiKeyFromEnvironment();
-    token = undefined;
-    refreshToken = undefined;
-  } else if (token && token !== credentials.token) {
-    // Environment token does not refresh through the CLI.
+    platformUrl = getPlatformBaseUrl(override.baseUrl ?? config.baseUrl);
+    orgSlug = override.org ?? config.org;
+    orgId = undefined;
+  } else if (envToken) {
+    token = envToken;
     refreshToken = undefined;
     tokenExpiresAt = undefined;
+    refreshExpiresAt = undefined;
+    platformUrl = getPlatformBaseUrl(mergedConfig.baseUrl);
+    orgSlug = mergedConfig.org;
+    orgId = undefined;
+  } else if (envApiKey) {
+    apiKey = envApiKey;
+    token = undefined;
+    refreshToken = undefined;
+    platformUrl = getPlatformBaseUrl(mergedConfig.baseUrl);
+    orgSlug = mergedConfig.org;
+    orgId = undefined;
+  } else {
+    token = credentials.token;
+    apiKey = credentials.apiKey;
+    refreshToken = credentials.refreshToken;
+    tokenExpiresAt = credentials.tokenExpiresAt;
+    refreshExpiresAt = credentials.refreshExpiresAt;
+    platformUrl = getPlatformBaseUrl(mergedConfig.baseUrl ?? credentials.baseUrl);
+    orgSlug = mergedConfig.org ?? credentials.orgSlug;
+    orgId = credentials.orgId;
   }
+
+  const apiBaseUrl = getApiBaseUrl(platformUrl);
+  const authBaseUrl = getAuthBaseUrl(platformUrl);
+  const format = config.format;
 
   let auth: CliAuth = {
     token,
@@ -156,12 +174,10 @@ export async function resolveAuth(override?: {
     };
   }
 
-  if (!auth.token && !auth.apiKey && !apiKeyFromEnvironment() && !tokenFromEnvironment()) {
-    if (isNonInteractive()) {
-      throw new AuthError(
-        'No credentials found in non-interactive mode. Set BENCHMARKS_PLATFORM_API_KEY or BENCHMARKS_PLATFORM_TOKEN.',
-      );
-    }
+  if (!auth.token && !auth.apiKey) {
+    throw new AuthError(
+      'No credentials found. Set BENCHMARKS_PLATFORM_API_KEY or BENCHMARKS_PLATFORM_TOKEN, or run `bench auth login` for OAuth. Create an API key at https://platform.computesdk.com in your organization settings (Settings → API keys).',
+    );
   }
 
   return auth;

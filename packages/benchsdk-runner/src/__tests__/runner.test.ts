@@ -10,6 +10,10 @@ vi.mock('@benchsdk/api', () => ({
 
 vi.mock('@benchsdk/worker', () => ({
   BenchmarkReporter: { claim: (...args: unknown[]) => reporterClaim(...args) },
+  createSystemMetricsCollector: () => ({
+    sample: () => ({ ts: new Date().toISOString() }),
+    stop: () => {},
+  }),
   filterParticipantsByEnv: (ps: any[]) => {
     const available: any[] = [];
     const skipped: { name: string; missing: string[] }[] = [];
@@ -24,9 +28,19 @@ vi.mock('@benchsdk/worker', () => ({
   selectParticipants: (all: any[], names?: string[]) => (names ? all.filter((p) => names.includes(p.name)) : all),
 }));
 
+vi.mock('@benchsdk/cli', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@benchsdk/cli')>();
+  return {
+    ...original,
+    resolveAuth: vi.fn(),
+  };
+});
+
 import { parseCliArgs, mergeConfig, runBenchmark } from '../runner';
 import { TaskError, defineTask } from '../bench-config';
 import { NoAvailableParticipantsError } from '../no-available-participants';
+import { resolveAuth, AuthError } from '@benchsdk/cli';
+import type { CliAuth } from '@benchsdk/cli';
 import type { BenchmarkConfig } from '../bench-config';
 import type { TaskResultRecord } from '@benchsdk/api';
 
@@ -265,12 +279,32 @@ describe('runBenchmark', () => {
       return { assignment, records };
     });
     createBenchmarkClient.mockReturnValue(fakeClient);
+    vi.mocked(resolveAuth).mockImplementation(async () => {
+      const token = process.env.BENCHMARKS_PLATFORM_TOKEN;
+      const apiKey = process.env.BENCHMARKS_PLATFORM_API_KEY;
+      if (!token && !apiKey) {
+        throw new AuthError('No credentials found');
+      }
+      return {
+        apiBaseUrl: 'https://platform.computesdk.com/api/v1',
+        baseUrl: 'https://platform.computesdk.com',
+        authBaseUrl: 'https://platform.computesdk.com/auth',
+        format: 'table',
+        apiKey: token ? undefined : apiKey,
+        token: token || undefined,
+        orgSlug: process.env.BENCHMARKS_TEST_ORG_SLUG,
+        orgId: process.env.BENCHMARKS_TEST_ORG_ID,
+      } as CliAuth;
+    });
   });
 
   afterEach(() => {
     delete process.env.E2B_API_KEY;
     delete process.env.MODAL_TOKEN;
     delete process.env.BENCHMARKS_PLATFORM_API_KEY;
+    delete process.env.BENCHMARKS_PLATFORM_TOKEN;
+    delete process.env.BENCHMARKS_TEST_ORG_SLUG;
+    delete process.env.BENCHMARKS_TEST_ORG_ID;
     delete process.env.BENCHSDK_NO_INGEST;
   });
 
@@ -546,7 +580,20 @@ describe('runBenchmark', () => {
       { name: 'e2b', missing: ['E2B_API_KEY'] },
       { name: 'modal', missing: ['MODAL_TOKEN'] },
     ]);
-    expect(createBenchmarkClient).not.toHaveBeenCalled();
+    expect(createBenchmarkClient).toHaveBeenCalled();
+  });
+
+  it('throws AuthError before checking participants when no platform credentials are set', async () => {
+    delete process.env.BENCHMARKS_PLATFORM_API_KEY;
+    delete process.env.BENCHMARKS_PLATFORM_TOKEN;
+
+    const err = await runBenchmark(
+      { benchmarkSlug: 's', benchmarkName: 'n', participants },
+      defineTask(async () => ({})),
+      [],
+    ).catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(AuthError);
   });
 
   it('participant mode: tags data.phase from the schedule via measure', async () => {
@@ -689,6 +736,44 @@ describe('runBenchmark', () => {
     expect(runWorker).not.toHaveBeenCalled();
     expect(fakeClient.planWorkers).toHaveBeenCalledTimes(2);
     expect(calls.planWorkers[0][3]).toMatchObject({ workerCount: 1, targetConcurrency: 2 });
+  });
+
+  it('groupBy round: uploads a single shared system-metrics artifact (not one per participant)', async () => {
+    const uploads: Record<string, { kind: string; body: string; metadata?: Record<string, unknown> }[]> = { e2b: [], modal: [] };
+    reporterClaim.mockImplementation(async (cfg: any) => ({
+      taskIndexStart: 0,
+      recordResult: () => {},
+      uploadArtifact: async (input: { kind: string; body: string; metadata?: Record<string, unknown> }) => {
+        uploads[cfg.participantSlug].push(input);
+        return {};
+      },
+      setProgress: () => {},
+      heartbeat: async () => {},
+      finish: async () => {},
+    }));
+
+    const task = vi.fn(async () => ({ data: { ok: true } }));
+
+    await runBenchmark(
+      { benchmarkSlug: 'ai-gateway-local', benchmarkName: 'AI GW', iterations: 2, groupBy: 'round', participants },
+      defineTask(task),
+      [],
+    );
+
+    // Every participant runs in this one shared process, so metrics belong to
+    // the run — a single artifact via one reporter, not a duplicate per slug.
+    const metricsUploads = [...uploads.e2b, ...uploads.modal].filter((u) => u.kind === 'system-metrics');
+    expect(metricsUploads).toHaveLength(1);
+    const metrics = metricsUploads[0];
+    expect(metrics).toMatchObject({ kind: 'system-metrics', name: 'metrics.jsonl', contentType: 'application/x-ndjson' });
+    // Tagged process-scoped with every participant, so it's not misread as the
+    // uploading participant's isolated usage (the SDK's only artifact API is
+    // worker-scoped, so it's necessarily filed under one reporter's worker).
+    expect(metrics.metadata).toEqual({ scope: 'shared-process', participants: ['e2b', 'modal'] });
+    // Baseline sample at claim + one per round (2 rounds) + one final sample.
+    const lines = metrics.body.trim().split('\n');
+    expect(lines).toHaveLength(4);
+    for (const line of lines) expect(() => JSON.parse(line)).not.toThrow();
   });
 
   it('groupBy round: a task with no explicit steps records a single implicit "task" step', async () => {
@@ -1113,7 +1198,7 @@ describe('runBenchmark', () => {
 
       const outcome = await runBenchmark(config, defineTask(task), ['--no-ingest']);
 
-      expect(createBenchmarkClient).not.toHaveBeenCalled();
+      expect(createBenchmarkClient).toHaveBeenCalled();
       expect(fakeClient.upsertBenchmark).not.toHaveBeenCalled();
       expect(fakeClient.createRun).not.toHaveBeenCalled();
       expect(runWorker).not.toHaveBeenCalled();
@@ -1137,7 +1222,7 @@ describe('runBenchmark', () => {
 
       const outcome = await runBenchmark(config, defineTask(task), ['--no-ingest']);
 
-      expect(createBenchmarkClient).not.toHaveBeenCalled();
+      expect(createBenchmarkClient).toHaveBeenCalled();
       expect(fakeClient.upsertBenchmark).not.toHaveBeenCalled();
       expect(fakeClient.createRun).not.toHaveBeenCalled();
       expect(fakeClient.planWorkers).not.toHaveBeenCalled();
@@ -1159,9 +1244,65 @@ describe('runBenchmark', () => {
 
       const outcome = await runBenchmark(config, defineTask(task), []);
 
-      expect(createBenchmarkClient).not.toHaveBeenCalled();
+      expect(createBenchmarkClient).toHaveBeenCalled();
       expect(fakeClient.createRun).not.toHaveBeenCalled();
       expect(outcome.runId).toBe('no-ingest');
     });
+
+    it('does not submit a run summary in dry-run even with scoring configured', async () => {
+      const onScore = vi.fn((lowerIsBetter) => ({
+        metrics: [lowerIsBetter('ttiMs', { unit: 'ms', ceiling: 1000, weights: { median: 1, p95: 0, p99: 0 } })],
+      }));
+      const onComplete = vi.fn();
+      const config: BenchmarkConfig<typeof participants[number]> = {
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        iterations: 2,
+        participants: [participants[0]],
+        onScore,
+        onComplete,
+      };
+
+      const outcome = await runBenchmark(config, defineTask(async () => ({ data: { ttiMs: 100 } })), ['--no-ingest']);
+
+      expect(fakeClient.submitRunSummary).not.toHaveBeenCalled();
+      expect(onScore).not.toHaveBeenCalled();
+      expect(onComplete).toHaveBeenCalledTimes(1);
+      expect(onComplete).toHaveBeenCalledWith(outcome);
+      expect(outcome.runId).toBe('no-ingest');
+    });
+  });
+
+  it('propagates resolved orgSlug and orgId to round-mode reporter claims', async () => {
+    process.env.BENCHMARKS_PLATFORM_TOKEN = 'oauth-token';
+    process.env.BENCHMARKS_TEST_ORG_SLUG = 'my-org';
+    process.env.BENCHMARKS_TEST_ORG_ID = 'my-org-id';
+    delete process.env.BENCHMARKS_PLATFORM_API_KEY;
+
+    const task = vi.fn(async () => ({ data: { ok: true } }));
+    const config: BenchmarkConfig<typeof participants[number]> = {
+      benchmarkSlug: 's',
+      benchmarkName: 'n',
+      iterations: 1,
+      groupBy: 'round',
+      participants: [participants[0]],
+    };
+
+    await runBenchmark(config, defineTask(task), []);
+
+    expect(createBenchmarkClient).toHaveBeenCalledWith(
+      expect.objectContaining({
+        token: 'oauth-token',
+        orgSlug: 'my-org',
+        orgId: 'my-org-id',
+      }),
+    );
+    expect(reporterClaim).toHaveBeenCalledWith(
+      expect.objectContaining({
+        token: 'oauth-token',
+        orgSlug: 'my-org',
+        orgId: 'my-org-id',
+      }),
+    );
   });
 });
