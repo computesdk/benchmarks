@@ -246,7 +246,14 @@ export function createSystemMetricsCollector(): BenchmarkSystemMetricsCollector 
       // sample read. The current read for this sample will happen after this
       // baseline read completes, so the two snapshots are still ordered.
       return readHostCpuJiffies();
-    })();
+    })().then((baseline) => {
+      // If both the creation-time and fallback reads failed, clear the cached
+      // promise so the next sample can retry establishing the baseline.
+      if (baseline === null) {
+        hostCpuBaselineInitPromise = null;
+      }
+      return baseline;
+    });
     return hostCpuBaselineInitPromise;
   }
 
