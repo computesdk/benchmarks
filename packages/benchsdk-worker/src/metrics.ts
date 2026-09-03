@@ -233,6 +233,8 @@ export function createSystemMetricsCollector(): BenchmarkSystemMetricsCollector 
   // Capture the host CPU baseline once at creation time so cumulative host
   // CPU usage covers the full collector lifetime, not just from the first sample.
   const hostCpuBaselinePromise: Promise<number[] | null> = readHostCpuJiffies().catch(() => null);
+  let hostCpuBaseline: number[] | null = null;
+  let hostCpuBaselineReady = false;
   let cgroupPaths: CgroupPaths | null = null;
   let cachedCgroupMemLimitMb: number | null | undefined;
   let cachedCgroupCpuLimitCores: number | null | undefined;
@@ -243,15 +245,34 @@ export function createSystemMetricsCollector(): BenchmarkSystemMetricsCollector 
       const memory = process.memoryUsage();
       const loadavg = os.loadavg();
 
-      const [hostMem, hostCpuJiffies, openFds, sockstat, hostCpuBaseline] = await Promise.all([
+      // On the first sample, await the creation-time baseline before reading the
+      // current /proc/stat snapshot so the two reads are correctly ordered and
+      // the first delta cannot be negative. If that creation read failed, we
+      // fall back to using the first successful sample read as the baseline and
+      // skip reporting a delta until a second ordered snapshot exists.
+      if (!hostCpuBaselineReady) {
+        hostCpuBaselineReady = true;
+        const creationBaseline = await hostCpuBaselinePromise;
+        if (creationBaseline) {
+          hostCpuBaseline = creationBaseline;
+        }
+      }
+
+      const [hostMem, hostCpuJiffies, openFds, sockstat] = await Promise.all([
         readHostMemInfo(),
         readHostCpuJiffies(),
         countOpenFds(),
         readSockstat(),
-        hostCpuBaselinePromise,
       ]);
 
-      const hostCpu = hostCpuBaseline && hostCpuJiffies ? hostCpuUsageSince(hostCpuBaseline, hostCpuJiffies) : null;
+      let hostCpu: { usedUs: number; totalUs: number } | null = null;
+      if (hostCpuBaseline) {
+        if (hostCpuJiffies) {
+          hostCpu = hostCpuUsageSince(hostCpuBaseline, hostCpuJiffies);
+        }
+      } else if (hostCpuJiffies) {
+        hostCpuBaseline = hostCpuJiffies;
+      }
 
       if (!cgroupPaths) {
         cgroupPaths = await cgroupRelativePaths();
