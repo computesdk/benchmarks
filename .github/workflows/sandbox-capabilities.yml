@@ -1,6 +1,8 @@
 name: Sandbox Capabilities Matrix
 
 on:
+  schedule:
+    - cron: '0 10 * * 1' # Weekly on Monday at 10am UTC / 5am CDT
   workflow_dispatch:
     inputs:
       provider:
