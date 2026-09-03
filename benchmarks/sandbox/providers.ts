@@ -125,8 +125,8 @@ export const providers: ProviderConfig[] = [
   },
   {
     name: 'givemeanode',
-    requiredEnvVars: ['GMN_TOKEN'],
-    createCompute: () => givemeanode({ apiKey: process.env.GMN_TOKEN!, baseUrl: process.env.GMN_API_HOST }),
+    requiredEnvVars: ['GMAN_TOKEN'],
+    createCompute: () => givemeanode({ apiKey: process.env.GMAN_TOKEN!, baseUrl: process.env.GMN_API_HOST }),
   },
   {
     name: 'hopx',
