@@ -130,8 +130,8 @@ export const providers: ProviderConfig[] = [
   },
   {
     name: 'givemeanode',
-    requiredEnvVars: ['GMN_TOKEN'],
-    createCompute: () => givemeanode({ apiKey: process.env.GMN_TOKEN! }),
+    requiredEnvVars: ['GMAN_TOKEN'],
+    createCompute: () => givemeanode({ apiKey: process.env.GMAN_TOKEN! }),
   },
   {
     name: 'isorun',
