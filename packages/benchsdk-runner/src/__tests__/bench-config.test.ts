@@ -152,6 +152,62 @@ describe('defineBenchmarkConfig', () => {
       }),
     ).toThrow('duplicate');
   });
+
+  it('rejects an empty or non-string display defaultMetric', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: { overview: { defaultMetric: '' } },
+      }),
+    ).toThrow('display.overview.defaultMetric');
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: { overview: { defaultMetric: 123 as any } },
+      }),
+    ).toThrow('display.overview.defaultMetric');
+  });
+
+  it('rejects a display defaultMetric not declared in metrics', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: {
+          metrics: [{ key: 'x', label: 'X' }],
+          overview: { defaultMetric: 'y' },
+        },
+      }),
+    ).toThrow("'y' is not declared in display.metrics");
+  });
+
+  it('accepts a display defaultMetric that matches a declared metric key', () => {
+    const config = defineBenchmarkConfig({
+      benchmarkSlug: 's',
+      benchmarkName: 'n',
+      participants,
+      display: {
+        metrics: [{ key: 'x', label: 'X' }],
+        overview: { defaultMetric: 'x' },
+      },
+    });
+    expect(config.display?.overview?.defaultMetric).toBe('x');
+  });
+
+  it('allows a display defaultMetric when metrics is omitted', () => {
+    const config = defineBenchmarkConfig({
+      benchmarkSlug: 's',
+      benchmarkName: 'n',
+      participants,
+      display: { overview: { defaultMetric: 'anything' } },
+    });
+    expect(config.display?.overview?.defaultMetric).toBe('anything');
+  });
 });
 
 describe('defineTask', () => {

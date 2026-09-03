@@ -472,21 +472,21 @@ export function defineBenchmarkConfig<T extends BaseParticipant = BaseParticipan
     if (typeof config.display !== 'object' || config.display === null || Array.isArray(config.display)) {
       throw new Error('display must be an object');
     }
+    const displayMetricKeys = new Set<string>();
     if (config.display.metrics !== undefined) {
       if (!Array.isArray(config.display.metrics)) {
         throw new Error('display.metrics must be an array');
       }
-      const seenMetricKeys = new Set<string>();
       for (let i = 0; i < config.display.metrics.length; i++) {
         const metric = config.display.metrics[i];
         if (metric === null || typeof metric !== 'object' || Array.isArray(metric)) {
           throw new Error(`display.metrics[${i}] must be an object`);
         }
         const key = assertNonEmptyString(metric.key, `display.metrics[${i}].key`);
-        if (seenMetricKeys.has(key)) {
+        if (displayMetricKeys.has(key)) {
           throw new Error(`duplicate display metric key: ${key}`);
         }
-        seenMetricKeys.add(key);
+        displayMetricKeys.add(key);
         assertNonEmptyString(metric.label, `display.metrics[${i}].label`);
         if (metric.direction !== undefined && metric.direction !== 'higher-better' && metric.direction !== 'lower-better') {
           throw new Error(`display.metrics[${i}].direction must be 'higher-better' or 'lower-better'`);
@@ -524,7 +524,15 @@ export function defineBenchmarkConfig<T extends BaseParticipant = BaseParticipan
       if (typeof config.display.overview !== 'object' || config.display.overview === null || Array.isArray(config.display.overview)) {
         throw new Error('display.overview must be an object');
       }
-      const { defaultLayout } = config.display.overview;
+      const { defaultMetric, defaultLayout } = config.display.overview;
+      if (defaultMetric !== undefined) {
+        const metric = assertNonEmptyString(defaultMetric, 'display.overview.defaultMetric');
+        // If the manifest declares metrics, the default must reference one of them.
+        // When metrics is omitted we can't validate the key, so any non-empty string is allowed.
+        if (config.display.metrics !== undefined && !displayMetricKeys.has(metric)) {
+          throw new Error(`display.overview.defaultMetric '${metric}' is not declared in display.metrics`);
+        }
+      }
       if (defaultLayout !== undefined && !['ranking', 'cards', 'chart', 'leaderboard'].includes(defaultLayout)) {
         throw new Error("display.overview.defaultLayout must be 'ranking', 'cards', 'chart', or 'leaderboard'");
       }
