@@ -1,4 +1,4 @@
-import * as fs from 'node:fs';
+import { promises as fs } from 'node:fs';
 import * as os from 'node:os';
 import { monitorEventLoopDelay } from 'node:perf_hooks';
 
@@ -35,63 +35,63 @@ export interface BenchmarkSystemMetricsSample {
 }
 
 export interface BenchmarkSystemMetricsCollector {
-  sample(): BenchmarkSystemMetricsSample;
+  sample(): Promise<BenchmarkSystemMetricsSample>;
   stop(): void;
 }
 
-function readSockstat(): Record<string, number> | null {
+async function readTextFile(path: string): Promise<string | null> {
   try {
-    const data = fs.readFileSync('/proc/net/sockstat', 'utf-8');
-    const out: Record<string, number> = {};
-    for (const line of data.split('\n')) {
-      const index = line.indexOf(':');
-      if (index < 0) continue;
-      const section = line.slice(0, index).trim().toLowerCase();
-      const parts = line.slice(index + 1).trim().split(/\s+/);
-      for (let i = 0; i + 1 < parts.length; i += 2) {
-        const value = Number.parseInt(parts[i + 1], 10);
-        if (!Number.isNaN(value)) out[`${section}_${parts[i]}`] = value;
-      }
+    return await fs.readFile(path, 'utf-8');
+  } catch {
+    return null;
+  }
+}
+
+async function readSockstat(): Promise<Record<string, number> | null> {
+  const data = await readTextFile('/proc/net/sockstat');
+  if (!data) return null;
+  const out: Record<string, number> = {};
+  for (const line of data.split('\n')) {
+    const index = line.indexOf(':');
+    if (index < 0) continue;
+    const section = line.slice(0, index).trim().toLowerCase();
+    const parts = line.slice(index + 1).trim().split(/\s+/);
+    for (let i = 0; i + 1 < parts.length; i += 2) {
+      const value = Number.parseInt(parts[i + 1], 10);
+      if (!Number.isNaN(value)) out[`${section}_${parts[i]}`] = value;
     }
-    return out;
+  }
+  return out;
+}
+
+async function countOpenFds(): Promise<number | null> {
+  try {
+    const entries = await fs.readdir('/proc/self/fd');
+    return entries.length;
   } catch {
     return null;
   }
 }
 
-function countOpenFds(): number | null {
-  try {
-    return fs.readdirSync('/proc/self/fd').length;
-  } catch {
-    return null;
-  }
-}
-
-function readHostMemInfo(): { totalMb: number; availableMb: number } | null {
-  try {
-    const data = fs.readFileSync('/proc/meminfo', 'utf-8');
-    const total = data.match(/^MemTotal:\s+(\d+)\s*kB/m);
-    const available = data.match(/^MemAvailable:\s+(\d+)\s*kB/m);
-    if (!total || !available) return null;
-    return {
-      totalMb: Math.round(Number.parseInt(total[1], 10) / 1024),
-      availableMb: Math.round(Number.parseInt(available[1], 10) / 1024),
-    };
-  } catch {
-    return null;
-  }
+async function readHostMemInfo(): Promise<{ totalMb: number; availableMb: number } | null> {
+  const data = await readTextFile('/proc/meminfo');
+  if (!data) return null;
+  const total = data.match(/^MemTotal:\s+(\d+)\s*kB/m);
+  const available = data.match(/^MemAvailable:\s+(\d+)\s*kB/m);
+  if (!total || !available) return null;
+  return {
+    totalMb: Math.round(Number.parseInt(total[1], 10) / 1024),
+    availableMb: Math.round(Number.parseInt(available[1], 10) / 1024),
+  };
 }
 
 // user nice system idle iowait irq softirq steal [guest guest_nice], in jiffies.
-function readHostCpuJiffies(): number[] | null {
-  try {
-    const data = fs.readFileSync('/proc/stat', 'utf-8');
-    const line = data.split('\n').find((l) => l.startsWith('cpu '));
-    if (!line) return null;
-    return line.trim().split(/\s+/).slice(1).map((v) => Number.parseInt(v, 10));
-  } catch {
-    return null;
-  }
+async function readHostCpuJiffies(): Promise<number[] | null> {
+  const data = await readTextFile('/proc/stat');
+  if (!data) return null;
+  const line = data.split('\n').find((l) => l.startsWith('cpu '));
+  if (!line) return null;
+  return line.trim().split(/\s+/).slice(1).map((v) => Number.parseInt(v, 10));
 }
 
 // ponytail: hardcoded 100Hz — correct on ~every Linux distro/container, wrong
@@ -110,17 +110,22 @@ function hostCpuUsageSince(baseline: number[] | null, current: number[] | null):
   return { usedUs: Math.round(usedUs), totalUs: Math.round(totalUs) };
 }
 
+interface CgroupPaths {
+  v2: string;
+  controllers: Map<string, string>;
+}
+
 // The process's own control files aren't always at the cgroup fs root: under a
 // nested cgroup (no namespacing) they live at `<root>/<relative>/...`. Parse
 // the relative path per controller from /proc/self/cgroup, defaulting to the
 // root so hosts that *do* namespace the cgroup (relative path "/") still work.
 // A limit set on any ancestor also constrains us, so callers walk up the tree
 // and take the tightest — reading only the leaf would miss a parent's ceiling.
-function cgroupRelativePaths(): { v2: string; controllers: Map<string, string> } {
+async function cgroupRelativePaths(): Promise<CgroupPaths> {
   const controllers = new Map<string, string>();
   let v2 = '';
   try {
-    const data = fs.readFileSync('/proc/self/cgroup', 'utf-8');
+    const data = await fs.readFile('/proc/self/cgroup', 'utf-8');
     for (const line of data.split('\n')) {
       // Format: hierarchy-id:controller-list:relative-path
       const idx = line.indexOf(':');
@@ -170,59 +175,51 @@ function tighter(a: number | null, b: number | null): number | null {
   return Math.min(a, b);
 }
 
-function readCgroupMemLimitMb(): number | null {
-  const { v2, controllers } = cgroupRelativePaths();
+async function readCgroupMemLimitMb(paths: CgroupPaths): Promise<number | null> {
   let limit: number | null = null;
-  for (const dir of cgroupDirsToRoot('/sys/fs/cgroup', v2)) {
-    try {
-      const raw = fs.readFileSync(`${dir}/memory.max`, 'utf-8').trim();
-      if (raw === 'max') continue; // unlimited here — an ancestor may still cap us.
-      const bytes = Number.parseInt(raw, 10);
-      if (Number.isFinite(bytes)) limit = tighter(limit, Math.round(bytes / 1024 / 1024));
-    } catch {
-      // No memory.max at this level — try the next ancestor, then fall to v1.
-    }
+  for (const dir of cgroupDirsToRoot('/sys/fs/cgroup', paths.v2)) {
+    const raw = await readTextFile(`${dir}/memory.max`);
+    if (raw === null) continue;
+    const trimmed = raw.trim();
+    if (trimmed === 'max') continue; // unlimited here — an ancestor may still cap us.
+    const bytes = Number.parseInt(trimmed, 10);
+    if (Number.isFinite(bytes)) limit = tighter(limit, Math.round(bytes / 1024 / 1024));
   }
   if (limit !== null) return limit;
-  const relPath = controllers.get('memory') ?? '';
+  const relPath = paths.controllers.get('memory') ?? '';
   for (const dir of cgroupDirsToRoot('/sys/fs/cgroup/memory', relPath)) {
-    try {
-      const bytes = Number.parseInt(fs.readFileSync(`${dir}/memory.limit_in_bytes`, 'utf-8').trim(), 10);
-      // v1 has no "unlimited" string; it reports a near-2^63 sentinel instead.
-      if (!Number.isFinite(bytes) || bytes > 1e15) continue;
-      limit = tighter(limit, Math.round(bytes / 1024 / 1024));
-    } catch {
-      // No limit file at this level — keep walking up toward the root.
-    }
+    const raw = await readTextFile(`${dir}/memory.limit_in_bytes`);
+    if (raw === null) continue;
+    const bytes = Number.parseInt(raw.trim(), 10);
+    // v1 has no "unlimited" string; it reports a near-2^63 sentinel instead.
+    if (!Number.isFinite(bytes) || bytes > 1e15) continue;
+    limit = tighter(limit, Math.round(bytes / 1024 / 1024));
   }
   return limit;
 }
 
-function readCgroupCpuLimitCores(): number | null {
-  const { v2, controllers } = cgroupRelativePaths();
+async function readCgroupCpuLimitCores(paths: CgroupPaths): Promise<number | null> {
   let limit: number | null = null;
-  for (const dir of cgroupDirsToRoot('/sys/fs/cgroup', v2)) {
-    try {
-      const [quotaRaw, periodRaw] = fs.readFileSync(`${dir}/cpu.max`, 'utf-8').trim().split(/\s+/);
-      if (quotaRaw === 'max') continue; // unlimited here — an ancestor may still cap us.
-      const quota = Number.parseInt(quotaRaw, 10);
-      const period = Number.parseInt(periodRaw, 10);
-      if (Number.isFinite(quota) && period > 0) limit = tighter(limit, quota / period);
-    } catch {
-      // No cpu.max at this level — try the next ancestor, then fall to v1.
-    }
+  for (const dir of cgroupDirsToRoot('/sys/fs/cgroup', paths.v2)) {
+    const raw = await readTextFile(`${dir}/cpu.max`);
+    if (raw === null) continue;
+    const [quotaRaw, periodRaw] = raw.trim().split(/\s+/);
+    if (quotaRaw === 'max') continue; // unlimited here — an ancestor may still cap us.
+    const quota = Number.parseInt(quotaRaw, 10);
+    const period = Number.parseInt(periodRaw, 10);
+    if (Number.isFinite(quota) && period > 0) limit = tighter(limit, quota / period);
   }
   if (limit !== null) return limit;
-  const relPath = controllers.get('cpu') ?? '';
+  const relPath = paths.controllers.get('cpu') ?? '';
   for (const dir of cgroupDirsToRoot('/sys/fs/cgroup/cpu', relPath)) {
-    try {
-      const quota = Number.parseInt(fs.readFileSync(`${dir}/cpu.cfs_quota_us`, 'utf-8').trim(), 10);
-      if (!Number.isFinite(quota) || quota <= 0) continue; // -1 == unlimited here.
-      const period = Number.parseInt(fs.readFileSync(`${dir}/cpu.cfs_period_us`, 'utf-8').trim(), 10);
-      if (period > 0) limit = tighter(limit, quota / period);
-    } catch {
-      // No quota file at this level — keep walking up toward the root.
-    }
+    const quotaRaw = await readTextFile(`${dir}/cpu.cfs_quota_us`);
+    if (quotaRaw === null) continue;
+    const quota = Number.parseInt(quotaRaw.trim(), 10);
+    if (!Number.isFinite(quota) || quota <= 0) continue; // -1 == unlimited here.
+    const periodRaw = await readTextFile(`${dir}/cpu.cfs_period_us`);
+    if (periodRaw === null) continue;
+    const period = Number.parseInt(periodRaw.trim(), 10);
+    if (period > 0) limit = tighter(limit, quota / period);
   }
   return limit;
 }
@@ -230,19 +227,47 @@ function readCgroupCpuLimitCores(): number | null {
 export function createSystemMetricsCollector(): BenchmarkSystemMetricsCollector {
   const startedAt = Date.now();
   const cpuBaseline = process.cpuUsage();
-  const hostCpuBaseline = readHostCpuJiffies();
-  const cgroupMemLimitMb = readCgroupMemLimitMb();
-  const cgroupCpuLimitCores = readCgroupCpuLimitCores();
   const eventLoop = monitorEventLoopDelay({ resolution: 20 });
   eventLoop.enable();
 
+  let hostCpuBaseline: number[] | null = null;
+  let cgroupPaths: CgroupPaths | null = null;
+  let cachedCgroupMemLimitMb: number | null | undefined;
+  let cachedCgroupCpuLimitCores: number | null | undefined;
+
   return {
-    sample() {
+    async sample() {
       const cpu = process.cpuUsage(cpuBaseline);
       const memory = process.memoryUsage();
       const loadavg = os.loadavg();
-      const hostMem = readHostMemInfo();
-      const hostCpu = hostCpuUsageSince(hostCpuBaseline, readHostCpuJiffies());
+
+      const [hostMem, hostCpuJiffies, openFds, sockstat] = await Promise.all([
+        readHostMemInfo(),
+        readHostCpuJiffies(),
+        countOpenFds(),
+        readSockstat(),
+      ]);
+
+      let hostCpu: { usedUs: number; totalUs: number } | null = null;
+      if (hostCpuJiffies) {
+        if (hostCpuBaseline) {
+          hostCpu = hostCpuUsageSince(hostCpuBaseline, hostCpuJiffies);
+        } else {
+          hostCpuBaseline = hostCpuJiffies;
+        }
+      }
+
+      if (!cgroupPaths) {
+        cgroupPaths = await cgroupRelativePaths();
+      }
+
+      if (cachedCgroupMemLimitMb === undefined) {
+        cachedCgroupMemLimitMb = await readCgroupMemLimitMb(cgroupPaths);
+      }
+      if (cachedCgroupCpuLimitCores === undefined) {
+        cachedCgroupCpuLimitCores = await readCgroupCpuLimitCores(cgroupPaths);
+      }
+
       const sample: BenchmarkSystemMetricsSample = {
         ts: new Date().toISOString(),
         uptimeMs: Date.now() - startedAt,
@@ -258,14 +283,14 @@ export function createSystemMetricsCollector(): BenchmarkSystemMetricsCollector 
         loadavg1m: loadavg[0],
         loadavg5m: loadavg[1],
         loadavg15m: loadavg[2],
-        openFds: countOpenFds(),
-        sockstat: readSockstat(),
+        openFds,
+        sockstat,
         hostMemTotalMb: hostMem?.totalMb ?? null,
         hostMemAvailableMb: hostMem?.availableMb ?? null,
         hostCpuUsedUs: hostCpu?.usedUs ?? null,
         hostCpuTotalUs: hostCpu?.totalUs ?? null,
-        cgroupMemLimitMb,
-        cgroupCpuLimitCores,
+        cgroupMemLimitMb: cachedCgroupMemLimitMb ?? null,
+        cgroupCpuLimitCores: cachedCgroupCpuLimitCores ?? null,
       };
       eventLoop.reset();
       return sample;

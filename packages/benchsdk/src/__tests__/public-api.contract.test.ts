@@ -1422,9 +1422,9 @@ describe('createSystemMetricsCollector', () => {
     'cgroupMemLimitMb', 'cgroupCpuLimitCores',
   ];
 
-  it('VAL-SDK-086: sample() returns a complete 22-field BenchmarkSystemMetricsSample', () => {
+  it('VAL-SDK-086: sample() returns a complete 22-field BenchmarkSystemMetricsSample', async () => {
     const collector = createSystemMetricsCollector();
-    const sample = collector.sample();
+    const sample = await collector.sample();
     collector.stop();
     expect(Object.keys(sample).sort()).toEqual([...SAMPLE_KEYS].sort());
     expect(Object.keys(sample)).toHaveLength(22);
@@ -1433,26 +1433,26 @@ describe('createSystemMetricsCollector', () => {
     expect(sample.eventLoopP99Ms).toEqual(expect.any(Number));
   });
 
-  it('VAL-SDK-087: sample() can be called repeatedly (event loop counters reset per call)', () => {
+  it('VAL-SDK-087: sample() can be called repeatedly (event loop counters reset per call)', async () => {
     const collector = createSystemMetricsCollector();
-    const first = collector.sample();
-    const second = collector.sample();
+    const first = await collector.sample();
+    const second = await collector.sample();
     collector.stop();
     expect(first.eventLoopMaxMs).toEqual(expect.any(Number));
     expect(second.eventLoopMaxMs).toEqual(expect.any(Number));
     expect(second.uptimeMs).toBeGreaterThanOrEqual(first.uptimeMs);
   });
 
-  it('VAL-SDK-088: stop() disables the monitor without throwing', () => {
+  it('VAL-SDK-088: stop() disables the monitor without throwing', async () => {
     const collector = createSystemMetricsCollector();
-    collector.sample();
+    await collector.sample();
     expect(() => collector.stop()).not.toThrow();
     expect(typeof collector.stop).toBe('function');
   });
 
-  it('VAL-SDK-089: sockstat, openFds, and the /proc- and cgroup-derived fields gracefully degrade to null off Linux', () => {
+  it('VAL-SDK-089: sockstat, openFds, and the /proc- and cgroup-derived fields gracefully degrade to null off Linux', async () => {
     const collector = createSystemMetricsCollector();
-    const sample = collector.sample();
+    const sample = await collector.sample();
     collector.stop();
     expect(sample.openFds === null || typeof sample.openFds === 'number').toBe(true);
     expect(sample.sockstat === null || typeof sample.sockstat === 'object').toBe(true);

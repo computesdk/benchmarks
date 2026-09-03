@@ -980,9 +980,9 @@ describe('createBenchmarkClient', () => {
     expect(sentSequences).toEqual([0, 0]);
   });
 
-  it('samples system metrics for coordinator artifacts', () => {
+  it('samples system metrics for coordinator artifacts', async () => {
     const collector = createSystemMetricsCollector();
-    const sample = collector.sample();
+    const sample = await collector.sample();
     collector.stop();
 
     expect(sample.ts).toEqual(expect.any(String));

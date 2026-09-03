@@ -405,10 +405,18 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
   // socket counts — not the sandbox/VM's total resource usage.
   const systemMetricsCollector = metricsIntervalMs > 0 ? createSystemMetricsCollector() : undefined;
   const systemMetricsSamples: BenchmarkSystemMetricsSample[] = [];
+  const takeSystemMetricsSample = async () => {
+    if (!systemMetricsCollector) return;
+    try {
+      systemMetricsSamples.push(await systemMetricsCollector.sample());
+    } catch {
+      // Best-effort: never fail the run over metrics collection.
+    }
+  };
   const metricsInterval =
     systemMetricsCollector && metricsIntervalMs > 0
       ? setInterval(() => {
-          systemMetricsSamples.push(systemMetricsCollector.sample());
+          void takeSystemMetricsSample();
         }, metricsIntervalMs)
       : undefined;
   metricsInterval?.unref?.();
@@ -434,7 +442,7 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
     // An immediate baseline sample, same reasoning as the heartbeat above: a
     // worker that finishes inside one metricsIntervalMs window would
     // otherwise upload no metrics artifact at all.
-    if (systemMetricsCollector) systemMetricsSamples.push(systemMetricsCollector.sample());
+    void takeSystemMetricsSample();
 
     await mapPool(taskIndices, workerConcurrency, async (taskIndex) => {
       inFlightCount += 1;
@@ -577,7 +585,7 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
     if (logFlush) clearInterval(logFlush);
     await uploadWorkerLogArtifact(true);
     if (metricsInterval) clearInterval(metricsInterval);
-    if (systemMetricsCollector) systemMetricsSamples.push(systemMetricsCollector.sample());
+    await takeSystemMetricsSample();
     systemMetricsCollector?.stop();
     await uploadSystemMetricsArtifact();
     clearInterval(heartbeat);
