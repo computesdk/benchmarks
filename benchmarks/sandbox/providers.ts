@@ -77,7 +77,13 @@ export const providers: ProviderConfig[] = [
   {
     name: 'cloud-run',
     requiredEnvVars: ['CLOUD_RUN_SANDBOX_URL', 'CLOUD_RUN_SANDBOX_SECRET'],
-    createCompute: () => cloudRun({ sandboxUrl: process.env.CLOUD_RUN_SANDBOX_URL!, sandboxSecret: process.env.CLOUD_RUN_SANDBOX_SECRET! }),
+    createCompute: () => cloudRun({
+      sandboxUrl: process.env.CLOUD_RUN_SANDBOX_URL!,
+      sandboxSecret: process.env.CLOUD_RUN_SANDBOX_SECRET!,
+      executionMode: 'stateful',
+      write: true,
+      allowEgress: true,
+    }),
   },
   {
     name: 'cloudflare',
