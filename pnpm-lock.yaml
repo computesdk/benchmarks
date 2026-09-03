@@ -83,6 +83,9 @@ importers:
       '@computesdk/freestyle':
         specifier: ^0.2.0
         version: 0.2.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      '@computesdk/givemeanode':
+        specifier: ^1.0.1
+        version: 1.0.1
       '@computesdk/hopx':
         specifier: ^0.2.28
         version: 0.2.28(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -777,6 +780,9 @@ packages:
 
   '@computesdk/freestyle@0.2.0':
     resolution: {integrity: sha512-TBQ6zEAbTWQ6+4cgMzFHKQyqqtvjGplPM22F4HV0q886X2P9cc8Z8zqwkXKSNg0TQzzppyJXJLumjGG1SAoaGQ==}
+
+  '@computesdk/givemeanode@1.0.1':
+    resolution: {integrity: sha512-vR2yKu2OSG/c2Gn2URg2/8n0dOqDXi09aTZIa3/4NqLFI+me6aYhrrgaDHcoSXCvA8OMXuM5/kUCwqDsvhJRsg==}
 
   '@computesdk/hopx@0.2.28':
     resolution: {integrity: sha512-NGkqEitBw7VtJJcwKw6E82kB9tpSMdmlKE2RA2CJfOeJdPIMyO/RuxvprVAZW1Xl5H0zIexhyzwrtO6tnfQ62w==}
@@ -6413,6 +6419,11 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+
+  '@computesdk/givemeanode@1.0.1':
+    dependencies:
+      '@computesdk/provider': 2.1.5
+      computesdk: 4.1.4
 
   '@computesdk/hopx@0.2.28(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
     dependencies:
