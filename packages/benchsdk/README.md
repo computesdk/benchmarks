@@ -202,7 +202,7 @@ For coordinator health artifacts, sample system metrics:
 
 ```ts
 const metrics = createSystemMetricsCollector();
-const samples = [metrics.sample()];
+const samples = [await metrics.sample()];
 metrics.stop();
 ```
 
