@@ -60,7 +60,7 @@ jobs:
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            pnpm update --ignore-scripts
+            pnpm -r update --ignore-scripts
           else
             pnpm install --frozen-lockfile --ignore-scripts
           fi
@@ -114,7 +114,7 @@ jobs:
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            pnpm update --ignore-scripts
+            pnpm -r update --ignore-scripts
           else
             pnpm install --frozen-lockfile --ignore-scripts
           fi
