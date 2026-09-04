@@ -90,7 +90,9 @@ jobs:
         if: env.SHOULD_RUN == 'true'
       - name: Install dependencies
         if: env.SHOULD_RUN == 'true'
-        run: pnpm install --frozen-lockfile
+        run: |
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm -r --filter './packages/**' run build
       - name: Clear stale results from checkout
         if: env.SHOULD_RUN == 'true'
         run: rm -rf results/
@@ -178,7 +180,9 @@ jobs:
           cache: 'pnpm'
       - uses: namespacelabs/nscloud-setup@df198f982fcecfb8264bea3f1274b56a61b6dfdc # v0.0.12
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm -r --filter './packages/**' run build
       - name: Download all results
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:

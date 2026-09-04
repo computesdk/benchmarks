@@ -79,10 +79,11 @@ jobs:
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            pnpm update
+            pnpm -r update --ignore-scripts
           else
-            pnpm install --frozen-lockfile
+            pnpm install --frozen-lockfile --ignore-scripts
           fi
+          pnpm -r --filter './packages/**' run build
       - name: Clear stale results from checkout
         run: rm -rf results/snapshot-fork/
       - name: Run snapshot/fork test
@@ -131,10 +132,11 @@ jobs:
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            pnpm update
+            pnpm -r update --ignore-scripts
           else
-            pnpm install --frozen-lockfile
+            pnpm install --frozen-lockfile --ignore-scripts
           fi
+          pnpm -r --filter './packages/**' run build
       - name: Download snapshot/fork artifacts
         uses: actions/download-artifact@v4
         with:

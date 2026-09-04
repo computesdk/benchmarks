@@ -106,10 +106,11 @@ jobs:
         if: env.SHOULD_RUN == 'true'
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            pnpm update
+            pnpm -r update --ignore-scripts
           else
-            pnpm install --frozen-lockfile
+            pnpm install --frozen-lockfile --ignore-scripts
           fi
+          pnpm -r --filter './packages/**' run build
       - name: Clear stale results from checkout
         if: env.SHOULD_RUN == 'true'
         run: rm -rf results/
@@ -162,10 +163,11 @@ jobs:
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            pnpm update
+            pnpm -r update --ignore-scripts
           else
-            pnpm install --frozen-lockfile
+            pnpm install --frozen-lockfile --ignore-scripts
           fi
+          pnpm -r --filter './packages/**' run build
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
