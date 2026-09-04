@@ -1,4 +1,6 @@
 export { defineBenchmarkConfig, defineTask, TaskError } from './bench-config.js';
+declare const __BENCH_VERSION__: string;
+export const BENCHSDK_RUNNER_VERSION = __BENCH_VERSION__;
 export type {
   BenchmarkConfig,
   BenchmarkTask,
