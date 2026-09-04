@@ -90,10 +90,11 @@ jobs:
           (github.event.inputs.provider == '' || contains(format(',{0},', github.event.inputs.provider), format(',{0},', matrix.provider)))
         run: |
           if [ "${{ github.event_name }}" = 'schedule' ]; then
-            pnpm update
+            pnpm -r update --ignore-scripts
           else
-            pnpm install --frozen-lockfile
+            pnpm install --frozen-lockfile --ignore-scripts
           fi
+          pnpm -r --filter './packages/**' run build
       - name: Build bundles
         if: |
           github.event_name != 'workflow_dispatch' ||
@@ -147,10 +148,11 @@ jobs:
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = 'schedule' ]; then
-            pnpm update
+            pnpm -r update --ignore-scripts
           else
-            pnpm install --frozen-lockfile
+            pnpm install --frozen-lockfile --ignore-scripts
           fi
+          pnpm -r --filter './packages/**' run build
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
