@@ -25,7 +25,7 @@ on:
           - gemini
           - kimi
       iterations:
-        description: 'Cold + warm iterations per gateway (leave empty for family default or 30)'
+        description: 'Cold + warm iterations per gateway (leave empty for family default or 50)'
         required: false
         default: ''
       provider:
@@ -161,7 +161,7 @@ jobs:
           elif [ -n "$FAMILY_ITERATIONS" ]; then
             ITERATIONS="$FAMILY_ITERATIONS"
           else
-            ITERATIONS="30"
+            ITERATIONS="50"
           fi
 
           provider_args=()
