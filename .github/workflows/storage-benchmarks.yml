@@ -78,10 +78,15 @@ jobs:
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            pnpm update
+            pnpm update --ignore-scripts
           else
-            pnpm install --frozen-lockfile
+            pnpm install --frozen-lockfile --ignore-scripts
           fi
+      - name: Build workspace packages
+        # The @benchsdk/* packages are built from source and dist/ is not
+        # committed. Build them in topological order so dependents like
+        # @benchsdk/client can resolve @benchsdk/worker during their own build.
+        run: pnpm -r --filter './packages/**' run build
       - name: Clear stale results from checkout
         run: rm -rf results/storage/
       - name: Run storage benchmark
@@ -131,10 +136,15 @@ jobs:
       - name: Install dependencies
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            pnpm update
+            pnpm update --ignore-scripts
           else
-            pnpm install --frozen-lockfile
+            pnpm install --frozen-lockfile --ignore-scripts
           fi
+      - name: Build workspace packages
+        # The @benchsdk/* packages are built from source and dist/ is not
+        # committed. Build them in topological order so dependents like
+        # @benchsdk/client can resolve @benchsdk/worker during their own build.
+        run: pnpm -r --filter './packages/**' run build
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
