@@ -641,6 +641,12 @@ export interface RunWorkerOptions {
   /** Compress worker log artifacts with `gzip`. Defaults to `BENCHMARK_LOG_COMPRESSION` env or `false`. */
   logCompression?: 'gzip' | false;
   /**
+   * Optional callback for telemetry failures (heartbeat, result flush, log
+   * upload, completion). The worker stays best-effort by default; this makes
+   * dropped telemetry observable.
+   */
+  onTelemetryError?: (error: unknown, operation: string) => void;
+  /**
    * Interval in ms to sample system metrics (this process's CPU/memory, event
    * loop lag, host load average and socket counts), uploaded as a
    * `system-metrics` artifact once at finish. `0` disables sampling entirely.

@@ -1,11 +1,13 @@
 # @benchsdk/runner
 
-Benchmark framework for authoring `*.bench.ts` files that report to the benchmarks platform via [`@benchsdk/client`](../benchsdk).
+Benchmark framework for authoring `*.bench.ts` files and operating benchmark workers. It reports to the benchmarks platform via `@benchsdk/api`; [`@benchsdk/client`](../benchsdk) is a backwards-compatibility re-export shim.
 
 ## What it provides
 
 - **`defineBenchmarkConfig`** / **`defineTask`** — A `*.bench.ts` file exports exactly two things: a **config** (`defineBenchmarkConfig`, the orchestration knobs + `participants` + an optional `onComplete` hook) and a **task** (`defineTask`, the workload for one iteration). There is no "mode": the orchestration shape (sequential / staggered / burst) emerges from the `iterations`, `concurrency`, and `staggerDelayMs` knobs, and `groupBy` (`'participant'` | `'round'`) selects the ordering across participants.
 - **`bench run <file>`** — The CLI entrypoint. It imports the module, reads its `config` and `task`, applies CLI overrides, and drives the run. Benchmark files declare; they never call the runner themselves.
+- **`bench check <file>`** — Validates environment variables, API connectivity, participant availability, and scoring weights before a run.
+- **`runBenchmarkWorker(options)`** — One-shot operator helper that runs a single participant's worker without a `*.bench.ts` file.
 - **`TaskError`** / **`NoAvailableParticipantsError`** — Structured errors: throw `TaskError` from a task to attach a code / data / pre-measured steps; `bench run` treats `NoAvailableParticipantsError` (every participant env-gated out) as a clean no-op exit.
 
 ## Install
@@ -68,7 +70,7 @@ tsx node_modules/@benchsdk/runner/dist/bin.js run sandbox-tti.bench.ts
 
 Inside a task the context exposes three separate channels:
 
-- **`step(name, fn, options?)`** — returns `fn`'s value to your code (thread live objects between steps); records the step's timing/status on the platform. Return values are never auto-recorded as data. Set `captureOutput: false` to return an outcome-shaped object (`stdout`, `stderr`, `exitCode`, ...) without writing it to the worker log.
+- **`step(name, fn, options?)`** — returns `fn`'s value to your code (thread live objects between steps); records the step's timing/status on the platform. Return values are never auto-recorded as data. Set `captureOutput: false` to return an outcome-shaped object (`stdout`, `stderr`, `exitCode`, ...) without writing it to the worker log. Use `parallelInvocations` (formerly `concurrency`) to invoke a step multiple times in parallel.
 - **`measure(data)`** — explicit metric channel. Called inside a `step()` it merges into that step's data; called at task top-level it merges into the task record. A task with no explicit steps is recorded as one implicit `'task'` step carrying its measurements.
 - **`log(message, metaOrOptions?)`** — human-readable narration to the run timeline. `metaOrOptions` can be a metadata JSON object or `{ level: 'debug' | 'info' | 'warn' | 'error', meta?: JsonObject }`.
 
@@ -77,6 +79,7 @@ Inside a task the context exposes three separate channels:
 `bench` is a unified CLI. Besides `bench run`, it can authenticate and query the platform:
 
 ```sh
+bench check <file.bench.ts>
 bench auth login
 bench benchmarks list
 bench runs list <slug>

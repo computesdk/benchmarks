@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { runBenchmarkFile } from '../cli';
 import { NoAvailableParticipantsError } from '../no-available-participants.js';
 import { AuthError } from '@benchsdk/cli';
@@ -49,5 +49,26 @@ describe('runBenchmarkFile', () => {
     await expect(
       runBenchmarkFile(['run', fixture('good.bench.ts'), '--iterations', '3']),
     ).rejects.toBeInstanceOf(AuthError);
+  });
+
+  it('validates a benchmark with --check instead of executing tasks', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('good.bench.ts'), '--check', '--dry-run']),
+    ).rejects.toThrow(/Benchmark check failed/);
+  });
+
+  it('loads a project config file via --config and applies defaults', async () => {
+    const logs: string[] = [];
+    const spy = vi.spyOn(console, 'log').mockImplementation((...args: unknown[]) => {
+      logs.push(args.join(' '));
+    });
+    try {
+      await runBenchmarkFile(['run', fixture('local.bench.ts'), '--config', fixture('bench.config.ts')]);
+      const knobLine = logs.find((l) => l.includes('Knobs:'));
+      expect(knobLine).toMatch(/iterations=2/);
+      expect(knobLine).toMatch(/concurrency=2/);
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

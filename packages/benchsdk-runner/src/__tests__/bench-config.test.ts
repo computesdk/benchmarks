@@ -30,11 +30,11 @@ describe('defineBenchmarkConfig', () => {
   });
 
   it('requires benchmarkSlug', () => {
-    expect(() => defineBenchmarkConfig({ benchmarkSlug: '', benchmarkName: 'n', participants })).toThrow('benchmarkSlug is required');
+    expect(() => defineBenchmarkConfig({ benchmarkSlug: '', benchmarkName: 'n', participants })).toThrow(/benchmarkSlug.*is required/);
   });
 
   it('requires benchmarkName', () => {
-    expect(() => defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: '', participants })).toThrow('benchmarkName is required');
+    expect(() => defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: '', participants })).toThrow(/benchmarkName.*is required/);
   });
 
   it('rejects non-integer or < 1 iterations', () => {
@@ -139,5 +139,14 @@ describe('TaskError', () => {
     expect(err.code).toBeUndefined();
     expect(err.data).toBeUndefined();
     expect(err.steps).toBeUndefined();
+  });
+
+  it('renders a formatted toString with code, step, and timeout', () => {
+    const err = new TaskError('timed out', { code: 'step_timeout', step: 'create', timeoutMs: 5000, data: { participant: 'local' } });
+    const text = err.toString();
+    expect(text).toContain('[TaskError (step_timeout)] timed out');
+    expect(text).toContain('step: create');
+    expect(text).toContain('timeoutMs: 5000');
+    expect(text).toContain('"local"');
   });
 });

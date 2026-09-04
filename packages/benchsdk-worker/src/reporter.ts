@@ -1,3 +1,4 @@
+import os from 'node:os';
 import { createBenchmarkClient } from '@benchsdk/api';
 import type {
   BenchmarkAssignment,
@@ -19,6 +20,12 @@ export interface BenchmarkReporterConfig extends BenchmarkClientConfig {
   processKind?: string;
   processKey?: string;
   batchSize?: number;
+  /**
+   * Optional callback for telemetry failures (heartbeat, result flush, artifact
+   * upload, completion). The reporter stays best-effort by default; this makes
+   * dropped telemetry observable.
+   */
+  onTelemetryError?: (error: unknown, operation: string) => void;
 }
 
 export interface BenchmarkReporterProgress {
@@ -60,7 +67,8 @@ export interface BenchmarkReporterBarrierResult {
 export class BenchmarkReporter {
   private readonly client: BenchmarkClient;
   private readonly assignment: BenchmarkAssignment;
-  private readonly cfg: Required<Pick<BenchmarkReporterConfig, 'benchmarkSlug' | 'runId' | 'participantSlug' | 'batchSize'>>;
+  private readonly cfg: Required<Pick<BenchmarkReporterConfig, 'benchmarkSlug' | 'runId' | 'participantSlug' | 'batchSize'>> &
+    Pick<BenchmarkReporterConfig, 'onTelemetryError'>;
   private pending: TaskResultRecord[] = [];
   private sequenceNumber = 0;
   private flushChain: Promise<void> = Promise.resolve();
@@ -76,6 +84,7 @@ export class BenchmarkReporter {
       runId: cfg.runId,
       participantSlug: cfg.participantSlug,
       batchSize: cfg.batchSize ?? DEFAULT_REPORTER_BATCH_SIZE,
+      onTelemetryError: cfg.onTelemetryError,
     };
     this.progress = { done: 0, inFlight: 0, errors: 0, total: assignment.taskRange.count };
   }
@@ -85,7 +94,7 @@ export class BenchmarkReporter {
       const client = createBenchmarkClient(cfg);
       const assignment = await client.claimWorker(cfg.benchmarkSlug, cfg.runId, cfg.participantSlug, {
         processKind: cfg.processKind,
-        processKey: cfg.processKey,
+        processKey: cfg.processKey ?? os.hostname(),
       });
       return assignment ? new BenchmarkReporter(client, cfg, assignment) : null;
     } catch (error) {
@@ -109,6 +118,14 @@ export class BenchmarkReporter {
     return this.assignment.taskRange.start;
   }
 
+  private reportTelemetryError(operation: string, error: unknown): void {
+    if (this.cfg.onTelemetryError) {
+      this.cfg.onTelemetryError(error, operation);
+      return;
+    }
+    console.warn(`[benchsdk] telemetry failure (${operation}): ${error instanceof Error ? error.message : String(error)}`);
+  }
+
   setProgress(progress: BenchmarkReporterProgress): void {
     this.progress = { ...progress, total: progress.total ?? this.assignment.taskRange.count };
   }
@@ -130,7 +147,7 @@ export class BenchmarkReporter {
       progressTotal: this.progress.total,
       ...(currentStep ? { currentStep } : {}),
       ...(concurrency ? { concurrency } : {}),
-    }).catch(() => {});
+    }).catch((error) => this.reportTelemetryError('heartbeat', error));
   }
 
   async waitForStepReady(input: BenchmarkReporterBarrierInput): Promise<BenchmarkReporterBarrierResult> {
@@ -145,7 +162,7 @@ export class BenchmarkReporter {
     try {
       while (true) {
         await this.heartbeat({ currentStep: input.step, concurrency });
-        const progress = await this.client.getRunProgress(this.cfg.benchmarkSlug, this.cfg.runId).catch(() => null);
+        const progress = await this.client.getRunProgress(this.cfg.benchmarkSlug, this.cfg.runId).catch((error) => { this.reportTelemetryError('getRunProgress', error); return null; });
         const participant = progress?.participants.find((item) => item.slug === this.cfg.participantSlug);
         const step = participant?.concurrency.find((item) => item.step === input.step);
         if (step?.ready) {
@@ -175,10 +192,7 @@ export class BenchmarkReporter {
       metadata: input.metadata,
       body: input.body,
     }).catch((error) => {
-      console.warn(
-        `[benchsdk] failed to upload ${input.kind} artifact for worker ${this.assignment.workerId}: ` +
-          `${error instanceof Error ? error.message : String(error)}`,
-      );
+      this.reportTelemetryError('uploadArtifact', error);
       return null;
     });
   }
@@ -200,10 +214,7 @@ export class BenchmarkReporter {
           });
         } catch (error) {
           this.flushFailed = true;
-          console.warn(
-            `[benchsdk] failed to send ${this.pending.length} task result(s) for worker ${this.assignment.workerId}: ` +
-              `${error instanceof Error ? error.message : String(error)}`,
-          );
+          this.reportTelemetryError('flush', error);
           break;
         }
         this.pending.splice(0, batch.length);
@@ -222,7 +233,7 @@ export class BenchmarkReporter {
         this.assignment.workerId,
         this.assignment.attemptId,
         error,
-      ).catch(() => {});
+      ).catch((failureError) => this.reportTelemetryError('failWorker', failureError));
       return;
     }
     if (this.flushFailed || this.pending.length > 0) {
@@ -232,7 +243,7 @@ export class BenchmarkReporter {
         this.assignment.workerId,
         this.assignment.attemptId,
         new Error('Failed to flush task results'),
-      ).catch(() => {});
+      ).catch((error) => this.reportTelemetryError('failWorker', error));
       return;
     }
     await this.client.completeWorker(
@@ -240,7 +251,7 @@ export class BenchmarkReporter {
       this.cfg.runId,
       this.assignment.workerId,
       this.assignment.attemptId,
-    ).catch(() => {});
+    ).catch((error) => this.reportTelemetryError('completeWorker', error));
   }
 }
 

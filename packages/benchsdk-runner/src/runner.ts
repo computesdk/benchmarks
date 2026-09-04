@@ -18,6 +18,7 @@ import { execSync } from 'node:child_process';
 import os from 'node:os';
 import { createBenchmarkClient } from '@benchsdk/api';
 import { resolveAuth } from '@benchsdk/cli';
+import type { CliAuth } from '@benchsdk/cli';
 import {
   BenchmarkReporter,
   createSystemMetricsCollector,
@@ -39,7 +40,7 @@ import type {
   TaskStepRecord,
 } from '@benchsdk/api';
 import type { BaseParticipant } from '@benchsdk/worker';
-import { TaskError } from './bench-config.js';
+import { TaskError, defineBenchmarkConfig } from './bench-config.js';
 import type {
   BenchmarkConfig,
   BenchmarkRunOutcome,
@@ -145,12 +146,24 @@ function isStepOutcome(value: unknown): value is BenchmarkStepOutcome {
   return typeof o.stdout === 'string' || typeof o.stderr === 'string' || typeof o.error === 'string';
 }
 
-function withTimeout<T>(promise: Promise<T>, ms: number, name: string): Promise<T> {
+interface TimeoutContext {
+  stepName: string;
+  timeoutMs: number;
+  participantSlug?: string;
+}
+
+function withTimeout<T>(promise: Promise<T>, { stepName, timeoutMs, participantSlug }: TimeoutContext): Promise<T> {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(
-      () => reject(new TaskError(`Step "${name}" timed out after ${ms}ms`, { code: 'step_timeout' })),
-      ms,
-    );
+    const timer = setTimeout(() => {
+      const participant = participantSlug ? ` for participant "${participantSlug}"` : '';
+      reject(
+        new TaskError(`Step "${stepName}" timed out after ${timeoutMs}ms${participant}`, {
+          code: 'step_timeout',
+          step: stepName,
+          timeoutMs,
+        }),
+      );
+    }, timeoutMs);
     promise.then(
       (value) => {
         clearTimeout(timer);
@@ -168,21 +181,26 @@ async function runStepInvocations<R>(
   name: string,
   fn: () => Promise<R> | R,
   options: TaskStepOptions | undefined,
+  participantSlug?: string,
 ): Promise<R | R[]> {
-  const requestedConcurrency = options?.concurrency;
-  if (requestedConcurrency !== undefined && (!Number.isInteger(requestedConcurrency) || requestedConcurrency < 1)) {
-    throw new Error(`step "${name}" concurrency must be an integer >= 1 (got ${requestedConcurrency})`);
+  if (options?.concurrency !== undefined) {
+    console.warn(`[benchsdk] step "${name}" option "concurrency" is deprecated; use "parallelInvocations"`);
+  }
+
+  const requestedParallelism = options?.parallelInvocations ?? options?.concurrency;
+  if (requestedParallelism !== undefined && (!Number.isInteger(requestedParallelism) || requestedParallelism < 1)) {
+    throw new Error(`step "${name}" parallelInvocations must be an integer >= 1 (got ${requestedParallelism})`);
   }
   const timeoutMs = options?.timeoutMs;
   if (timeoutMs !== undefined && (!Number.isFinite(timeoutMs) || timeoutMs < 0)) {
     throw new Error(`step "${name}" timeoutMs must be a number >= 0 (got ${timeoutMs})`);
   }
 
-  const count = requestedConcurrency ?? 1;
+  const count = requestedParallelism ?? 1;
   const invocations = Array.from({ length: count }, () => {
     const promise = Promise.resolve().then(() => fn());
     if (timeoutMs === undefined) return promise;
-    return withTimeout(promise, timeoutMs, name);
+    return withTimeout(promise, { stepName: name, timeoutMs, participantSlug });
   });
 
   if (count === 1) {
@@ -207,15 +225,16 @@ async function runStepWithClient<R, C extends number = 1>(
   clientStep: RunWorkerContext['step'],
   name: string,
   fn: () => Promise<R> | R,
-  options?: TaskStepOptions & { concurrency?: C },
+  options?: TaskStepOptions & { parallelInvocations?: C; concurrency?: C },
+  participantSlug?: string,
 ): Promise<C extends 1 ? R : R[]> {
-  const { concurrency: runnerConcurrency, timeoutMs, ...clientOptions } = options ?? {};
+  const { parallelInvocations: runnerParallelism, concurrency: deprecatedConcurrency, timeoutMs, ...clientOptions } = options ?? {};
   const clientStepOptions: DefineStepOptions = {
     ...clientOptions,
     timeoutMs,
-    stepConcurrency: runnerConcurrency,
+    stepConcurrency: runnerParallelism ?? deprecatedConcurrency,
   };
-  const result = await clientStep(name, () => runStepInvocations(name, fn, options), clientStepOptions);
+  const result = await clientStep(name, () => runStepInvocations(name, fn, options, participantSlug), clientStepOptions);
   return result as C extends 1 ? R : R[];
 }
 
@@ -228,7 +247,7 @@ async function runStepWithClient<R, C extends number = 1>(
  * `process.argv` itself; the runner validates and skips them without choking on
  * their values.
  */
-export function parseCliArgs(argv: string[], allowedCustomFlags?: readonly string[]): CliArgs {
+export function parseCliArgs(argv: string[], allowedCustomFlags?: readonly string[], defaults: Partial<CliArgs> = {}): CliArgs {
   const args: CliArgs = {};
   const unknown: string[] = [];
   const allowed = new Set(allowedCustomFlags ?? []);
@@ -360,6 +379,19 @@ export function parseCliArgs(argv: string[], allowedCustomFlags?: readonly strin
   if (!args.noIngest && isEnvNoIngest()) {
     args.noIngest = true;
   }
+
+  // Apply project-level config defaults where the CLI did not provide a value.
+  args.noIngest ??= defaults.noIngest;
+  args.iterations ??= defaults.iterations;
+  args.concurrency ??= defaults.concurrency;
+  args.staggerDelayMs ??= defaults.staggerDelayMs;
+  args.groupBy ??= defaults.groupBy;
+  args.shape ??= defaults.shape;
+  args.runKey ??= defaults.runKey;
+  args.benchmark ??= defaults.benchmark;
+  args.name ??= defaults.name;
+  args.providers ??= defaults.providers;
+
   return args;
 }
 
@@ -440,6 +472,15 @@ function defaultOnResult(record: TaskResultRecord, meta: { iterations: number; p
   } else {
     console.log(`  [${meta.participant}] Task ${n}/${meta.iterations}: FAILED — ${record.errorCode ?? 'unknown error'}`);
   }
+}
+
+export interface PlatformConfig {
+  baseUrl?: string;
+  apiKey?: string;
+}
+
+export interface RunBenchmarkOptions extends PlatformConfig {
+  cliArgs?: Partial<CliArgs>;
 }
 
 /**
@@ -547,21 +588,38 @@ export async function runBenchmark<T extends BaseParticipant>(
   fileConfig: BenchmarkConfig<T>,
   task: BenchmarkTask<T>,
   argv: string[] = [],
+  options: RunBenchmarkOptions = {},
 ): Promise<BenchmarkRunOutcome> {
-  const args = parseCliArgs(argv, fileConfig.customCliFlags);
+  const args = parseCliArgs(argv, fileConfig.customCliFlags, options.cliArgs);
   const noIngest = args.noIngest ?? isEnvNoIngest();
   const shaped = applyShape(fileConfig, resolveShape(fileConfig, args.shape));
   const config = applyIdentityOverrides(shaped, args);
   const resolved = mergeConfig(config, args);
 
-  const auth = await resolveAuth();
-  const client = createBenchmarkClient({
-    baseUrl: auth.apiBaseUrl,
-    apiKey: auth.apiKey,
-    token: auth.token,
-    orgSlug: auth.orgSlug,
-    orgId: auth.orgId,
-  });
+  let baseUrl = '';
+  let apiKey = '';
+  let token: string | undefined;
+  let orgSlug: string | undefined;
+  let orgId: string | undefined;
+  let client: BenchmarkClient | null = null;
+
+  const auth: CliAuth | null = noIngest
+    ? await resolveAuth({ baseUrl: options.baseUrl, apiKey: options.apiKey }).catch(() => null)
+    : await resolveAuth({ baseUrl: options.baseUrl, apiKey: options.apiKey });
+  if (auth) {
+    baseUrl = auth.apiBaseUrl;
+    apiKey = auth.apiKey ?? '';
+    token = auth.token;
+    orgSlug = auth.orgSlug;
+    orgId = auth.orgId;
+    client = createBenchmarkClient({
+      baseUrl: auth.apiBaseUrl,
+      apiKey: auth.apiKey,
+      token: auth.token,
+      orgSlug: auth.orgSlug,
+      orgId: auth.orgId,
+    });
+  }
 
   const available = resolveParticipants(config, resolved);
 
@@ -619,7 +677,7 @@ export async function runBenchmark<T extends BaseParticipant>(
         config: runConfig,
       });
       runId = run.id;
-      dashboardUrl = dashboardUrlFor(auth.apiBaseUrl, organizationSlug, config.benchmarkSlug, run.id);
+      dashboardUrl = dashboardUrlFor(baseUrl, organizationSlug, config.benchmarkSlug, run.id);
       for (const participant of available) {
         await client!.upsertParticipant(config.benchmarkSlug, runId, participant.name, { totalTasks });
       }
@@ -633,7 +691,7 @@ export async function runBenchmark<T extends BaseParticipant>(
         config: runConfig,
       });
       runId = run.id;
-      dashboardUrl = dashboardUrlFor(auth.apiBaseUrl, organizationSlug, config.benchmarkSlug, run.id);
+      dashboardUrl = dashboardUrlFor(baseUrl, organizationSlug, config.benchmarkSlug, run.id);
       console.log(`Run created: ${run.name} (${runId})`);
       console.log(`View at: ${dashboardUrl}\n`);
     }
@@ -643,7 +701,7 @@ export async function runBenchmark<T extends BaseParticipant>(
 
   let participantRecords: ParticipantRecords[];
   if (resolved.groupBy === 'round') {
-    participantRecords = await runGroupedByRound(config, schedule, available, resolved, client, runId, auth.apiBaseUrl, auth.apiKey, auth.token, auth.orgSlug, auth.orgId, onResult, noIngest);
+    participantRecords = await runGroupedByRound(config, schedule, available, resolved, client, runId, baseUrl, apiKey, token, orgSlug, orgId, onResult, noIngest);
   } else {
     participantRecords = await runGroupedByParticipant(config, schedule, available, resolved, client, runId, onResult, noIngest);
   }
@@ -655,7 +713,7 @@ export async function runBenchmark<T extends BaseParticipant>(
     participants: participantRecords,
     config: resolved,
   };
-  if (!noIngest && (config.onScore || config.scoring)) {
+  if (!noIngest && client && (config.onScore || config.scoring)) {
     try {
       const spec = config.onScore
         ? await config.onScore(lowerIsBetter, higherIsBetter)
@@ -685,6 +743,44 @@ export async function runBenchmark<T extends BaseParticipant>(
   }
   if (config.onComplete) await config.onComplete(outcome);
   return outcome;
+}
+
+export interface RunBenchmarkWorkerOptions<T extends BaseParticipant = BaseParticipant> {
+  benchmarkSlug: string;
+  benchmarkName?: string;
+  runKey?: string;
+  participant: T;
+  task: BenchmarkTask<T>;
+  iterations?: number;
+  concurrency?: number;
+  staggerDelayMs?: number;
+  groupBy?: GroupBy;
+  noIngest?: boolean;
+}
+
+/**
+ * One-shot helper: run a single participant's worker for a benchmark without
+ * creating a `*.bench.ts` file. This is a convenience wrapper around
+ * `runBenchmark` that builds a minimal `BenchmarkConfig` from the supplied
+ * options.
+ */
+export async function runBenchmarkWorker<T extends BaseParticipant>(
+  options: RunBenchmarkWorkerOptions<T>,
+): Promise<BenchmarkRunOutcome> {
+  const config = defineBenchmarkConfig({
+    benchmarkSlug: options.benchmarkSlug,
+    benchmarkName: options.benchmarkName ?? options.benchmarkSlug,
+    participants: [options.participant],
+    iterations: options.iterations ?? 1,
+    concurrency: options.concurrency ?? 1,
+    staggerDelayMs: options.staggerDelayMs ?? 0,
+    groupBy: options.groupBy ?? 'participant',
+    defaultProviders: [options.participant.name],
+  });
+  const argv: string[] = [];
+  if (options.runKey) argv.push('--run-key', options.runKey);
+  if (options.noIngest) argv.push('--dry-run');
+  return runBenchmark(config, options.task, argv);
 }
 
 function getGitSha(): string | undefined {
@@ -798,7 +894,7 @@ async function runGroupedByParticipant<T extends BaseParticipant>(
             participant,
             taskIndex: scheduleIndex,
             phase: slot.phase,
-            step: (name, fn, options) => runStepWithClient(ctx.step, name, fn, options),
+            step: (name, fn, options) => runStepWithClient(ctx.step, name, fn, options, participant.name),
             measure: ctx.measure,
             log: ctx.log,
           });
@@ -1032,7 +1128,7 @@ async function runTaskRecord<T extends BaseParticipant>(
     async step<R, C extends number = 1>(
       name: string,
       fn: () => Promise<R> | R,
-      options?: TaskStepOptions & { concurrency?: C },
+      options?: TaskStepOptions & { parallelInvocations?: C; concurrency?: C },
     ): Promise<C extends 1 ? R : R[]> {
       const stepStartedAtMs = Date.now();
       const stepRecord: TaskStepRecord = {
@@ -1042,12 +1138,13 @@ async function runTaskRecord<T extends BaseParticipant>(
         completedAt: new Date(stepStartedAtMs).toISOString(),
         latencyMs: 0,
       };
-      if (options?.concurrency !== undefined) stepRecord.concurrency = options.concurrency;
+      const requestedParallelism = options?.parallelInvocations ?? options?.concurrency;
+      if (requestedParallelism !== undefined) stepRecord.concurrency = requestedParallelism;
       if (options?.timeoutMs !== undefined) stepRecord.timeoutMs = options.timeoutMs;
       const previousStep = activeStep;
       activeStep = stepRecord;
       try {
-        const result = await runStepInvocations<R>(name, fn, options);
+        const result = await runStepInvocations<R>(name, fn, options, participant.name);
         const outcome: BenchmarkStepOutcome =
           options?.captureOutput !== false && !Array.isArray(result) && isStepOutcome(result)
             ? (result as BenchmarkStepOutcome)

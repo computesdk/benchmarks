@@ -1,5 +1,16 @@
 # @benchsdk/client
 
+## 0.4.0 (unreleased)
+
+### BREAKING
+
+- `@benchsdk/client` is now a backwards-compatibility shim over `@benchsdk/runner`. It re-exports the full `@benchsdk/runner` surface and preserves `createBenchmarkClient(...).runWorker(...)` for existing low-level callers, but the canonical public packages are now `@benchsdk/runner` (authoring + operator helpers) and `@benchsdk/api` (raw REST types).
+- Removed the direct `@benchsdk/api` and `@benchsdk/worker` dependencies; all primitives now come through `@benchsdk/runner`.
+
+### ADDED
+
+- Re-exports the entire `@benchsdk/runner` API surface from the package barrel, so existing `@benchsdk/client` imports continue to work and gain new runners (`defineBenchmarkConfig`, `defineTask`, `runBenchmarkWorker`, `bench check`, etc.).
+
 ## 0.3.0
 
 ### Minor Changes

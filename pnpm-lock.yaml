@@ -240,12 +240,9 @@ importers:
 
   packages/benchsdk:
     dependencies:
-      '@benchsdk/api':
+      '@benchsdk/runner':
         specifier: workspace:*
-        version: link:../benchsdk-api
-      '@benchsdk/worker':
-        specifier: workspace:*
-        version: link:../benchsdk-worker
+        version: link:../benchsdk-runner
     devDependencies:
       '@types/node':
         specifier: ^20.0.0

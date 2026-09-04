@@ -1,5 +1,27 @@
 # @benchsdk/runner
 
+## 0.3.0 (unreleased)
+
+### BREAKING
+
+- `TaskStepOptions.concurrency` is renamed to `TaskStepOptions.parallelInvocations` to avoid ambiguity with `config.concurrency` (max in-flight tasks). The old `concurrency` field is still accepted for backwards compatibility but logs a deprecation warning.
+- `runWorker` is now a free function exported from `@benchsdk/runner` / `@benchsdk/worker`: `runWorker(client, options)`. The legacy `createBenchmarkClient().runWorker(options)` spelling remains available through `@benchsdk/client` and `@benchsdk/runner`.
+
+### ADDED
+
+- `runBenchmarkWorker(options)` one-shot operator helper: runs a single participant's worker without creating a `*.bench.ts` file.
+- `bench check <file.bench.ts>` CLI command: validates environment variables, API connectivity, participant availability, and scoring weights before a run.
+- `validateBenchmarkConfig(config)` returns a `BenchmarkConfigErrorItem[]`; `defineBenchmarkConfig` throws `BenchmarkConfigError` with structured `{ field, message }` issues.
+- `defineOnComplete(handler)` helper for typed `onComplete` callbacks.
+- `RunWorkerOptions.processKey` defaults to `os.hostname()` when omitted.
+- `TaskError` now carries `step`, `timeoutMs`, and participant context for step timeouts.
+- `RunWorkerOptions.onTelemetryError` and `BenchmarkReporterConfig.onTelemetryError` callbacks expose heartbeat/log-upload/artifact telemetry failures instead of swallowing them silently.
+
+### FIXED
+
+- Worker telemetry failures now emit a `console.warn` by default instead of failing silently.
+- Step timeout diagnostics now include the step name, configured timeout, and participant name.
+
 ## 0.2.0
 
 ### Minor Changes

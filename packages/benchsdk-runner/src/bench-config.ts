@@ -84,7 +84,19 @@ export interface TaskStepOptions extends Omit<DefineStepOptions, 'concurrency' |
   /** Per-iteration timeout in milliseconds. If an invocation exceeds this, it is aborted and a `step_timeout` TaskError is thrown. */
   timeoutMs?: number;
   /** Number of times to invoke `fn` in parallel. Defaults to 1. When greater than 1, the step returns an array of results. */
+  parallelInvocations?: number;
+  /** @deprecated use `parallelInvocations` instead. */
   concurrency?: number;
+}
+
+export interface TaskErrorOptions {
+  code?: string;
+  data?: JsonObject;
+  steps?: TaskStepRecord[];
+  /** The step name this error was thrown from, when known. */
+  step?: string;
+  /** The timeout that was exceeded, when this is a timeout error. */
+  timeoutMs?: number;
 }
 
 /**
@@ -95,12 +107,30 @@ export class TaskError extends Error {
   readonly code?: string;
   readonly data?: JsonObject;
   readonly steps?: TaskStepRecord[];
-  constructor(message: string, opts?: { code?: string; data?: JsonObject; steps?: TaskStepRecord[] }) {
+  readonly step?: string;
+  readonly timeoutMs?: number;
+  constructor(message: string, opts?: TaskErrorOptions) {
     super(message);
     this.name = 'TaskError';
     this.code = opts?.code;
     this.data = opts?.data;
     this.steps = opts?.steps;
+    this.step = opts?.step;
+    this.timeoutMs = opts?.timeoutMs;
+  }
+
+  override toString(): string {
+    let s = `[${this.name}${this.code ? ` (${this.code})` : ''}] ${this.message}`;
+    if (this.step) {
+      s += `\n  step: ${this.step}`;
+    }
+    if (this.timeoutMs !== undefined) {
+      s += `\n  timeoutMs: ${this.timeoutMs}`;
+    }
+    if (this.data && Object.keys(this.data).length > 0) {
+      s += `\n  data: ${JSON.stringify(this.data, null, 2)}`;
+    }
+    return s;
   }
 }
 
@@ -114,14 +144,14 @@ export interface TaskContext<T extends BaseParticipant = BaseParticipant> {
   phase?: string;
   /**
    * Runs `fn` as a named platform step. Mirrors `@benchsdk/worker`'s
-   * `RunWorkerContext.step`; supports closures and try/finally. A `concurrency`
+   * `RunWorkerContext.step`; supports closures and try/finally. `parallelInvocations`
    * greater than 1 invokes `fn` that many times in parallel and returns an array.
    * `timeoutMs` aborts any invocation that exceeds it with a `step_timeout` TaskError.
    */
   step<R, C extends number = 1>(
     name: string,
     fn: () => Promise<R> | R,
-    options?: TaskStepOptions & { concurrency?: C },
+    options?: TaskStepOptions & { parallelInvocations?: C; concurrency?: C },
   ): Promise<C extends 1 ? R : R[]>;
   /**
    * Attaches a JSON measurement to the platform. Inside a `step` it lands on
@@ -268,6 +298,25 @@ export interface BenchmarkConfig<T extends BaseParticipant = BaseParticipant> {
   customCliFlags?: readonly string[];
 }
 
+export interface BenchmarkConfigErrorItem {
+  field: string;
+  message: string;
+}
+
+export class BenchmarkConfigError extends Error {
+  readonly issues: BenchmarkConfigErrorItem[];
+  constructor(issues: BenchmarkConfigErrorItem[]) {
+    super(BenchmarkConfigError.formatIssues(issues));
+    this.name = 'BenchmarkConfigError';
+    this.issues = issues;
+  }
+
+  private static formatIssues(issues: BenchmarkConfigErrorItem[]): string {
+    const lines = issues.map((i) => `  - ${i.field}: ${i.message}`);
+    return `Invalid benchmark config:\n${lines.join('\n')}\n\nFix the fields above and try again.`;
+  }
+}
+
 function assertPositiveInt(value: number | undefined, field: string): void {
   if (value === undefined) return;
   if (!Number.isInteger(value) || value < 1) {
@@ -348,64 +397,19 @@ function validateBenchmarkScoringConfig(scoring: BenchmarkScoringConfig): void {
 export function defineBenchmarkConfig<T extends BaseParticipant = BaseParticipant>(
   config: BenchmarkConfig<T>,
 ): BenchmarkConfig<T> {
-  if (!config.benchmarkSlug || typeof config.benchmarkSlug !== 'string') {
-    throw new Error('benchmarkSlug is required');
-  }
-  if (!config.benchmarkName || typeof config.benchmarkName !== 'string') {
-    throw new Error('benchmarkName is required');
-  }
-  if (config.phases !== undefined) {
-    if (config.iterations !== undefined) {
-      throw new Error('phases and iterations are mutually exclusive');
-    }
-    if (!Array.isArray(config.phases) || config.phases.length === 0) {
-      throw new Error('phases must be a non-empty array');
-    }
-    const seen = new Set<string>();
-    for (const phase of config.phases) {
-      if (!phase.name || typeof phase.name !== 'string') {
-        throw new Error('each phase requires a non-empty name');
-      }
-      if (seen.has(phase.name)) {
-        throw new Error(`duplicate phase name: ${phase.name}`);
-      }
-      seen.add(phase.name);
-      assertPositiveInt(phase.iterations, `phase '${phase.name}' iterations`);
-    }
-  }
-  assertPositiveInt(config.iterations, 'iterations');
-  assertPositiveInt(config.concurrency, 'concurrency');
-  if (config.staggerDelayMs !== undefined && (!Number.isFinite(config.staggerDelayMs) || config.staggerDelayMs < 0)) {
-    throw new Error(`staggerDelayMs must be a number >= 0 (got ${config.staggerDelayMs})`);
-  }
-  if (config.groupBy !== undefined && config.groupBy !== 'participant' && config.groupBy !== 'round') {
-    throw new Error(`groupBy must be 'participant' or 'round' (got ${config.groupBy})`);
-  }
-  if (config.shapes !== undefined) {
-    for (const [shapeName, shape] of Object.entries(config.shapes)) {
-      if (!shape.slug || !/^[a-z0-9][a-z0-9-]*$/.test(shape.slug)) {
-        throw new Error(`shape '${shapeName}' needs a lowercase slug (got ${JSON.stringify(shape.slug)})`);
-      }
-      if (shape.name !== undefined && (typeof shape.name !== 'string' || shape.name.trim() === '')) {
-        throw new Error(`shape '${shapeName}' name must be a non-empty string`);
-      }
-      if (shape.staggerDelayMs !== undefined && (!Number.isFinite(shape.staggerDelayMs) || shape.staggerDelayMs < 0)) {
-        throw new Error(`shape '${shapeName}' staggerDelayMs must be a number >= 0 (got ${shape.staggerDelayMs})`);
-      }
-    }
-  }
-  if (config.dimensions !== undefined) {
-    if (config.dimensions === null || typeof config.dimensions !== 'object' || Array.isArray(config.dimensions)) {
-      throw new Error('dimensions must be a plain object');
-    }
-  }
+  const issues = validateBenchmarkConfig(config);
   if (config.scoring !== undefined) {
-    validateBenchmarkScoringConfig(config.scoring);
-  }
-  if (config.customCliFlags !== undefined) {
-    if (!Array.isArray(config.customCliFlags) || !config.customCliFlags.every((f) => typeof f === 'string' && f.startsWith('--'))) {
-      throw new Error('customCliFlags must be an array of strings starting with "--"');
+    try {
+      validateBenchmarkScoringConfig(config.scoring);
+    } catch (error) {
+      issues.push({
+        field: 'scoring',
+        message: error instanceof Error ? error.message : String(error),
+      });
     }
+  }
+  if (issues.length > 0) {
+    throw new BenchmarkConfigError(issues);
   }
   return config;
 }
@@ -428,4 +432,95 @@ export function defineTask<T extends BaseParticipant = BaseParticipant>(
     throw new Error('defineTask requires a task function.');
   }
   return task;
+}
+
+/**
+ * Validates a `BenchmarkConfig` without throwing, returning a list of
+ * `{ field, message }` issues. Returns an empty array when the config is valid.
+ */
+export function validateBenchmarkConfig<T extends BaseParticipant = BaseParticipant>(
+  config: BenchmarkConfig<T>,
+): BenchmarkConfigErrorItem[] {
+  const issues: BenchmarkConfigErrorItem[] = [];
+
+  if (!config.benchmarkSlug || typeof config.benchmarkSlug !== 'string') {
+    issues.push({ field: 'benchmarkSlug', message: 'is required' });
+  } else if (!/^[a-z0-9][a-z0-9-]*$/.test(config.benchmarkSlug)) {
+    issues.push({ field: 'benchmarkSlug', message: `must be a lowercase slug (got ${JSON.stringify(config.benchmarkSlug)})` });
+  }
+  if (!config.benchmarkName || typeof config.benchmarkName !== 'string') {
+    issues.push({ field: 'benchmarkName', message: 'is required' });
+  }
+
+  if (config.phases !== undefined) {
+    if (config.iterations !== undefined) {
+      issues.push({ field: 'iterations', message: 'phases and iterations are mutually exclusive' });
+    }
+    if (!Array.isArray(config.phases) || config.phases.length === 0) {
+      issues.push({ field: 'phases', message: 'must be a non-empty array' });
+    } else {
+      const seen = new Set<string>();
+      for (const phase of config.phases) {
+        if (!phase.name || typeof phase.name !== 'string') {
+          issues.push({ field: 'phases', message: 'each phase requires a non-empty name' });
+        } else {
+          if (seen.has(phase.name)) {
+            issues.push({ field: `phases['${phase.name}']`, message: `duplicate phase name: ${phase.name}` });
+          }
+          seen.add(phase.name);
+          if (!Number.isInteger(phase.iterations) || phase.iterations < 1) {
+            issues.push({ field: `phases['${phase.name}'].iterations`, message: `must be an integer >= 1 (got ${phase.iterations})` });
+          }
+        }
+      }
+    }
+  }
+
+  if (config.iterations !== undefined && (!Number.isInteger(config.iterations) || config.iterations < 1)) {
+    issues.push({ field: 'iterations', message: `must be an integer >= 1 (got ${config.iterations})` });
+  }
+  if (config.concurrency !== undefined && (!Number.isInteger(config.concurrency) || config.concurrency < 1)) {
+    issues.push({ field: 'concurrency', message: `must be an integer >= 1 (got ${config.concurrency})` });
+  }
+  if (config.staggerDelayMs !== undefined && (!Number.isFinite(config.staggerDelayMs) || config.staggerDelayMs < 0)) {
+    issues.push({ field: 'staggerDelayMs', message: `must be a number >= 0 (got ${config.staggerDelayMs})` });
+  }
+  if (config.groupBy !== undefined && config.groupBy !== 'participant' && config.groupBy !== 'round') {
+    issues.push({ field: 'groupBy', message: `must be 'participant' or 'round' (got ${config.groupBy})` });
+  }
+  if (config.shapes !== undefined) {
+    for (const [shapeName, shape] of Object.entries(config.shapes)) {
+      if (!shape.slug || !/^[a-z0-9][a-z0-9-]*$/.test(shape.slug)) {
+        issues.push({ field: `shapes['${shapeName}'].slug`, message: `needs a lowercase slug (got ${JSON.stringify(shape.slug)})` });
+      }
+      if (shape.name !== undefined && (typeof shape.name !== 'string' || shape.name.trim() === '')) {
+        issues.push({ field: `shapes['${shapeName}'].name`, message: 'must be a non-empty string' });
+      }
+      if (shape.staggerDelayMs !== undefined && (!Number.isFinite(shape.staggerDelayMs) || shape.staggerDelayMs < 0)) {
+        issues.push({ field: `shapes['${shapeName}'].staggerDelayMs`, message: `must be a number >= 0 (got ${shape.staggerDelayMs})` });
+      }
+    }
+  }
+  if (config.dimensions !== undefined) {
+    if (config.dimensions === null || typeof config.dimensions !== 'object' || Array.isArray(config.dimensions)) {
+      issues.push({ field: 'dimensions', message: 'must be a plain object' });
+    }
+  }
+  if (config.customCliFlags !== undefined) {
+    if (!Array.isArray(config.customCliFlags) || !config.customCliFlags.every((f) => typeof f === 'string' && f.startsWith('--'))) {
+      issues.push({ field: 'customCliFlags', message: 'must be an array of strings starting with "--"' });
+    }
+  }
+
+  return issues;
+}
+
+/**
+ * Typed helper for `config.onComplete` callbacks. The body receives the full
+ * `BenchmarkRunOutcome` and can be sync or async.
+ */
+export function defineOnComplete(
+  onComplete: (outcome: BenchmarkRunOutcome) => void | Promise<void>,
+): (outcome: BenchmarkRunOutcome) => void | Promise<void> {
+  return onComplete;
 }

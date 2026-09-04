@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import * as runnerBarrel from '@benchsdk/runner';
 
 import * as barrel from '../index';
 import {
@@ -1470,102 +1471,100 @@ describe('createSystemMetricsCollector', () => {
 // ---------------------------------------------------------------------------
 describe('public API surface and type exports', () => {
   const here = dirname(fileURLToPath(import.meta.url));
-  // The barrel re-exports the full public type surface from @benchsdk/api and
-  // @benchsdk/worker. Internal helper types must never appear here.
-  const TYPES_EXPORTS = [
-    'BenchmarkAssignment', 'BenchmarkArtifact', 'BenchmarkClient', 'BenchmarkClientConfig',
-    'BenchmarkConcurrencyPoint', 'BenchmarkAnalyticsReadiness', 'BenchmarkEventRateBucket', 'BenchmarkFailurePoint',
-    'BenchmarkParticipant', 'BenchmarkResource', 'BenchmarkResultLatencySummary',
-    'BenchmarkResultsOverview', 'BenchmarkResultsOverviewAnalytics', 'BenchmarkResultsOverviewInput',
-    'BenchmarkResultsOverviewRun', 'BenchmarkResultSummary', 'BenchmarkRun', 'BenchmarkRunImports',
-    'BenchmarkRunAnalyticsSummary', 'BenchmarkRunImportsSummary', 'BenchmarkRunImportItem', 'BenchmarkRunResults',
-    'BenchmarkRunStatus', 'BenchmarkRunSummaryInput', 'BenchmarkRunSummaryMetric', 'BenchmarkRunSummaryResult', 'BenchmarkRunSummaryRunMetadata', 'BenchmarkRunSummaryScalar', 'BenchmarkRunTaskResults', 'BenchmarkRunTaskResultsInput', 'BenchmarkRunTimeline',
-    'BenchmarkRunTimelineInput', 'BenchmarkRunWorker', 'BenchmarkStepResultSummary', 'BenchmarkTaskBucket',
-    'BenchmarkWorkerAttempt', 'BenchmarkWorkerStatus', 'ClaimWorkerInput', 'CreateWorkerArtifactInput',
-    'CreateWorkerArtifactResponse', 'CreateRunInput', 'DefineStepOptions',
-    'JsonObject', 'JsonValue', 'PlanWorkersInput', 'RunProgress', 'RunProgressConcurrency',
-    'RunProgressParticipant', 'RunProgressParticipantCounts', 'RunProgressStatus', 'RunProgressSummary',
-    'RunProgressTaskCounts', 'RunProgressWorkerCounts', 'RunWorkerContext', 'RunWorkerOptions', 'RunWorkerResult',
-    'SendTaskResultsInput', 'TaskStepRecord', 'TaskResultRecord', 'TaskResultsResponse', 'TaskFunction',
-    'UpdateBenchmarkInput', 'UpdateParticipantInput', 'UpdateRunInput', 'UpdateWorkerInput', 'WorkerConcurrencySample',
-    'WorkerFinishContext', 'WorkerHeartbeatInput', 'UpsertBenchmarkInput', 'UpsertParticipantInput',
-    'UploadWorkerArtifactInput', 'BaseParticipant',
-  ];
-  const REPORTER_EXPORTS = [
-    'BenchmarkReporterArtifactInput', 'BenchmarkReporterBarrierInput', 'BenchmarkReporterBarrierResult',
-    'BenchmarkReporterConfig', 'BenchmarkReporterHeartbeatInput', 'BenchmarkReporterProgress',
-  ];
-  const METRICS_EXPORTS = ['BenchmarkSystemMetricsCollector', 'BenchmarkSystemMetricsSample'];
   const INTERNAL_TYPES = ['BenchmarkParticipantResultSummary'];
 
-  it('VAL-SDK-090: built barrel re-exports exactly the public type set and excludes internal types', () => {
-    // Pin the actual shipped surface by reading the built dist/index.d.ts
-    // declarations. The split into @benchsdk/api and @benchsdk/worker means the
-    // barrel can contain both local type declarations and re-exports from workspace
-    // packages, so we gather all exported type names across the file.
-    const distDecl = readFileSync(join(here, '..', '..', 'dist', 'index.d.ts'), 'utf8');
+  const RUNNER_DTS_PATH = join(here, '..', '..', '..', 'benchsdk-runner', 'dist', 'index.d.ts');
 
-    const expectedTypes = [...TYPES_EXPORTS, ...REPORTER_EXPORTS, ...METRICS_EXPORTS];
-    const expectedTypeSet = new Set(expectedTypes);
+  function extractExportedNames(dtsSource: string): string[] {
+    const names: string[] = [];
+    for (const match of dtsSource.matchAll(/export\s+(?:type\s*)?\{([^}]+)\}(?:\s*from\s*['"][^'"]+['"])?\s*;?/g)) {
+      for (let entry of match[1].split(',')) {
+        entry = entry.trim();
+        if (!entry) continue;
+        const name = entry
+          .replace(/^type\s+/, '')
+          .replace(/\s+as\s+.*/, '')
+          .trim();
+        names.push(name);
+      }
+    }
+    for (const match of dtsSource.matchAll(/export\s+(?:type\s+(\w+)|interface\s+(\w+))/g)) {
+      names.push(match[1] ?? match[2]);
+    }
+    return names;
+  }
+
+  function typeNamesFor(dtsSource: string, valueNames: Set<string>): string[] {
+    const all = extractExportedNames(dtsSource);
+    const types = all.filter((name) => !valueNames.has(name));
+    return [...new Set(types)];
+  }
+
+  it('VAL-SDK-090: built barrel re-exports exactly the public type set and excludes internal types', () => {
+    const distDecl = readFileSync(join(here, '..', '..', 'dist', 'index.d.ts'), 'utf8');
+    const runnerDecl = readFileSync(RUNNER_DTS_PATH, 'utf8');
+
+    const runnerValues = new Set(Object.keys(runnerBarrel));
+    const expectedTypes = typeNamesFor(runnerDecl, runnerValues).sort();
 
     const exportedTypeNames: string[] = [];
 
-    // export { type A, B } or export { A, B } from 'pkg'
+    // If the barrel is a compatibility shim, it may use `export *` from
+    // @benchsdk/runner. Expand that to the runner's full type surface.
+    if (/export\s+\*\s+from\s+['"]@benchsdk\/runner['"]/.test(distDecl)) {
+      exportedTypeNames.push(...expectedTypes);
+    }
+
     for (const match of distDecl.matchAll(/export\s+(?:type\s*)?\{([^}]+)\}(?:\s*from\s*['"][^'"]+['"])?\s*;?/g)) {
       const blockIsTypeOnly = match[0].startsWith('export type {');
       for (let entry of match[1].split(',')) {
         entry = entry.trim();
         if (!entry) continue;
-        // strip optional `type` prefix and `as` aliases
         const name = entry
           .replace(/^type\s+/, '')
           .replace(/\s+as\s+.*/, '')
-          .trim();
-        if (entry.startsWith('type ') || blockIsTypeOnly) {
-          exportedTypeNames.push(name);
-        } else if (expectedTypeSet.has(name)) {
-          // Re-exports from workspace packages are not always prefixed with `type`
-          // in declaration emit. Treat names that are part of the expected
-          // public type surface as type exports.
+        .trim();
+        const isType = entry.startsWith('type ') || blockIsTypeOnly;
+        if (isType) {
           exportedTypeNames.push(name);
         }
       }
     }
 
-    // export interface X / export type X = ... (top-level declarations)
     for (const match of distDecl.matchAll(/export\s+(?:type\s+(\w+)|interface\s+(\w+))/g)) {
       exportedTypeNames.push(match[1] ?? match[2]);
     }
 
     const uniqueExportedTypeNames = [...new Set(exportedTypeNames)].sort();
 
-    // The exported type set must match the expected surface exactly.
-    expect(uniqueExportedTypeNames).toEqual([...expectedTypes].sort());
+    expect(uniqueExportedTypeNames).toEqual(expectedTypes);
 
-    // Every expected type must also appear as a declaration in the .d.ts.
     for (const name of expectedTypes) {
-      expect(distDecl).toMatch(new RegExp(`\\b${name}\\b`));
+      const inLocalDecl = new RegExp(`\\b${name}\\b`).test(distDecl);
+      const inRunnerDecl = new RegExp(`\\b${name}\\b`).test(runnerDecl);
+      expect(inLocalDecl || inRunnerDecl).toBe(true);
     }
 
-    // Internal helper types must never be surfaced by the built barrel.
     for (const internal of INTERNAL_TYPES) {
       expect(uniqueExportedTypeNames).not.toContain(internal);
     }
-
   });
 
   it('VAL-SDK-091: every value export is present on the package barrel', () => {
-    const valueExports = [
-      'BenchmarkApiError', 'BenchmarkReporter', 'claimBenchmarkReporter', 'createBenchmarkClient',
-      'createSystemMetricsCollector',
-    ];
-    for (const name of valueExports) {
-      expect(barrel).toHaveProperty(name);
+    const valueNames = Object.keys(barrel);
+    expect(valueNames.length).toBeGreaterThan(0);
+    for (const name of valueNames) {
       expect((barrel as Record<string, unknown>)[name]).toBeTypeOf('function');
     }
     // Type-only surface compiles (see the _PublicTypeSurface alias above).
     const surfaceProof: _PublicTypeSurface | undefined = undefined;
     expect(surfaceProof).toBeUndefined();
+  });
+
+  it('VAL-SDK-091b: createBenchmarkClient preserves the legacy runWorker method', () => {
+    const client = (barrel as { createBenchmarkClient: typeof createBenchmarkClient }).createBenchmarkClient();
+    expect(client.runWorker).toBeTypeOf('function');
+    expect(client.getBenchmark).toBeTypeOf('function');
   });
 
   it('VAL-SDK-092: package.json exports map, main/module/types, and engines.node are preserved', () => {

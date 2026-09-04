@@ -1,5 +1,7 @@
 # @benchsdk/client
 
+> **Backwards-compatibility shim.** `@benchsdk/client` re-exports the full `@benchsdk/runner` surface and preserves the legacy `createBenchmarkClient().runWorker(options)` spelling. New projects should import from `@benchsdk/runner` for authoring/operator helpers or `@benchsdk/api` for raw REST types.
+
 Client and worker helpers for the ComputeSDK benchmark orchestrator.
 
 This package talks to the platform-owned benchmark/run/participant/worker API. It does not mint canonical run, worker, attempt, event, or task IDs. Workers claim platform-assigned work, execute task indexes in their assigned range, and send `task_results` batches back to the platform.
