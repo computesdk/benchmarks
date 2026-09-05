@@ -39,8 +39,8 @@ importers:
         specifier: ^0.2.7
         version: 0.2.7(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@computesdk/archil':
-        specifier: ^0.4.9
-        version: 0.4.9
+        specifier: ^0.4.10
+        version: 0.4.10
       '@computesdk/arker':
         specifier: ^0.1.4
         version: 0.1.4(@computesdk/daytona@1.7.33(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@computesdk/e2b@1.7.53)(@computesdk/modal@1.9.5)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -730,8 +730,8 @@ packages:
   '@computesdk/anchorbrowser@0.2.7':
     resolution: {integrity: sha512-eWZAAdk9OsDf7XKV7exCoqZvxESd4hSpgrNIGsm6cxXTGRvv1L95siWOmVMv8MLh7Xk9CoMTaFRBIW39LHldPg==}
 
-  '@computesdk/archil@0.4.9':
-    resolution: {integrity: sha512-EcwrPbLhaGa0eKo+0XZXwKmIJe9I18lfG5fODWxW5wRKUXRZW2psDL5jdqzurW567zNiQylB7nXRXr4u/e2j0g==}
+  '@computesdk/archil@0.4.10':
+    resolution: {integrity: sha512-HO5TvF7tITKwRnWC3wQZixOdzkHUsFEjSC81OSGC4t6r2ggVmrfmitdZRgo4+2XtyGnCh5YRq96Snfe8CSI7Ig==}
 
   '@computesdk/arker@0.1.4':
     resolution: {integrity: sha512-57CWI0AWy3qp9ERSpPcuDK62lst7UIN+GOI+WztsQOQUWJsgfzKn8iN6RknryLvw6o9Rxz7DTGM+Ekxqy8Ze9Q==}
@@ -6285,7 +6285,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@computesdk/archil@0.4.9':
+  '@computesdk/archil@0.4.10':
     dependencies:
       '@computesdk/provider': 2.1.5
       computesdk: 4.1.4
