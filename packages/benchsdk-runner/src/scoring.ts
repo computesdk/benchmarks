@@ -230,6 +230,7 @@ function scoreGroup(
   groupKey: string | undefined,
   groupValue: unknown,
   provider: string,
+  unitByMetric: Map<string, string | undefined>,
 ): BenchmarkScoreResult {
   const successFilter = spec.success ?? ((r: TaskResultRecord) => r.status === 'success');
   const passing = records.filter(successFilter);
@@ -253,7 +254,8 @@ function scoreGroup(
       metric.weights.p99 * scoreStat(p99, metric);
     metricScoresSum += metricScore;
 
-    metrics.push({ name: metric.name, unit: metric.unit ?? '', median, p95, p99 });
+    const unit = metric.unit ?? unitByMetric.get(metric.name) ?? '';
+    metrics.push({ name: metric.name, unit, median, p95, p99 });
   }
 
   const compositeScore = successRate === 0 ? 0 : Math.round(metricScoresSum * successRate * 100) / 100;
@@ -273,9 +275,14 @@ function scoreGroup(
   };
 }
 
-export function score(outcome: BenchmarkRunOutcome, spec: ScoringSpec): BenchmarkScoreResult[] {
+export function score(
+  outcome: BenchmarkRunOutcome,
+  spec: ScoringSpec,
+  displayMetrics?: { key: string; unit?: string }[],
+): BenchmarkScoreResult[] {
   validateScoringSpec(spec);
   const baseDimensions = toJsonObject(spec.dimensions ?? {});
+  const unitByMetric = new Map(displayMetrics?.map((m) => [m.key, m.unit]));
   const results: BenchmarkScoreResult[] = [];
 
   for (const { participant, records } of outcome.participants) {
@@ -286,7 +293,7 @@ export function score(outcome: BenchmarkRunOutcome, spec: ScoringSpec): Benchmar
       : [{ value: undefined, records }];
 
     for (const group of groups) {
-      results.push(scoreGroup(group.records, spec, baseDimensions, spec.groupBy, group.value, participant));
+      results.push(scoreGroup(group.records, spec, baseDimensions, spec.groupBy, group.value, participant, unitByMetric));
     }
   }
 

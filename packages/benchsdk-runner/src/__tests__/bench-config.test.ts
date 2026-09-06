@@ -276,6 +276,50 @@ describe('defineBenchmarkConfig', () => {
     });
     expect(config.display?.overview?.defaultMetric).toBe('anything');
   });
+
+  it('rejects unknown keys in display', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: { extra: 'value' } as any,
+      }),
+    ).toThrow("display contains unexpected key: 'extra'");
+  });
+
+  it('rejects unknown keys in display.metrics', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: { metrics: [{ key: 'x', label: 'X', extra: 1 }] as any },
+      }),
+    ).toThrow("display.metrics[0] contains unexpected key: 'extra'");
+  });
+
+  it('rejects unknown keys in display.steps', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: { steps: [{ key: 'x', label: 'X', extra: 1 }] as any },
+      }),
+    ).toThrow("display.steps[0] contains unexpected key: 'extra'");
+  });
+
+  it('rejects unknown keys in display.overview', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: { overview: { defaultMetric: 'x', extra: true } as any },
+      }),
+    ).toThrow("display.overview contains unexpected key: 'extra'");
+  });
 });
 
 describe('defineTask', () => {

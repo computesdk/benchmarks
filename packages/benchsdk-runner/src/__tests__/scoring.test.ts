@@ -129,6 +129,46 @@ describe('score with groupBy', () => {
   });
 });
 
+describe('score resolves missing metric unit from display.metrics', () => {
+  function record(taskIndex: number, status: string, data: Record<string, unknown>): TaskResultRecord {
+    return { taskIndex, status, data: data as TaskResultRecord['data'] };
+  }
+
+  it('fills in the unit from display.metrics when the scoring metric omits it', () => {
+    const spec: ScoringSpec = {
+      metrics: [lowerIsBetter('durationMs', { ceiling: 500, weights: { median: 1, p95: 0, p99: 0 } })],
+    };
+    const outcome = {
+      participants: [
+        {
+          participant: 'demo',
+          records: [record(0, 'success', { durationMs: 100 })],
+        },
+      ],
+    } as unknown as BenchmarkRunOutcome;
+
+    const results = score(outcome, spec, [{ key: 'durationMs', label: 'Duration', unit: 'ms' }]);
+    expect(results[0].metrics[0]).toMatchObject({ name: 'durationMs', unit: 'ms', median: 100 });
+  });
+
+  it('prefers the unit declared in the scoring metric over display.metrics', () => {
+    const spec: ScoringSpec = {
+      metrics: [lowerIsBetter('durationMs', { ceiling: 500, unit: 's', weights: { median: 1, p95: 0, p99: 0 } })],
+    };
+    const outcome = {
+      participants: [
+        {
+          participant: 'demo',
+          records: [record(0, 'success', { durationMs: 100 })],
+        },
+      ],
+    } as unknown as BenchmarkRunOutcome;
+
+    const results = score(outcome, spec, [{ key: 'durationMs', label: 'Duration', unit: 'ms' }]);
+    expect(results[0].metrics[0].unit).toBe('s');
+  });
+});
+
 describe('scoringConfigToSpec', () => {
   it('derives unit from display.metrics when omitted in scoring.metrics', () => {
     const spec = scoringConfigToSpec(

@@ -329,6 +329,14 @@ function assertNonEmptyString(value: unknown, field: string): string {
   return value;
 }
 
+function assertOnlyAllowedKeys(value: Record<string, unknown>, allowed: readonly string[], field: string): void {
+  for (const key of Object.keys(value)) {
+    if (!allowed.includes(key)) {
+      throw new Error(`${field} contains unexpected key: '${key}'`);
+    }
+  }
+}
+
 function assertPositiveInt(value: number | undefined, field: string): void {
   if (value === undefined) return;
   if (!Number.isInteger(value) || value < 1) {
@@ -483,6 +491,7 @@ export function defineBenchmarkConfig<T extends BaseParticipant = BaseParticipan
     if (typeof config.display !== 'object' || config.display === null || Array.isArray(config.display)) {
       throw new Error('display must be an object');
     }
+    assertOnlyAllowedKeys(config.display as unknown as Record<string, unknown>, ['description', 'metrics', 'steps', 'overview'], 'display');
     if (config.display.description !== undefined && typeof config.display.description !== 'string') {
       throw new Error('display.description must be a string');
     }
@@ -496,6 +505,7 @@ export function defineBenchmarkConfig<T extends BaseParticipant = BaseParticipan
         if (metric === null || typeof metric !== 'object' || Array.isArray(metric)) {
           throw new Error(`display.metrics[${i}] must be an object`);
         }
+        assertOnlyAllowedKeys(metric as unknown as Record<string, unknown>, ['key', 'label', 'unit', 'direction', 'decimals', 'order'], `display.metrics[${i}]`);
         const key = assertNonEmptyString(metric.key, `display.metrics[${i}].key`);
         if (displayMetricKeys.has(key)) {
           throw new Error(`duplicate display metric key: ${key}`);
@@ -526,6 +536,7 @@ export function defineBenchmarkConfig<T extends BaseParticipant = BaseParticipan
         if (step === null || typeof step !== 'object' || Array.isArray(step)) {
           throw new Error(`display.steps[${i}] must be an object`);
         }
+        assertOnlyAllowedKeys(step as unknown as Record<string, unknown>, ['key', 'label', 'order'], `display.steps[${i}]`);
         const key = assertNonEmptyString(step.key, `display.steps[${i}].key`);
         if (seenStepKeys.has(key)) {
           throw new Error(`duplicate display step key: ${key}`);
@@ -541,6 +552,7 @@ export function defineBenchmarkConfig<T extends BaseParticipant = BaseParticipan
       if (typeof config.display.overview !== 'object' || config.display.overview === null || Array.isArray(config.display.overview)) {
         throw new Error('display.overview must be an object');
       }
+      assertOnlyAllowedKeys(config.display.overview as unknown as Record<string, unknown>, ['defaultMetric', 'defaultLayout'], 'display.overview');
       const { defaultMetric, defaultLayout } = config.display.overview;
       if (defaultMetric !== undefined) {
         const metric = assertNonEmptyString(defaultMetric, 'display.overview.defaultMetric');
