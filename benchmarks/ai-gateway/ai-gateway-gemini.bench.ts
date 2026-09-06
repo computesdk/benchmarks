@@ -37,13 +37,29 @@ export const config = defineBenchmarkConfig({
   participants: providers,
   concurrency: providers.length,
   customCliFlags: ['--ai-gateway-iterations-cold', '--ai-gateway-iterations-warm'],
+  display: {
+    description: 'AI gateway cold/warm latency and token throughput.',
+    metrics: [
+      { key: 'coldE2eMs', label: 'Cold end-to-end', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'warmTtftMs', label: 'Warm time to first token', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'outputTokensPerSec', label: 'Output tokens/s', unit: 'tok/s', direction: 'higher-better', decimals: 1 },
+      { key: 'outputTokens', label: 'Output tokens', direction: 'higher-better', decimals: 0 },
+    ],
+    steps: [
+      { key: 'dns', label: 'DNS' },
+      { key: 'tcp', label: 'TCP' },
+      { key: 'tls', label: 'TLS' },
+      { key: 'ttfb', label: 'TTFB' },
+      { key: 'ttft', label: 'TTFT' },
+    ],
+    overview: { defaultMetric: 'coldE2eMs', defaultLayout: 'ranking' },
+  },
   scoring: {
     metrics: [
-      { key: 'coldE2eMs', unit: 'ms', ceiling: 20000, weights: { median: 0.30, p95: 0.15, p99: 0 } },
-      { key: 'warmTtftMs', unit: 'ms', ceiling: 20000, weights: { median: 0.30, p95: 0.15, p99: 0 } },
+      { key: 'coldE2eMs', ceiling: 20000, weights: { median: 0.30, p95: 0.15, p99: 0 } },
+      { key: 'warmTtftMs', ceiling: 20000, weights: { median: 0.30, p95: 0.15, p99: 0 } },
       {
         key: 'outputTokensPerSec',
-        unit: 'tokens/sec',
         floor: 5,
         ceiling: 200,
         higherIsBetter: true,

@@ -19,6 +19,15 @@ export const config = defineBenchmarkConfig({
   staggerDelayMs: 60_000,
   participants: providers,
   defaultProviders: ['tensorlake'],
+  display: {
+    description: 'Tensorlake OpenCode installation and run reliability.',
+    steps: [
+      { key: 'create', label: 'Create sandbox' },
+      { key: 'install', label: 'Install OpenCode' },
+      { key: 'run', label: 'Run OpenCode' },
+      { key: 'destroy', label: 'Destroy sandbox' },
+    ],
+  },
 });
 
 export const task = defineTask<ProviderConfig>(async (ctx) => {

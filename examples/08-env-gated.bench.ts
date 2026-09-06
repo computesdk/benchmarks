@@ -27,9 +27,20 @@ export const config = defineBenchmarkConfig({
     { name: 'local', requiredEnvVars: [] },
     { name: 'remote', requiredEnvVars: ['DEMO_API_KEY'] },
   ],
+  display: {
+    description: 'Env-gated local vs. remote participant latency.',
+    metrics: [
+      { key: 'durationMs', label: 'Duration', unit: 'ms', direction: 'lower-better', decimals: 0 },
+    ],
+    steps: [
+      { key: 'remote-auth', label: 'Remote auth' },
+      { key: 'local-work', label: 'Local work' },
+    ],
+    overview: { defaultMetric: 'durationMs', defaultLayout: 'ranking' },
+  },
   scoring: {
     metrics: [
-      { key: 'durationMs', unit: 'ms', ceiling: 1000, weights: { median: 0.7, p95: 0.2, p99: 0.1 } },
+      { key: 'durationMs', ceiling: 1000, weights: { median: 0.7, p95: 0.2, p99: 0.1 } },
     ],
   },
 });
