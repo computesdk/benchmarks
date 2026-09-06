@@ -1,0 +1,108 @@
+name: AI Gateway Regional Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: 'Cold + warm iterations per region'
+        required: false
+        default: '5'
+        type: string
+      dry_run:
+        description: 'Run without ingesting or committing results'
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    - cron: '0 10 * * 5' # Weekly on Friday at 10am UTC
+
+concurrency:
+  group: ai-gateway-regional-benchmarks
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  bench:
+    name: AI Gateway Regional Benchmark (${{ matrix.region }})
+    # NOTE: Swap `namespace-profile-default` for region-specific Namespace
+    # runner profiles/labels once they are configured. `BENCH_REGION` labels
+    # the records, but it does not control where the job is scheduled.
+    runs-on: ${{ matrix.profile }};permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - region: us-east-1
+            profile: namespace-profile-default
+          - region: eu-west-1
+            profile: namespace-profile-default
+          - region: ap-southeast-1
+            profile: namespace-profile-default
+          - region: us-west-2
+            profile: namespace-profile-default
+    env:
+      BENCH_REGION: ${{ matrix.region }}
+      BENCH_RUN_KEY: regional-ai-gateway-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+      - uses: namespacelabs/nscloud-setup@df198f982fcecfb8264bea3f1274b56a61b6dfdc # v0
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Build workspace packages
+        run: pnpm -r --filter './packages/**' run build
+      - name: Run AI gateway regional benchmark
+        env:
+          ITERATIONS: ${{ github.event.inputs.iterations }}
+        run: |
+          . benchmarks/scripts/load-vault-secrets.sh '^(ANTHROPIC_API_KEY|OPENAI_API_KEY|GEMINI_API_KEY|KIMI_API_KEY|NOVITA_API_KEY|NEON_AI_GATEWAY_BASE_URL|NEON_AI_GATEWAY_TOKEN|NGROK_AI_GATEWAY_API_KEY|LLMAPI_API_KEY|CLOUDFLARE_AI_GATEWAY_ACCOUNT_ID|CLOUDFLARE_AI_GATEWAY_GATEWAY_ID|CLOUDFLARE_AI_GATEWAY_TOKEN|LLM_GATEWAY_API_KEY|OPENROUTER_API_KEY|PYDANTIC_AI_GATEWAY_API_KEY|VERCEL_AI_GATEWAY_API_KEY|CONCENTRATE_AI_GATEWAY_API_KEY|BLAZERAIL_API_KEY|RAMP_ROUTER_API_KEY|BENCHMARKS_PLATFORM_API_KEY)'
+
+          iterations_arg=()
+          if [ -n "$ITERATIONS" ]; then
+            iterations_arg=(--iterations "$ITERATIONS")
+          fi
+
+          npx tsx packages/benchsdk-runner/dist/bin.js run \
+            benchmarks/ai-gateway/ai-gateway-regional.bench.ts \
+            --run-key "$BENCH_RUN_KEY" \
+            "${iterations_arg[@]}" \
+            ${{ (github.event_name == 'push' || github.event.inputs.dry_run == 'true') && '--no-ingest' || '' }}
+      - name: Upload results as artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ai-gateway-regional-results-${{ matrix.region }}
+          path: |
+            results/ai-gateway-latency/regional/anthropic/${{ matrix.region }}/
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Commit and push
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add results/ai-gateway-latency/regional/anthropic/${{ matrix.region }}/
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore: update AI gateway regional benchmark results [${{ matrix.region }}] [skip ci]"
+
+          branch="${GITHUB_REF#refs/heads/}"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "${branch}"
+            git rebase --autostash "origin/${branch}" || { git rebase --abort; exit 1; }
+            if git push origin "HEAD:${branch}"; then
+              echo "Pushed on attempt ${attempt}"
+              exit 0
+            fi
+            echo "Push rejected (attempt ${attempt}); will rebase and retry"
+          done
+          echo "Failed to push after multiple attempts" >&2
+          exit 1
