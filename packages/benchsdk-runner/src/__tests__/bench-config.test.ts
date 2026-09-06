@@ -126,6 +126,28 @@ describe('defineBenchmarkConfig', () => {
     expect(config.display?.metrics?.[0].key).toBe('throughputMbps');
   });
 
+  it('rejects a non-string display description', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: { description: 123 as any },
+      }),
+    ).toThrow('display.description must be a string');
+  });
+
+  it('rejects a non-string display metric unit', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: { metrics: [{ key: 'x', label: 'X', unit: 123 as any }] },
+      }),
+    ).toThrow('display.metrics[0].unit must be a string');
+  });
+
   it('rejects an invalid display direction', () => {
     expect(() =>
       defineBenchmarkConfig({

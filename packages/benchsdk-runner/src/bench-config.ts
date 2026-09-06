@@ -483,6 +483,9 @@ export function defineBenchmarkConfig<T extends BaseParticipant = BaseParticipan
     if (typeof config.display !== 'object' || config.display === null || Array.isArray(config.display)) {
       throw new Error('display must be an object');
     }
+    if (config.display.description !== undefined && typeof config.display.description !== 'string') {
+      throw new Error('display.description must be a string');
+    }
     const displayMetricKeys = new Set<string>();
     if (config.display.metrics !== undefined) {
       if (!Array.isArray(config.display.metrics)) {
@@ -499,6 +502,9 @@ export function defineBenchmarkConfig<T extends BaseParticipant = BaseParticipan
         }
         displayMetricKeys.add(key);
         assertNonEmptyString(metric.label, `display.metrics[${i}].label`);
+        if (metric.unit !== undefined && typeof metric.unit !== 'string') {
+          throw new Error(`display.metrics[${i}].unit must be a string`);
+        }
         if (metric.direction !== undefined && metric.direction !== 'higher-better' && metric.direction !== 'lower-better') {
           throw new Error(`display.metrics[${i}].direction must be 'higher-better' or 'lower-better'`);
         }
