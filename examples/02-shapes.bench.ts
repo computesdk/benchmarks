@@ -27,9 +27,19 @@ export const config = defineBenchmarkConfig({
     burst: { slug: 'shape-demo-burst', name: 'Shape Demo (Burst)' },
     staggered: { slug: 'shape-demo-staggered', name: 'Shape Demo (Staggered)', staggerDelayMs: 200 },
   },
+  display: {
+    description: 'Workload shape variants (sequential, burst, staggered).',
+    metrics: [
+      { key: 'durationMs', label: 'Duration', unit: 'ms', direction: 'lower-better', decimals: 0 },
+    ],
+    steps: [
+      { key: 'work', label: 'Work' },
+    ],
+    overview: { defaultMetric: 'durationMs', defaultLayout: 'ranking' },
+  },
   scoring: {
     metrics: [
-      { key: 'durationMs', unit: 'ms', ceiling: 1000, weights: { median: 0.7, p95: 0.2, p99: 0.1 } },
+      { key: 'durationMs', ceiling: 1000, weights: { median: 0.7, p95: 0.2, p99: 0.1 } },
     ],
   },
 });

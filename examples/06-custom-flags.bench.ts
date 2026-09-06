@@ -51,11 +51,21 @@ export const config = defineBenchmarkConfig({
     algorithm,
     payloadBytes,
   },
+  display: {
+    description: 'Custom CLI flags for payload size and hash algorithm.',
+    metrics: [
+      { key: 'durationMs', label: 'Duration', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'hashLength', label: 'Hash length', direction: 'higher-better', decimals: 0 },
+    ],
+    steps: [
+      { key: 'hash', label: 'Hash payload' },
+    ],
+    overview: { defaultMetric: 'durationMs', defaultLayout: 'ranking' },
+  },
   scoring: {
     metrics: [
       {
         key: 'durationMs',
-        unit: 'ms',
         ceiling: 1000,
         weights: { median: 0.7, p95: 0.2, p99: 0.1 },
       },

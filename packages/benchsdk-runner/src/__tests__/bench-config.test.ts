@@ -109,6 +109,173 @@ describe('defineBenchmarkConfig', () => {
       defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, shapes: { s: { slug: 'ok', staggerDelayMs: -1 } } }),
     ).toThrow('staggerDelayMs');
   });
+
+  it('carries a display manifest when valid', () => {
+    const config = defineBenchmarkConfig({
+      benchmarkSlug: 's',
+      benchmarkName: 'n',
+      participants,
+      display: {
+        description: 'A test benchmark',
+        metrics: [{ key: 'throughputMbps', label: 'Throughput', unit: 'Mbps', direction: 'higher-better' }],
+        steps: [{ key: 'create', label: 'Create sandbox' }],
+        overview: { defaultMetric: 'throughputMbps', defaultLayout: 'ranking' },
+      },
+    });
+    expect(config.display?.overview?.defaultLayout).toBe('ranking');
+    expect(config.display?.metrics?.[0].key).toBe('throughputMbps');
+  });
+
+  it('rejects a non-string display description', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: { description: 123 as any },
+      }),
+    ).toThrow('display.description must be a string');
+  });
+
+  it('rejects a non-string display metric unit', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: { metrics: [{ key: 'x', label: 'X', unit: 123 as any }] },
+      }),
+    ).toThrow('display.metrics[0].unit must be a string');
+  });
+
+  it('rejects an invalid display direction', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: { metrics: [{ key: 'x', label: 'X', direction: 'up' as any }] },
+      }),
+    ).toThrow('direction');
+  });
+
+  it('rejects duplicate display metric keys', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: {
+          metrics: [
+            { key: 'x', label: 'X' },
+            { key: 'x', label: 'X2' },
+          ],
+        },
+      }),
+    ).toThrow('duplicate');
+  });
+
+  it('rejects an empty or non-string display defaultMetric', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: { overview: { defaultMetric: '' } },
+      }),
+    ).toThrow('display.overview.defaultMetric');
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: { overview: { defaultMetric: 123 as any } },
+      }),
+    ).toThrow('display.overview.defaultMetric');
+  });
+
+  it('rejects a display defaultMetric not declared in metrics', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: {
+          metrics: [{ key: 'x', label: 'X' }],
+          overview: { defaultMetric: 'y' },
+        },
+      }),
+    ).toThrow("'y' is not declared in display.metrics");
+  });
+
+  it('accepts a display defaultMetric that matches a declared metric key', () => {
+    const config = defineBenchmarkConfig({
+      benchmarkSlug: 's',
+      benchmarkName: 'n',
+      participants,
+      display: {
+        metrics: [{ key: 'x', label: 'X' }],
+        overview: { defaultMetric: 'x' },
+      },
+    });
+    expect(config.display?.overview?.defaultMetric).toBe('x');
+  });
+
+  it('accepts scoring without unit when display.metrics declares it', () => {
+    const config = defineBenchmarkConfig({
+      benchmarkSlug: 's',
+      benchmarkName: 'n',
+      participants,
+      display: {
+        metrics: [{ key: 'ttiMs', label: 'Time to interactive', unit: 'ms' }],
+      },
+      scoring: {
+        metrics: [{ key: 'ttiMs', ceiling: 10000, weights: { median: 1, p95: 0, p99: 0 } }],
+      },
+    });
+    expect(config.scoring?.metrics[0].unit).toBeUndefined();
+  });
+
+  it('rejects a scoring unit that conflicts with display.metrics', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: {
+          metrics: [{ key: 'ttiMs', label: 'Time to interactive', unit: 'ms' }],
+        },
+        scoring: {
+          metrics: [{ key: 'ttiMs', unit: 's', ceiling: 10000, weights: { median: 1, p95: 0, p99: 0 } }],
+        },
+      }),
+    ).toThrow("scoring.metrics[0].unit 's' conflicts with display.metrics[0].unit 'ms'");
+  });
+
+  it('does not throw a TypeError when display.metrics is malformed', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        // @ts-expect-error intentionally malformed
+        display: { metrics: 'not-an-array' },
+        scoring: {
+          metrics: [{ key: 'ttiMs', ceiling: 10000, weights: { median: 1, p95: 0, p99: 0 } }],
+        },
+      }),
+    ).toThrow('display.metrics must be an array');
+  });
+
+  it('allows a display defaultMetric when metrics is omitted', () => {
+    const config = defineBenchmarkConfig({
+      benchmarkSlug: 's',
+      benchmarkName: 'n',
+      participants,
+      display: { overview: { defaultMetric: 'anything' } },
+    });
+    expect(config.display?.overview?.defaultMetric).toBe('anything');
+  });
 });
 
 describe('defineTask', () => {

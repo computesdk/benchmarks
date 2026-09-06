@@ -55,15 +55,33 @@ export const config = defineBenchmarkConfig({
   participants,
   customCliFlags: ['--dataset'],
   dimensions: { dataset },
+  display: {
+    description: 'Storage snapshot/fork creation and read latency.',
+    metrics: [
+      { key: 'snapshotCreateMs', label: 'Snapshot create', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'forkFromSnapshotMs', label: 'Fork from snapshot', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'forkFromLiveMs', label: 'Fork from live', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'forkFirstReadMs', label: 'Fork first read', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'seedMs', label: 'Seed', unit: 'ms', direction: 'lower-better', decimals: 0 },
+    ],
+    steps: [
+      { key: 'seed', label: 'Seed' },
+      { key: 'snapshot-create', label: 'Create snapshot' },
+      { key: 'fork-from-snapshot', label: 'Fork from snapshot' },
+      { key: 'fork-from-live', label: 'Fork from live' },
+      { key: 'fork-first-read', label: 'First read' },
+    ],
+    overview: { defaultMetric: 'forkFirstReadMs', defaultLayout: 'ranking' },
+  },
   scoring: {
     // A fork whose read-back didn't match is not a usable fork, so its timings
     // must not be scored as if it were.
     success: { requireData: { verified: true } },
     metrics: [
-      { key: 'snapshotCreateMs', unit: 'ms', ceiling: 60000, weights: { median: 0.40, p95: 0, p99: 0 } },
-      { key: 'forkFromSnapshotMs', unit: 'ms', ceiling: 60000, weights: { median: 0.35, p95: 0, p99: 0 } },
-      { key: 'forkFromLiveMs', unit: 'ms', ceiling: 60000, weights: { median: 0.15, p95: 0, p99: 0 } },
-      { key: 'forkFirstReadMs', unit: 'ms', ceiling: 60000, weights: { median: 0.10, p95: 0, p99: 0 } },
+      { key: 'snapshotCreateMs', ceiling: 60000, weights: { median: 0.40, p95: 0, p99: 0 } },
+      { key: 'forkFromSnapshotMs', ceiling: 60000, weights: { median: 0.35, p95: 0, p99: 0 } },
+      { key: 'forkFromLiveMs', ceiling: 60000, weights: { median: 0.15, p95: 0, p99: 0 } },
+      { key: 'forkFirstReadMs', ceiling: 60000, weights: { median: 0.10, p95: 0, p99: 0 } },
     ],
   },
   onComplete: (outcome) =>
