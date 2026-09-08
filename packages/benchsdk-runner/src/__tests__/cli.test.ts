@@ -69,6 +69,12 @@ describe('runBenchmarkFile', () => {
     ).rejects.toThrow(/Usage:/);
   });
 
+  it('catches a misconfigured onScore during --check', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('bad-onscore.bench.ts'), '--check', '--dry-run']),
+    ).rejects.toThrow(/Benchmark check failed/);
+  });
+
   it('loads a project config file via --config and applies defaults', async () => {
     const logs: string[] = [];
     const spy = vi.spyOn(console, 'log').mockImplementation((...args: unknown[]) => {

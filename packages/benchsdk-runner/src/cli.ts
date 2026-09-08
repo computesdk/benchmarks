@@ -25,7 +25,7 @@ import { filterParticipantsByEnv, selectParticipants } from '@benchsdk/worker';
 import { parseCliArgs, runBenchmark, type CliArgs } from './runner.js';
 import { NoAvailableParticipantsError } from './no-available-participants.js';
 import { validateBenchmarkConfig, BenchmarkConfigError, type BenchmarkConfig as TypedBenchmarkConfig } from './bench-config.js';
-import { scoringConfigToSpec, validateScoringSpec } from './scoring.js';
+import { scoringConfigToSpec, validateScoringSpec, lowerIsBetter, higherIsBetter } from './scoring.js';
 import type { BaseParticipant } from '@benchsdk/worker';
 import type { BenchmarkConfig, BenchmarkTask } from './bench-config.js';
 
@@ -236,7 +236,16 @@ export async function runCheck(argv: string[]): Promise<void> {
   const { available, skipped } = filterParticipantsByEnv(selected);
 
   let scoringOk = true;
-  if (cfg.scoring) {
+  if (cfg.onScore) {
+    try {
+      const spec = await cfg.onScore(lowerIsBetter, higherIsBetter);
+      validateScoringSpec(spec);
+    } catch (err) {
+      scoringOk = false;
+      const message = err instanceof Error ? err.message : String(err);
+      console.warn(`[benchsdk] Scoring validation failed: ${message}`);
+    }
+  } else if (cfg.scoring) {
     try {
       const spec = scoringConfigToSpec(cfg.scoring, cfg.dimensions);
       validateScoringSpec(spec);
@@ -267,7 +276,7 @@ export async function runCheck(argv: string[]): Promise<void> {
       available: available.map((p) => p.name),
       skipped: skipped.map((s) => ({ name: s.name, missing: s.missing })),
     },
-    scoringOk: cfg.scoring ? scoringOk : undefined,
+    scoringOk: cfg.scoring || cfg.onScore ? scoringOk : undefined,
   };
 
   console.log(JSON.stringify(report, null, 2));
