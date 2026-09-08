@@ -602,6 +602,34 @@ export function validateBenchmarkConfig<T extends BaseParticipant = BaseParticip
     issues.push({ field: 'benchmarkName', message: 'is required' });
   }
 
+  if (!Array.isArray(config.participants) || config.participants.length === 0) {
+    issues.push({ field: 'participants', message: 'must be a non-empty array' });
+  } else {
+    const seenParticipants = new Set<string>();
+    for (let i = 0; i < config.participants.length; i++) {
+      const p = config.participants[i] as unknown;
+      if (p === null || typeof p !== 'object' || Array.isArray(p)) {
+        issues.push({ field: `participants[${i}]`, message: 'must be an object' });
+        continue;
+      }
+      const participant = p as Record<string, unknown>;
+      if (typeof participant.name !== 'string' || participant.name.trim() === '') {
+        issues.push({ field: `participants[${i}].name`, message: 'must be a non-empty string' });
+      } else if (seenParticipants.has(participant.name)) {
+        issues.push({ field: `participants[${i}].name`, message: `duplicate participant name: ${participant.name}` });
+      } else {
+        seenParticipants.add(participant.name);
+      }
+      if (
+        participant.requiredEnvVars !== undefined &&
+        (!Array.isArray(participant.requiredEnvVars) ||
+          !(participant.requiredEnvVars as unknown[]).every((v) => typeof v === 'string'))
+      ) {
+        issues.push({ field: `participants[${i}].requiredEnvVars`, message: 'must be an array of strings' });
+      }
+    }
+  }
+
   if (config.phases !== undefined) {
     if (config.iterations !== undefined) {
       issues.push({ field: 'iterations', message: 'phases and iterations are mutually exclusive' });
@@ -610,16 +638,24 @@ export function validateBenchmarkConfig<T extends BaseParticipant = BaseParticip
       issues.push({ field: 'phases', message: 'must be a non-empty array' });
     } else {
       const seen = new Set<string>();
-      for (const phase of config.phases) {
-        if (!phase.name || typeof phase.name !== 'string') {
-          issues.push({ field: 'phases', message: 'each phase requires a non-empty name' });
+      for (let i = 0; i < config.phases.length; i++) {
+        const phase = config.phases[i] as unknown;
+        if (phase === null || typeof phase !== 'object' || Array.isArray(phase)) {
+          issues.push({ field: `phases[${i}]`, message: 'must be an object' });
+          continue;
+        }
+        const phaseObj = phase as Record<string, unknown>;
+        if (typeof phaseObj.name !== 'string' || phaseObj.name.trim() === '') {
+          issues.push({ field: `phases[${i}]`, message: 'must have a non-empty string name' });
         } else {
-          if (seen.has(phase.name)) {
-            issues.push({ field: `phases['${phase.name}']`, message: `duplicate phase name: ${phase.name}` });
+          const name = phaseObj.name;
+          if (seen.has(name)) {
+            issues.push({ field: `phases['${name}']`, message: `duplicate phase name: ${name}` });
           }
-          seen.add(phase.name);
-          if (!Number.isInteger(phase.iterations) || phase.iterations < 1) {
-            issues.push({ field: `phases['${phase.name}'].iterations`, message: `must be an integer >= 1 (got ${phase.iterations})` });
+          seen.add(name);
+          const iterations = phaseObj.iterations;
+          if (typeof iterations !== 'number' || !Number.isInteger(iterations) || iterations < 1) {
+            issues.push({ field: `phases['${name}'].iterations`, message: `must be an integer >= 1 (got ${iterations})` });
           }
         }
       }
@@ -639,15 +675,27 @@ export function validateBenchmarkConfig<T extends BaseParticipant = BaseParticip
     issues.push({ field: 'groupBy', message: `must be 'participant' or 'round' (got ${config.groupBy})` });
   }
   if (config.shapes !== undefined) {
-    for (const [shapeName, shape] of Object.entries(config.shapes)) {
-      if (!shape.slug || !/^[a-z0-9][a-z0-9-]*$/.test(shape.slug)) {
-        issues.push({ field: `shapes['${shapeName}'].slug`, message: `needs a lowercase slug (got ${JSON.stringify(shape.slug)})` });
-      }
-      if (shape.name !== undefined && (typeof shape.name !== 'string' || shape.name.trim() === '')) {
-        issues.push({ field: `shapes['${shapeName}'].name`, message: 'must be a non-empty string' });
-      }
-      if (shape.staggerDelayMs !== undefined && (!Number.isFinite(shape.staggerDelayMs) || shape.staggerDelayMs < 0)) {
-        issues.push({ field: `shapes['${shapeName}'].staggerDelayMs`, message: `must be a number >= 0 (got ${shape.staggerDelayMs})` });
+    if (typeof config.shapes !== 'object' || config.shapes === null || Array.isArray(config.shapes)) {
+      issues.push({ field: 'shapes', message: 'must be a plain object' });
+    } else {
+      for (const [shapeName, shape] of Object.entries(config.shapes)) {
+        if (shape === null || typeof shape !== 'object' || Array.isArray(shape)) {
+          issues.push({ field: `shapes['${shapeName}']`, message: 'must be an object' });
+          continue;
+        }
+        const shapeObj = shape as unknown as Record<string, unknown>;
+        const slug = shapeObj.slug;
+        if (typeof slug !== 'string' || slug === '' || !/^[a-z0-9][a-z0-9-]*$/.test(slug)) {
+          issues.push({ field: `shapes['${shapeName}'].slug`, message: `needs a lowercase slug (got ${JSON.stringify(slug)})` });
+        }
+        const name = shapeObj.name;
+        if (name !== undefined && (typeof name !== 'string' || name.trim() === '')) {
+          issues.push({ field: `shapes['${shapeName}'].name`, message: 'must be a non-empty string' });
+        }
+        const staggerDelayMs = shapeObj.staggerDelayMs;
+        if (staggerDelayMs !== undefined && (typeof staggerDelayMs !== 'number' || !Number.isFinite(staggerDelayMs) || staggerDelayMs < 0)) {
+          issues.push({ field: `shapes['${shapeName}'].staggerDelayMs`, message: `must be a number >= 0 (got ${staggerDelayMs})` });
+        }
       }
     }
   }

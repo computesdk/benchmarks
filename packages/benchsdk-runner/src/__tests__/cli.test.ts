@@ -81,6 +81,18 @@ describe('runBenchmarkFile', () => {
     ).rejects.toThrow(/Usage:/);
   });
 
+  it('rejects --base-url without a value during bench check', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('local.bench.ts'), '--check', '--base-url', '--dry-run']),
+    ).rejects.toThrow(/Usage:/);
+  });
+
+  it('rejects --api-key without a value during bench check', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('local.bench.ts'), '--check', '--api-key', '--dry-run']),
+    ).rejects.toThrow(/Usage:/);
+  });
+
   it('catches a misconfigured onScore during --check', async () => {
     await expect(
       runBenchmarkFile(['run', fixture('bad-onscore.bench.ts'), '--check', '--dry-run']),

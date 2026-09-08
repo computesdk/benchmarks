@@ -28,3 +28,5 @@ Fold operator surface into `@benchsdk/runner` and add ergonomics/observability h
 - `@benchsdk/runner` re-exports `resolveAuth`, `createApiClient`, `AuthError`, and the `CliAuth` type from `@benchsdk/cli` so operators only need one package import.
 - `@benchsdk/runner` project config files (`bench.config.ts` / `.benchrc`) are validated; `dryRun` and other fields must have correct types, and `apiKey` is removed in favor of `apiKeyEnv` to keep secrets out of source control.
 - `@benchsdk/worker` `onTelemetryError` is now also invoked for `completeWorker` and `failWorker` telemetry failures in the normal completion path.
+- `bench check` now extracts and validates `--base-url` and `--api-key` flags with required-value semantics instead of treating them as pass-through custom flags.
+- `validateBenchmarkConfig` no longer throws when `phases`, `participants`, or `shapes` entries are `null`/primitives; it returns structured `BenchmarkConfigErrorItem` issues instead.

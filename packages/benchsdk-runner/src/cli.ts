@@ -247,7 +247,9 @@ export async function runCheck(argv: string[]): Promise<void> {
     throw new BenchmarkConfigError(configIssues);
   }
 
-  const parsed = parseCliArgs(flags, [...(cfg.customCliFlags ?? []), '--base-url', '--api-key'], cliDefaultsFromConfig(projectConfig));
+  const { value: baseUrl, argv: flagsWithoutBaseUrl } = shiftFlag(flags, 'base-url');
+  const { value: apiKey, argv: flagsWithoutApiKey } = shiftFlag(flagsWithoutBaseUrl, 'api-key');
+  const parsed = parseCliArgs(flagsWithoutApiKey, cfg.customCliFlags ?? [], cliDefaultsFromConfig(projectConfig));
   const dryRun = parsed.noIngest ?? projectConfig.dryRun ?? false;
 
   let client: BenchmarkClient | undefined;
@@ -256,8 +258,8 @@ export async function runCheck(argv: string[]): Promise<void> {
   if (!dryRun) {
     try {
       auth = await resolveAuth({
-        baseUrl: getFlag(flags, 'base-url') ?? projectConfig.baseUrl,
-        apiKey: getFlag(flags, 'api-key') ?? resolveApiKey(projectConfig),
+        baseUrl: baseUrl ?? projectConfig.baseUrl,
+        apiKey: apiKey ?? resolveApiKey(projectConfig),
       });
       client = createBenchmarkClient({
         baseUrl: auth.apiBaseUrl,

@@ -353,6 +353,42 @@ describe('defineBenchmarkConfig', () => {
   });
 });
 
+describe('malformed nested containers', () => {
+  it('rejects a null or primitive phase instead of crashing', () => {
+    expect(() => defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, phases: [null as any] })).toThrow('phases[0]');
+    expect(() => defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, phases: ['x' as any] })).toThrow('phases[0]');
+  });
+
+  it('rejects a phase with a missing or non-string name', () => {
+    expect(() => defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, phases: [{ iterations: 1 } as any] })).toThrow('phases[0]');
+  });
+
+  it('rejects malformed participants without crashing', () => {
+    expect(() =>
+      defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants: [null as any] }),
+    ).toThrow('participants[0]');
+    expect(() =>
+      defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants: ['x' as any] }),
+    ).toThrow('participants[0]');
+    expect(() =>
+      defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants: [{ requiredEnvVars: [] } as any] }),
+    ).toThrow('participants[0].name');
+  });
+
+  it('rejects a shapes value that is not a plain object', () => {
+    expect(() => defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, shapes: ['x' as any] })).toThrow('shapes');
+  });
+
+  it('rejects a malformed shape entry without crashing', () => {
+    expect(() =>
+      defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, shapes: { burst: null as any } }),
+    ).toThrow("shapes['burst']");
+    expect(() =>
+      defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, shapes: { burst: { slug: 'BAD' } as any } }),
+    ).toThrow("shapes['burst']");
+  });
+});
+
 describe('defineTask', () => {
   it('returns the task function unchanged', () => {
     const fn = async () => {};
