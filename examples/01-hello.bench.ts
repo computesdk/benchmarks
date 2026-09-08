@@ -1,3 +1,4 @@
+
 /**
  * Minimal benchmark: one participant, one step, one metric.
  *
@@ -20,14 +21,13 @@ export const config = defineBenchmarkConfig({
   concurrency: 1,
   participants: [{ name: 'local', requiredEnvVars: [] }],
   display: {
-    description: 'Minimal one-step, one-metric benchmark.',
     metrics: [
       { key: 'durationMs', label: 'Duration', unit: 'ms', direction: 'lower-better', decimals: 0 },
     ],
     steps: [
       { key: 'work', label: 'Work' },
     ],
-    overview: { defaultMetric: 'durationMs', defaultLayout: 'ranking' },
+    overview: { defaultMetric: 'compositeScore', defaultLayout: 'ranking' },
   },
   scoring: {
     metrics: [

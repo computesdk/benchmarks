@@ -1,3 +1,4 @@
+
 /**
  * onScore and onComplete: define scoring with functions and write an aggregate
  * summary file after the run finishes.
@@ -23,14 +24,13 @@ export const config = defineBenchmarkConfig({
   participants: [{ name: 'local', requiredEnvVars: [] }],
   dimensions: { workload: 'sort' },
   display: {
-    description: 'Custom onScore and onComplete demo for sorting workload.',
     metrics: [
       { key: 'durationMs', label: 'Duration', unit: 'ms', direction: 'lower-better', decimals: 0 },
     ],
     steps: [
       { key: 'sort', label: 'Sort' },
     ],
-    overview: { defaultMetric: 'durationMs', defaultLayout: 'ranking' },
+    overview: { defaultMetric: 'compositeScore', defaultLayout: 'ranking' },
   },
   onScore: (lowerIsBetter) => ({
     dimensions: { workload: 'sort' },

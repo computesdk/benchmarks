@@ -1,3 +1,4 @@
+
 /**
  * Structured logging and step output capture.
  *
@@ -30,7 +31,6 @@ export const config = defineBenchmarkConfig({
   concurrency: 1,
   participants: [{ name: 'local', requiredEnvVars: [] }],
   display: {
-    description: 'Structured logging and step output capture.',
     metrics: [
       { key: 'durationMs', label: 'Duration', unit: 'ms', direction: 'lower-better', decimals: 0 },
     ],
@@ -40,7 +40,7 @@ export const config = defineBenchmarkConfig({
       { key: 'safe-node-version', label: 'Safe node version' },
       { key: 'parse-version', label: 'Parse version' },
     ],
-    overview: { defaultMetric: 'durationMs', defaultLayout: 'ranking' },
+    overview: { defaultMetric: 'compositeScore', defaultLayout: 'ranking' },
   },
   scoring: {
     metrics: [

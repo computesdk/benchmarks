@@ -1,3 +1,4 @@
+
 /**
  * groupBy: 'round' interleaves participants so each round runs back-to-back.
  * This is useful for fair comparisons (e.g. every provider's Nth request under
@@ -26,14 +27,13 @@ export const config = defineBenchmarkConfig({
     { name: 'slow', requiredEnvVars: [], workMs: 80 },
   ],
   display: {
-    description: 'Round-robin participant interleaving latency.',
     metrics: [
       { key: 'durationMs', label: 'Duration', unit: 'ms', direction: 'lower-better', decimals: 0 },
     ],
     steps: [
       { key: 'work', label: 'Work' },
     ],
-    overview: { defaultMetric: 'durationMs', defaultLayout: 'ranking' },
+    overview: { defaultMetric: 'compositeScore', defaultLayout: 'ranking' },
   },
   scoring: {
     metrics: [

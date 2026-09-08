@@ -1,3 +1,4 @@
+
 /**
  * Storage snapshot/fork benchmark: per-iteration seed -> snapshot -> fork ->
  * verify, per provider (concurrency 1 = sequential; each iteration creates real
@@ -56,7 +57,6 @@ export const config = defineBenchmarkConfig({
   customCliFlags: ['--dataset'],
   dimensions: { dataset },
   display: {
-    description: 'Storage snapshot/fork creation and read latency.',
     metrics: [
       { key: 'snapshotCreateMs', label: 'Snapshot create', unit: 'ms', direction: 'lower-better', decimals: 0 },
       { key: 'forkFromSnapshotMs', label: 'Fork from snapshot', unit: 'ms', direction: 'lower-better', decimals: 0 },
@@ -71,7 +71,7 @@ export const config = defineBenchmarkConfig({
       { key: 'fork-from-live', label: 'Fork from live' },
       { key: 'fork-first-read', label: 'First read' },
     ],
-    overview: { defaultMetric: 'forkFirstReadMs', defaultLayout: 'ranking' },
+    overview: { defaultMetric: 'compositeScore', defaultLayout: 'ranking' },
   },
   scoring: {
     // A fork whose read-back didn't match is not a usable fork, so its timings

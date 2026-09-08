@@ -1,3 +1,4 @@
+
 /**
  * Scoring with multiple metrics, a higher-is-better metric, and a success rule.
  *
@@ -24,7 +25,6 @@ export const config = defineBenchmarkConfig({
   concurrency: 1,
   participants: [{ name: 'local', requiredEnvVars: [], payloadBytes: 1024 * 1024 }],
   display: {
-    description: 'Hash duration, throughput, and verification success.',
     metrics: [
       { key: 'durationMs', label: 'Duration', unit: 'ms', direction: 'lower-better', decimals: 0 },
       { key: 'throughputMbps', label: 'Throughput', unit: 'Mbps', direction: 'higher-better', decimals: 1 },
@@ -32,7 +32,7 @@ export const config = defineBenchmarkConfig({
     steps: [
       { key: 'hash', label: 'Hash payload' },
     ],
-    overview: { defaultMetric: 'durationMs', defaultLayout: 'ranking' },
+    overview: { defaultMetric: 'compositeScore', defaultLayout: 'ranking' },
   },
   scoring: {
     // Records only count as successful when data.verified === true.

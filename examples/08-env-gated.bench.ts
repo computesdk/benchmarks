@@ -1,3 +1,4 @@
+
 /**
  * Env-gated participants: providers with `requiredEnvVars` are automatically
  * skipped when those env vars are missing. `defaultProviders` limits the default
@@ -28,7 +29,6 @@ export const config = defineBenchmarkConfig({
     { name: 'remote', requiredEnvVars: ['DEMO_API_KEY'] },
   ],
   display: {
-    description: 'Env-gated local vs. remote participant latency.',
     metrics: [
       { key: 'durationMs', label: 'Duration', unit: 'ms', direction: 'lower-better', decimals: 0 },
     ],
@@ -36,7 +36,7 @@ export const config = defineBenchmarkConfig({
       { key: 'remote-auth', label: 'Remote auth' },
       { key: 'local-work', label: 'Local work' },
     ],
-    overview: { defaultMetric: 'durationMs', defaultLayout: 'ranking' },
+    overview: { defaultMetric: 'compositeScore', defaultLayout: 'ranking' },
   },
   scoring: {
     metrics: [

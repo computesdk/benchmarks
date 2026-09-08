@@ -1,3 +1,4 @@
+
 /**
  * Browser throughput benchmark: each session runs a fixed action loop; sessions
  * are interleaved across providers (groupBy 'round') so every provider runs its
@@ -36,7 +37,6 @@ export const config = defineBenchmarkConfig({
   groupBy: 'round',
   participants: throughputProviders,
   display: {
-    description: 'Browser session throughput and action rate.',
     metrics: [
       { key: 'actionsPerSecond', label: 'Actions/s', unit: '/s', direction: 'higher-better', decimals: 2 },
       { key: 'actionsCompleted', label: 'Actions completed', direction: 'higher-better', decimals: 0 },
@@ -53,7 +53,7 @@ export const config = defineBenchmarkConfig({
       { key: 'actions', label: 'Actions' },
       { key: 'release', label: 'Release session' },
     ],
-    overview: { defaultMetric: 'actionsPerSecond', defaultLayout: 'ranking' },
+    overview: { defaultMetric: 'compositeScore', defaultLayout: 'ranking' },
   },
   scoring: {
     // A session that dropped actions isn't comparable to one that completed

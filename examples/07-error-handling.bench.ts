@@ -1,3 +1,4 @@
+
 /**
  * Error handling: TaskError preserves code/data, step timeoutMs aborts long
  * steps, and try/finally cleans up resources.
@@ -22,7 +23,6 @@ export const config = defineBenchmarkConfig({
   concurrency: 1,
   participants: [{ name: 'local', requiredEnvVars: [] }],
   display: {
-    description: 'TaskError, step timeout, and cleanup behavior.',
     metrics: [
       { key: 'durationMs', label: 'Duration', unit: 'ms', direction: 'lower-better', decimals: 0 },
     ],
@@ -32,7 +32,7 @@ export const config = defineBenchmarkConfig({
       { key: 'work', label: 'Work' },
       { key: 'cleanup', label: 'Cleanup' },
     ],
-    overview: { defaultMetric: 'durationMs', defaultLayout: 'ranking' },
+    overview: { defaultMetric: 'compositeScore', defaultLayout: 'ranking' },
   },
   scoring: {
     metrics: [
