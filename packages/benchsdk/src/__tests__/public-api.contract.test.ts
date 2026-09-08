@@ -1554,6 +1554,10 @@ describe('public API surface and type exports', () => {
     const valueNames = Object.keys(barrel);
     expect(valueNames.length).toBeGreaterThan(0);
     for (const name of valueNames) {
+      if (name === 'BENCHSDK_RUNNER_VERSION') {
+        expect((barrel as Record<string, unknown>)[name]).toBeTypeOf('string');
+        continue;
+      }
       expect((barrel as Record<string, unknown>)[name]).toBeTypeOf('function');
     }
     // Type-only surface compiles (see the _PublicTypeSurface alias above).
