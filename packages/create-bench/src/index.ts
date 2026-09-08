@@ -75,9 +75,14 @@ export const config = defineBenchmarkConfig({
   iterations: 10,
   concurrency: 1,
   participants: [{ name: 'local', requiredEnvVars: [] }],
+  display: {
+    metrics: [
+      { key: 'durationMs', label: 'Duration', unit: 'ms', direction: 'lower-better' },
+    ],
+  },
   scoring: {
     metrics: [
-      { key: 'durationMs', unit: 'ms', ceiling: 1000, weights: { median: 0.7, p95: 0.2, p99: 0.1 } },
+      { key: 'durationMs', ceiling: 1000, weights: { median: 0.7, p95: 0.2, p99: 0.1 } },
     ],
   },
 });

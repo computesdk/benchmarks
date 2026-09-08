@@ -22,12 +22,21 @@ export const config = defineBenchmarkConfig({
   concurrency: 1,
   participants: [{ name: 'local', requiredEnvVars: [] }],
   dimensions: { workload: 'sort' },
+  display: {
+    description: 'Custom onScore and onComplete demo for sorting workload.',
+    metrics: [
+      { key: 'durationMs', label: 'Duration', unit: 'ms', direction: 'lower-better', decimals: 0 },
+    ],
+    steps: [
+      { key: 'sort', label: 'Sort' },
+    ],
+    overview: { defaultMetric: 'durationMs', defaultLayout: 'ranking' },
+  },
   onScore: (lowerIsBetter) => ({
     dimensions: { workload: 'sort' },
     success: (record) => record.status === 'success' && (record.data as { sorted?: boolean }).sorted === true,
     metrics: [
       lowerIsBetter('durationMs', {
-        unit: 'ms',
         ceiling: 500,
         value: (record) => (record.data as { durationMs?: number }).durationMs ?? 0,
         weights: { median: 0.7, p95: 0.2, p99: 0.1 },

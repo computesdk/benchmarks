@@ -654,9 +654,10 @@ export async function runBenchmark<T extends BaseParticipant>(
     dashboardUrl = '';
   } else {
     if (identityIsOurs) {
-      const benchmarkConfig: JsonObject = config.scoring
-        ? { scoring: config.scoring as unknown as JsonObject }
-        : {};
+      const benchmarkConfig: JsonObject = {
+        ...(config.scoring ? { scoring: config.scoring as unknown as JsonObject } : {}),
+        ...(config.display ? { display: config.display as unknown as JsonObject } : {}),
+      };
       await client!.upsertBenchmark(config.benchmarkSlug, {
         name: config.benchmarkName,
         ...(Object.keys(benchmarkConfig).length > 0 ? { config: benchmarkConfig } : {}),
@@ -717,7 +718,7 @@ export async function runBenchmark<T extends BaseParticipant>(
     try {
       const spec = config.onScore
         ? await config.onScore(lowerIsBetter, higherIsBetter)
-        : scoringConfigToSpec(config.scoring!, config.dimensions);
+        : scoringConfigToSpec(config.scoring!, config.dimensions, config.display);
       const scored = score(outcome, spec);
       const run = {
         gitSha: process.env.GITHUB_SHA ?? getGitSha(),
@@ -1002,7 +1003,7 @@ async function runGroupedByRound<T extends BaseParticipant>(
     // uploads metrics.
     if (reporter && !metricsCollector) {
       metricsCollector = createSystemMetricsCollector();
-      metricsSamples.push(metricsCollector.sample());
+      metricsSamples.push(await metricsCollector.sample());
     }
   }
 
@@ -1047,14 +1048,14 @@ async function runGroupedByRound<T extends BaseParticipant>(
     // everything sequentially in this one loop, so a round boundary is the
     // natural, already-existing cadence. Taken after the whole round (not per
     // participant) since the sample covers the shared process, not one slice.
-    if (metricsCollector) metricsSamples.push(metricsCollector.sample());
+    if (metricsCollector) metricsSamples.push(await metricsCollector.sample());
   }
 
   // One shared collector for the whole process — a final sample (before stop,
   // which disables the event-loop monitor), then upload a single
   // `system-metrics` artifact via any one reporter (all participants ran in
   // this process, so the metrics belong to the run, not to any one of them).
-  if (metricsCollector) metricsSamples.push(metricsCollector.sample());
+  if (metricsCollector) metricsSamples.push(await metricsCollector.sample());
   metricsCollector?.stop();
   // The SDK only has a worker-scoped artifact API, so this single artifact is
   // necessarily filed under one reporter's worker. Tag it as process-scoped

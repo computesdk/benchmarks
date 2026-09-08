@@ -54,12 +54,27 @@ const baseConfig = {
   concurrency: 1,
   participants: storageProviders,
   customCliFlags: ['--file-size'],
+  display: {
+    description: 'Storage upload/download lifecycle latency and throughput.',
+    metrics: [
+      { key: 'uploadMs', label: 'Upload', unit: 'ms', direction: 'lower-better' as const, decimals: 0 },
+      { key: 'downloadMs', label: 'Download', unit: 'ms', direction: 'lower-better' as const, decimals: 0 },
+      { key: 'throughputMbps', label: 'Throughput', unit: 'Mbps', direction: 'higher-better' as const, decimals: 1 },
+      { key: 'fileSizeBytes', label: 'File size', unit: 'bytes', direction: 'lower-better' as const, decimals: 0 },
+    ],
+    steps: [
+      { key: 'upload', label: 'Upload' },
+      { key: 'download', label: 'Download' },
+      { key: 'delete', label: 'Delete' },
+    ],
+    overview: { defaultMetric: 'downloadMs', defaultLayout: 'ranking' as const },
+  },
   scoring: {
     groupBy: 'file_size',
     metrics: [
-      { key: 'uploadMs', unit: 'ms', ceiling: 30000, weights: { median: 0.25, p95: 0.10, p99: 0.05 } },
-      { key: 'downloadMs', unit: 'ms', ceiling: 30000, weights: { median: 0.35, p95: 0.15, p99: 0.05 } },
-      { key: 'throughputMbps', unit: 'mbps', floor: 1, ceiling: 1000, higherIsBetter: true, weights: { median: 0.05, p95: 0, p99: 0 } },
+      { key: 'uploadMs', ceiling: 30000, weights: { median: 0.25, p95: 0.10, p99: 0.05 } },
+      { key: 'downloadMs', ceiling: 30000, weights: { median: 0.35, p95: 0.15, p99: 0.05 } },
+      { key: 'throughputMbps', floor: 1, ceiling: 1000, higherIsBetter: true, weights: { median: 0.05, p95: 0, p99: 0 } },
     ],
   },
 };

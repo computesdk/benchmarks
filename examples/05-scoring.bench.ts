@@ -23,6 +23,17 @@ export const config = defineBenchmarkConfig({
   iterations: 10,
   concurrency: 1,
   participants: [{ name: 'local', requiredEnvVars: [], payloadBytes: 1024 * 1024 }],
+  display: {
+    description: 'Hash duration, throughput, and verification success.',
+    metrics: [
+      { key: 'durationMs', label: 'Duration', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'throughputMbps', label: 'Throughput', unit: 'Mbps', direction: 'higher-better', decimals: 1 },
+    ],
+    steps: [
+      { key: 'hash', label: 'Hash payload' },
+    ],
+    overview: { defaultMetric: 'durationMs', defaultLayout: 'ranking' },
+  },
   scoring: {
     // Records only count as successful when data.verified === true.
     success: {
@@ -32,14 +43,12 @@ export const config = defineBenchmarkConfig({
       // Duration is 50% of the composite score.
       {
         key: 'durationMs',
-        unit: 'ms',
         ceiling: 1000,
         weights: { median: 0.35, p95: 0.1, p99: 0.05 },
       },
       // Throughput is also 50% of the composite score.
       {
         key: 'throughputMbps',
-        unit: 'mbps',
         floor: 1,
         ceiling: 500,
         higherIsBetter: true,

@@ -26,10 +26,27 @@ export const config = defineBenchmarkConfig({
   iterations: 2,
   concurrency: 1,
   participants: browserProviders,
+  display: {
+    description: 'Browser create→connect→navigate→release lifecycle latency.',
+    metrics: [
+      { key: 'totalMs', label: 'Total lifecycle', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'createMs', label: 'Session creation', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'connectMs', label: 'CDP connection', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'navigateMs', label: 'Page navigation', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'releaseMs', label: 'Session release', unit: 'ms', direction: 'lower-better', decimals: 0 },
+    ],
+    steps: [
+      { key: 'create', label: 'Create session' },
+      { key: 'connect', label: 'Connect CDP' },
+      { key: 'navigate', label: 'Navigate page' },
+      { key: 'release', label: 'Release session' },
+    ],
+    overview: { defaultMetric: 'totalMs', defaultLayout: 'ranking' },
+  },
   scoring: {
     metrics: [
-      { key: 'totalMs', unit: 'ms', ceiling: 10000, weights: { median: 0.40, p95: 0.20, p99: 0.10 } },
-      { key: 'createMs', unit: 'ms', ceiling: 10000, weights: { median: 0.30, p95: 0, p99: 0 } },
+      { key: 'totalMs', ceiling: 10000, weights: { median: 0.40, p95: 0.20, p99: 0.10 } },
+      { key: 'createMs', ceiling: 10000, weights: { median: 0.30, p95: 0, p99: 0 } },
     ],
   },
   onComplete: (outcome) =>

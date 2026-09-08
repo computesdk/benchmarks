@@ -23,9 +23,20 @@ export const config = defineBenchmarkConfig({
   ],
   concurrency: 1,
   participants: [{ name: 'local', requiredEnvVars: [], coldDelayMs: 100 }],
+  display: {
+    description: 'Cold vs. warm phase latency.',
+    metrics: [
+      { key: 'durationMs', label: 'Duration', unit: 'ms', direction: 'lower-better', decimals: 0 },
+    ],
+    steps: [
+      { key: 'cold-work', label: 'Cold work' },
+      { key: 'warm-work', label: 'Warm work' },
+    ],
+    overview: { defaultMetric: 'durationMs', defaultLayout: 'ranking' },
+  },
   scoring: {
     metrics: [
-      { key: 'durationMs', unit: 'ms', ceiling: 1000, weights: { median: 0.7, p95: 0.2, p99: 0.1 } },
+      { key: 'durationMs', ceiling: 1000, weights: { median: 0.7, p95: 0.2, p99: 0.1 } },
     ],
   },
 });

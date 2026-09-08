@@ -60,7 +60,12 @@ jobs:
           cache: 'pnpm'
       - uses: namespacelabs/nscloud-setup@df198f982fcecfb8264bea3f1274b56a61b6dfdc # v0.0.12
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Build workspace packages
+        # The @benchsdk/* packages are built from source and dist/ is not
+        # committed. Build them in topological order so dependents like
+        # @benchsdk/client can resolve @benchsdk/worker during their own build.
+        run: pnpm -r --filter './packages/**' run build
       - name: Run storage concurrency benchmark
         env:
           STORAGE_CONCURRENCY_PROVIDER: ${{ inputs.provider || '' }}
@@ -106,7 +111,12 @@ jobs:
           node-version: 24
           cache: 'pnpm'
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Build workspace packages
+        # The @benchsdk/* packages are built from source and dist/ is not
+        # committed. Build them in topological order so dependents like
+        # @benchsdk/client can resolve @benchsdk/worker during their own build.
+        run: pnpm -r --filter './packages/**' run build
       - name: Download combined results
         uses: actions/download-artifact@v4
         continue-on-error: true

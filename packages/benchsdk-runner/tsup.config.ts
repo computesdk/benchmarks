@@ -1,4 +1,5 @@
 import { defineConfig } from 'tsup';
+import pkg from './package.json';
 
 export default defineConfig({
   entry: {
@@ -16,4 +17,7 @@ export default defineConfig({
   // module as any benchmark it loads; keep that import external instead of
   // bundling a second copy of the runner into bin.*.
   external: ['@benchsdk/runner'],
+  define: {
+    __BENCH_VERSION__: JSON.stringify(pkg.version),
+  },
 });

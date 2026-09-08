@@ -35,6 +35,26 @@ export const config = defineBenchmarkConfig({
   iterations: 2,
   groupBy: 'round',
   participants: throughputProviders,
+  display: {
+    description: 'Browser session throughput and action rate.',
+    metrics: [
+      { key: 'actionsPerSecond', label: 'Actions/s', unit: '/s', direction: 'higher-better', decimals: 2 },
+      { key: 'actionsCompleted', label: 'Actions completed', direction: 'higher-better', decimals: 0 },
+      { key: 'taskMs', label: 'Action loop', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'screenshotMs', label: 'Screenshot', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'createMs', label: 'Session creation', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'connectMs', label: 'CDP connection', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'releaseMs', label: 'Session release', unit: 'ms', direction: 'lower-better', decimals: 0 },
+      { key: 'totalMs', label: 'Total lifecycle', unit: 'ms', direction: 'lower-better', decimals: 0 },
+    ],
+    steps: [
+      { key: 'create', label: 'Create session' },
+      { key: 'connect', label: 'Connect CDP' },
+      { key: 'actions', label: 'Actions' },
+      { key: 'release', label: 'Release session' },
+    ],
+    overview: { defaultMetric: 'actionsPerSecond', defaultLayout: 'ranking' },
+  },
   scoring: {
     // A session that dropped actions isn't comparable to one that completed
     // them all, so it counts against the success rate and its timings are
@@ -43,14 +63,13 @@ export const config = defineBenchmarkConfig({
     metrics: [
       {
         key: 'actionsPerSecond',
-        unit: 'actions/sec',
         floor: 0,
         ceiling: 10,
         higherIsBetter: true,
         weights: { median: 0.40, p95: 0, p99: 0 },
       },
-      { key: 'taskMs', unit: 'ms', ceiling: 30000, weights: { median: 0.25, p95: 0.20, p99: 0 } },
-      { key: 'screenshotMs', unit: 'ms', ceiling: 30000, weights: { median: 0.15, p95: 0, p99: 0 } },
+      { key: 'taskMs', ceiling: 30000, weights: { median: 0.25, p95: 0.20, p99: 0 } },
+      { key: 'screenshotMs', ceiling: 30000, weights: { median: 0.15, p95: 0, p99: 0 } },
     ],
   },
   onComplete: (outcome) =>

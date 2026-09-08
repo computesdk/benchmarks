@@ -899,7 +899,7 @@ describe('createBenchmarkClient', () => {
     expect(artifactPost?.body).toMatchObject({ kind: 'coordinator.log', name: 'worker.log', contentType: 'application/gzip' });
 
     const upload = seen.find((entry) => entry.url === 'https://upload.test');
-    const decompressed = gunzipSync(Buffer.from(upload?.body as ArrayBufferView));
+    const decompressed = gunzipSync(Buffer.from(upload?.body as Uint8Array));
     expect(decompressed.toString()).toContain('compressed entry');
   });
 
@@ -980,9 +980,9 @@ describe('createBenchmarkClient', () => {
     expect(sentSequences).toEqual([0, 0]);
   });
 
-  it('samples system metrics for coordinator artifacts', () => {
+  it('samples system metrics for coordinator artifacts', async () => {
     const collector = createSystemMetricsCollector();
-    const sample = collector.sample();
+    const sample = await collector.sample();
     collector.stop();
 
     expect(sample.ts).toEqual(expect.any(String));

@@ -29,9 +29,22 @@ export const config = defineBenchmarkConfig({
   iterations: 3,
   concurrency: 1,
   participants: [{ name: 'local', requiredEnvVars: [] }],
+  display: {
+    description: 'Structured logging and step output capture.',
+    metrics: [
+      { key: 'durationMs', label: 'Duration', unit: 'ms', direction: 'lower-better', decimals: 0 },
+    ],
+    steps: [
+      { key: 'work', label: 'Work' },
+      { key: 'node-version', label: 'Node version' },
+      { key: 'safe-node-version', label: 'Safe node version' },
+      { key: 'parse-version', label: 'Parse version' },
+    ],
+    overview: { defaultMetric: 'durationMs', defaultLayout: 'ranking' },
+  },
   scoring: {
     metrics: [
-      { key: 'durationMs', unit: 'ms', ceiling: 1000, weights: { median: 0.7, p95: 0.2, p99: 0.1 } },
+      { key: 'durationMs', ceiling: 1000, weights: { median: 0.7, p95: 0.2, p99: 0.1 } },
     ],
   },
 });

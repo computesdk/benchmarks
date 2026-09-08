@@ -1,3 +1,4 @@
+import { BENCHSDK_RUNNER_VERSION } from '@benchsdk/runner';
 import type { AIGatewayProviderConfig } from './types.js';
 import { resolveNeonHost } from './neon-host.js';
 
@@ -326,6 +327,23 @@ export const providers: AIGatewayProviderConfig[] = [
       buf.match(/"resolvedProvider"\s*:\s*"([^"]+)"/)?.[1] ??
       buf.match(/"provider"\s*:\s*"([^"]+)"/)?.[1] ??
       buf.match(/"model"\s*:\s*"([^"/]+)\/[^"]*"/)?.[1],
+    reasoningCountsAsFirstToken: true,
+  },
+  {
+    name: 'github-copilot',
+    requiredEnvVars: ['GITHUB_COPILOT_API_KEY'],
+    wireFormat: 'openai',
+    model: 'kimi-k3',
+    host: 'api.githubcopilot.com',
+    path: '/chat/completions',
+    buildHeaders: () => ({
+      'X-GitHub-Api-Version': '2025-10-01',
+      'User-Agent': `benchsdk-runner/${BENCHSDK_RUNNER_VERSION}`,
+      Authorization: `Bearer ${process.env.GITHUB_COPILOT_API_KEY || ''}`,
+    }),
+    extraBody: {
+      temperature: undefined,
+    },
     reasoningCountsAsFirstToken: true,
   },
   {

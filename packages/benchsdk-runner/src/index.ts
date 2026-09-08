@@ -1,5 +1,7 @@
 // High-level authoring DSL
 export { defineBenchmarkConfig, defineTask, TaskError, BenchmarkConfigError, validateBenchmarkConfig } from './bench-config.js';
+declare const __BENCH_VERSION__: string;
+export const BENCHSDK_RUNNER_VERSION = __BENCH_VERSION__;
 export type {
   BenchmarkConfig,
   BenchmarkTask,
@@ -12,6 +14,10 @@ export type {
   ResolvedRunConfig,
   BenchmarkRunOutcome,
   BenchmarkConfigErrorItem,
+  BenchmarkDisplayConfig,
+  BenchmarkMetricDisplay,
+  BenchmarkStepDisplay,
+  BenchmarkOverviewDisplay,
 } from './bench-config.js';
 
 // Operator / runner entrypoints

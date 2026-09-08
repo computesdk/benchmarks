@@ -129,6 +129,53 @@ describe('score with groupBy', () => {
   });
 });
 
+describe('scoringConfigToSpec', () => {
+  it('derives unit from display.metrics when omitted in scoring.metrics', () => {
+    const spec = scoringConfigToSpec(
+      {
+        metrics: [{ key: 'ttiMs', ceiling: 10000, weights: { median: 1, p95: 0, p99: 0 } }],
+      },
+      undefined,
+      {
+        metrics: [{ key: 'ttiMs', label: 'Time to interactive', unit: 'ms' }],
+      },
+    );
+
+    expect(spec.metrics[0].name).toBe('ttiMs');
+    expect(spec.metrics[0].unit).toBe('ms');
+  });
+
+  it('uses the scoring metric unit as a fallback when display.metrics is absent', () => {
+    const spec = scoringConfigToSpec({
+      metrics: [{ key: 'ttiMs', unit: 'ms', ceiling: 10000, weights: { median: 1, p95: 0, p99: 0 } }],
+    });
+
+    expect(spec.metrics[0].unit).toBe('ms');
+  });
+
+  it('lets display.metrics override a scoring metric unit', () => {
+    const spec = scoringConfigToSpec(
+      {
+        metrics: [{ key: 'ttiMs', unit: 's', ceiling: 10000, weights: { median: 1, p95: 0, p99: 0 } }],
+      },
+      undefined,
+      {
+        metrics: [{ key: 'ttiMs', label: 'Time to interactive', unit: 'ms' }],
+      },
+    );
+
+    expect(spec.metrics[0].unit).toBe('ms');
+  });
+
+  it('falls back to an empty unit when neither scoring nor display declares one', () => {
+    const spec = scoringConfigToSpec({
+      metrics: [{ key: 'ttiMs', ceiling: 10000, weights: { median: 1, p95: 0, p99: 0 } }],
+    });
+
+    expect(spec.metrics[0].unit).toBe('');
+  });
+});
+
 describe('scoringConfigToSpec success rule', () => {
   const spec = scoringConfigToSpec({
     success: { requireData: { verified: true } },

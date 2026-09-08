@@ -27,9 +27,19 @@ export const config = defineBenchmarkConfig({
     { name: 'alpha', requiredEnvVars: [], workMs: 20 },
     { name: 'beta', requiredEnvVars: [], workMs: 40 },
   ],
+  display: {
+    description: 'Shared run key across multiple CI jobs.',
+    metrics: [
+      { key: 'durationMs', label: 'Duration', unit: 'ms', direction: 'lower-better', decimals: 0 },
+    ],
+    steps: [
+      { key: 'work', label: 'Work' },
+    ],
+    overview: { defaultMetric: 'durationMs', defaultLayout: 'ranking' },
+  },
   scoring: {
     metrics: [
-      { key: 'durationMs', unit: 'ms', ceiling: 500, weights: { median: 0.7, p95: 0.2, p99: 0.1 } },
+      { key: 'durationMs', ceiling: 500, weights: { median: 0.7, p95: 0.2, p99: 0.1 } },
     ],
   },
 });
