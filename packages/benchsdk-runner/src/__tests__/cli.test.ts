@@ -63,6 +63,12 @@ describe('runBenchmarkFile', () => {
     ).rejects.toThrow(/must export a `task`/);
   });
 
+  it('rejects --base-url without a value instead of consuming the next flag', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('good.bench.ts'), '--base-url', '--dry-run']),
+    ).rejects.toThrow(/Usage:/);
+  });
+
   it('loads a project config file via --config and applies defaults', async () => {
     const logs: string[] = [];
     const spy = vi.spyOn(console, 'log').mockImplementation((...args: unknown[]) => {

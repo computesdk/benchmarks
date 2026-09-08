@@ -135,8 +135,12 @@ function sleep(ms: number): Promise<void> {
 
 function handleTelemetryError(handler: ((error: unknown, operation: string) => void) | undefined, operation: string, error: unknown): void {
   if (handler) {
-    handler(error, operation);
-    return;
+    try {
+      handler(error, operation);
+      return;
+    } catch (handlerError) {
+      console.warn(`[benchsdk] telemetry error handler threw for (${operation}): ${handlerError instanceof Error ? handlerError.message : String(handlerError)}`);
+    }
   }
   console.warn(`[benchsdk] telemetry failure (${operation}): ${error instanceof Error ? error.message : String(error)}`);
 }
@@ -449,8 +453,8 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
         name: 'metrics.jsonl',
         body,
       });
-    } catch {
-      // Metrics upload is best-effort; never fail the run over it.
+    } catch (error) {
+      handleTelemetryError(options.onTelemetryError, 'systemMetrics', error);
     }
   }
 

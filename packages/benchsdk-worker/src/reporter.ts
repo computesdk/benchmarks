@@ -120,8 +120,12 @@ export class BenchmarkReporter {
 
   private reportTelemetryError(operation: string, error: unknown): void {
     if (this.cfg.onTelemetryError) {
-      this.cfg.onTelemetryError(error, operation);
-      return;
+      try {
+        this.cfg.onTelemetryError(error, operation);
+        return;
+      } catch (handlerError) {
+        console.warn(`[benchsdk] telemetry error handler threw for (${operation}): ${handlerError instanceof Error ? handlerError.message : String(handlerError)}`);
+      }
     }
     console.warn(`[benchsdk] telemetry failure (${operation}): ${error instanceof Error ? error.message : String(error)}`);
   }

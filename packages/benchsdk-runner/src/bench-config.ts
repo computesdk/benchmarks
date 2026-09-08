@@ -560,12 +560,6 @@ export function defineBenchmarkConfig<T extends BaseParticipant = BaseParticipan
       });
     }
   }
-  if (config.display?.overview?.defaultMetric === 'compositeScore' && config.scoring === undefined && config.onScore === undefined) {
-    issues.push({
-      field: 'display.overview.defaultMetric',
-      message: "cannot be 'compositeScore' without config.scoring or config.onScore",
-    });
-  }
   if (issues.length > 0) {
     throw new BenchmarkConfigError(issues);
   }
@@ -678,6 +672,12 @@ export function validateBenchmarkConfig<T extends BaseParticipant = BaseParticip
         message: error instanceof Error ? error.message : String(error),
       });
     }
+  }
+  if (config.display?.overview?.defaultMetric === 'compositeScore' && config.scoring === undefined && config.onScore === undefined) {
+    issues.push({
+      field: 'display.overview.defaultMetric',
+      message: "cannot be 'compositeScore' without config.scoring or config.onScore",
+    });
   }
 
   return issues;

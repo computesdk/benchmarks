@@ -51,10 +51,42 @@ function isBenchmarkConfig(value: unknown): value is BenchmarkConfig {
 }
 
 function getFlag(argv: string[], name: string): string | undefined {
-  const i = argv.indexOf(`--${name}`);
-  if (i === -1 || i + 1 >= argv.length) return undefined;
-  const value = argv[i + 1];
-  return value?.startsWith('--') ? undefined : value;
+  const prefix = `--${name}`;
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg === prefix) {
+      const value = argv[i + 1];
+      return value?.startsWith('--') ? undefined : value;
+    }
+    if (arg.startsWith(`${prefix}=`)) {
+      return arg.slice(prefix.length + 1);
+    }
+  }
+  return undefined;
+}
+
+function shiftFlag(argv: string[], name: string): { value: string | undefined; argv: string[] } {
+  const prefix = `--${name}`;
+  const prefixEq = `${prefix}=`;
+  const result: string[] = [];
+  let value: string | undefined;
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg === prefix) {
+      const next = argv[++i];
+      if (!next || next.startsWith('--')) throw new Error(USAGE);
+      value = next;
+      continue;
+    }
+    if (arg.startsWith(prefixEq)) {
+      const eqValue = arg.slice(prefixEq.length);
+      if (!eqValue) throw new Error(USAGE);
+      value = eqValue;
+      continue;
+    }
+    result.push(arg);
+  }
+  return { value, argv: result };
 }
 
 /** Project-level CLI config defaults. */
@@ -106,15 +138,16 @@ async function loadConfigFile(fullPath: string): Promise<BenchSdkConfig> {
   return (mod.default ?? mod.config ?? {}) as BenchSdkConfig;
 }
 
-async function resolveProjectConfig(argv: string[], cwd: string): Promise<{ config: BenchSdkConfig; argv: string[] }> {
+async function resolveProjectConfig(argv: string[], cwd: string): Promise<{ config: BenchSdkConfig; configPath?: string; argv: string[] }> {
   const { configPath, argv: cleanArgv } = shiftConfigFlag(argv);
   if (configPath) {
-    return { config: await loadConfigFile(resolve(cwd, configPath)), argv: cleanArgv };
+    const full = resolve(cwd, configPath);
+    return { config: await loadConfigFile(full), configPath: full, argv: cleanArgv };
   }
   for (const name of DEFAULT_CONFIG_NAMES) {
     const full = resolve(cwd, name);
     if (existsSync(full)) {
-      return { config: await loadConfigFile(full), argv: cleanArgv };
+      return { config: await loadConfigFile(full), configPath: full, argv: cleanArgv };
     }
   }
   return { config: {}, argv: cleanArgv };
@@ -165,7 +198,8 @@ export async function runCheck(argv: string[]): Promise<void> {
     throw new BenchmarkConfigError(configIssues);
   }
 
-  const dryRun = flags.includes('--dry-run') || flags.includes('--no-ingest') || projectConfig.dryRun;
+  const parsed = parseCliArgs(flags, [...(cfg.customCliFlags ?? []), '--base-url', '--api-key'], cliDefaultsFromConfig(projectConfig));
+  const dryRun = parsed.noIngest ?? projectConfig.dryRun ?? false;
 
   let client: BenchmarkClient | undefined;
   let apiOk = dryRun;
@@ -191,9 +225,7 @@ export async function runCheck(argv: string[]): Promise<void> {
     }
   }
 
-  const providerArg = getFlag(flags, 'provider');
-  const providerNames = providerArg ? providerArg.split(',').map((p) => p.trim()).filter(Boolean) : undefined;
-  const effectiveProviderNames = providerNames ?? projectConfig.providers ?? cfg.defaultProviders;
+  const effectiveProviderNames = parsed.providers ?? cfg.defaultProviders;
 
   let selected: BaseParticipant[];
   try {
@@ -252,16 +284,20 @@ export async function runCheck(argv: string[]): Promise<void> {
  * exit. Does not call `process.exit`.
  */
 export async function runBenchmarkFile(argv: string[]): Promise<void> {
-  const { config: projectConfig, argv: cleanArgv } = await resolveProjectConfig(argv, process.cwd());
+  const { config: projectConfig, configPath, argv: cleanArgv } = await resolveProjectConfig(argv, process.cwd());
   const [command, ...rest] = cleanArgv;
   const [file, ...flags] = rest;
   if (command !== 'run' || !file || file.startsWith('-')) throw new Error(USAGE);
 
   const check = flags.includes('--check') || flags.includes('--validate');
-  const runnerFlags = flags.filter((f) => f !== '--check' && f !== '--validate' && !f.startsWith('--config'));
   if (check) {
-    return runCheck(['check', file, ...runnerFlags]);
+    const checkFlags = flags.filter((f) => f !== '--check' && f !== '--validate');
+    return runCheck(['check', file, ...(configPath ? ['--config', configPath] : []), ...checkFlags]);
   }
+
+  const { value: baseUrl, argv: flagsWithoutBaseUrl } = shiftFlag(flags, 'base-url');
+  const { value: apiKey, argv: flagsWithoutApiKey } = shiftFlag(flagsWithoutBaseUrl, 'api-key');
+  const runnerFlags = flagsWithoutApiKey.filter((f) => f !== '--check' && f !== '--validate' && !f.startsWith('--config'));
 
   const mod = (await import(pathToFileURL(resolve(process.cwd(), file)).href)) as BenchmarkModule;
   const config = mod.config;
@@ -274,15 +310,11 @@ export async function runBenchmarkFile(argv: string[]): Promise<void> {
     throw new Error(`${file} must export a \`task\` created with defineTask.`);
   }
 
-  const baseUrl = getFlag(flags, 'base-url') ?? projectConfig.baseUrl;
-  const apiKey = getFlag(flags, 'api-key') ?? resolveApiKey(projectConfig);
-  const cliDefaults = cliDefaultsFromConfig(projectConfig);
-
   await runBenchmark(
     config as BenchmarkConfig<BaseParticipant>,
     task as BenchmarkTask<BaseParticipant>,
     runnerFlags,
-    { baseUrl, apiKey, cliArgs: cliDefaults },
+    { baseUrl: baseUrl ?? projectConfig.baseUrl, apiKey: apiKey ?? resolveApiKey(projectConfig), cliArgs: cliDefaultsFromConfig(projectConfig) },
   );
 }
 
