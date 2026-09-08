@@ -23,15 +23,15 @@
  * the burst, so network errors are swallowed (mirroring the old bench SDK's
  * internal behaviour).
  */
-import {
-  createBenchmarkClient,
-  type BenchmarkClient,
-  type BenchmarkAssignment,
-  type JsonObject,
-  type TaskResultRecord,
-  type TaskStepRecord,
-  type WorkerConcurrencySample,
-} from '@benchsdk/runner';
+import { createBenchmarkClient } from '@benchsdk/client';
+import type {
+  BenchmarkAssignment,
+  BenchmarkClient,
+  JsonObject,
+  TaskResultRecord,
+  TaskStepRecord,
+  WorkerConcurrencySample,
+} from '@benchsdk/client';
 import type { ProgressStats, SandboxResult } from './types.js';
 import { log } from './logger.js';
 

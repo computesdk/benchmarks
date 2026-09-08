@@ -44,7 +44,7 @@
 import 'dotenv/config';
 import { execSync } from 'node:child_process';
 import { fetchNamespace, getAndValidateCredentials } from '@computesdk/namespace';
-import { createBenchmarkClient } from '@benchsdk/runner';
+import { createBenchmarkClient } from '@benchsdk/client';
 
 // The platform benchmark these runs report under. One logical burst = one
 // platform run; each VM claims one planned worker for the provider participant.
