@@ -28,7 +28,7 @@ export const config = defineBenchmarkConfig({
       { key: 'destroy', label: 'Destroy sandbox' },
     ],
   
-    overview: { defaultMetric: 'compositeScore' },
+    overview: { defaultMetric: 'task' },
   },
 });
 

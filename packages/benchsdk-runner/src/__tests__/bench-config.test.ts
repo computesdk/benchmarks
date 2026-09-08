@@ -209,7 +209,7 @@ describe('defineBenchmarkConfig', () => {
     expect(config.display?.overview?.defaultMetric).toBe('x');
   });
 
-  it('accepts compositeScore and task as default metrics without declaring them', () => {
+  it('accepts compositeScore as a default metric when scoring is declared', () => {
     const composite = defineBenchmarkConfig({
       benchmarkSlug: 's',
       benchmarkName: 'n',
@@ -218,9 +218,14 @@ describe('defineBenchmarkConfig', () => {
         metrics: [{ key: 'x', label: 'X' }],
         overview: { defaultMetric: 'compositeScore' },
       },
+      scoring: {
+        metrics: [{ key: 'x', ceiling: 100, weights: { median: 1, p95: 0, p99: 0 } }],
+      },
     });
     expect(composite.display?.overview?.defaultMetric).toBe('compositeScore');
+  });
 
+  it('accepts task as a default metric without declaring it', () => {
     const task = defineBenchmarkConfig({
       benchmarkSlug: 's',
       benchmarkName: 'n',
@@ -231,6 +236,20 @@ describe('defineBenchmarkConfig', () => {
       },
     });
     expect(task.display?.overview?.defaultMetric).toBe('task');
+  });
+
+  it('rejects compositeScore as a default metric without scoring or onScore', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: {
+          metrics: [{ key: 'x', label: 'X' }],
+          overview: { defaultMetric: 'compositeScore' },
+        },
+      }),
+    ).toThrow("compositeScore");
   });
 
   it('accepts scoring without unit when display.metrics declares it', () => {

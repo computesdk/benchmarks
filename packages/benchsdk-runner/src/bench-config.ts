@@ -553,6 +553,9 @@ export function defineBenchmarkConfig<T extends BaseParticipant = BaseParticipan
       }
     }
   }
+  if (config.display?.overview?.defaultMetric === 'compositeScore' && config.scoring === undefined && config.onScore === undefined) {
+    throw new Error("display.overview.defaultMetric cannot be 'compositeScore' without config.scoring or config.onScore");
+  }
   return config;
 }
 
