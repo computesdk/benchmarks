@@ -256,13 +256,15 @@ export async function runCheck(argv: string[]): Promise<void> {
     }
   }
 
-  const missingEnv = dryRun
+  // Provider requiredEnvVars are reported in participants.skipped; this only
+  // tracks the platform API key/token required for a non-dry-run submission.
+  const missingPlatformAuth = dryRun
     ? []
     : auth
       ? []
       : [['BENCHMARKS_PLATFORM_API_KEY or BENCHMARKS_PLATFORM_TOKEN', undefined]];
 
-  for (const [name] of missingEnv) {
+  for (const [name] of missingPlatformAuth) {
     console.warn(`[benchsdk] ${name} is not set`);
   }
 
@@ -270,7 +272,7 @@ export async function runCheck(argv: string[]): Promise<void> {
     file,
     benchmarkSlug: cfg.benchmarkSlug,
     apiOk,
-    envOk: dryRun || missingEnv.length === 0,
+    envOk: dryRun || missingPlatformAuth.length === 0,
     participants: {
       requested: selected.map((p) => p.name),
       available: available.map((p) => p.name),
@@ -281,8 +283,8 @@ export async function runCheck(argv: string[]): Promise<void> {
 
   console.log(JSON.stringify(report, null, 2));
 
-  const envFailure = !dryRun && missingEnv.length > 0;
-  if (!apiOk || (!dryRun && available.length === 0) || scoringOk === false || envFailure) {
+  const authFailure = !dryRun && missingPlatformAuth.length > 0;
+  if (!apiOk || available.length === 0 || scoringOk === false || authFailure) {
     throw new Error('Benchmark check failed. See warnings above for details.');
   }
 }

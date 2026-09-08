@@ -51,16 +51,22 @@ describe('runBenchmarkFile', () => {
     ).rejects.toBeInstanceOf(AuthError);
   });
 
-  it('validates a benchmark with --check instead of executing tasks', async () => {
+  it('fails bench check --dry-run when no participants are available', async () => {
     await expect(
-      runBenchmarkFile(['run', fixture('good.bench.ts'), '--check']),
+      runBenchmarkFile(['run', fixture('good.bench.ts'), '--check', '--dry-run']),
     ).rejects.toThrow(/Benchmark check failed/);
   });
 
-  it('allows bench check --dry-run even when provider env vars are missing', async () => {
+  it('passes bench check --dry-run without platform credentials when participants are available', async () => {
     await expect(
-      runBenchmarkFile(['run', fixture('good.bench.ts'), '--check', '--dry-run']),
+      runBenchmarkFile(['run', fixture('local.bench.ts'), '--check', '--dry-run']),
     ).resolves.toBeUndefined();
+  });
+
+  it('fails bench check when platform credentials are missing', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('local.bench.ts'), '--check']),
+    ).rejects.toThrow(/Benchmark check failed/);
   });
 
   it('rejects a missing task during --check', async () => {
