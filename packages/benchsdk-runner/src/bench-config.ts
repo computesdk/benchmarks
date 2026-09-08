@@ -597,8 +597,6 @@ export function validateBenchmarkConfig<T extends BaseParticipant = BaseParticip
 
   if (!config.benchmarkSlug || typeof config.benchmarkSlug !== 'string') {
     issues.push({ field: 'benchmarkSlug', message: 'is required' });
-  } else if (!/^[a-z0-9][a-z0-9-]*$/.test(config.benchmarkSlug)) {
-    issues.push({ field: 'benchmarkSlug', message: `must be a lowercase slug (got ${JSON.stringify(config.benchmarkSlug)})` });
   }
   if (!config.benchmarkName || typeof config.benchmarkName !== 'string') {
     issues.push({ field: 'benchmarkName', message: 'is required' });

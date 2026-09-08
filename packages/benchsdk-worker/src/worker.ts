@@ -194,6 +194,8 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
   let sequenceNumber = 0;
   const records: TaskResultRecord[] = [];
   const pending: TaskResultRecord[] = [];
+  let flushFailed = false;
+  let lastFlushError: unknown;
   const batchSize = options.batchSize ?? DEFAULT_BATCH_SIZE;
   const workerConcurrency = options.concurrency ?? claimed.targetConcurrency;
   validatePositiveInteger('concurrency', workerConcurrency);
@@ -286,18 +288,28 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
 
   async function flush(isFinal: boolean, force = false): Promise<void> {
     flushChain = flushChain.then(async () => {
+      flushFailed = false;
+      lastFlushError = undefined;
       if (force && doneCount >= taskIndices.length) return;
       while (pending.length >= batchSize || ((isFinal || force) && pending.length > 0)) {
-        const batch = pending.splice(0, batchSize);
-        await client.sendTaskResults({
-          benchmarkSlug: options.benchmarkSlug,
-          runId: options.runId,
-          workerId: claimed.workerId,
-          attemptId: claimed.attemptId,
-          sequenceNumber,
-          isFinal: isFinal && pending.length === 0,
-          records: batch,
-        });
+        const batch = pending.slice(0, batchSize);
+        try {
+          await client.sendTaskResults({
+            benchmarkSlug: options.benchmarkSlug,
+            runId: options.runId,
+            workerId: claimed.workerId,
+            attemptId: claimed.attemptId,
+            sequenceNumber,
+            isFinal: isFinal && batch.length === pending.length,
+            records: batch,
+          });
+        } catch (error) {
+          flushFailed = true;
+          lastFlushError = error;
+          handleTelemetryError(options.onTelemetryError, 'resultFlush', error);
+          break;
+        }
+        pending.splice(0, batch.length);
         sequenceNumber += 1;
       }
     });
@@ -582,6 +594,9 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
     });
 
     await flush(true);
+    if (flushFailed || pending.length > 0) {
+      throw lastFlushError ?? new Error('Failed to flush task results');
+    }
 
     const hasErrors = records.some((record) => record.status !== 'success');
     try {
