@@ -7,7 +7,7 @@ export interface BaseParticipant {
   /** Participant name (e.g. 'e2b', 'daytona', 'openrouter') */
   name: string;
   /** Environment variables that must all be set to run this participant */
-  requiredEnvVars: string[];
+  requiredEnvVars?: string[];
 }
 
 /**
@@ -22,7 +22,8 @@ export function filterParticipantsByEnv<T extends BaseParticipant>(
   const skipped: { name: string; missing: string[] }[] = [];
 
   for (const p of participants) {
-    const missing = p.requiredEnvVars.filter((v) => !process.env[v]);
+    const requiredEnvVars = Array.isArray(p.requiredEnvVars) ? p.requiredEnvVars : [];
+    const missing = requiredEnvVars.filter((v) => !process.env[v]);
     if (missing.length > 0) {
       skipped.push({ name: p.name, missing });
     } else {
