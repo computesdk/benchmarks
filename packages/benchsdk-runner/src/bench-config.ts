@@ -342,8 +342,6 @@ export interface BenchmarkOverviewDisplay {
  * benchmark runs, but how it should be rendered, without a platform code change.
  */
 export interface BenchmarkDisplayConfig {
-  /** Optional human-readable description shown on the benchmark listing. */
-  description?: string;
   /** Metric catalog — labels, units, and ranking direction for `ctx.measure` keys. */
   metrics?: BenchmarkMetricDisplay[];
   /** Step catalog — human labels for lifecycle steps reported via `ctx.step`. */
@@ -368,13 +366,6 @@ export class BenchmarkConfigError extends Error {
   private static formatIssues(issues: BenchmarkConfigErrorItem[]): string {
     const lines = issues.map((i) => `  - ${i.field}: ${i.message}`);
     return `Invalid benchmark config:\n${lines.join('\n')}\n\nFix the fields above and try again.`;
-  }
-}
-
-function assertPositiveInt(value: number | undefined, field: string): void {
-  if (value === undefined) return;
-  if (!Number.isInteger(value) || value < 1) {
-    throw new Error(`${field} must be an integer >= 1 (got ${value})`);
   }
 }
 
@@ -469,9 +460,6 @@ function validateBenchmarkDisplayConfig(display: BenchmarkDisplayConfig): void {
   if (typeof display !== 'object' || display === null || Array.isArray(display)) {
     throw new Error('display must be an object');
   }
-  if (display.description !== undefined && typeof display.description !== 'string') {
-    throw new Error('display.description must be a string');
-  }
   const displayMetricKeys = new Set<string>();
   if (display.metrics !== undefined) {
     if (!Array.isArray(display.metrics)) {
@@ -530,10 +518,13 @@ function validateBenchmarkDisplayConfig(display: BenchmarkDisplayConfig): void {
     const { defaultMetric, defaultLayout } = display.overview;
     if (defaultMetric !== undefined) {
       const metric = assertNonEmptyString(defaultMetric, 'display.overview.defaultMetric');
-      // If the manifest declares metrics, the default must reference one of them.
-      // When metrics is omitted we can't validate the key, so any non-empty string is allowed.
-      if (display.metrics !== undefined && !displayMetricKeys.has(metric)) {
-        throw new Error(`display.overview.defaultMetric '${metric}' is not declared in display.metrics`);
+      // The default metric can reference any declared custom metric, or the
+      // platform-level composite score / overall task latency sentinels.
+      const validDefaultMetrics = new Set(displayMetricKeys);
+      validDefaultMetrics.add('compositeScore');
+      validDefaultMetrics.add('task');
+      if (display.metrics !== undefined && !validDefaultMetrics.has(metric)) {
+        throw new Error(`display.overview.defaultMetric '${metric}' is not declared in display.metrics and is not a known default (compositeScore, task)`);
       }
     }
     if (defaultLayout !== undefined && !['ranking', 'cards', 'chart', 'leaderboard'].includes(defaultLayout)) {
@@ -556,6 +547,12 @@ export function defineBenchmarkConfig<T extends BaseParticipant = BaseParticipan
         message: error instanceof Error ? error.message : String(error),
       });
     }
+  }
+  if (config.display?.overview?.defaultMetric === 'compositeScore' && config.scoring === undefined && config.onScore === undefined) {
+    issues.push({
+      field: 'display.overview.defaultMetric',
+      message: "cannot be 'compositeScore' without config.scoring or config.onScore",
+    });
   }
   if (issues.length > 0) {
     throw new BenchmarkConfigError(issues);

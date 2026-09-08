@@ -1,3 +1,4 @@
+
 /**
  * Dax benchmark: runs the OpenCode build (scripts/dax-benchmark.sh) inside a
  * freshly created sandbox once per iteration and measures its build phases
@@ -44,7 +45,6 @@ export const config = defineBenchmarkConfig({
   defaultProviders: ['e2b', 'modal', 'tensorlake'],
   participants: providers,
   display: {
-    description: 'OpenCode build lifecycle latency per phase.',
     metrics: [
       { key: 'totalMs', label: 'Total build time', unit: 'ms', direction: 'lower-better', decimals: 0 },
       { key: 'prepareMs', label: 'Prepare', unit: 'ms', direction: 'lower-better', decimals: 0 },

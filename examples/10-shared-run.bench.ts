@@ -1,3 +1,4 @@
+
 /**
  * Shared run key: when the same benchmark is invoked from multiple CI jobs or
  * machines, pass `--run-key <shared-key>` so every process contributes to a
@@ -28,14 +29,13 @@ export const config = defineBenchmarkConfig({
     { name: 'beta', requiredEnvVars: [], workMs: 40 },
   ],
   display: {
-    description: 'Shared run key across multiple CI jobs.',
     metrics: [
       { key: 'durationMs', label: 'Duration', unit: 'ms', direction: 'lower-better', decimals: 0 },
     ],
     steps: [
       { key: 'work', label: 'Work' },
     ],
-    overview: { defaultMetric: 'durationMs', defaultLayout: 'ranking' },
+    overview: { defaultMetric: 'compositeScore', defaultLayout: 'ranking' },
   },
   scoring: {
     metrics: [

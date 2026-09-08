@@ -1,3 +1,4 @@
+
 /**
  * Custom CLI flags: pass benchmark-specific values through the runner without
  * it treating them as unknown options.
@@ -52,7 +53,6 @@ export const config = defineBenchmarkConfig({
     payloadBytes,
   },
   display: {
-    description: 'Custom CLI flags for payload size and hash algorithm.',
     metrics: [
       { key: 'durationMs', label: 'Duration', unit: 'ms', direction: 'lower-better', decimals: 0 },
       { key: 'hashLength', label: 'Hash length', direction: 'higher-better', decimals: 0 },
@@ -60,7 +60,7 @@ export const config = defineBenchmarkConfig({
     steps: [
       { key: 'hash', label: 'Hash payload' },
     ],
-    overview: { defaultMetric: 'durationMs', defaultLayout: 'ranking' },
+    overview: { defaultMetric: 'compositeScore', defaultLayout: 'ranking' },
   },
   scoring: {
     metrics: [
