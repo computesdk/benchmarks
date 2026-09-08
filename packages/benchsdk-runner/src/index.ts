@@ -28,6 +28,11 @@ export { defineOnComplete } from './bench-config.js';
 export { run, runBenchmarkFile } from './cli.js';
 export type { BenchSdkConfig } from './cli.js';
 
+// Platform authentication and data-query primitives (re-exported from
+// `@benchsdk/cli` so the runner package is the single canonical operator surface).
+export { resolveAuth, createApiClient, AuthError } from '@benchsdk/cli';
+export type { CliAuth } from '@benchsdk/cli';
+
 // Scoring
 export { score, lowerIsBetter, higherIsBetter, validateScoringSpec, ScoringSpecError, scoringConfigToSpec } from './scoring.js';
 export type { ScoringSpec, MetricScoring, BenchmarkScoreResult, BenchmarkScoringConfig, BenchmarkScoringMetric, BenchmarkScoringSuccess, BenchmarkScoringWeights } from './scoring.js';

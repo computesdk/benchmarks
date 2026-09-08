@@ -3,6 +3,7 @@
 "@benchsdk/worker": minor
 "@benchsdk/client": minor
 "@benchsdk/runner": minor
+"@benchsdk/cli": minor
 "create-bench": patch
 ---
 
@@ -22,3 +23,6 @@ Fold operator surface into `@benchsdk/runner` and add ergonomics/observability h
 - Worker telemetry failures now emit `console.warn` by default instead of failing silently.
 - `TaskError` now includes `step`, `timeoutMs`, and participant context for step timeouts.
 - `create-bench` scaffold and README now reference `@benchsdk/runner` instead of the deprecated `@benchsdk/client` entrypoint.
+- `@benchsdk/cli` now has a README documenting its programmatic API, auth precedence, config/credentials files, and CLI commands.
+- `@benchsdk/cli` `printData` now honors `--format table` for objects as well as arrays and prints `No results.` for empty objects.
+- `@benchsdk/runner` re-exports `resolveAuth`, `createApiClient`, `AuthError`, and the `CliAuth` type from `@benchsdk/cli` so operators only need one package import.
