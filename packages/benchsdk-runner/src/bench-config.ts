@@ -383,6 +383,14 @@ function assertNonEmptyString(value: unknown, field: string): string {
   return value;
 }
 
+function assertOnlyAllowedKeys(value: Record<string, unknown>, allowed: readonly string[], field: string): void {
+  for (const key of Object.keys(value)) {
+    if (!allowed.includes(key)) {
+      throw new Error(`${field} contains unexpected key: '${key}'`);
+    }
+  }
+}
+
 function validateBenchmarkScoringConfig(scoring: BenchmarkScoringConfig, display?: BenchmarkDisplayConfig): void {
   if (!Array.isArray(scoring.metrics) || scoring.metrics.length === 0) {
     throw new Error('scoring.metrics must be a non-empty array');
@@ -460,6 +468,7 @@ function validateBenchmarkDisplayConfig(display: BenchmarkDisplayConfig): void {
   if (typeof display !== 'object' || display === null || Array.isArray(display)) {
     throw new Error('display must be an object');
   }
+  assertOnlyAllowedKeys(display as unknown as Record<string, unknown>, ['metrics', 'steps', 'overview'], 'display');
   const displayMetricKeys = new Set<string>();
   if (display.metrics !== undefined) {
     if (!Array.isArray(display.metrics)) {
@@ -470,6 +479,7 @@ function validateBenchmarkDisplayConfig(display: BenchmarkDisplayConfig): void {
       if (metric === null || typeof metric !== 'object' || Array.isArray(metric)) {
         throw new Error(`display.metrics[${i}] must be an object`);
       }
+      assertOnlyAllowedKeys(metric as unknown as Record<string, unknown>, ['key', 'label', 'unit', 'direction', 'decimals', 'order'], `display.metrics[${i}]`);
       const key = assertNonEmptyString(metric.key, `display.metrics[${i}].key`);
       if (displayMetricKeys.has(key)) {
         throw new Error(`duplicate display metric key: ${key}`);
@@ -500,6 +510,7 @@ function validateBenchmarkDisplayConfig(display: BenchmarkDisplayConfig): void {
       if (step === null || typeof step !== 'object' || Array.isArray(step)) {
         throw new Error(`display.steps[${i}] must be an object`);
       }
+      assertOnlyAllowedKeys(step as unknown as Record<string, unknown>, ['key', 'label', 'order'], `display.steps[${i}]`);
       const key = assertNonEmptyString(step.key, `display.steps[${i}].key`);
       if (seenStepKeys.has(key)) {
         throw new Error(`duplicate display step key: ${key}`);
@@ -515,6 +526,7 @@ function validateBenchmarkDisplayConfig(display: BenchmarkDisplayConfig): void {
     if (typeof display.overview !== 'object' || display.overview === null || Array.isArray(display.overview)) {
       throw new Error('display.overview must be an object');
     }
+    assertOnlyAllowedKeys(display.overview as unknown as Record<string, unknown>, ['defaultMetric', 'defaultLayout'], 'display.overview');
     const { defaultMetric, defaultLayout } = display.overview;
     if (defaultMetric !== undefined) {
       const metric = assertNonEmptyString(defaultMetric, 'display.overview.defaultMetric');
