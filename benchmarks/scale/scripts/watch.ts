@@ -28,8 +28,8 @@
  */
 
 import 'dotenv/config';
-import { createBenchmarkClient, BenchmarkApiError } from '@benchsdk/client';
-import type { RunProgress, BenchmarkRunResults } from '@benchsdk/client';
+import { createBenchmarkClient, BenchmarkApiError } from '@benchsdk/runner';
+import type { RunProgress, BenchmarkRunResults } from '@benchsdk/runner';
 
 const BENCHMARK_SLUG = process.env.BENCHMARK_SLUG ?? 'scale';
 
