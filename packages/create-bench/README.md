@@ -1,6 +1,6 @@
 # create-bench
 
-Scaffold a new ComputeSDK benchmark project that uses [`@benchsdk/client`](https://github.com/computesdk/benchmarks/tree/master/packages/benchsdk).
+Scaffold a new ComputeSDK benchmark project that uses [`@benchsdk/runner`](https://github.com/computesdk/benchmarks/tree/master/packages/benchsdk-runner).
 
 ## Usage
 
@@ -18,9 +18,9 @@ npm create bench my-benchmark
 
 The CLI creates a directory with the given project name and writes:
 
-- `package.json` — with `@benchsdk/client`, `tsx`, and benchmark scripts
+- `package.json` — with `@benchsdk/runner`, `tsx`, and benchmark scripts
 - `tsconfig.json` — basic TypeScript configuration
-- `bench.ts` — a minimal benchmark worker using `createBenchmarkClient().runWorker()`
+- `bench.ts` — a minimal benchmark using `defineBenchmarkConfig` / `defineTask`
 - `.env.example` — environment variables to configure the worker
 - `README.md` — instructions for the new project
 

@@ -3,6 +3,7 @@
 "@benchsdk/worker": minor
 "@benchsdk/client": minor
 "@benchsdk/runner": minor
+"create-bench": patch
 ---
 
 Fold operator surface into `@benchsdk/runner` and add ergonomics/observability helpers.
@@ -20,3 +21,4 @@ Fold operator surface into `@benchsdk/runner` and add ergonomics/observability h
 - Add `RunWorkerOptions.onTelemetryError` / `BenchmarkReporterConfig.onTelemetryError` callbacks for heartbeat/log-upload/artifact telemetry failures.
 - Worker telemetry failures now emit `console.warn` by default instead of failing silently.
 - `TaskError` now includes `step`, `timeoutMs`, and participant context for step timeouts.
+- `create-bench` scaffold and README now reference `@benchsdk/runner` instead of the deprecated `@benchsdk/client` entrypoint.
