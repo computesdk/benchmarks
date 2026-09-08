@@ -370,10 +370,18 @@ export async function runBenchmarkFile(argv: string[]): Promise<void> {
     throw new Error(`${file} must export a \`task\` created with defineTask.`);
   }
 
+  const envFlags: string[] = [];
+  if (process.env.BENCHMARK_SLUG) {
+    envFlags.push('--benchmark', process.env.BENCHMARK_SLUG);
+  }
+  if (process.env.BENCHMARK_NAME) {
+    envFlags.push('--name', process.env.BENCHMARK_NAME);
+  }
+
   await runBenchmark(
     config as BenchmarkConfig<BaseParticipant>,
     task as BenchmarkTask<BaseParticipant>,
-    runnerFlags,
+    [...envFlags, ...runnerFlags],
     { baseUrl: baseUrl ?? projectConfig.baseUrl, apiKey: apiKey ?? resolveApiKey(projectConfig), cliArgs: cliDefaultsFromConfig(projectConfig) },
   );
 }
