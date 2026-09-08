@@ -606,9 +606,15 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
     }
 
     if (hasErrors) {
-      await client.failWorker(options.benchmarkSlug, options.runId, claimed.workerId, claimed.attemptId, new Error('One or more tasks failed'));
+      await client.failWorker(options.benchmarkSlug, options.runId, claimed.workerId, claimed.attemptId, new Error('One or more tasks failed')).catch((error) => {
+        handleTelemetryError(options.onTelemetryError, 'failWorker', error);
+        throw error;
+      });
     } else {
-      await client.completeWorker(options.benchmarkSlug, options.runId, claimed.workerId, claimed.attemptId);
+      await client.completeWorker(options.benchmarkSlug, options.runId, claimed.workerId, claimed.attemptId).catch((error) => {
+        handleTelemetryError(options.onTelemetryError, 'completeWorker', error);
+        throw error;
+      });
     }
 
     return { assignment: claimed, records };

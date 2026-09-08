@@ -34,6 +34,10 @@ export function printData(data: unknown, options: OutputOptions = {}): void {
   }
 
   if (typeof data === 'object') {
+    if (Object.keys(data).length === 0) {
+      console.log('No results.');
+      return;
+    }
     if (format === 'table') {
       console.table(data);
       return;

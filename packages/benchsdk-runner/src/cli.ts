@@ -92,8 +92,7 @@ function shiftFlag(argv: string[], name: string): { value: string | undefined; a
 /** Project-level CLI config defaults. */
 export interface BenchSdkConfig {
   baseUrl?: string;
-  apiKey?: string;
-  /** Environment variable name to read the API key from. */
+  /** Environment variable name to read the API key from. Project config files should not store secrets. */
   apiKeyEnv?: string;
   providers?: string[];
   iterations?: number;
@@ -138,16 +137,66 @@ async function loadConfigFile(fullPath: string): Promise<BenchSdkConfig> {
   return (mod.default ?? mod.config ?? {}) as BenchSdkConfig;
 }
 
+function validateBenchSdkConfig(value: unknown, path?: string): string[] {
+  const prefix = path ? `${path}: ` : '';
+  if (typeof value !== 'object' || value === null) {
+    return [`${prefix}config must be an object`];
+  }
+  const config = value as Record<string, unknown>;
+  const issues: string[] = [];
+  const checkString = (key: string) => {
+    if (config[key] !== undefined && typeof config[key] !== 'string') issues.push(`${prefix}${key} must be a string`);
+  };
+  const checkPositiveInt = (key: string) => {
+    if (config[key] !== undefined && (!Number.isInteger(config[key]) || (config[key] as number) < 1)) {
+      issues.push(`${prefix}${key} must be a positive integer`);
+    }
+  };
+  const checkNonNegativeInt = (key: string) => {
+    if (config[key] !== undefined && (!Number.isInteger(config[key]) || (config[key] as number) < 0)) {
+      issues.push(`${prefix}${key} must be a non-negative integer`);
+    }
+  };
+
+  checkString('baseUrl');
+  checkString('apiKeyEnv');
+  if (config.providers !== undefined) {
+    if (!Array.isArray(config.providers) || !config.providers.every((p) => typeof p === 'string')) {
+      issues.push(`${prefix}providers must be an array of strings`);
+    }
+  }
+  checkPositiveInt('iterations');
+  checkPositiveInt('concurrency');
+  checkNonNegativeInt('staggerDelayMs');
+  if (config.groupBy !== undefined && config.groupBy !== 'participant' && config.groupBy !== 'round') {
+    issues.push(`${prefix}groupBy must be 'participant' or 'round'`);
+  }
+  checkString('shape');
+  checkString('runKey');
+  checkString('benchmark');
+  checkString('name');
+  if (config.dryRun !== undefined && typeof config.dryRun !== 'boolean') {
+    issues.push(`${prefix}dryRun must be a boolean`);
+  }
+  return issues;
+}
+
 async function resolveProjectConfig(argv: string[], cwd: string): Promise<{ config: BenchSdkConfig; configPath?: string; argv: string[] }> {
   const { configPath, argv: cleanArgv } = shiftConfigFlag(argv);
   if (configPath) {
     const full = resolve(cwd, configPath);
-    return { config: await loadConfigFile(full), configPath: full, argv: cleanArgv };
+    const config = await loadConfigFile(full);
+    const issues = validateBenchSdkConfig(config, full);
+    if (issues.length > 0) throw new Error(`Invalid bench config:\n${issues.map((i) => `  - ${i}`).join('\n')}`);
+    return { config, configPath: full, argv: cleanArgv };
   }
   for (const name of DEFAULT_CONFIG_NAMES) {
     const full = resolve(cwd, name);
     if (existsSync(full)) {
-      return { config: await loadConfigFile(full), configPath: full, argv: cleanArgv };
+      const config = await loadConfigFile(full);
+      const issues = validateBenchSdkConfig(config, full);
+      if (issues.length > 0) throw new Error(`Invalid bench config:\n${issues.map((i) => `  - ${i}`).join('\n')}`);
+      return { config, configPath: full, argv: cleanArgv };
     }
   }
   return { config: {}, argv: cleanArgv };
@@ -169,7 +218,7 @@ function cliDefaultsFromConfig(config: BenchSdkConfig): Partial<CliArgs> {
 }
 
 function resolveApiKey(config: BenchSdkConfig): string | undefined {
-  return config.apiKey ?? (config.apiKeyEnv ? process.env[config.apiKeyEnv] : undefined);
+  return config.apiKeyEnv ? process.env[config.apiKeyEnv] : undefined;
 }
 
 /**

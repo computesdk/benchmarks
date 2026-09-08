@@ -70,6 +70,13 @@ describe('printData', () => {
     expect(dirSpy).not.toHaveBeenCalled();
   });
 
+  it('prints "No results." for an empty object', () => {
+    printData({});
+    expect(logSpy).toHaveBeenCalledWith('No results.');
+    expect(tableSpy).not.toHaveBeenCalled();
+    expect(dirSpy).not.toHaveBeenCalled();
+  });
+
   it('prints a primitive with console.log', () => {
     printData('hello');
     expect(logSpy).toHaveBeenCalledWith('hello');

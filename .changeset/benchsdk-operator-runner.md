@@ -26,3 +26,5 @@ Fold operator surface into `@benchsdk/runner` and add ergonomics/observability h
 - `@benchsdk/cli` now has a README documenting its programmatic API, auth precedence, config/credentials files, and CLI commands.
 - `@benchsdk/cli` `printData` now honors `--format table` for objects as well as arrays and prints `No results.` for empty objects.
 - `@benchsdk/runner` re-exports `resolveAuth`, `createApiClient`, `AuthError`, and the `CliAuth` type from `@benchsdk/cli` so operators only need one package import.
+- `@benchsdk/runner` project config files (`bench.config.ts` / `.benchrc`) are validated; `dryRun` and other fields must have correct types, and `apiKey` is removed in favor of `apiKeyEnv` to keep secrets out of source control.
+- `@benchsdk/worker` `onTelemetryError` is now also invoked for `completeWorker` and `failWorker` telemetry failures in the normal completion path.

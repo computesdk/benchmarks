@@ -101,4 +101,10 @@ describe('runBenchmarkFile', () => {
       spy.mockRestore();
     }
   });
+
+  it('rejects a project config file with invalid field types', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('local.bench.ts'), '--config', fixture('invalid-config.json'), '--dry-run']),
+    ).rejects.toThrow(/dryRun must be a boolean/);
+  });
 });
