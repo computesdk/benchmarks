@@ -139,7 +139,7 @@ async function loadConfigFile(fullPath: string): Promise<BenchSdkConfig> {
 
 function validateBenchSdkConfig(value: unknown, path?: string): string[] {
   const prefix = path ? `${path}: ` : '';
-  if (typeof value !== 'object' || value === null) {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return [`${prefix}config must be an object`];
   }
   const config = value as Record<string, unknown>;

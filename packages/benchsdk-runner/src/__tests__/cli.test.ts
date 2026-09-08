@@ -107,4 +107,10 @@ describe('runBenchmarkFile', () => {
       runBenchmarkFile(['run', fixture('local.bench.ts'), '--config', fixture('invalid-config.json'), '--dry-run']),
     ).rejects.toThrow(/dryRun must be a boolean/);
   });
+
+  it('rejects a project config file that is not an object', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('local.bench.ts'), '--config', fixture('array-config.json'), '--dry-run']),
+    ).rejects.toThrow(/config must be an object/);
+  });
 });
