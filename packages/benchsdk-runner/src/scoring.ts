@@ -254,7 +254,8 @@ function scoreGroup(
       metric.weights.p99 * scoreStat(p99, metric);
     metricScoresSum += metricScore;
 
-    const unit = metric.unit ?? unitByMetric.get(metric.name) ?? '';
+    const unitKey = typeof metric.value === 'string' ? metric.value : metric.name;
+    const unit = metric.unit ?? unitByMetric.get(unitKey) ?? '';
     metrics.push({ name: metric.name, unit, median, p95, p99 });
   }
 
