@@ -79,6 +79,7 @@ export const config = defineBenchmarkConfig({
     metrics: [
       { key: 'durationMs', label: 'Duration', unit: 'ms', direction: 'lower-better' },
     ],
+    overview: { defaultMetric: 'compositeScore' },
   },
   scoring: {
     metrics: [
