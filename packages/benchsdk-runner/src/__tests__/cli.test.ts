@@ -53,8 +53,14 @@ describe('runBenchmarkFile', () => {
 
   it('validates a benchmark with --check instead of executing tasks', async () => {
     await expect(
-      runBenchmarkFile(['run', fixture('good.bench.ts'), '--check', '--dry-run']),
+      runBenchmarkFile(['run', fixture('good.bench.ts'), '--check']),
     ).rejects.toThrow(/Benchmark check failed/);
+  });
+
+  it('allows bench check --dry-run even when provider env vars are missing', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('good.bench.ts'), '--check', '--dry-run']),
+    ).resolves.toBeUndefined();
   });
 
   it('rejects a missing task during --check', async () => {

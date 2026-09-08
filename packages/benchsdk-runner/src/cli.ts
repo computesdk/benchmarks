@@ -282,7 +282,7 @@ export async function runCheck(argv: string[]): Promise<void> {
   console.log(JSON.stringify(report, null, 2));
 
   const envFailure = !dryRun && missingEnv.length > 0;
-  if (!apiOk || available.length === 0 || scoringOk === false || envFailure) {
+  if (!apiOk || (!dryRun && available.length === 0) || scoringOk === false || envFailure) {
     throw new Error('Benchmark check failed. See warnings above for details.');
   }
 }
