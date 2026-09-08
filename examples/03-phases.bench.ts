@@ -1,3 +1,4 @@
+
 /**
  * Phases: named run segments that let the task branch by phase.
  * Each record is automatically tagged with `data.phase`.
@@ -24,7 +25,6 @@ export const config = defineBenchmarkConfig({
   concurrency: 1,
   participants: [{ name: 'local', requiredEnvVars: [], coldDelayMs: 100 }],
   display: {
-    description: 'Cold vs. warm phase latency.',
     metrics: [
       { key: 'durationMs', label: 'Duration', unit: 'ms', direction: 'lower-better', decimals: 0 },
     ],
@@ -32,7 +32,7 @@ export const config = defineBenchmarkConfig({
       { key: 'cold-work', label: 'Cold work' },
       { key: 'warm-work', label: 'Warm work' },
     ],
-    overview: { defaultMetric: 'durationMs', defaultLayout: 'ranking' },
+    overview: { defaultMetric: 'compositeScore', defaultLayout: 'ranking' },
   },
   scoring: {
     metrics: [

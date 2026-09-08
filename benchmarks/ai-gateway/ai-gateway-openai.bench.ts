@@ -1,3 +1,4 @@
+
 /**
  * AI Gateway benchmark — OpenAI family. Same methodology, task, CLI flags,
  * and request configuration (`max_tokens: 200`, `temperature: 0`) as
@@ -38,7 +39,6 @@ export const config = defineBenchmarkConfig({
   concurrency: providers.length,
   customCliFlags: ['--ai-gateway-iterations-cold', '--ai-gateway-iterations-warm'],
   display: {
-    description: 'AI gateway cold/warm latency and token throughput.',
     metrics: [
       { key: 'coldE2eMs', label: 'Cold end-to-end', unit: 'ms', direction: 'lower-better', decimals: 0 },
       { key: 'warmTtftMs', label: 'Warm time to first token', unit: 'ms', direction: 'lower-better', decimals: 0 },
@@ -52,7 +52,7 @@ export const config = defineBenchmarkConfig({
       { key: 'ttfb', label: 'TTFB' },
       { key: 'ttft', label: 'TTFT' },
     ],
-    overview: { defaultMetric: 'coldE2eMs', defaultLayout: 'ranking' },
+    overview: { defaultMetric: 'compositeScore', defaultLayout: 'ranking' },
   },
   scoring: {
     metrics: [

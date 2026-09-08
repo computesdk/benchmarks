@@ -1,3 +1,4 @@
+
 /**
  * Browser lifecycle benchmark: `iterations` create→connect→navigate→release
  * cycles per provider (concurrency 1 = sequential). Declarative — exports
@@ -27,7 +28,6 @@ export const config = defineBenchmarkConfig({
   concurrency: 1,
   participants: browserProviders,
   display: {
-    description: 'Browser create→connect→navigate→release lifecycle latency.',
     metrics: [
       { key: 'totalMs', label: 'Total lifecycle', unit: 'ms', direction: 'lower-better', decimals: 0 },
       { key: 'createMs', label: 'Session creation', unit: 'ms', direction: 'lower-better', decimals: 0 },
@@ -41,7 +41,7 @@ export const config = defineBenchmarkConfig({
       { key: 'navigate', label: 'Navigate page' },
       { key: 'release', label: 'Release session' },
     ],
-    overview: { defaultMetric: 'totalMs', defaultLayout: 'ranking' },
+    overview: { defaultMetric: 'compositeScore', defaultLayout: 'ranking' },
   },
   scoring: {
     metrics: [

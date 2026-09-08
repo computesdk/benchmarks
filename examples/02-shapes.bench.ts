@@ -1,3 +1,4 @@
+
 /**
  * Shapes: one benchmark file can report as sequential, burst, or staggered
  * variants by swapping slug/name and a default stagger delay.
@@ -28,14 +29,13 @@ export const config = defineBenchmarkConfig({
     staggered: { slug: 'shape-demo-staggered', name: 'Shape Demo (Staggered)', staggerDelayMs: 200 },
   },
   display: {
-    description: 'Workload shape variants (sequential, burst, staggered).',
     metrics: [
       { key: 'durationMs', label: 'Duration', unit: 'ms', direction: 'lower-better', decimals: 0 },
     ],
     steps: [
       { key: 'work', label: 'Work' },
     ],
-    overview: { defaultMetric: 'durationMs', defaultLayout: 'ranking' },
+    overview: { defaultMetric: 'compositeScore', defaultLayout: 'ranking' },
   },
   scoring: {
     metrics: [

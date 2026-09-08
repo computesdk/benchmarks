@@ -1,3 +1,4 @@
+
 import '../src/env.js';
 import { defineBenchmarkConfig, defineTask, TaskError } from '@benchsdk/runner';
 import { withTimeout } from '../src/util/timeout.js';
@@ -20,13 +21,14 @@ export const config = defineBenchmarkConfig({
   participants: providers,
   defaultProviders: ['tensorlake'],
   display: {
-    description: 'Tensorlake OpenCode installation and run reliability.',
     steps: [
       { key: 'create', label: 'Create sandbox' },
       { key: 'install', label: 'Install OpenCode' },
       { key: 'run', label: 'Run OpenCode' },
       { key: 'destroy', label: 'Destroy sandbox' },
     ],
+  
+    overview: { defaultMetric: 'compositeScore' },
   },
 });
 

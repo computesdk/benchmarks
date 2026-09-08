@@ -1,3 +1,4 @@
+
 /**
  * Storage upload/download benchmark: `iterations` upload→download→delete cycles
  * per provider (concurrency 1 = sequential). Declarative — exports `config` +
@@ -55,7 +56,6 @@ const baseConfig = {
   participants: storageProviders,
   customCliFlags: ['--file-size'],
   display: {
-    description: 'Storage upload/download lifecycle latency and throughput.',
     metrics: [
       { key: 'uploadMs', label: 'Upload', unit: 'ms', direction: 'lower-better' as const, decimals: 0 },
       { key: 'downloadMs', label: 'Download', unit: 'ms', direction: 'lower-better' as const, decimals: 0 },
@@ -67,7 +67,7 @@ const baseConfig = {
       { key: 'download', label: 'Download' },
       { key: 'delete', label: 'Delete' },
     ],
-    overview: { defaultMetric: 'downloadMs', defaultLayout: 'ranking' as const },
+    overview: { defaultMetric: 'compositeScore', defaultLayout: 'ranking' as const },
   },
   scoring: {
     groupBy: 'file_size',

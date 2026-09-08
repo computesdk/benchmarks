@@ -1,3 +1,4 @@
+
 /**
  * Sandbox time-to-interactive benchmark. TTI = sandbox create through the
  * first command (`node -v`) succeeding, excluding destroy. Declarative —
@@ -40,7 +41,6 @@ export const config = defineBenchmarkConfig({
   concurrency: 1,
   participants: providers,
   display: {
-    description: 'Sandbox time-to-interactive from create through first successful command.',
     metrics: [
       { key: 'ttiMs', label: 'Time to interactive', unit: 'ms', direction: 'lower-better', decimals: 0 },
     ],
@@ -49,7 +49,7 @@ export const config = defineBenchmarkConfig({
       { key: 'exec.task', label: 'Run first command' },
       { key: 'destroy', label: 'Destroy sandbox' },
     ],
-    overview: { defaultMetric: 'ttiMs', defaultLayout: 'ranking' },
+    overview: { defaultMetric: 'compositeScore', defaultLayout: 'ranking' },
   },
   scoring: {
     metrics: [
