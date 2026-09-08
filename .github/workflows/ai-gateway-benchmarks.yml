@@ -13,6 +13,14 @@ on:
     - cron: '0 9 * * 5' # Weekly on Friday at 9am UTC (4am CDT)
   workflow_dispatch:
     inputs:
+      slug:
+        description: 'Optional platform benchmark slug override'
+        required: false
+        default: ''
+      name:
+        description: 'Optional platform benchmark name override'
+        required: false
+        default: ''
       family:
         description: 'Family to run (leave as All for every target-model family)'
         required: false
@@ -64,6 +72,10 @@ permissions:
   contents: write
   pull-requests: write
   id-token: write
+
+env:
+  BENCHMARK_SLUG: ${{ github.event.inputs.slug || '' }}
+  BENCHMARK_NAME: ${{ github.event.inputs.name || '' }}
 
 jobs:
   bench:

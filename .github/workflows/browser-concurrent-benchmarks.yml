@@ -13,6 +13,14 @@ on:
     - cron: '0 4 * * 1' # Weekly on Monday at 04:00 UTC (offset from other browser benchmarks)
   workflow_dispatch:
     inputs:
+      slug:
+        description: 'Optional platform benchmark slug override'
+        required: false
+        default: ''
+      name:
+        description: 'Optional platform benchmark name override'
+        required: false
+        default: ''
       dry_run:
         description: 'Run without ingesting or committing results'
         required: false
@@ -24,6 +32,10 @@ concurrency:
   cancel-in-progress: true
 
 permissions: {}
+
+env:
+  BENCHMARK_SLUG: ${{ github.event.inputs.slug || '' }}
+  BENCHMARK_NAME: ${{ github.event.inputs.name || '' }}
 
 jobs:
   setup:

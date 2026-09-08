@@ -12,6 +12,14 @@ on:
     - cron: '30 11 * * 5' # Weekly on Friday at 11:30am UTC (6:30am CDT, offset from storage to avoid racing pushes to master)
   workflow_dispatch:
     inputs:
+      slug:
+        description: 'Optional platform benchmark slug override'
+        required: false
+        default: ''
+      name:
+        description: 'Optional platform benchmark name override'
+        required: false
+        default: ''
       iterations:
         description: 'Iterations per provider'
         required: false
@@ -39,6 +47,10 @@ permissions:
   contents: write
   pull-requests: write
   id-token: write
+
+env:
+  BENCHMARK_SLUG: ${{ github.event.inputs.slug || '' }}
+  BENCHMARK_NAME: ${{ github.event.inputs.name || '' }}
 
 jobs:
   snapshot-fork:

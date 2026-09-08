@@ -14,6 +14,14 @@ on:
       - '.github/workflows/sandbox-disk.yml'
   workflow_dispatch:
     inputs:
+      slug:
+        description: 'Optional platform benchmark slug override'
+        required: false
+        default: ''
+      name:
+        description: 'Optional platform benchmark name override'
+        required: false
+        default: ''
       replicas:
         description: 'Replicates per provider'
         required: false
@@ -36,6 +44,10 @@ permissions:
   contents: write
   pull-requests: write
   id-token: write
+
+env:
+  BENCHMARK_SLUG: ${{ github.event.inputs.slug || '' }}
+  BENCHMARK_NAME: ${{ github.event.inputs.name || '' }}
 
 jobs:
   bench:

@@ -64,7 +64,19 @@ export async function runBenchmarkFile(argv: string[]): Promise<void> {
     throw new Error(`${file} must export a \`task\` created with defineTask.`);
   }
 
-  await runBenchmark(config as BenchmarkConfig<BaseParticipant>, task as BenchmarkTask<BaseParticipant>, flags);
+  const envFlags: string[] = [];
+  if (process.env.BENCHMARK_SLUG) {
+    envFlags.push('--benchmark', process.env.BENCHMARK_SLUG);
+  }
+  if (process.env.BENCHMARK_NAME) {
+    envFlags.push('--name', process.env.BENCHMARK_NAME);
+  }
+
+  await runBenchmark(
+    config as BenchmarkConfig<BaseParticipant>,
+    task as BenchmarkTask<BaseParticipant>,
+    [...envFlags, ...flags],
+  );
 }
 
 /** Executable entry: dispatches to benchmark execution or platform data commands. */

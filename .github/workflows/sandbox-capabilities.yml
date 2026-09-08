@@ -3,6 +3,14 @@ name: Sandbox Capabilities Matrix
 on:
   workflow_dispatch:
     inputs:
+      slug:
+        description: 'Optional platform benchmark slug override'
+        required: false
+        default: ''
+      name:
+        description: 'Optional platform benchmark name override'
+        required: false
+        default: ''
       provider:
         description: 'Provider to run (leave empty for all)'
         required: false
@@ -26,6 +34,10 @@ concurrency:
   cancel-in-progress: true
 
 permissions: {}
+
+env:
+  BENCHMARK_SLUG: ${{ github.event.inputs.slug || '' }}
+  BENCHMARK_NAME: ${{ github.event.inputs.name || '' }}
 
 jobs:
   bench:

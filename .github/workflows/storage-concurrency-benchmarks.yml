@@ -14,6 +14,14 @@ on:
     - cron: '0 13 * * 3' # Weekly on Wednesday at 13:00 UTC
   workflow_dispatch:
     inputs:
+      slug:
+        description: 'Optional platform benchmark slug override'
+        required: false
+        default: ''
+      name:
+        description: 'Optional platform benchmark name override'
+        required: false
+        default: ''
       provider:
         description: 'Optional provider name (for example aws-s3)'
         required: false
@@ -42,6 +50,10 @@ concurrency:
 permissions:
   contents: read
   id-token: write
+
+env:
+  BENCHMARK_SLUG: ${{ github.event.inputs.slug || '' }}
+  BENCHMARK_NAME: ${{ github.event.inputs.name || '' }}
 
 jobs:
   benchmark:
