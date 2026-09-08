@@ -57,6 +57,12 @@ describe('runBenchmarkFile', () => {
     ).rejects.toThrow(/Benchmark check failed/);
   });
 
+  it('rejects a missing task during --check', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('no-task.bench.ts'), '--check', '--dry-run']),
+    ).rejects.toThrow(/must export a `task`/);
+  });
+
   it('loads a project config file via --config and applies defaults', async () => {
     const logs: string[] = [];
     const spy = vi.spyOn(console, 'log').mockImplementation((...args: unknown[]) => {

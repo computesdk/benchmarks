@@ -151,8 +151,12 @@ export async function runCheck(argv: string[]): Promise<void> {
 
   const mod = (await import(pathToFileURL(resolve(process.cwd(), file)).href)) as BenchmarkModule;
   const config = mod.config;
+  const task = mod.task ?? mod.default;
   if (!isBenchmarkConfig(config)) {
     throw new Error(`${file} must export a \`config\` created with defineBenchmarkConfig (with participants).`);
+  }
+  if (typeof task !== 'function') {
+    throw new Error(`${file} must export a \`task\` created with defineTask.`);
   }
 
   const cfg = config as TypedBenchmarkConfig<BaseParticipant>;
