@@ -27,6 +27,7 @@ import { formatError } from '../src/util/error.js';
 import { providers } from './providers.js';
 import type { ProviderConfig } from './types.js';
 import { writeSandboxLegacyResults } from './legacy-results.js';
+import type { SandboxInterface } from 'computesdk';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -68,29 +69,39 @@ export const config = defineBenchmarkConfig({
 });
 
 /** The slice of a provider's sandbox this workload actually touches. */
-interface TtiSandbox {
-  runCommand(command: string): Promise<{ exitCode: number; stdout?: string; stderr?: string }>;
-  destroy(): Promise<unknown>;
-}
+interface TtiSandbox extends SandboxInterface {}
 
 export const task = defineTask<ProviderConfig>(async (ctx) => {
   const { participant, step, measure, log } = ctx;
   const compute = participant.createCompute();
 
-  const start = performance.now();
-  const sandbox = await step('create', () =>
-    withTimeout<TtiSandbox>(
-      compute.sandbox.create(participant.sandboxOptions),
-      participant.timeout ?? CREATE_TIMEOUT_MS,
-      'Sandbox creation timed out',
-    ),
-  );
-
+  const createStart = performance.now();
+  let sandbox: TtiSandbox | undefined;
+  let createMs: number | undefined;
   let ttiMs: number | undefined;
+
   try {
+    sandbox = await step('create', async () => {
+      const s = await withTimeout<TtiSandbox>(
+        compute.sandbox.create(participant.sandboxOptions),
+        participant.timeout ?? CREATE_TIMEOUT_MS,
+        'Sandbox creation timed out',
+      );
+      createMs = performance.now() - createStart;
+      measure({ sandboxId: s.sandboxId, createMs });
+      const info = await s.getInfo();
+      measure({ createdAt: info.createdAt.toISOString() });
+      return s;
+    });
+    if (sandbox === undefined) {
+      throw new Error('create step did not return a sandbox');
+    }
+    const commandSandbox = sandbox;
+
+    const commandStart = performance.now();
     const result = await step('exec.task', async () => {
       const r = await withTimeout(
-        sandbox.runCommand('node -v'),
+        commandSandbox.runCommand('node -v'),
         COMMAND_TIMEOUT_MS,
         'First command execution timed out',
       );
@@ -98,16 +109,21 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
         log('node -v failed', { level: 'error', meta: { exitCode: r.exitCode, stderr: r.stderr ?? null } });
         throw new Error(`Command failed with exit code ${r.exitCode}: ${r.stderr || 'Unknown error'}`);
       }
-      ttiMs = performance.now() - start;
+      if (createMs === undefined) {
+        throw new Error('create step did not produce a createMs measurement');
+      }
+      ttiMs = createMs + (performance.now() - commandStart);
       measure({ ttiMs });
       return r;
     });
     log('node -v succeeded', { level: 'info', meta: { version: result.stdout?.trim() ?? null, exitCode: result.exitCode } });
   } finally {
-    await step('destroy', () =>
-      withTimeout(sandbox.destroy(), participant.destroyTimeoutMs ?? DESTROY_TIMEOUT_MS, 'Destroy timeout'),
-      { reportConcurrency: false },
-    ).catch((err: unknown) => log('destroy failed', { level: 'warn', meta: { error: formatError(err) } }));
+    if (sandbox) {
+      await step('destroy', () =>
+        withTimeout(sandbox!.destroy(), participant.destroyTimeoutMs ?? DESTROY_TIMEOUT_MS, 'Destroy timeout'),
+        { reportConcurrency: false },
+      ).catch((err: unknown) => log('destroy failed', { level: 'warn', meta: { error: formatError(err) } }));
+    }
   }
 
   if (ttiMs === undefined) {

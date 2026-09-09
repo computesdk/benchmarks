@@ -18,8 +18,11 @@ import type {
   BenchmarkRunSummaryInput,
   BenchmarkRunTaskResults,
   BenchmarkRunTaskResultsInput,
+  BenchmarkRunTaskIterations,
+  BenchmarkRunStepIterations,
   BenchmarkRunTimeline,
   BenchmarkRunTimelineInput,
+  BenchmarkRunIterationInput,
   BenchmarkRunWorker,
   BenchmarkWorkerAttempt,
   CreateWorkerArtifactInput,
@@ -74,6 +77,14 @@ function queryString(input: Record<string, number | undefined>): string {
   }
   const value = params.toString();
   return value ? `?${value}` : '';
+}
+
+function iterationsExtraParams(input: BenchmarkRunIterationInput = {}): string {
+  const params = new URLSearchParams();
+  if (input.participant) params.set('participant', input.participant);
+  if (input.steps?.length) params.set('steps', input.steps.join(','));
+  const value = params.toString();
+  return value ? `&${value}` : '';
 }
 
 function getApiKey(input?: string): string | undefined {
@@ -511,6 +522,20 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
       return request<BenchmarkRunTimeline>(
         'GET',
         `/benchmarks/${encodePath(benchmarkSlug)}/runs/${encodePath(runId)}/results/timeline${queryString({ bucketMs: input.bucketMs })}`,
+      );
+    },
+
+    async getRunTaskIterations(benchmarkSlug, runId, input: BenchmarkRunIterationInput = {}) {
+      return request<BenchmarkRunTaskIterations>(
+        'GET',
+        `/benchmarks/${encodePath(benchmarkSlug)}/runs/${encodePath(runId)}/iterations?type=tasks${iterationsExtraParams(input)}`,
+      );
+    },
+
+    async getRunStepIterations(benchmarkSlug, runId, input: BenchmarkRunIterationInput = {}) {
+      return request<BenchmarkRunStepIterations>(
+        'GET',
+        `/benchmarks/${encodePath(benchmarkSlug)}/runs/${encodePath(runId)}/iterations?type=steps${iterationsExtraParams(input)}`,
       );
     },
 

@@ -54,6 +54,8 @@ Commands:
   runs show <benchmark-slug> <runId> Show a single run
   results <benchmark-slug> [--run <id>] [--format json|table]
                                      Show benchmark or run results
+  iterations <benchmark-slug> --run <id> [--participant <slug>] [--steps <list>] [--format json|table]
+                                     Show per-iteration step latencies
   artifacts list <benchmark-slug> <runId> [--worker <id>]
                                      List run artifacts
   export <benchmark-slug> [--run <id>] [--out <dir>]
@@ -133,6 +135,8 @@ const subcommandOptionSchema = {
   limit: { type: 'number' as const },
   offset: { type: 'number' as const },
   run: { type: 'string' as const },
+  participant: { type: 'string' as const },
+  steps: { type: 'string' as const },
   worker: { type: 'string' as const },
   out: { type: 'string' as const },
 };
@@ -200,6 +204,8 @@ Subcommands:
        bench runs show <benchmark-slug> <runId>`;
     case 'results':
       return `Usage: bench results <benchmark-slug> [--run <id>] [--format json|table]`;
+    case 'iterations':
+      return `Usage: bench iterations <benchmark-slug> --run <id> [--participant <slug>] [--steps <list>] [--format json|table]`;
     case 'artifacts':
       return `Usage: bench artifacts list <benchmark-slug> <runId> [--worker <id>]`;
     case 'export':
@@ -375,6 +381,36 @@ async function handleResults(
   printData(results, { ...outputOptions, format: options.format === 'json' ? 'json' : outputOptions.format });
 }
 
+async function handleIterations(
+  benchmarkSlug: string,
+  options: { run?: string; participant?: string; steps?: string },
+  overrides: { baseUrl?: string; apiKey?: string; org?: string },
+  outputOptions: OutputOptions = {},
+): Promise<void> {
+  if (!options.run) {
+    throw new Error('Usage: bench iterations <benchmark-slug> --run <id> [--participant <slug>] [--steps <list>]');
+  }
+  const { api } = await createApiClient(overrides);
+  const steps = options.steps
+    ? options.steps.split(',').map((s) => s.trim()).filter(Boolean)
+    : undefined;
+  const { steps: rows } = await api.getRunStepIterations(benchmarkSlug, options.run, {
+    participant: options.participant,
+    steps,
+  });
+  const formatted = rows.map((row) => ({
+    participantSlug: row.participantSlug,
+    taskIndex: row.taskIndex,
+    stepName: row.stepName,
+    status: row.status,
+    latencyMs: row.latencyMs,
+    startedAt: row.startedAt,
+    completedAt: row.completedAt,
+    ...row.data,
+  }));
+  printData(formatted, outputOptions);
+}
+
 async function handleArtifactsList(
   benchmarkSlug: string,
   runId: string,
@@ -517,6 +553,13 @@ export async function run(argv: string[]): Promise<void> {
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench results <benchmark-slug>');
         await handleResults(slug, options, overrides, outputOptions);
+        break;
+      }
+      case 'iterations': {
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest);
+        const [slug] = subPositionals;
+        if (!slug) throw new Error('Benchmark slug required: bench iterations <benchmark-slug>');
+        await handleIterations(slug, options, overrides, outputOptions);
         break;
       }
       case 'artifacts': {
