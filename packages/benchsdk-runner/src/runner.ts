@@ -488,7 +488,7 @@ export interface RunBenchmarkOptions extends PlatformConfig {
  * the known names if the shape is unknown, so a typo fails loudly instead of
  * silently running the base benchmark.
  */
-function resolveShape<T extends BaseParticipant>(
+export function resolveShape<T extends BaseParticipant>(
   config: BenchmarkConfig<T>,
   shapeName: string | undefined,
 ): BenchmarkShape | undefined {

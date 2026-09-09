@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { runBenchmarkFile } from '../cli';
+import { runBenchmarkFile, runCheck } from '../cli';
 import { NoAvailableParticipantsError } from '../no-available-participants.js';
 import { AuthError } from '@benchsdk/cli';
 
@@ -124,5 +124,25 @@ describe('runBenchmarkFile', () => {
     await expect(
       runBenchmarkFile(['run', fixture('local.bench.ts'), '--config', fixture('array-config.json'), '--dry-run']),
     ).rejects.toThrow(/config must be an object/);
+  });
+
+  it('rejects --config when its value is another flag', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('local.bench.ts'), '--config', '--dry-run']),
+    ).rejects.toThrow(/Usage:/);
+  });
+
+  it('rejects bench run --check with an unknown shape', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('shapes.bench.ts'), '--check', '--dry-run', '--shape', 'nope']),
+    ).rejects.toThrow(/Unknown --shape "nope"/);
+  });
+});
+
+describe('runCheck', () => {
+  it('rejects an unknown shape', async () => {
+    await expect(
+      runCheck(['check', fixture('shapes.bench.ts'), '--dry-run', '--shape', 'nope']),
+    ).rejects.toThrow(/Unknown --shape "nope"/);
   });
 });

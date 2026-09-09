@@ -22,7 +22,7 @@ import { run as runPlatformCli, resolveAuth } from '@benchsdk/cli';
 import type { CliAuth } from '@benchsdk/cli';
 import { createBenchmarkClient, type BenchmarkClient, type BenchmarkClientConfig } from '@benchsdk/api';
 import { filterParticipantsByEnv, selectParticipants } from '@benchsdk/worker';
-import { parseCliArgs, runBenchmark, type CliArgs } from './runner.js';
+import { parseCliArgs, resolveShape, runBenchmark, type CliArgs } from './runner.js';
 import { NoAvailableParticipantsError } from './no-available-participants.js';
 import { validateBenchmarkConfig, BenchmarkConfigError, type BenchmarkConfig as TypedBenchmarkConfig } from './bench-config.js';
 import { scoringConfigToSpec, validateScoringSpec, lowerIsBetter, higherIsBetter } from './scoring.js';
@@ -114,8 +114,9 @@ function shiftConfigFlag(argv: string[]): { configPath?: string; argv: string[] 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--config') {
-      configPath = argv[++i];
-      if (!configPath) throw new Error(USAGE);
+      const next = argv[++i];
+      if (!next || next.startsWith('--')) throw new Error(USAGE);
+      configPath = next;
       continue;
     }
     if (arg.startsWith('--config=')) {
@@ -250,6 +251,7 @@ export async function runCheck(argv: string[]): Promise<void> {
   const { value: baseUrl, argv: flagsWithoutBaseUrl } = shiftFlag(flags, 'base-url');
   const { value: apiKey, argv: flagsWithoutApiKey } = shiftFlag(flagsWithoutBaseUrl, 'api-key');
   const parsed = parseCliArgs(flagsWithoutApiKey, cfg.customCliFlags ?? [], cliDefaultsFromConfig(projectConfig));
+  resolveShape(cfg, parsed.shape);
   const dryRun = parsed.noIngest ?? projectConfig.dryRun ?? false;
 
   let client: BenchmarkClient | undefined;
