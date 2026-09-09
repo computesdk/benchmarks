@@ -434,6 +434,46 @@ export interface BenchmarkRunTimeline {
   };
 }
 
+export interface BenchmarkRunIterationInput {
+  participant?: string;
+  steps?: string[];
+}
+
+export interface BenchmarkTaskIteration {
+  participantSlug: string;
+  provider: string | null;
+  taskIndex: number;
+  status: string;
+  latencyMs: number | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  data: JsonObject;
+}
+
+export interface BenchmarkStepIteration {
+  participantSlug: string;
+  provider: string | null;
+  stepName: string;
+  taskIndex: number;
+  status: string;
+  latencyMs: number | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  data: JsonObject;
+}
+
+export interface BenchmarkRunTaskIterations {
+  run: { id: string };
+  generatedAt: string;
+  tasks: BenchmarkTaskIteration[];
+}
+
+export interface BenchmarkRunStepIterations {
+  run: { id: string };
+  generatedAt: string;
+  steps: BenchmarkStepIteration[];
+}
+
 export interface BenchmarkRunImportsSummary {
   eventBatches: number;
   persisted: number;
@@ -809,6 +849,16 @@ export interface BenchmarkClient {
     runId: string,
     input?: BenchmarkRunTimelineInput,
   ): Promise<BenchmarkRunTimeline>;
+  getRunTaskIterations(
+    benchmarkSlug: string,
+    runId: string,
+    input?: BenchmarkRunIterationInput,
+  ): Promise<BenchmarkRunTaskIterations>;
+  getRunStepIterations(
+    benchmarkSlug: string,
+    runId: string,
+    input?: BenchmarkRunIterationInput,
+  ): Promise<BenchmarkRunStepIterations>;
   getRunImports(benchmarkSlug: string, runId: string): Promise<BenchmarkRunImports>;
   submitRunSummary(benchmarkSlug: string, runId: string, input: BenchmarkRunSummaryInput): Promise<void>;
 }

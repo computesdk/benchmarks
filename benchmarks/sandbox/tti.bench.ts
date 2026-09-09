@@ -27,6 +27,7 @@ import { formatError } from '../src/util/error.js';
 import { providers } from './providers.js';
 import type { ProviderConfig } from './types.js';
 import { writeSandboxLegacyResults } from './legacy-results.js';
+import type { SandboxInterface } from 'computesdk';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -68,23 +69,25 @@ export const config = defineBenchmarkConfig({
 });
 
 /** The slice of a provider's sandbox this workload actually touches. */
-interface TtiSandbox {
-  runCommand(command: string): Promise<{ exitCode: number; stdout?: string; stderr?: string }>;
-  destroy(): Promise<unknown>;
-}
+interface TtiSandbox extends SandboxInterface {}
 
 export const task = defineTask<ProviderConfig>(async (ctx) => {
   const { participant, step, measure, log } = ctx;
   const compute = participant.createCompute();
 
   const start = performance.now();
-  const sandbox = await step('create', () =>
-    withTimeout<TtiSandbox>(
+  const createStart = start;
+  const sandbox = await step('create', async () => {
+    const s = await withTimeout<TtiSandbox>(
       compute.sandbox.create(participant.sandboxOptions),
       participant.timeout ?? CREATE_TIMEOUT_MS,
       'Sandbox creation timed out',
-    ),
-  );
+    );
+    const createMs = performance.now() - createStart;
+    const info = await s.getInfo();
+    measure({ sandboxId: s.sandboxId, createdAt: info.createdAt.toISOString(), createMs });
+    return s;
+  });
 
   let ttiMs: number | undefined;
   try {
