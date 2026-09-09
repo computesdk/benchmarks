@@ -319,7 +319,7 @@ export interface BenchmarkResultsOverviewInput {
   offset?: number;
 }
 
-export type BenchmarkAnalyticsReadiness = 'ready' | 'complete' | 'partial' | 'pending' | 'unavailable' | 'failed';
+export type BenchmarkAnalyticsReadiness = 'ready' | 'complete' | 'partial' | 'pending' | 'unavailable' | 'failed' | 'importing';
 
 export interface BenchmarkRunAnalyticsSummary {
   status: BenchmarkAnalyticsReadiness;
