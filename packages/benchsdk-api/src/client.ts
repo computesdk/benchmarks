@@ -79,12 +79,12 @@ function queryString(input: Record<string, number | undefined>): string {
   return value ? `?${value}` : '';
 }
 
-function iterationsQueryString(input: BenchmarkRunIterationInput = {}): string {
+function iterationsExtraParams(input: BenchmarkRunIterationInput = {}): string {
   const params = new URLSearchParams();
   if (input.participant) params.set('participant', input.participant);
   if (input.steps?.length) params.set('steps', input.steps.join(','));
   const value = params.toString();
-  return value ? `?${value}` : '';
+  return value ? `&${value}` : '';
 }
 
 function getApiKey(input?: string): string | undefined {
@@ -528,14 +528,14 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
     async getRunTaskIterations(benchmarkSlug, runId, input: BenchmarkRunIterationInput = {}) {
       return request<BenchmarkRunTaskIterations>(
         'GET',
-        `/benchmarks/${encodePath(benchmarkSlug)}/runs/${encodePath(runId)}/iterations?type=tasks${iterationsQueryString(input)}`,
+        `/benchmarks/${encodePath(benchmarkSlug)}/runs/${encodePath(runId)}/iterations?type=tasks${iterationsExtraParams(input)}`,
       );
     },
 
     async getRunStepIterations(benchmarkSlug, runId, input: BenchmarkRunIterationInput = {}) {
       return request<BenchmarkRunStepIterations>(
         'GET',
-        `/benchmarks/${encodePath(benchmarkSlug)}/runs/${encodePath(runId)}/iterations?type=steps${iterationsQueryString(input)}`,
+        `/benchmarks/${encodePath(benchmarkSlug)}/runs/${encodePath(runId)}/iterations?type=steps${iterationsExtraParams(input)}`,
       );
     },
 
