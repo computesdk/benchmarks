@@ -1,5 +1,20 @@
 # @benchsdk/cli
 
+## 0.3.0
+
+### Minor Changes
+
+- 0b1916f: Expose per-iteration benchmark results and sandbox reuse metadata.
+
+  - `@benchsdk/api` adds `getRunTaskIterations` and `getRunStepIterations` plus the `BenchmarkRunIterationInput`, `BenchmarkTaskIteration`, `BenchmarkStepIteration`, `BenchmarkRunTaskIterations`, and `BenchmarkRunStepIterations` types.
+  - `@benchsdk/cli` adds `bench iterations <benchmark-slug> --run <id> [--participant <slug>] [--steps <list>] [--format json|table]`.
+  - `benchmarks/sandbox/tti.bench.ts` records `sandboxId`, `createdAt`, and `createMs` in the `create` step for sandbox reuse detection.
+
+### Patch Changes
+
+- Updated dependencies [0b1916f]
+  - @benchsdk/api@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes

@@ -1,5 +1,14 @@
 # @benchsdk/runner
 
+## 0.3.1
+
+### Patch Changes
+
+- Updated dependencies [0b1916f]
+  - @benchsdk/api@0.3.0
+  - @benchsdk/cli@0.3.0
+  - @benchsdk/worker@0.2.1
+
 ## 0.3.0
 
 ### Minor Changes
