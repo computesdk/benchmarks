@@ -417,6 +417,7 @@ describe('runBenchmark', () => {
     try {
       delete process.env.BENCH_TRIGGER_SOURCE;
       delete process.env.BENCH_TRIGGER_REQUESTED_BY;
+      delete process.env.BENCH_TRIGGER_REQUEST_ID;
       process.env.GITHUB_EVENT_NAME = 'schedule';
       await run();
       expect(calls.createRun[0][1].config.trigger).toEqual({ source: 'schedule', event: 'schedule' });
@@ -425,17 +426,20 @@ describe('runBenchmark', () => {
       process.env.GITHUB_EVENT_NAME = 'workflow_dispatch';
       process.env.BENCH_TRIGGER_SOURCE = 'platform-retrigger';
       process.env.BENCH_TRIGGER_REQUESTED_BY = 'acme';
+      process.env.BENCH_TRIGGER_REQUEST_ID = 'req-1';
       await run();
       expect(calls.createRun[1][1].config.trigger).toEqual({
         source: 'platform-retrigger',
         event: 'workflow_dispatch',
         requestedBy: 'acme',
+        requestId: 'req-1',
       });
       expect(calls.submitRunSummary[1][2].run.triggeredBy).toBe('platform-retrigger');
 
       process.env.GITHUB_EVENT_NAME = '  ';
       process.env.BENCH_TRIGGER_SOURCE = '';
       delete process.env.BENCH_TRIGGER_REQUESTED_BY;
+      process.env.BENCH_TRIGGER_REQUEST_ID = ' ';
       await run();
       expect(calls.createRun[2][1].config.trigger).toEqual({ source: 'manual' });
       expect(calls.submitRunSummary[2][2].run.triggeredBy).toBe('manual');

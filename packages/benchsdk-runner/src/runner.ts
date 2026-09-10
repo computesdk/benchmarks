@@ -522,11 +522,13 @@ export function resolveTriggerSource(env: NodeJS.ProcessEnv = process.env): stri
 
 function triggerToJson(env: NodeJS.ProcessEnv = process.env): JsonObject {
   const requestedBy = env.BENCH_TRIGGER_REQUESTED_BY?.trim();
+  const requestId = env.BENCH_TRIGGER_REQUEST_ID?.trim();
   const event = env.GITHUB_EVENT_NAME?.trim();
   return {
     source: resolveTriggerSource(env),
     ...(event ? { event } : {}),
     ...(requestedBy ? { requestedBy } : {}),
+    ...(requestId ? { requestId } : {}),
   };
 }
 
