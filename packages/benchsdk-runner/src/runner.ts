@@ -517,14 +517,15 @@ function resolveParticipants<T extends BaseParticipant>(config: BenchmarkConfig<
 export function resolveTriggerSource(env: NodeJS.ProcessEnv = process.env): string {
   const source = env.BENCH_TRIGGER_SOURCE?.trim();
   if (source) return source;
-  return env.GITHUB_EVENT_NAME ?? 'manual';
+  return env.GITHUB_EVENT_NAME?.trim() || 'manual';
 }
 
 function triggerToJson(env: NodeJS.ProcessEnv = process.env): JsonObject {
   const requestedBy = env.BENCH_TRIGGER_REQUESTED_BY?.trim();
+  const event = env.GITHUB_EVENT_NAME?.trim();
   return {
     source: resolveTriggerSource(env),
-    ...(env.GITHUB_EVENT_NAME ? { event: env.GITHUB_EVENT_NAME } : {}),
+    ...(event ? { event } : {}),
     ...(requestedBy ? { requestedBy } : {}),
   };
 }

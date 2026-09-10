@@ -433,11 +433,12 @@ describe('runBenchmark', () => {
       });
       expect(calls.submitRunSummary[1][2].run.triggeredBy).toBe('platform-retrigger');
 
-      delete process.env.GITHUB_EVENT_NAME;
+      process.env.GITHUB_EVENT_NAME = '  ';
       process.env.BENCH_TRIGGER_SOURCE = '';
       delete process.env.BENCH_TRIGGER_REQUESTED_BY;
       await run();
       expect(calls.createRun[2][1].config.trigger).toEqual({ source: 'manual' });
+      expect(calls.submitRunSummary[2][2].run.triggeredBy).toBe('manual');
     } finally {
       process.env = savedEnv;
     }
