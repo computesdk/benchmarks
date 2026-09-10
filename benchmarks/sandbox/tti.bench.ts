@@ -85,9 +85,6 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
         'Sandbox creation timed out',
       );
       createMs = performance.now() - createStart;
-      measure({ sandboxId: s.sandboxId, createMs });
-      const info = await s.getInfo();
-      measure({ createdAt: info.createdAt.toISOString() });
       return s;
     });
     if (sandbox === undefined) {
