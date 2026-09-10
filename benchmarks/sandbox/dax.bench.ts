@@ -72,7 +72,7 @@ export const config = defineBenchmarkConfig({
       { key: 'install', label: 'Install' },
       { key: 'typecheck', label: 'Typecheck' },
     ],
-    overview: { defaultMetric: 'totalMs', defaultLayout: 'ranking' },
+    overview: { defaultMetric: 'task', defaultLayout: 'ranking' },
   },
   onComplete: (outcome) =>
     writeDaxLegacyResults(outcome.participants, {
