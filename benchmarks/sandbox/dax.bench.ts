@@ -103,7 +103,7 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
       {
         name: 'dax-root',
         type: 'ephemeral',
-        sizeMb: 8192,
+        sizeMb: 16384,
         mountPath: '/',                                     // Keep the writable root off RAM
       },
     ],
