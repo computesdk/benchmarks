@@ -85,6 +85,17 @@ import { resolveNeonHost } from './neon-host.js';
  */
 export const providers: AIGatewayProviderConfig[] = [
   {
+    name: 'cocoonstack-gateway',
+    requiredEnvVars: ['COCOONSTACK_GATEWAY_API_KEY'],
+    wireFormat: 'openai',
+    model: 'kimi-k3',
+    host: 'gw-bench.simular.cloud',
+    path: '/v1/chat/completions',
+    buildHeaders: () => ({ Authorization: `Bearer ${process.env.COCOONSTACK_GATEWAY_API_KEY}` }),
+    extraBody: { temperature: undefined },
+    reasoningCountsAsFirstToken: true,
+  },
+  {
     // `moonshotai/kimi-k3` is OpenRouter's confirmed catalog convention
     // (openrouter.ai/moonshotai). Provider-order pinning to `moonshotai`
     // specifically (not a generic "no fallback" flag) — see the open-weight

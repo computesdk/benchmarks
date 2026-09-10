@@ -31,6 +31,15 @@ import { resolveNeonHost } from './neon-host.js';
  */
 export const providers: AIGatewayProviderConfig[] = [
   {
+    name: 'cocoonstack-gateway',
+    requiredEnvVars: ['COCOONSTACK_GATEWAY_API_KEY'],
+    wireFormat: 'responses',
+    model: 'gpt-5.4-mini',
+    host: 'gw-bench.simular.cloud',
+    path: '/v1/responses',
+    buildHeaders: () => ({ Authorization: `Bearer ${process.env.COCOONSTACK_GATEWAY_API_KEY}` }),
+  },
+  {
     // Confirmed: OpenRouter's Responses API passthrough exists at
     // `/api/v1/responses` (openrouter.ai/docs/api_reference/responses/overview),
     // OpenAI-Responses-compatible. Same provider-order pinning mechanism as
