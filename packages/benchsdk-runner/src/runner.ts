@@ -508,11 +508,33 @@ function resolveParticipants<T extends BaseParticipant>(config: BenchmarkConfig<
   return available;
 }
 
+/**
+ * How this run came to be, for the platform's run record. `BENCH_TRIGGER_SOURCE`
+ * (e.g. `platform-retrigger`) is set by a workflow when something other than its
+ * own schedule or a human dispatch kicked it off; otherwise the GitHub event
+ * name (`schedule`, `workflow_dispatch`) or `manual` outside of CI.
+ */
+export function resolveTriggerSource(env: NodeJS.ProcessEnv = process.env): string {
+  const source = env.BENCH_TRIGGER_SOURCE?.trim();
+  if (source) return source;
+  return env.GITHUB_EVENT_NAME ?? 'manual';
+}
+
+function triggerToJson(env: NodeJS.ProcessEnv = process.env): JsonObject {
+  const requestedBy = env.BENCH_TRIGGER_REQUESTED_BY?.trim();
+  return {
+    source: resolveTriggerSource(env),
+    ...(env.GITHUB_EVENT_NAME ? { event: env.GITHUB_EVENT_NAME } : {}),
+    ...(requestedBy ? { requestedBy } : {}),
+  };
+}
+
 /** Builds a JSON-serializable snapshot of the resolved run execution config. */
-function runConfigToJson<T extends BaseParticipant>(
+export function runConfigToJson<T extends BaseParticipant>(
   config: BenchmarkConfig<T>,
   resolved: ResolvedRunConfig,
   participants: string[],
+  env: NodeJS.ProcessEnv = process.env,
 ): JsonObject {
   const phases = config.phases?.map((phase) => ({
     name: phase.name,
@@ -530,6 +552,7 @@ function runConfigToJson<T extends BaseParticipant>(
     ...(config.dimensions ? { dimensions: config.dimensions } : {}),
     ...(config.scoring ? { scoring: config.scoring } : {}),
     participants,
+    trigger: triggerToJson(env),
   };
   return JSON.parse(JSON.stringify(runConfig)) as JsonObject;
 }
@@ -665,7 +688,7 @@ export async function runBenchmark<T extends BaseParticipant>(
       const run = {
         gitSha: process.env.GITHUB_SHA ?? getGitSha(),
         gitRef: process.env.GITHUB_REF_NAME ?? process.env.GITHUB_REF ?? getGitRef(),
-        triggeredBy: process.env.GITHUB_EVENT_NAME ?? 'manual',
+        triggeredBy: resolveTriggerSource(),
         nodeVersion: process.version,
         platform: os.platform(),
         arch: os.arch(),

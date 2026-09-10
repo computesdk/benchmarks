@@ -401,6 +401,48 @@ describe('runBenchmark', () => {
     expect(onComplete).toHaveBeenCalledWith(outcome);
   });
 
+  it('records BENCH_TRIGGER_SOURCE in the run config and summary, falling back to the GitHub event', async () => {
+    const config: BenchmarkConfig<typeof participants[number]> = {
+      benchmarkSlug: 's',
+      benchmarkName: 'n',
+      iterations: 1,
+      concurrency: 1,
+      participants: [participants[0]],
+      onScore: (lowerIsBetter) => ({
+        metrics: [lowerIsBetter('ttiMs', { unit: 'ms', ceiling: 1000, weights: { median: 1, p95: 0, p99: 0 } })],
+      }),
+    };
+    const run = () => runBenchmark(config, defineTask(async () => ({ data: { ttiMs: 100 } })), []);
+    const savedEnv = { ...process.env };
+    try {
+      delete process.env.BENCH_TRIGGER_SOURCE;
+      delete process.env.BENCH_TRIGGER_REQUESTED_BY;
+      process.env.GITHUB_EVENT_NAME = 'schedule';
+      await run();
+      expect(calls.createRun[0][1].config.trigger).toEqual({ source: 'schedule', event: 'schedule' });
+      expect(calls.submitRunSummary[0][2].run.triggeredBy).toBe('schedule');
+
+      process.env.GITHUB_EVENT_NAME = 'workflow_dispatch';
+      process.env.BENCH_TRIGGER_SOURCE = 'platform-retrigger';
+      process.env.BENCH_TRIGGER_REQUESTED_BY = 'acme';
+      await run();
+      expect(calls.createRun[1][1].config.trigger).toEqual({
+        source: 'platform-retrigger',
+        event: 'workflow_dispatch',
+        requestedBy: 'acme',
+      });
+      expect(calls.submitRunSummary[1][2].run.triggeredBy).toBe('platform-retrigger');
+
+      delete process.env.GITHUB_EVENT_NAME;
+      process.env.BENCH_TRIGGER_SOURCE = '';
+      delete process.env.BENCH_TRIGGER_REQUESTED_BY;
+      await run();
+      expect(calls.createRun[2][1].config.trigger).toEqual({ source: 'manual' });
+    } finally {
+      process.env = savedEnv;
+    }
+  });
+
   it('propagates a ScoringSpecError from a misconfigured onScore instead of swallowing it as a warning', async () => {
     // weights sum to 0.5, not 1.0 — an authoring bug in onScore, not a
     // transient submit failure, so runBenchmark must reject rather than warn
