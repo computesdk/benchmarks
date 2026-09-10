@@ -106,12 +106,15 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
         log('node -v failed', { level: 'error', meta: { exitCode: r.exitCode, stderr: r.stderr ?? null } });
         throw new Error(`Command failed with exit code ${r.exitCode}: ${r.stderr || 'Unknown error'}`);
       }
+      if (createMs === undefined) {
+        throw new Error('create step did not produce a createMs measurement');
+      }
+      ttiMs = createMs + (performance.now() - commandStart);
       return r;
     });
-    if (createMs === undefined) {
-      throw new Error('create step did not produce a createMs measurement');
+    if (ttiMs === undefined) {
+      throw new Error('exec.task did not produce a ttiMs measurement');
     }
-    ttiMs = createMs + (performance.now() - commandStart);
     measure({ ttiMs });
     log('node -v succeeded', { level: 'info', meta: { version: result.stdout?.trim() ?? null, exitCode: result.exitCode } });
   } finally {
