@@ -248,49 +248,49 @@ importers:
         version: link:../benchsdk-worker
     devDependencies:
       '@types/node':
-        specifier: ^20.19.43
+        specifier: ^20.0.0
         version: 20.19.43
       '@vitest/coverage-v8':
-        specifier: ^1.6.1
+        specifier: ^1.0.0
         version: 1.6.1(vitest@1.6.1(@types/node@20.19.43))
       eslint:
-        specifier: ^8.57.1
+        specifier: ^8.37.0
         version: 8.57.1
       rimraf:
-        specifier: ^5.0.10
+        specifier: ^5.0.0
         version: 5.0.10
       tsup:
-        specifier: ^8.5.1
+        specifier: ^8.0.0
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.28)(tsx@4.23.13)(typescript@5.9.3)(yaml@2.9.0)
       typescript:
-        specifier: ^5.9.3
+        specifier: ^5.0.0
         version: 5.9.3
       vitest:
-        specifier: ^1.6.1
+        specifier: ^1.0.0
         version: 1.6.1(@types/node@20.19.43)
 
   packages/benchsdk-api:
     devDependencies:
       '@types/node':
-        specifier: ^20.19.43
+        specifier: ^20.0.0
         version: 20.19.43
       '@vitest/coverage-v8':
-        specifier: ^1.6.1
+        specifier: ^1.0.0
         version: 1.6.1(vitest@1.6.1(@types/node@20.19.43))
       eslint:
-        specifier: ^8.57.1
+        specifier: ^8.37.0
         version: 8.57.1
       rimraf:
-        specifier: ^5.0.10
+        specifier: ^5.0.0
         version: 5.0.10
       tsup:
-        specifier: ^8.5.1
+        specifier: ^8.0.0
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.28)(tsx@4.23.13)(typescript@5.9.3)(yaml@2.9.0)
       typescript:
-        specifier: ^5.9.3
+        specifier: ^5.0.0
         version: 5.9.3
       vitest:
-        specifier: ^1.6.1
+        specifier: ^1.0.0
         version: 1.6.1(@types/node@20.19.43)
 
   packages/benchsdk-cli:
@@ -300,25 +300,25 @@ importers:
         version: link:../benchsdk-api
     devDependencies:
       '@types/node':
-        specifier: ^20.19.43
+        specifier: ^20.0.0
         version: 20.19.43
       '@vitest/coverage-v8':
-        specifier: ^1.6.1
+        specifier: ^1.0.0
         version: 1.6.1(vitest@1.6.1(@types/node@20.19.43))
       eslint:
-        specifier: ^8.57.1
+        specifier: ^8.37.0
         version: 8.57.1
       rimraf:
-        specifier: ^5.0.10
+        specifier: ^5.0.0
         version: 5.0.10
       tsup:
-        specifier: ^8.5.1
+        specifier: ^8.0.0
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.28)(tsx@4.23.13)(typescript@5.9.3)(yaml@2.9.0)
       typescript:
-        specifier: ^5.9.3
+        specifier: ^5.0.0
         version: 5.9.3
       vitest:
-        specifier: ^1.6.1
+        specifier: ^1.0.0
         version: 1.6.1(@types/node@20.19.43)
 
   packages/benchsdk-runner:
@@ -334,19 +334,19 @@ importers:
         version: link:../benchsdk-worker
     devDependencies:
       '@types/node':
-        specifier: ^20.19.43
+        specifier: ^20.0.0
         version: 20.19.43
       rimraf:
-        specifier: ^5.0.10
+        specifier: ^5.0.0
         version: 5.0.10
       tsup:
-        specifier: ^8.5.1
+        specifier: ^8.0.0
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.28)(tsx@4.23.13)(typescript@5.9.3)(yaml@2.9.0)
       typescript:
-        specifier: ^5.9.3
+        specifier: ^5.0.0
         version: 5.9.3
       vitest:
-        specifier: ^1.6.1
+        specifier: ^1.0.0
         version: 1.6.1(@types/node@20.19.43)
 
   packages/benchsdk-worker:
@@ -356,43 +356,43 @@ importers:
         version: link:../benchsdk-api
     devDependencies:
       '@types/node':
-        specifier: ^20.19.43
+        specifier: ^20.0.0
         version: 20.19.43
       '@vitest/coverage-v8':
-        specifier: ^1.6.1
+        specifier: ^1.0.0
         version: 1.6.1(vitest@1.6.1(@types/node@20.19.43))
       eslint:
-        specifier: ^8.57.1
+        specifier: ^8.37.0
         version: 8.57.1
       rimraf:
-        specifier: ^5.0.10
+        specifier: ^5.0.0
         version: 5.0.10
       tsup:
-        specifier: ^8.5.1
+        specifier: ^8.0.0
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.28)(tsx@4.23.13)(typescript@5.9.3)(yaml@2.9.0)
       typescript:
-        specifier: ^5.9.3
+        specifier: ^5.0.0
         version: 5.9.3
       vitest:
-        specifier: ^1.6.1
+        specifier: ^1.0.0
         version: 1.6.1(@types/node@20.19.43)
 
   packages/create-bench:
     devDependencies:
       '@types/node':
-        specifier: ^20.19.43
+        specifier: ^20.0.0
         version: 20.19.43
       rimraf:
-        specifier: ^5.0.10
+        specifier: ^5.0.0
         version: 5.0.10
       tsup:
-        specifier: ^8.5.1
+        specifier: ^8.0.0
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.28)(tsx@4.23.13)(typescript@5.9.3)(yaml@2.9.0)
       typescript:
-        specifier: ^5.9.3
+        specifier: ^5.0.0
         version: 5.9.3
       vitest:
-        specifier: ^1.6.1
+        specifier: ^1.0.0
         version: 1.6.1(@types/node@20.19.43)
 
 packages:
