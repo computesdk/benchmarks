@@ -156,10 +156,17 @@ prepare() {
   # setuptools is optional - only needed for node-gyp native module compilation,
   # not for the clone/install/typecheck benchmark. Skip the check entirely.
 
-  # Install Node.js only if it's not already available. Some sandboxes (e.g.
-  # Vercel) ship Node.js pre-installed; respect that rather than trying to
-  # override it (the symlink may not take precedence in PATH).
-  if ! command -v node >/dev/null 2>&1; then
+  # Keep the benchmark runtime consistent on glibc images. Alpine uses its
+  # native Node package because the official Node archives are not musl builds.
+  local install_node=false
+  if [[ -z "$BUN_MUSL_SUFFIX" ]] && {
+    ! command -v node >/dev/null 2>&1 ||
+      [[ "$(node --version 2>/dev/null || true)" != "v${NODE_VERSION}" ]]
+  }; then
+    install_node=true
+  fi
+
+  if [[ "$install_node" == true ]]; then
     local archive="node-v${NODE_VERSION}-${NODE_ARCH}.tar.gz"
     local prefix="/opt/node-v${NODE_VERSION}-${NODE_ARCH}"
     if ! curl -fsSL "https://nodejs.org/download/release/v${NODE_VERSION}/${archive}" -o "/tmp/${archive}"; then
