@@ -25,7 +25,7 @@ import type { JsonObject, TaskStepRecord } from '@benchsdk/api';
 import { VMTier } from '@codesandbox/sdk';
 import { withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
-import { sandboxIdentity } from '../src/util/sandbox-identity.js';
+import { sandboxId as getSandboxId } from '../src/util/sandbox-id.js';
 import { providers } from './providers.js';
 import type { ProviderConfig } from './types.js';
 import { BENCH_SCRIPT_PATH } from './dax.js';
@@ -332,9 +332,8 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
     console.error(`  [${p.name}] ${message}`);
     throw new TaskError(message, { code: 'create_failed', data: { error: message } });
   });
-  const identity = sandboxIdentity(sandbox);
-  const sandboxId = identity.sandboxId;
-  log('Sandbox created', { level: 'info', meta: { provider: p.name, ...identity, createMs: Date.now() - createStart } });
+  const sandboxId = getSandboxId(sandbox);
+  log('Sandbox created', { level: 'info', meta: { provider: p.name, sandboxId, createMs: Date.now() - createStart } });
   console.log(`  [${p.name}] sandbox ${sandboxId ?? '<no id>'} created in ${Date.now() - createStart}ms`);
 
   let timing: DaxTimingResult;

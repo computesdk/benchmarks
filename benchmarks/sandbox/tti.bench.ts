@@ -24,7 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { defineBenchmarkConfig, defineTask } from '@benchsdk/runner';
 import { withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
-import { sandboxIdentity } from '../src/util/sandbox-identity.js';
+import { sandboxId as getSandboxId } from '../src/util/sandbox-id.js';
 import { providers } from './providers.js';
 import type { ProviderConfig } from './types.js';
 import { writeSandboxLegacyResults } from './legacy-results.js';
@@ -92,9 +92,8 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
     if (sandbox === undefined) {
       throw new Error('create step did not return a sandbox');
     }
-    const identity = sandboxIdentity(sandbox);
-    sandboxId = identity.sandboxId;
-    log('Sandbox created', { level: 'info', meta: { provider: participant.name, ...identity, createMs: Math.round(createMs ?? 0) } });
+    sandboxId = getSandboxId(sandbox);
+    log('Sandbox created', { level: 'info', meta: { provider: participant.name, sandboxId, createMs: Math.round(createMs ?? 0) } });
     console.log(`  [${participant.name}] sandbox ${sandboxId ?? '<no id>'} created in ${Math.round(createMs ?? 0)}ms`);
     const commandSandbox = sandbox;
 

@@ -3,7 +3,7 @@ import '../src/env.js';
 import { defineBenchmarkConfig, defineTask, TaskError } from '@benchsdk/runner';
 import { withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
-import { sandboxIdentity } from '../src/util/sandbox-identity.js';
+import { sandboxId as getSandboxId } from '../src/util/sandbox-id.js';
 import { providers } from '../sandbox/providers.js';
 import type { ProviderConfig } from '../sandbox/types.js';
 
@@ -52,9 +52,8 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
         'Sandbox creation timed out',
       ),
     );
-    const identity = sandboxIdentity(sandbox);
-    sandboxId = identity.sandboxId;
-    log('Sandbox created', { level: 'info', meta: { provider: participant.name, ...identity, createMs: Date.now() - createStart } });
+    sandboxId = getSandboxId(sandbox);
+    log('Sandbox created', { level: 'info', meta: { provider: participant.name, sandboxId, createMs: Date.now() - createStart } });
     console.log(`  [${participant.name}] sandbox ${sandboxId ?? '<no id>'} created in ${Date.now() - createStart}ms`);
 
     await step('install', async () => {
