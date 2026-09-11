@@ -116,6 +116,7 @@ jobs:
             svgScript: generate-ai-gateway-svg
             svgFile: ai-gateway.svg
             timeout: 60
+            scheduleIterations: 50
           - slug: openai
             label: OpenAI
             benchScript: benchmarks/ai-gateway/ai-gateway-openai.bench.ts
@@ -123,6 +124,7 @@ jobs:
             svgScript: generate-ai-gateway-openai-svg
             svgFile: ai-gateway-openai.svg
             timeout: 60
+            scheduleIterations: 50
           - slug: gemini
             label: Gemini
             benchScript: benchmarks/ai-gateway/ai-gateway-gemini.bench.ts
@@ -130,6 +132,7 @@ jobs:
             svgScript: generate-ai-gateway-gemini-svg
             svgFile: ai-gateway-gemini.svg
             timeout: 60
+            scheduleIterations: 50
           - slug: kimi
             label: Kimi
             benchScript: benchmarks/ai-gateway/ai-gateway-kimi.bench.ts
@@ -137,6 +140,7 @@ jobs:
             svgScript: generate-ai-gateway-kimi-svg
             svgFile: ai-gateway-kimi.svg
             timeout: 150
+            scheduleIterations: 25
             iterations: 25
     # Manual runs can scope to one family via the `family` input; push/schedule
     # triggers always run all four.
@@ -182,11 +186,7 @@ jobs:
           fi
 
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            if [ "${{ matrix.family.slug }}" = "kimi" ]; then
-              ITERATIONS="25"
-            else
-              ITERATIONS="50"
-            fi
+            ITERATIONS="${{ matrix.family.scheduleIterations }}"
           elif [ "${{ github.event_name }}" = "push" ]; then
             ITERATIONS="10"
           elif [ -n "$INPUT_ITERATIONS" ]; then
