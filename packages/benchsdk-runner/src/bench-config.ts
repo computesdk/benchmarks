@@ -84,7 +84,19 @@ export interface TaskStepOptions extends Omit<DefineStepOptions, 'concurrency' |
   /** Per-iteration timeout in milliseconds. If an invocation exceeds this, it is aborted and a `step_timeout` TaskError is thrown. */
   timeoutMs?: number;
   /** Number of times to invoke `fn` in parallel. Defaults to 1. When greater than 1, the step returns an array of results. */
+  parallelInvocations?: number;
+  /** @deprecated use `parallelInvocations` instead. */
   concurrency?: number;
+}
+
+export interface TaskErrorOptions {
+  code?: string;
+  data?: JsonObject;
+  steps?: TaskStepRecord[];
+  /** The step name this error was thrown from, when known. */
+  step?: string;
+  /** The timeout that was exceeded, when this is a timeout error. */
+  timeoutMs?: number;
 }
 
 /**
@@ -95,12 +107,30 @@ export class TaskError extends Error {
   readonly code?: string;
   readonly data?: JsonObject;
   readonly steps?: TaskStepRecord[];
-  constructor(message: string, opts?: { code?: string; data?: JsonObject; steps?: TaskStepRecord[] }) {
+  readonly step?: string;
+  readonly timeoutMs?: number;
+  constructor(message: string, opts?: TaskErrorOptions) {
     super(message);
     this.name = 'TaskError';
     this.code = opts?.code;
     this.data = opts?.data;
     this.steps = opts?.steps;
+    this.step = opts?.step;
+    this.timeoutMs = opts?.timeoutMs;
+  }
+
+  override toString(): string {
+    let s = `[${this.name}${this.code ? ` (${this.code})` : ''}] ${this.message}`;
+    if (this.step) {
+      s += `\n  step: ${this.step}`;
+    }
+    if (this.timeoutMs !== undefined) {
+      s += `\n  timeoutMs: ${this.timeoutMs}`;
+    }
+    if (this.data && Object.keys(this.data).length > 0) {
+      s += `\n  data: ${JSON.stringify(this.data, null, 2)}`;
+    }
+    return s;
   }
 }
 
@@ -114,14 +144,14 @@ export interface TaskContext<T extends BaseParticipant = BaseParticipant> {
   phase?: string;
   /**
    * Runs `fn` as a named platform step. Mirrors `@benchsdk/worker`'s
-   * `RunWorkerContext.step`; supports closures and try/finally. A `concurrency`
+   * `RunWorkerContext.step`; supports closures and try/finally. `parallelInvocations`
    * greater than 1 invokes `fn` that many times in parallel and returns an array.
    * `timeoutMs` aborts any invocation that exceeds it with a `step_timeout` TaskError.
    */
   step<R, C extends number = 1>(
     name: string,
     fn: () => Promise<R> | R,
-    options?: TaskStepOptions & { concurrency?: C },
+    options?: TaskStepOptions & { parallelInvocations?: C; concurrency?: C },
   ): Promise<C extends 1 ? R : R[]>;
   /**
    * Attaches a JSON measurement to the platform. Inside a `step` it lands on
@@ -171,53 +201,6 @@ export interface ResolvedRunConfig {
   staggerDelayMs: number;
   groupBy: GroupBy;
   providers?: string[];
-}
-
-/** Display metadata for a single custom metric a benchmark reports via `ctx.measure`. */
-export interface BenchmarkMetricDisplay {
-  /** Stable metric key, matching the key in `ctx.measure` or `data`. */
-  key: string;
-  /** Human-readable label shown in the platform UI. */
-  label: string;
-  /** Optional unit shown after the value (e.g. `Mbps`, `/s`, `ms`). */
-  unit?: string;
-  /** Number of decimal places when formatting numeric values. Defaults to the display format. */
-  decimals?: number;
-  /** Whether higher or lower values rank better. */
-  direction?: 'higher-better' | 'lower-better';
-  /** Optional ordering hint for metric lists. */
-  order?: number;
-}
-
-/** Display metadata for a single task lifecycle step. */
-export interface BenchmarkStepDisplay {
-  /** Stable step name, matching the string passed to `ctx.step`. */
-  key: string;
-  /** Human-readable label shown in the platform UI. */
-  label: string;
-  /** Optional ordering hint for step lists. */
-  order?: number;
-}
-
-/** Display defaults for the benchmark overview page. */
-export interface BenchmarkOverviewDisplay {
-  /** Metric key to rank participants by by default (falls back to overall task latency). */
-  defaultMetric?: string;
-  /** Default overview layout. */
-  defaultLayout?: 'ranking' | 'cards' | 'chart' | 'leaderboard';
-}
-
-/**
- * Optional platform display manifest. A `*.bench.ts` file owns not only how the
- * benchmark runs, but how it should be rendered, without a platform code change.
- */
-export interface BenchmarkDisplayConfig {
-  /** Metric catalog — labels, units, and ranking direction for `ctx.measure` keys. */
-  metrics?: BenchmarkMetricDisplay[];
-  /** Step catalog — human labels for lifecycle steps reported via `ctx.step`. */
-  steps?: BenchmarkStepDisplay[];
-  /** Overview defaults. */
-  overview?: BenchmarkOverviewDisplay;
 }
 
 /**
@@ -320,6 +303,79 @@ export interface BenchmarkConfig<T extends BaseParticipant = BaseParticipant> {
   display?: BenchmarkDisplayConfig;
 }
 
+/** Display metadata for a single custom metric a benchmark reports via `ctx.measure`. */
+export interface BenchmarkMetricDisplay {
+  /** Stable metric key, matching the key in `ctx.measure` or `data`. */
+  key: string;
+  /** Human-readable label shown in the platform UI. */
+  label: string;
+  /** Optional unit shown after the value (e.g. `Mbps`, `/s`, `ms`). */
+  unit?: string;
+  /** Number of decimal places when formatting numeric values. Defaults to the display format. */
+  decimals?: number;
+  /** Whether higher or lower values rank better. */
+  direction?: 'higher-better' | 'lower-better';
+  /** Optional ordering hint for metric lists. */
+  order?: number;
+}
+
+/** Display metadata for a single task lifecycle step. */
+export interface BenchmarkStepDisplay {
+  /** Stable step name, matching the string passed to `ctx.step`. */
+  key: string;
+  /** Human-readable label shown in the platform UI. */
+  label: string;
+  /** Optional ordering hint for step lists. */
+  order?: number;
+}
+
+/** Display defaults for the benchmark overview page. */
+export interface BenchmarkOverviewDisplay {
+  /** Metric key to rank participants by by default (falls back to overall task latency). */
+  defaultMetric?: string;
+  /** Default overview layout. */
+  defaultLayout?: 'ranking' | 'cards' | 'chart' | 'leaderboard';
+}
+
+/**
+ * Optional platform display manifest. A `*.bench.ts` file owns not only how the
+ * benchmark runs, but how it should be rendered, without a platform code change.
+ */
+export interface BenchmarkDisplayConfig {
+  /** Metric catalog — labels, units, and ranking direction for `ctx.measure` keys. */
+  metrics?: BenchmarkMetricDisplay[];
+  /** Step catalog — human labels for lifecycle steps reported via `ctx.step`. */
+  steps?: BenchmarkStepDisplay[];
+  /** Overview defaults. */
+  overview?: BenchmarkOverviewDisplay;
+}
+
+export interface BenchmarkConfigErrorItem {
+  field: string;
+  message: string;
+}
+
+export class BenchmarkConfigError extends Error {
+  readonly issues: BenchmarkConfigErrorItem[];
+  constructor(issues: BenchmarkConfigErrorItem[]) {
+    super(BenchmarkConfigError.formatIssues(issues));
+    this.name = 'BenchmarkConfigError';
+    this.issues = issues;
+  }
+
+  private static formatIssues(issues: BenchmarkConfigErrorItem[]): string {
+    const lines = issues.map((i) => `  - ${i.field}: ${i.message}`);
+    return `Invalid benchmark config:\n${lines.join('\n')}\n\nFix the fields above and try again.`;
+  }
+}
+
+function assertFiniteNumber(value: unknown, field: string): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new Error(`${field} must be a finite number (got ${value})`);
+  }
+  return value;
+}
+
 function assertNonEmptyString(value: unknown, field: string): string {
   if (typeof value !== 'string' || value.trim() === '') {
     throw new Error(`${field} must be a non-empty string`);
@@ -333,20 +389,6 @@ function assertOnlyAllowedKeys(value: Record<string, unknown>, allowed: readonly
       throw new Error(`${field} contains unexpected key: '${key}'`);
     }
   }
-}
-
-function assertPositiveInt(value: number | undefined, field: string): void {
-  if (value === undefined) return;
-  if (!Number.isInteger(value) || value < 1) {
-    throw new Error(`${field} must be an integer >= 1 (got ${value})`);
-  }
-}
-
-function assertFiniteNumber(value: unknown, field: string): number {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    throw new Error(`${field} must be a finite number (got ${value})`);
-  }
-  return value;
 }
 
 function validateBenchmarkScoringConfig(scoring: BenchmarkScoringConfig, display?: BenchmarkDisplayConfig): void {
@@ -422,151 +464,104 @@ function validateBenchmarkScoringConfig(scoring: BenchmarkScoringConfig, display
   }
 }
 
+function validateBenchmarkDisplayConfig(display: BenchmarkDisplayConfig): void {
+  if (typeof display !== 'object' || display === null || Array.isArray(display)) {
+    throw new Error('display must be an object');
+  }
+  assertOnlyAllowedKeys(display as unknown as Record<string, unknown>, ['metrics', 'steps', 'overview'], 'display');
+  const displayMetricKeys = new Set<string>();
+  if (display.metrics !== undefined) {
+    if (!Array.isArray(display.metrics)) {
+      throw new Error('display.metrics must be an array');
+    }
+    for (let i = 0; i < display.metrics.length; i++) {
+      const metric = display.metrics[i];
+      if (metric === null || typeof metric !== 'object' || Array.isArray(metric)) {
+        throw new Error(`display.metrics[${i}] must be an object`);
+      }
+      assertOnlyAllowedKeys(metric as unknown as Record<string, unknown>, ['key', 'label', 'unit', 'direction', 'decimals', 'order'], `display.metrics[${i}]`);
+      const key = assertNonEmptyString(metric.key, `display.metrics[${i}].key`);
+      if (displayMetricKeys.has(key)) {
+        throw new Error(`duplicate display metric key: ${key}`);
+      }
+      displayMetricKeys.add(key);
+      assertNonEmptyString(metric.label, `display.metrics[${i}].label`);
+      if (metric.unit !== undefined && typeof metric.unit !== 'string') {
+        throw new Error(`display.metrics[${i}].unit must be a string`);
+      }
+      if (metric.direction !== undefined && metric.direction !== 'higher-better' && metric.direction !== 'lower-better') {
+        throw new Error(`display.metrics[${i}].direction must be 'higher-better' or 'lower-better'`);
+      }
+      if (metric.decimals !== undefined && (!Number.isInteger(metric.decimals) || metric.decimals < 0)) {
+        throw new Error(`display.metrics[${i}].decimals must be a non-negative integer`);
+      }
+      if (metric.order !== undefined && (!Number.isInteger(metric.order) || metric.order < 0)) {
+        throw new Error(`display.metrics[${i}].order must be a non-negative integer`);
+      }
+    }
+  }
+  if (display.steps !== undefined) {
+    if (!Array.isArray(display.steps)) {
+      throw new Error('display.steps must be an array');
+    }
+    const seenStepKeys = new Set<string>();
+    for (let i = 0; i < display.steps.length; i++) {
+      const step = display.steps[i];
+      if (step === null || typeof step !== 'object' || Array.isArray(step)) {
+        throw new Error(`display.steps[${i}] must be an object`);
+      }
+      assertOnlyAllowedKeys(step as unknown as Record<string, unknown>, ['key', 'label', 'order'], `display.steps[${i}]`);
+      const key = assertNonEmptyString(step.key, `display.steps[${i}].key`);
+      if (seenStepKeys.has(key)) {
+        throw new Error(`duplicate display step key: ${key}`);
+      }
+      seenStepKeys.add(key);
+      assertNonEmptyString(step.label, `display.steps[${i}].label`);
+      if (step.order !== undefined && (!Number.isInteger(step.order) || step.order < 0)) {
+        throw new Error(`display.steps[${i}].order must be a non-negative integer`);
+      }
+    }
+  }
+  if (display.overview !== undefined) {
+    if (typeof display.overview !== 'object' || display.overview === null || Array.isArray(display.overview)) {
+      throw new Error('display.overview must be an object');
+    }
+    assertOnlyAllowedKeys(display.overview as unknown as Record<string, unknown>, ['defaultMetric', 'defaultLayout'], 'display.overview');
+    const { defaultMetric, defaultLayout } = display.overview;
+    if (defaultMetric !== undefined) {
+      const metric = assertNonEmptyString(defaultMetric, 'display.overview.defaultMetric');
+      // The default metric can reference any declared custom metric, or the
+      // platform-level composite score / overall task latency sentinels.
+      const validDefaultMetrics = new Set(displayMetricKeys);
+      validDefaultMetrics.add('compositeScore');
+      validDefaultMetrics.add('task');
+      if (display.metrics !== undefined && !validDefaultMetrics.has(metric)) {
+        throw new Error(`display.overview.defaultMetric '${metric}' is not declared in display.metrics and is not a known default (compositeScore, task)`);
+      }
+    }
+    if (defaultLayout !== undefined && !['ranking', 'cards', 'chart', 'leaderboard'].includes(defaultLayout)) {
+      throw new Error("display.overview.defaultLayout must be 'ranking', 'cards', 'chart', or 'leaderboard'");
+    }
+  }
+}
+
 /** Validates `config` at file-evaluation time so mistakes surface immediately. */
 export function defineBenchmarkConfig<T extends BaseParticipant = BaseParticipant>(
   config: BenchmarkConfig<T>,
 ): BenchmarkConfig<T> {
-  if (!config.benchmarkSlug || typeof config.benchmarkSlug !== 'string') {
-    throw new Error('benchmarkSlug is required');
-  }
-  if (!config.benchmarkName || typeof config.benchmarkName !== 'string') {
-    throw new Error('benchmarkName is required');
-  }
-  if (config.phases !== undefined) {
-    if (config.iterations !== undefined) {
-      throw new Error('phases and iterations are mutually exclusive');
-    }
-    if (!Array.isArray(config.phases) || config.phases.length === 0) {
-      throw new Error('phases must be a non-empty array');
-    }
-    const seen = new Set<string>();
-    for (const phase of config.phases) {
-      if (!phase.name || typeof phase.name !== 'string') {
-        throw new Error('each phase requires a non-empty name');
-      }
-      if (seen.has(phase.name)) {
-        throw new Error(`duplicate phase name: ${phase.name}`);
-      }
-      seen.add(phase.name);
-      assertPositiveInt(phase.iterations, `phase '${phase.name}' iterations`);
-    }
-  }
-  assertPositiveInt(config.iterations, 'iterations');
-  assertPositiveInt(config.concurrency, 'concurrency');
-  if (config.staggerDelayMs !== undefined && (!Number.isFinite(config.staggerDelayMs) || config.staggerDelayMs < 0)) {
-    throw new Error(`staggerDelayMs must be a number >= 0 (got ${config.staggerDelayMs})`);
-  }
-  if (config.groupBy !== undefined && config.groupBy !== 'participant' && config.groupBy !== 'round') {
-    throw new Error(`groupBy must be 'participant' or 'round' (got ${config.groupBy})`);
-  }
-  if (config.shapes !== undefined) {
-    for (const [shapeName, shape] of Object.entries(config.shapes)) {
-      if (!shape.slug || !/^[a-z0-9][a-z0-9-]*$/.test(shape.slug)) {
-        throw new Error(`shape '${shapeName}' needs a lowercase slug (got ${JSON.stringify(shape.slug)})`);
-      }
-      if (shape.name !== undefined && (typeof shape.name !== 'string' || shape.name.trim() === '')) {
-        throw new Error(`shape '${shapeName}' name must be a non-empty string`);
-      }
-      if (shape.staggerDelayMs !== undefined && (!Number.isFinite(shape.staggerDelayMs) || shape.staggerDelayMs < 0)) {
-        throw new Error(`shape '${shapeName}' staggerDelayMs must be a number >= 0 (got ${shape.staggerDelayMs})`);
-      }
-    }
-  }
-  if (config.dimensions !== undefined) {
-    if (config.dimensions === null || typeof config.dimensions !== 'object' || Array.isArray(config.dimensions)) {
-      throw new Error('dimensions must be a plain object');
-    }
-  }
+  const issues = validateBenchmarkConfig(config);
   if (config.scoring !== undefined) {
-    validateBenchmarkScoringConfig(config.scoring, config.display);
-  }
-  if (config.customCliFlags !== undefined) {
-    if (!Array.isArray(config.customCliFlags) || !config.customCliFlags.every((f) => typeof f === 'string' && f.startsWith('--'))) {
-      throw new Error('customCliFlags must be an array of strings starting with "--"');
+    try {
+      validateBenchmarkScoringConfig(config.scoring, config.display);
+    } catch (error) {
+      issues.push({
+        field: 'scoring',
+        message: error instanceof Error ? error.message : String(error),
+      });
     }
   }
-  if (config.display !== undefined) {
-    if (typeof config.display !== 'object' || config.display === null || Array.isArray(config.display)) {
-      throw new Error('display must be an object');
-    }
-    assertOnlyAllowedKeys(config.display as unknown as Record<string, unknown>, ['metrics', 'steps', 'overview'], 'display');
-    const displayMetricKeys = new Set<string>();
-    if (config.display.metrics !== undefined) {
-      if (!Array.isArray(config.display.metrics)) {
-        throw new Error('display.metrics must be an array');
-      }
-      for (let i = 0; i < config.display.metrics.length; i++) {
-        const metric = config.display.metrics[i];
-        if (metric === null || typeof metric !== 'object' || Array.isArray(metric)) {
-          throw new Error(`display.metrics[${i}] must be an object`);
-        }
-        assertOnlyAllowedKeys(metric as unknown as Record<string, unknown>, ['key', 'label', 'unit', 'direction', 'decimals', 'order'], `display.metrics[${i}]`);
-        const key = assertNonEmptyString(metric.key, `display.metrics[${i}].key`);
-        if (displayMetricKeys.has(key)) {
-          throw new Error(`duplicate display metric key: ${key}`);
-        }
-        displayMetricKeys.add(key);
-        assertNonEmptyString(metric.label, `display.metrics[${i}].label`);
-        if (metric.unit !== undefined && typeof metric.unit !== 'string') {
-          throw new Error(`display.metrics[${i}].unit must be a string`);
-        }
-        if (metric.direction !== undefined && metric.direction !== 'higher-better' && metric.direction !== 'lower-better') {
-          throw new Error(`display.metrics[${i}].direction must be 'higher-better' or 'lower-better'`);
-        }
-        if (metric.decimals !== undefined && (!Number.isInteger(metric.decimals) || metric.decimals < 0)) {
-          throw new Error(`display.metrics[${i}].decimals must be a non-negative integer`);
-        }
-        if (metric.order !== undefined && (!Number.isInteger(metric.order) || metric.order < 0)) {
-          throw new Error(`display.metrics[${i}].order must be a non-negative integer`);
-        }
-      }
-    }
-    if (config.display.steps !== undefined) {
-      if (!Array.isArray(config.display.steps)) {
-        throw new Error('display.steps must be an array');
-      }
-      const seenStepKeys = new Set<string>();
-      for (let i = 0; i < config.display.steps.length; i++) {
-        const step = config.display.steps[i];
-        if (step === null || typeof step !== 'object' || Array.isArray(step)) {
-          throw new Error(`display.steps[${i}] must be an object`);
-        }
-        assertOnlyAllowedKeys(step as unknown as Record<string, unknown>, ['key', 'label', 'order'], `display.steps[${i}]`);
-        const key = assertNonEmptyString(step.key, `display.steps[${i}].key`);
-        if (seenStepKeys.has(key)) {
-          throw new Error(`duplicate display step key: ${key}`);
-        }
-        seenStepKeys.add(key);
-        assertNonEmptyString(step.label, `display.steps[${i}].label`);
-        if (step.order !== undefined && (!Number.isInteger(step.order) || step.order < 0)) {
-          throw new Error(`display.steps[${i}].order must be a non-negative integer`);
-        }
-      }
-    }
-    if (config.display.overview !== undefined) {
-      if (typeof config.display.overview !== 'object' || config.display.overview === null || Array.isArray(config.display.overview)) {
-        throw new Error('display.overview must be an object');
-      }
-      assertOnlyAllowedKeys(config.display.overview as unknown as Record<string, unknown>, ['defaultMetric', 'defaultLayout'], 'display.overview');
-      const { defaultMetric, defaultLayout } = config.display.overview;
-      if (defaultMetric !== undefined) {
-        const metric = assertNonEmptyString(defaultMetric, 'display.overview.defaultMetric');
-        // The default metric can reference any declared custom metric, or the
-        // platform-level composite score / overall task latency sentinels.
-        const validDefaultMetrics = new Set(displayMetricKeys);
-        validDefaultMetrics.add('compositeScore');
-        validDefaultMetrics.add('task');
-        if (config.display.metrics !== undefined && !validDefaultMetrics.has(metric)) {
-          throw new Error(`display.overview.defaultMetric '${metric}' is not declared in display.metrics and is not a known default (compositeScore, task)`);
-        }
-      }
-      if (defaultLayout !== undefined && !['ranking', 'cards', 'chart', 'leaderboard'].includes(defaultLayout)) {
-        throw new Error("display.overview.defaultLayout must be 'ranking', 'cards', 'chart', or 'leaderboard'");
-      }
-    }
-  }
-  if (config.display?.overview?.defaultMetric === 'compositeScore' && config.scoring === undefined && config.onScore === undefined) {
-    throw new Error("display.overview.defaultMetric cannot be 'compositeScore' without config.scoring or config.onScore");
+  if (issues.length > 0) {
+    throw new BenchmarkConfigError(issues);
   }
   return config;
 }
@@ -589,4 +584,157 @@ export function defineTask<T extends BaseParticipant = BaseParticipant>(
     throw new Error('defineTask requires a task function.');
   }
   return task;
+}
+
+/**
+ * Validates a `BenchmarkConfig` without throwing, returning a list of
+ * `{ field, message }` issues. Returns an empty array when the config is valid.
+ */
+export function validateBenchmarkConfig<T extends BaseParticipant = BaseParticipant>(
+  config: BenchmarkConfig<T>,
+): BenchmarkConfigErrorItem[] {
+  const issues: BenchmarkConfigErrorItem[] = [];
+
+  if (!config.benchmarkSlug || typeof config.benchmarkSlug !== 'string') {
+    issues.push({ field: 'benchmarkSlug', message: 'is required' });
+  }
+  if (!config.benchmarkName || typeof config.benchmarkName !== 'string') {
+    issues.push({ field: 'benchmarkName', message: 'is required' });
+  }
+
+  if (!Array.isArray(config.participants) || config.participants.length === 0) {
+    issues.push({ field: 'participants', message: 'must be a non-empty array' });
+  } else {
+    const seenParticipants = new Set<string>();
+    for (let i = 0; i < config.participants.length; i++) {
+      const p = config.participants[i] as unknown;
+      if (p === null || typeof p !== 'object' || Array.isArray(p)) {
+        issues.push({ field: `participants[${i}]`, message: 'must be an object' });
+        continue;
+      }
+      const participant = p as Record<string, unknown>;
+      if (typeof participant.name !== 'string' || participant.name.trim() === '') {
+        issues.push({ field: `participants[${i}].name`, message: 'must be a non-empty string' });
+      } else if (seenParticipants.has(participant.name)) {
+        issues.push({ field: `participants[${i}].name`, message: `duplicate participant name: ${participant.name}` });
+      } else {
+        seenParticipants.add(participant.name);
+      }
+      if (
+        participant.requiredEnvVars !== undefined &&
+        (!Array.isArray(participant.requiredEnvVars) ||
+          !(participant.requiredEnvVars as unknown[]).every((v) => typeof v === 'string'))
+      ) {
+        issues.push({ field: `participants[${i}].requiredEnvVars`, message: 'must be an array of strings' });
+      }
+    }
+  }
+
+  if (config.phases !== undefined) {
+    if (config.iterations !== undefined) {
+      issues.push({ field: 'iterations', message: 'phases and iterations are mutually exclusive' });
+    }
+    if (!Array.isArray(config.phases) || config.phases.length === 0) {
+      issues.push({ field: 'phases', message: 'must be a non-empty array' });
+    } else {
+      const seen = new Set<string>();
+      for (let i = 0; i < config.phases.length; i++) {
+        const phase = config.phases[i] as unknown;
+        if (phase === null || typeof phase !== 'object' || Array.isArray(phase)) {
+          issues.push({ field: `phases[${i}]`, message: 'must be an object' });
+          continue;
+        }
+        const phaseObj = phase as Record<string, unknown>;
+        if (typeof phaseObj.name !== 'string' || phaseObj.name.trim() === '') {
+          issues.push({ field: `phases[${i}]`, message: 'must have a non-empty string name' });
+        } else {
+          const name = phaseObj.name;
+          if (seen.has(name)) {
+            issues.push({ field: `phases['${name}']`, message: `duplicate phase name: ${name}` });
+          }
+          seen.add(name);
+          const iterations = phaseObj.iterations;
+          if (typeof iterations !== 'number' || !Number.isInteger(iterations) || iterations < 1) {
+            issues.push({ field: `phases['${name}'].iterations`, message: `must be an integer >= 1 (got ${iterations})` });
+          }
+        }
+      }
+    }
+  }
+
+  if (config.iterations !== undefined && (!Number.isInteger(config.iterations) || config.iterations < 1)) {
+    issues.push({ field: 'iterations', message: `must be an integer >= 1 (got ${config.iterations})` });
+  }
+  if (config.concurrency !== undefined && (!Number.isInteger(config.concurrency) || config.concurrency < 1)) {
+    issues.push({ field: 'concurrency', message: `must be an integer >= 1 (got ${config.concurrency})` });
+  }
+  if (config.staggerDelayMs !== undefined && (!Number.isFinite(config.staggerDelayMs) || config.staggerDelayMs < 0)) {
+    issues.push({ field: 'staggerDelayMs', message: `must be a number >= 0 (got ${config.staggerDelayMs})` });
+  }
+  if (config.groupBy !== undefined && config.groupBy !== 'participant' && config.groupBy !== 'round') {
+    issues.push({ field: 'groupBy', message: `must be 'participant' or 'round' (got ${config.groupBy})` });
+  }
+  if (config.shapes !== undefined) {
+    if (typeof config.shapes !== 'object' || config.shapes === null || Array.isArray(config.shapes)) {
+      issues.push({ field: 'shapes', message: 'must be a plain object' });
+    } else {
+      for (const [shapeName, shape] of Object.entries(config.shapes)) {
+        if (shape === null || typeof shape !== 'object' || Array.isArray(shape)) {
+          issues.push({ field: `shapes['${shapeName}']`, message: 'must be an object' });
+          continue;
+        }
+        const shapeObj = shape as unknown as Record<string, unknown>;
+        const slug = shapeObj.slug;
+        if (typeof slug !== 'string' || slug === '' || !/^[a-z0-9][a-z0-9-]*$/.test(slug)) {
+          issues.push({ field: `shapes['${shapeName}'].slug`, message: `needs a lowercase slug (got ${JSON.stringify(slug)})` });
+        }
+        const name = shapeObj.name;
+        if (name !== undefined && (typeof name !== 'string' || name.trim() === '')) {
+          issues.push({ field: `shapes['${shapeName}'].name`, message: 'must be a non-empty string' });
+        }
+        const staggerDelayMs = shapeObj.staggerDelayMs;
+        if (staggerDelayMs !== undefined && (typeof staggerDelayMs !== 'number' || !Number.isFinite(staggerDelayMs) || staggerDelayMs < 0)) {
+          issues.push({ field: `shapes['${shapeName}'].staggerDelayMs`, message: `must be a number >= 0 (got ${staggerDelayMs})` });
+        }
+      }
+    }
+  }
+  if (config.dimensions !== undefined) {
+    if (config.dimensions === null || typeof config.dimensions !== 'object' || Array.isArray(config.dimensions)) {
+      issues.push({ field: 'dimensions', message: 'must be a plain object' });
+    }
+  }
+  if (config.customCliFlags !== undefined) {
+    if (!Array.isArray(config.customCliFlags) || !config.customCliFlags.every((f) => typeof f === 'string' && f.startsWith('--'))) {
+      issues.push({ field: 'customCliFlags', message: 'must be an array of strings starting with "--"' });
+    }
+  }
+  if (config.display !== undefined) {
+    try {
+      validateBenchmarkDisplayConfig(config.display);
+    } catch (error) {
+      issues.push({
+        field: 'display',
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+  if (config.display?.overview?.defaultMetric === 'compositeScore' && config.scoring === undefined && config.onScore === undefined) {
+    issues.push({
+      field: 'display.overview.defaultMetric',
+      message: "cannot be 'compositeScore' without config.scoring or config.onScore",
+    });
+  }
+
+  return issues;
+}
+
+/**
+ * Typed helper for `config.onComplete` callbacks. The body receives the full
+ * `BenchmarkRunOutcome` and can be sync or async.
+ */
+export function defineOnComplete(
+  onComplete: (outcome: BenchmarkRunOutcome) => void | Promise<void>,
+): (outcome: BenchmarkRunOutcome) => void | Promise<void> {
+  return onComplete;
 }

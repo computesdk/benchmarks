@@ -13,6 +13,11 @@ export function printData(data: unknown, options: OutputOptions = {}): void {
     return;
   }
 
+  if (data === null || data === undefined) {
+    console.log('No results.');
+    return;
+  }
+
   const format = options.format ?? 'table';
 
   if (Array.isArray(data)) {
@@ -24,14 +29,19 @@ export function printData(data: unknown, options: OutputOptions = {}): void {
       console.table(data);
       return;
     }
-  }
-
-  if (data === null || data === undefined) {
-    console.log('No results.');
+    console.dir(data, { depth: null });
     return;
   }
 
   if (typeof data === 'object') {
+    if (Object.keys(data).length === 0) {
+      console.log('No results.');
+      return;
+    }
+    if (format === 'table') {
+      console.table(data);
+      return;
+    }
     console.dir(data, { depth: null });
     return;
   }

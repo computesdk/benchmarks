@@ -1,3 +1,4 @@
+import os from 'node:os';
 import { gzip as gzipCallback } from 'node:zlib';
 import { promisify } from 'node:util';
 
@@ -132,6 +133,18 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function handleTelemetryError(handler: ((error: unknown, operation: string) => void) | undefined, operation: string, error: unknown): void {
+  if (handler) {
+    try {
+      handler(error, operation);
+      return;
+    } catch (handlerError) {
+      console.warn(`[benchsdk] telemetry error handler threw for (${operation}): ${handlerError instanceof Error ? handlerError.message : String(handlerError)}`);
+    }
+  }
+  console.warn(`[benchsdk] telemetry failure (${operation}): ${error instanceof Error ? error.message : String(error)}`);
+}
+
 async function mapPool<T>(items: T[], concurrency: number, fn: (item: T) => Promise<void>): Promise<void> {
   let nextIndex = 0;
   const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
@@ -170,9 +183,10 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
   // sample at this interval loses it for good.
   const metricsIntervalMs = options.metricsIntervalMs ?? parseEnvInt('BENCHMARK_METRICS_INTERVAL_MS', DEFAULT_METRICS_INTERVAL_MS);
 
+  const processKey = options.processKey ?? os.hostname();
   const assignment = await client.claimWorker(options.benchmarkSlug, options.runId, options.participantSlug, {
     processKind: options.processKind,
-    processKey: options.processKey,
+    processKey,
   });
   if (!assignment) return { assignment: null, records: [] };
   const claimed = assignment;
@@ -180,6 +194,8 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
   let sequenceNumber = 0;
   const records: TaskResultRecord[] = [];
   const pending: TaskResultRecord[] = [];
+  let flushFailed = false;
+  let lastFlushError: unknown;
   const batchSize = options.batchSize ?? DEFAULT_BATCH_SIZE;
   const workerConcurrency = options.concurrency ?? claimed.targetConcurrency;
   validatePositiveInteger('concurrency', workerConcurrency);
@@ -228,7 +244,7 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
     heartbeatInFlight = (async () => {
       while (heartbeatRequested) {
         heartbeatRequested = false;
-        await sendHeartbeat().catch(() => {});
+        await sendHeartbeat().catch((error) => handleTelemetryError(options.onTelemetryError, 'heartbeat', error));
       }
     })().finally(() => {
       heartbeatInFlight = null;
@@ -272,18 +288,28 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
 
   async function flush(isFinal: boolean, force = false): Promise<void> {
     flushChain = flushChain.then(async () => {
+      flushFailed = false;
+      lastFlushError = undefined;
       if (force && doneCount >= taskIndices.length) return;
       while (pending.length >= batchSize || ((isFinal || force) && pending.length > 0)) {
-        const batch = pending.splice(0, batchSize);
-        await client.sendTaskResults({
-          benchmarkSlug: options.benchmarkSlug,
-          runId: options.runId,
-          workerId: claimed.workerId,
-          attemptId: claimed.attemptId,
-          sequenceNumber,
-          isFinal: isFinal && pending.length === 0,
-          records: batch,
-        });
+        const batch = pending.slice(0, batchSize);
+        try {
+          await client.sendTaskResults({
+            benchmarkSlug: options.benchmarkSlug,
+            runId: options.runId,
+            workerId: claimed.workerId,
+            attemptId: claimed.attemptId,
+            sequenceNumber,
+            isFinal: isFinal && batch.length === pending.length,
+            records: batch,
+          });
+        } catch (error) {
+          flushFailed = true;
+          lastFlushError = error;
+          handleTelemetryError(options.onTelemetryError, 'resultFlush', error);
+          break;
+        }
+        pending.splice(0, batch.length);
         sequenceNumber += 1;
       }
     });
@@ -291,7 +317,7 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
   }
 
   const resultFlush = setInterval(() => {
-    if (doneCount < taskIndices.length) void flush(false, true).catch(() => {});
+    if (doneCount < taskIndices.length) void flush(false, true).catch((error) => handleTelemetryError(options.onTelemetryError, 'resultFlush', error));
   }, options.flushIntervalMs ?? DEFAULT_FLUSH_INTERVAL_MS);
   resultFlush.unref?.();
 
@@ -349,7 +375,7 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
       if (!isFinal) return;
       // At finish, wait for the in-flight upload before flushing any remaining
       // lines appended after its snapshot.
-      await logUploadInFlight.catch(() => {});
+      await logUploadInFlight.catch((error) => handleTelemetryError(options.onTelemetryError, 'logUploadWait', error));
     }
 
     const snapshot = workerLogLines.slice();
@@ -372,8 +398,9 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
         // Only remove the lines that were uploaded; lines appended during the
         // upload remain buffered for the next flush.
         workerLogLines.splice(0, snapshot.length);
-      } catch {
+      } catch (error) {
         // Log upload is best-effort; never fail the run over it.
+        handleTelemetryError(options.onTelemetryError, 'logUpload', error);
       }
     })();
 
@@ -386,7 +413,7 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
       }
       if (isFinal && uploaded && workerLogLines.length > 0) {
         // Flush any lines appended while this upload was in flight.
-        await uploadWorkerLogArtifact(true).catch(() => {});
+        await uploadWorkerLogArtifact(true).catch((error) => handleTelemetryError(options.onTelemetryError, 'logUpload', error));
       }
     }
   }
@@ -394,7 +421,7 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
   const logFlush =
     logFlushIntervalMs > 0
       ? setInterval(() => {
-          if (workerLogLines.length > 0) void uploadWorkerLogArtifact(false).catch(() => {});
+          if (workerLogLines.length > 0) void uploadWorkerLogArtifact(false).catch((error) => handleTelemetryError(options.onTelemetryError, 'logUpload', error));
         }, logFlushIntervalMs)
       : undefined;
   logFlush?.unref?.();
@@ -438,13 +465,13 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
         name: 'metrics.jsonl',
         body,
       });
-    } catch {
-      // Metrics upload is best-effort; never fail the run over it.
+    } catch (error) {
+      handleTelemetryError(options.onTelemetryError, 'systemMetrics', error);
     }
   }
 
   try {
-    await sendHeartbeat().catch(() => {});
+    await sendHeartbeat().catch((error) => handleTelemetryError(options.onTelemetryError, 'heartbeat', error));
     // An immediate baseline sample, same reasoning as the heartbeat above: a
     // worker that finishes inside one metricsIntervalMs window would
     // otherwise upload no metrics artifact at all.
@@ -567,6 +594,9 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
     });
 
     await flush(true);
+    if (flushFailed || pending.length > 0) {
+      throw lastFlushError ?? new Error('Failed to flush task results');
+    }
 
     const hasErrors = records.some((record) => record.status !== 'success');
     try {
@@ -576,16 +606,22 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
     }
 
     if (hasErrors) {
-      await client.failWorker(options.benchmarkSlug, options.runId, claimed.workerId, claimed.attemptId, new Error('One or more tasks failed'));
+      await client.failWorker(options.benchmarkSlug, options.runId, claimed.workerId, claimed.attemptId, new Error('One or more tasks failed')).catch((error) => {
+        handleTelemetryError(options.onTelemetryError, 'failWorker', error);
+        throw error;
+      });
     } else {
-      await client.completeWorker(options.benchmarkSlug, options.runId, claimed.workerId, claimed.attemptId);
+      await client.completeWorker(options.benchmarkSlug, options.runId, claimed.workerId, claimed.attemptId).catch((error) => {
+        handleTelemetryError(options.onTelemetryError, 'completeWorker', error);
+        throw error;
+      });
     }
 
     return { assignment: claimed, records };
   } catch (error) {
-    await flush(true).catch(() => {});
-    await runFinishHook('error').catch(() => {});
-    await client.failWorker(options.benchmarkSlug, options.runId, claimed.workerId, claimed.attemptId, error).catch(() => {});
+    await flush(true).catch((error) => handleTelemetryError(options.onTelemetryError, 'resultFlush', error));
+    await runFinishHook('error').catch((error) => handleTelemetryError(options.onTelemetryError, 'finishHook', error));
+    await client.failWorker(options.benchmarkSlug, options.runId, claimed.workerId, claimed.attemptId, error).catch((error) => handleTelemetryError(options.onTelemetryError, 'failWorker', error));
     throw error;
   } finally {
     if (logFlush) clearInterval(logFlush);

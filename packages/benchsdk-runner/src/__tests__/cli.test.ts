@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { runBenchmarkFile } from '../cli';
+import { describe, expect, it, vi } from 'vitest';
+import { runBenchmarkFile, runCheck } from '../cli';
 import { NoAvailableParticipantsError } from '../no-available-participants.js';
 import { AuthError } from '@benchsdk/cli';
 
@@ -49,5 +49,100 @@ describe('runBenchmarkFile', () => {
     await expect(
       runBenchmarkFile(['run', fixture('good.bench.ts'), '--iterations', '3']),
     ).rejects.toBeInstanceOf(AuthError);
+  });
+
+  it('fails bench check --dry-run when no participants are available', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('good.bench.ts'), '--check', '--dry-run']),
+    ).rejects.toThrow(/Benchmark check failed/);
+  });
+
+  it('passes bench check --dry-run without platform credentials when participants are available', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('local.bench.ts'), '--check', '--dry-run']),
+    ).resolves.toBeUndefined();
+  });
+
+  it('fails bench check when platform credentials are missing', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('local.bench.ts'), '--check']),
+    ).rejects.toThrow(/Benchmark check failed/);
+  });
+
+  it('rejects a missing task during --check', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('no-task.bench.ts'), '--check', '--dry-run']),
+    ).rejects.toThrow(/must export a `task`/);
+  });
+
+  it('rejects --base-url without a value instead of consuming the next flag', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('good.bench.ts'), '--base-url', '--dry-run']),
+    ).rejects.toThrow(/Usage:/);
+  });
+
+  it('rejects --base-url without a value during bench check', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('local.bench.ts'), '--check', '--base-url', '--dry-run']),
+    ).rejects.toThrow(/Usage:/);
+  });
+
+  it('rejects --api-key without a value during bench check', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('local.bench.ts'), '--check', '--api-key', '--dry-run']),
+    ).rejects.toThrow(/Usage:/);
+  });
+
+  it('catches a misconfigured onScore during --check', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('bad-onscore.bench.ts'), '--check', '--dry-run']),
+    ).rejects.toThrow(/Benchmark check failed/);
+  });
+
+  it('loads a project config file via --config and applies defaults', async () => {
+    const logs: string[] = [];
+    const spy = vi.spyOn(console, 'log').mockImplementation((...args: unknown[]) => {
+      logs.push(args.join(' '));
+    });
+    try {
+      await runBenchmarkFile(['run', fixture('local.bench.ts'), '--config', fixture('bench.config.ts')]);
+      const knobLine = logs.find((l) => l.includes('Knobs:'));
+      expect(knobLine).toMatch(/iterations=2/);
+      expect(knobLine).toMatch(/concurrency=2/);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('rejects a project config file with invalid field types', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('local.bench.ts'), '--config', fixture('invalid-config.json'), '--dry-run']),
+    ).rejects.toThrow(/dryRun must be a boolean/);
+  });
+
+  it('rejects a project config file that is not an object', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('local.bench.ts'), '--config', fixture('array-config.json'), '--dry-run']),
+    ).rejects.toThrow(/config must be an object/);
+  });
+
+  it('rejects --config when its value is another flag', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('local.bench.ts'), '--config', '--dry-run']),
+    ).rejects.toThrow(/Usage:/);
+  });
+
+  it('rejects bench run --check with an unknown shape', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('shapes.bench.ts'), '--check', '--dry-run', '--shape', 'nope']),
+    ).rejects.toThrow(/Unknown --shape "nope"/);
+  });
+});
+
+describe('runCheck', () => {
+  it('rejects an unknown shape', async () => {
+    await expect(
+      runCheck(['check', fixture('shapes.bench.ts'), '--dry-run', '--shape', 'nope']),
+    ).rejects.toThrow(/Unknown --shape "nope"/);
   });
 });
