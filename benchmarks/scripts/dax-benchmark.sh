@@ -87,6 +87,7 @@ phase() {
   end="$(timestamp)"
   PHASE_MS["$name"]="$(( (end - start) / 1000000 ))"
   printf 'BENCH_PHASE\t%s\t%s\n' "$name" "${PHASE_MS[$name]}"
+  if [[ "$status" -ne 0 ]]; then printf 'BENCH_FAIL\t%s\n' "$name"; fi
   return "$status"
 }
 
