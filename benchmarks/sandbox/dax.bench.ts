@@ -25,6 +25,7 @@ import type { JsonObject, TaskStepRecord } from '@benchsdk/api';
 import { VMTier } from '@codesandbox/sdk';
 import { withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
+import { sandboxId as getSandboxId } from '../src/util/sandbox-id.js';
 import { providers } from './providers.js';
 import type { ProviderConfig } from './types.js';
 import { BENCH_SCRIPT_PATH } from './dax.js';
@@ -331,6 +332,9 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
     console.error(`  [${p.name}] ${message}`);
     throw new TaskError(message, { code: 'create_failed', data: { error: message } });
   });
+  const sandboxId = getSandboxId(sandbox);
+  log('Sandbox created', { level: 'info', meta: { provider: p.name, sandboxId, createMs: Date.now() - createStart } });
+  console.log(`  [${p.name}] sandbox ${sandboxId ?? '<no id>'} created in ${Date.now() - createStart}ms`);
 
   let timing: DaxTimingResult;
   let output: DaxBuildOutput | undefined;
@@ -353,7 +357,9 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
       .step('destroy', () => withTimeout(sandbox.destroy(), p.destroyTimeoutMs ?? destroyTimeoutMs, 'Destroy timeout'), {
         reportConcurrency: false,
       })
-      .catch((err: unknown) => log('destroy failed', { level: 'warn', meta: { error: formatError(err) } }));
+      .catch((err: unknown) =>
+        log('destroy failed', { level: 'warn', meta: { provider: p.name, sandboxId, error: formatError(err) } }),
+      );
   }
 
   const data = { ...(timing as unknown as JsonObject), ...(output?.failedPhase ? { failedPhase: output.failedPhase } : {}) };
@@ -366,6 +372,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
       level: 'error',
       meta: {
         provider: p.name,
+        sandboxId,
         totalMs: timing.totalMs,
         phasesCompleted: `${timing.phasesCompleted}/${timing.phasesTotal}`,
         ...(output?.failedPhase ? { failedPhase: output.failedPhase } : {}),
@@ -378,7 +385,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
     console.error(
       [
         `  [${p.name}] Dax build failed${output?.failedPhase ? ` in ${output.failedPhase}` : ''}` +
-          ` (${timing.phasesCompleted}/${timing.phasesTotal} phases, exit ${output?.exitCode ?? 'n/a'}): ${timing.error}`,
+          ` (sandbox ${sandboxId ?? 'unknown'}, ${timing.phasesCompleted}/${timing.phasesTotal} phases, exit ${output?.exitCode ?? 'n/a'}): ${timing.error}`,
         ...(stderrTail ? ['  --- stderr (tail) ---', indent(stderrTail)] : []),
         ...(stdoutTail ? ['  --- stdout (tail) ---', indent(stdoutTail)] : []),
       ].join('\n'),
@@ -390,6 +397,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
     level: 'info',
     meta: {
       provider: p.name,
+      sandboxId,
       totalMs: timing.totalMs,
       phasesCompleted: `${timing.phasesCompleted}/${timing.phasesTotal}`,
       ...(timing.commit ? { commit: timing.commit } : {}),
