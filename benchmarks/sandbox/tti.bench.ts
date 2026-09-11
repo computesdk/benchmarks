@@ -93,9 +93,14 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
       throw new Error('create step did not return a sandbox');
     }
     sandboxId = getSandboxId(sandbox);
-    log('Sandbox created', { level: 'info', meta: { provider: participant.name, sandboxId, createMs: Math.round(createMs ?? 0) } });
-    console.log(`  [${participant.name}] sandbox ${sandboxId ?? '<no id>'} created in ${Math.round(createMs ?? 0)}ms`);
     const commandSandbox = sandbox;
+
+    // Creation is logged only after the first command so no I/O sits inside
+    // the measured create-to-command window.
+    const logCreated = () => {
+      log('Sandbox created', { level: 'info', meta: { provider: participant.name, sandboxId, createMs: Math.round(createMs ?? 0) } });
+      console.log(`  [${participant.name}] sandbox ${sandboxId ?? '<no id>'} created in ${Math.round(createMs ?? 0)}ms`);
+    };
 
     const commandStart = performance.now();
     const result = await step('exec.task', async () => {
@@ -113,7 +118,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
       }
       ttiMs = createMs + (performance.now() - commandStart);
       return r;
-    });
+    }).finally(logCreated);
     if (ttiMs === undefined) {
       throw new Error('exec.task did not produce a ttiMs measurement');
     }
