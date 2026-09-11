@@ -3,6 +3,7 @@ import '../src/env.js';
 import { defineBenchmarkConfig, defineTask, TaskError } from '@benchsdk/runner';
 import { withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
+import { sandboxIdentity } from '../src/util/sandbox-identity.js';
 import { providers } from '../sandbox/providers.js';
 import type { ProviderConfig } from '../sandbox/types.js';
 
@@ -37,8 +38,10 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
   const compute = participant.createCompute();
 
   let sandbox: any;
+  let sandboxId: string | null = null;
 
   try {
+    const createStart = Date.now();
     sandbox = await step('create', () =>
       withTimeout(
         compute.sandbox.create({
@@ -49,6 +52,10 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
         'Sandbox creation timed out',
       ),
     );
+    const identity = sandboxIdentity(sandbox);
+    sandboxId = identity.sandboxId;
+    log('Sandbox created', { level: 'info', meta: { provider: participant.name, ...identity, createMs: Date.now() - createStart } });
+    console.log(`  [${participant.name}] sandbox ${sandboxId ?? '<no id>'} created in ${Date.now() - createStart}ms`);
 
     await step('install', async () => {
       const result = await sandbox.runCommand(
@@ -58,11 +65,11 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
       if (result.exitCode !== 0) {
         log('OpenCode install failed', {
           level: 'error',
-          meta: { exitCode: result.exitCode, stderr: preview(result.stderr) },
+          meta: { sandboxId, exitCode: result.exitCode, stderr: preview(result.stderr) },
         });
         throw new TaskError(`OpenCode install failed (exit ${result.exitCode})`);
       }
-      log('OpenCode install succeeded', { level: 'info', meta: { exitCode: result.exitCode } });
+      log('OpenCode install succeeded', { level: 'info', meta: { sandboxId, exitCode: result.exitCode } });
     });
 
     const output = await step('run', async () =>
@@ -76,7 +83,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
     if (output.exitCode !== 0) {
       log('OpenCode run failed', {
         level: 'error',
-        meta: { exitCode: output.exitCode, stdout: preview(stdout), stderr: preview(output.stderr) },
+        meta: { sandboxId, exitCode: output.exitCode, stdout: preview(stdout), stderr: preview(output.stderr) },
       });
       throw new TaskError(`OpenCode run failed (exit ${output.exitCode})`);
     }
@@ -84,7 +91,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
     const foundOk = stdout.includes('tensorlake-ok');
     log('OpenCode run completed', {
       level: foundOk ? 'info' : 'error',
-      meta: { exitCode: output.exitCode, outputLength: stdout.length, foundOk, stdout: preview(stdout) },
+      meta: { sandboxId, exitCode: output.exitCode, outputLength: stdout.length, foundOk, stdout: preview(stdout) },
     });
     if (!foundOk) {
       throw new TaskError(`OpenCode output did not include "tensorlake-ok": ${stdout}`.trim());
@@ -100,7 +107,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
             'Destroy timeout',
           ),
         { reportConcurrency: false },
-      ).catch((err: unknown) => log('destroy failed', { level: 'warn', meta: { error: formatError(err) } }));
+      ).catch((err: unknown) => log('destroy failed', { level: 'warn', meta: { sandboxId, error: formatError(err) } }));
     }
   }
 });
