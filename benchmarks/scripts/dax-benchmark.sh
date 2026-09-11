@@ -60,6 +60,9 @@ else
 fi
 
 declare -A PHASE_MS=()
+# Name of the measured phase currently running; cleared once it succeeds so a
+# non-zero exit from bookkeeping between phases is reported as such.
+FAILED_PHASE=""
 
 # Return a nanosecond epoch timestamp. GNU coreutils `date` supports %N and
 # yields a 19-digit value. BusyBox `date` (Alpine) does not expand %N, emitting
@@ -79,6 +82,7 @@ phase() {
   local name="$1"
   shift
   local start end
+  FAILED_PHASE="$name"
   start="$(timestamp)"
   set +e
   "$@"
@@ -87,6 +91,7 @@ phase() {
   end="$(timestamp)"
   PHASE_MS["$name"]="$(( (end - start) / 1000000 ))"
   printf 'BENCH_PHASE\t%s\t%s\n' "$name" "${PHASE_MS[$name]}"
+  if [[ "$status" -eq 0 ]]; then FAILED_PHASE=""; fi
   return "$status"
 }
 
@@ -233,6 +238,9 @@ clear_caches() {
 
 cleanup() {
   local status=$?
+  if [[ "$status" -ne 0 ]]; then
+    printf 'BENCH_FAIL\t%s\n' "${FAILED_PHASE:-bookkeeping}"
+  fi
   if [[ "$KEEP_ROOT" != "true" ]]; then
     rm -rf "$ROOT"
   fi

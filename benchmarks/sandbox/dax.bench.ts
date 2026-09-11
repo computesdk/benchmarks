@@ -44,7 +44,7 @@ const ERROR_MAX_CHARS = 1200;
 
 /** Lines the benchmark script prints for its own bookkeeping, not diagnostics. */
 function isStructuredLine(line: string): boolean {
-  return /^BENCH_(PHASE|META|DISK|DONE|CACHE|ERROR)\t/.test(line) || /^\|/.test(line) || line.trim() === '';
+  return /^BENCH_(PHASE|META|DISK|DONE|CACHE|ERROR|FAIL)\t/.test(line) || /^\|/.test(line) || line.trim() === '';
 }
 
 function humanLines(output: string): string[] {
@@ -232,6 +232,10 @@ async function runDaxBuild(
   const disk: Record<string, number> = {};
   let benchError: string | null = null;
   let doneCommit: string | null = null;
+  // BENCH_FAIL\t<stage> is printed by the script's exit trap on any non-zero
+  // exit: the measured phase whose command failed, or `bookkeeping` when a
+  // command between phases (mkdir, version/disk probe, ...) tripped `set -e`.
+  let failStage: string | null = null;
 
   for (const line of stdout.split('\n')) {
     if (line.startsWith('BENCH_PHASE\t')) {
@@ -246,6 +250,9 @@ async function runDaxBuild(
     } else if (line.startsWith('BENCH_DONE\t')) {
       const parts = line.split('\t');
       if (parts.length >= 2) doneCommit = parts[1];
+    } else if (line.startsWith('BENCH_FAIL\t')) {
+      const parts = line.split('\t');
+      if (parts.length >= 2 && parts[1]) failStage = parts[1];
     }
   }
 
@@ -263,18 +270,28 @@ async function runDaxBuild(
   const phaseKeys = ['prepare', 'cache_clear', 'bun_download', 'bun_unpack', 'clone', 'install', 'typecheck'];
   const rawPhasesCompleted = phaseKeys.filter(k => phases[k] !== undefined).length;
   const failed = exitCode !== 0 || benchError !== null || doneCommit === null;
-  // The script's phase() function emits BENCH_PHASE even for the failing phase (it prints timing before checking exit code).
-  // When the run failed, the last phase that emitted a BENCH_PHASE line is the one that failed, so don't count it.
-  const phasesCompleted = failed ? Math.max(0, rawPhasesCompleted - 1) : rawPhasesCompleted;
-  // Determine which phase failed so we can exclude its timing from the result.
-  // The failed phase is the last one that emitted BENCH_PHASE (index rawPhasesCompleted - 1).
-  const failedPhaseKey = failed && rawPhasesCompleted > 0 ? phaseKeys[rawPhasesCompleted - 1] : null;
-  const failedPhase = scriptErrorPhase ?? failedPhaseKey ?? undefined;
+  // The measured phase whose timing must be discarded. Prefer the script's
+  // explicit stage; without it (script killed before the trap ran) fall back
+  // to the last phase that emitted BENCH_PHASE, since phase() prints timing
+  // before checking the exit code.
+  let failedPhaseKey: string | null = null;
+  if (failed) {
+    const explicit = failStage ?? scriptErrorPhase;
+    if (explicit !== null) {
+      failedPhaseKey = phaseKeys.includes(explicit) && phases[explicit] !== undefined ? explicit : null;
+    } else if (rawPhasesCompleted > 0) {
+      failedPhaseKey = phaseKeys[rawPhasesCompleted - 1];
+    }
+  }
+  const phasesCompleted = failedPhaseKey ? rawPhasesCompleted - 1 : rawPhasesCompleted;
+  const failedPhase = scriptErrorPhase ?? failStage ?? failedPhaseKey ?? undefined;
 
   if (failed && !benchError) {
     const detail = summarizeFailure(stdout, stderr);
     const where = failedPhase
-      ? `${failedPhase} phase failed`
+      ? failedPhase === 'bookkeeping'
+        ? `script failed between phases (after ${phaseKeys[rawPhasesCompleted - 1] ?? 'start'})`
+        : `${failedPhase} phase failed`
       : rawPhasesCompleted === 0
         ? 'no benchmark phases ran (script did not start)'
         : 'script failed';
