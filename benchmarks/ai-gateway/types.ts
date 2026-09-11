@@ -1,8 +1,10 @@
 export type AIGatewayWireFormat = 'openai' | 'anthropic' | 'responses' | 'gemini';
 
 export interface AIGatewayProviderConfig {
-  /** Provider name */
+  /** Provider name (unique participant slug) */
   name: string;
+  /** Optional display name for legacy result/SVG output (defaults to `name`) */
+  displayName?: string;
   /** Environment variables that must all be set to run this benchmark */
   requiredEnvVars: string[];
   /** Request/response wire format this gateway speaks */
