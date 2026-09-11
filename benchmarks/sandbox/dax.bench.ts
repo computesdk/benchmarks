@@ -42,42 +42,20 @@ interface DaxBuildOutput {
 const OUTPUT_TAIL_LINES = 40;
 const ERROR_MAX_CHARS = 1200;
 
-/** Lines the benchmark script prints for its own bookkeeping, not diagnostics. */
-function isStructuredLine(line: string): boolean {
-  return /^BENCH_(PHASE|META|DISK|DONE|CACHE|ERROR|FAIL)\t/.test(line) || /^\|/.test(line) || line.trim() === '';
+/** Last `n` non-empty lines of `output`, excluding the script's structured BENCH_* lines. */
+function tail(output: string, n: number): string {
+  return output
+    .split('\n')
+    .map((l) => l.trimEnd())
+    .filter((l) => l !== '' && !l.startsWith('BENCH_'))
+    .slice(-n)
+    .join('\n');
 }
 
-function humanLines(output: string): string[] {
-  return output.split('\n').map((l) => l.trimEnd()).filter((l) => !isStructuredLine(l));
-}
-
-function tail(output: string, n = OUTPUT_TAIL_LINES): string {
-  return humanLines(output).slice(-n).join('\n');
-}
-
-const INTERESTING = /\b(error|fatal|failed|killed|panic|denied|not found|no space|out of memory|timed? ?out|ENOSPC|ENOMEM|EACCES|SIGKILL|E:)\b/i;
-
-/**
- * Build a compact, human-meaningful failure summary from the script output:
- * lines that look like real errors (from stdout and stderr, since bun/turbo/tsc
- * print theirs to stdout) followed by the stderr tail. Structured BENCH_* lines,
- * the result table and blank lines are dropped; the whole thing is capped so it
- * stays usable as a single `error` string.
- */
+/** Short one-line detail for the `error` string; the full tails go to the log. */
 function summarizeFailure(stdout: string, stderr: string): string {
-  const seen = new Set<string>();
-  const picked: string[] = [];
-  const push = (line: string) => {
-    if (seen.has(line)) return;
-    seen.add(line);
-    picked.push(line);
-  };
-  for (const line of [...humanLines(stdout), ...humanLines(stderr)]) {
-    if (INTERESTING.test(line)) push(line);
-  }
-  for (const line of humanLines(stderr).slice(-5)) push(line);
-  if (picked.length === 0) for (const line of humanLines(stdout).slice(-5)) push(line);
-  const summary = picked.slice(-12).join(' | ');
+  const parts = [tail(stderr, 5), tail(stdout, 5)].filter(Boolean);
+  const summary = parts.join('\n').split('\n').join(' | ');
   return summary.length > ERROR_MAX_CHARS ? summary.slice(0, ERROR_MAX_CHARS - 1) + '…' : summary;
 }
 
@@ -232,10 +210,8 @@ async function runDaxBuild(
   const disk: Record<string, number> = {};
   let benchError: string | null = null;
   let doneCommit: string | null = null;
-  // BENCH_FAIL\t<stage> is printed by the script's exit trap on any non-zero
-  // exit: the measured phase whose command failed, or `bookkeeping` when a
-  // command between phases (mkdir, version/disk probe, ...) tripped `set -e`.
-  let failStage: string | null = null;
+  // BENCH_FAIL\t<phase> is printed by phase() when the measured command fails.
+  let failedPhase: string | null = null;
 
   for (const line of stdout.split('\n')) {
     if (line.startsWith('BENCH_PHASE\t')) {
@@ -252,16 +228,14 @@ async function runDaxBuild(
       if (parts.length >= 2) doneCommit = parts[1];
     } else if (line.startsWith('BENCH_FAIL\t')) {
       const parts = line.split('\t');
-      if (parts.length >= 2 && parts[1]) failStage = parts[1];
+      if (parts.length >= 2 && parts[1]) failedPhase = parts[1];
     }
   }
 
-  // The script emits BENCH_ERROR\t<phase>\t<reason> for failures it detects itself.
-  let scriptErrorPhase: string | null = null;
   for (const line of stderr.split('\n')) {
     if (line.startsWith('BENCH_ERROR\t')) {
       const parts = line.split('\t');
-      scriptErrorPhase = parts[1] ?? null;
+      if (!failedPhase && parts[1]) failedPhase = parts[1];
       benchError = parts.slice(1).join(': ');
     }
   }
@@ -270,35 +244,20 @@ async function runDaxBuild(
   const phaseKeys = ['prepare', 'cache_clear', 'bun_download', 'bun_unpack', 'clone', 'install', 'typecheck'];
   const rawPhasesCompleted = phaseKeys.filter(k => phases[k] !== undefined).length;
   const failed = exitCode !== 0 || benchError !== null || doneCommit === null;
-  // The measured phase whose timing must be discarded. Prefer the script's
-  // explicit stage; without it (script killed before the trap ran) fall back
-  // to the last phase that emitted BENCH_PHASE, since phase() prints timing
-  // before checking the exit code.
-  let failedPhaseKey: string | null = null;
-  if (failed) {
-    const explicit = failStage ?? scriptErrorPhase;
-    if (explicit !== null) {
-      failedPhaseKey = phaseKeys.includes(explicit) && phases[explicit] !== undefined ? explicit : null;
-    } else if (rawPhasesCompleted > 0) {
-      failedPhaseKey = phaseKeys[rawPhasesCompleted - 1];
-    }
-  }
+  // phase() prints BENCH_PHASE (timing) before BENCH_FAIL, so the failed phase's
+  // timing must be dropped and not counted as completed.
+  const failedPhaseKey = failedPhase && phases[failedPhase] !== undefined ? failedPhase : null;
   const phasesCompleted = failedPhaseKey ? rawPhasesCompleted - 1 : rawPhasesCompleted;
-  const failedPhase = scriptErrorPhase ?? failStage ?? failedPhaseKey ?? undefined;
 
-  if (failed && !benchError) {
+  if (failed) {
     const detail = summarizeFailure(stdout, stderr);
     const where = failedPhase
-      ? failedPhase === 'bookkeeping'
-        ? `script failed between phases (after ${phaseKeys[rawPhasesCompleted - 1] ?? 'start'})`
-        : `${failedPhase} phase failed`
+      ? `${failedPhase} phase failed`
       : rawPhasesCompleted === 0
         ? 'no benchmark phases ran (script did not start)'
-        : 'script failed';
-    benchError = `${where} (exit code ${exitCode}, ${phasesCompleted}/${phaseKeys.length} phases completed)` + (detail ? `: ${detail}` : '');
-  } else if (benchError) {
-    const detail = summarizeFailure(stdout, stderr.split('\n').filter((l) => !l.startsWith('BENCH_ERROR\t')).join('\n'));
-    if (detail) benchError += `: ${detail}`;
+        : `script failed after ${phaseKeys[rawPhasesCompleted - 1]}`;
+    benchError = `${where} (exit code ${exitCode}, ${phasesCompleted}/${phaseKeys.length} phases completed)` +
+      (benchError ? `: ${benchError}` : '') + (detail ? `: ${detail}` : '');
   }
 
   const output: DaxBuildOutput = { exitCode, stdout, stderr, ...(failedPhase ? { failedPhase } : {}) };
@@ -401,8 +360,8 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
   const steps = daxPhaseSteps(timing);
 
   if (timing.error) {
-    const stdoutTail = output ? tail(output.stdout) : '';
-    const stderrTail = output ? tail(output.stderr) : '';
+    const stdoutTail = output ? tail(output.stdout, OUTPUT_TAIL_LINES) : '';
+    const stderrTail = output ? tail(output.stderr, OUTPUT_TAIL_LINES) : '';
     log('Dax build failed', {
       level: 'error',
       meta: {
