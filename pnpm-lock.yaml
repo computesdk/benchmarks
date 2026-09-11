@@ -45,8 +45,8 @@ importers:
         specifier: ^0.1.4
         version: 0.1.4(@computesdk/daytona@1.7.33(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@computesdk/e2b@1.7.53)(@computesdk/modal@1.9.5)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@computesdk/beam':
-        specifier: ^0.3.2
-        version: 0.3.2(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
+        specifier: ^0.3.3
+        version: 0.3.3(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
       '@computesdk/blaxel':
         specifier: ^1.6.19
         version: 1.6.19(@hey-api/openapi-ts@0.99.0(magicast@0.3.5)(typescript@5.9.3))(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -599,8 +599,8 @@ packages:
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
 
-  '@beamcloud/beam-js@1.0.17':
-    resolution: {integrity: sha512-LcgLeUDYZajTOktXXwRiWH6waE7ikWdaM5PjVv0bctjEOxwwFuUEtEc2iyj3SYAXaCJaXDiWs1LSB5frIkzBhQ==}
+  '@beamcloud/beam-js@1.0.18':
+    resolution: {integrity: sha512-G6rAd3PD/jfLvDO+WFoR+Rf7AuzbJ3rgEtTPiK+z0p4CDsTli6vxGA0zy/f8EqZ7i4OeCPlqmlp9sOeVmGE73Q==}
     peerDependencies:
       typescript: ^5.0.0
 
@@ -747,8 +747,8 @@ packages:
   '@computesdk/arker@0.1.4':
     resolution: {integrity: sha512-57CWI0AWy3qp9ERSpPcuDK62lst7UIN+GOI+WztsQOQUWJsgfzKn8iN6RknryLvw6o9Rxz7DTGM+Ekxqy8Ze9Q==}
 
-  '@computesdk/beam@0.3.2':
-    resolution: {integrity: sha512-sSA19KoVsVDXf+VxKLqrzHSiV1GGxyMnig0oF7ytcbDzWV3aWeGoKHPOvT40f5qjdO87QH3Cr9zX4bUiLu9YIg==}
+  '@computesdk/beam@0.3.3':
+    resolution: {integrity: sha512-IADuXmfDxILJMUX7FBMEO9m/054ghkobKGhjnco88eCy7iAT4VIq9a4vWfHfLNpPhM04zk1gCf553z1peqJdQQ==}
 
   '@computesdk/blaxel@1.6.19':
     resolution: {integrity: sha512-kWyjpZ/1voUPtrrjwMl9O7pWKZn2i9P0DzK3WWMEkd9G3KZDAXFMuKj849ZBR13vw9S6B2qjZnJKn2CIQMvKvA==}
@@ -6058,7 +6058,7 @@ snapshots:
 
   '@bcoe/v8-coverage@0.2.3': {}
 
-  '@beamcloud/beam-js@1.0.17(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)':
+  '@beamcloud/beam-js@1.0.18(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)':
     dependencies:
       axios: 1.20.0
       commander: 12.1.0
@@ -6360,9 +6360,9 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@computesdk/beam@0.3.2(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)':
+  '@computesdk/beam@0.3.3(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)':
     dependencies:
-      '@beamcloud/beam-js': 1.0.17(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      '@beamcloud/beam-js': 1.0.18(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
       '@computesdk/provider': 2.1.5
       computesdk: 4.1.4
     transitivePeerDependencies:
