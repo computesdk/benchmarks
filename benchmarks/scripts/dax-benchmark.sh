@@ -246,7 +246,9 @@ cleanup() {
   fi
   exit "$status"
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 total_start="$(timestamp)"
 if ! phase prepare prepare; then
