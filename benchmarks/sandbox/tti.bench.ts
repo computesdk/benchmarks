@@ -24,7 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { defineBenchmarkConfig, defineTask } from '@benchsdk/runner';
 import { withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
-import { sandboxId as getSandboxId } from '../src/util/sandbox-id.js';
+import { sandboxId } from '../src/util/sandbox-id.js';
 import { providers } from './providers.js';
 import type { ProviderConfig } from './types.js';
 import { writeSandboxLegacyResults } from './legacy-results.js';
@@ -77,7 +77,6 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
   let sandbox: TtiSandbox | undefined;
   let createMs: number | undefined;
   let ttiMs: number | undefined;
-  let sandboxId: string | null = null;
 
   try {
     sandbox = await step('create', async () => {
@@ -92,15 +91,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
     if (sandbox === undefined) {
       throw new Error('create step did not return a sandbox');
     }
-    sandboxId = getSandboxId(sandbox);
     const commandSandbox = sandbox;
-
-    // Creation is logged only after the first command so no I/O sits inside
-    // the measured create-to-command window.
-    const logCreated = () => {
-      log('Sandbox created', { level: 'info', meta: { provider: participant.name, sandboxId, createMs: Math.round(createMs ?? 0) } });
-      console.log(`  [${participant.name}] sandbox ${sandboxId ?? '<no id>'} created in ${Math.round(createMs ?? 0)}ms`);
-    };
 
     const commandStart = performance.now();
     const result = await step('exec.task', async () => {
@@ -110,7 +101,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
         'First command execution timed out',
       );
       if (r.exitCode !== 0) {
-        log('node -v failed', { level: 'error', meta: { sandboxId, exitCode: r.exitCode, stderr: r.stderr ?? null } });
+        log('node -v failed', { level: 'error', meta: { exitCode: r.exitCode, stderr: r.stderr ?? null } });
         throw new Error(`Command failed with exit code ${r.exitCode}: ${r.stderr || 'Unknown error'}`);
       }
       if (createMs === undefined) {
@@ -118,18 +109,19 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
       }
       ttiMs = createMs + (performance.now() - commandStart);
       return r;
-    }).finally(logCreated);
+    });
     if (ttiMs === undefined) {
       throw new Error('exec.task did not produce a ttiMs measurement');
     }
     measure({ ttiMs });
-    log('node -v succeeded', { level: 'info', meta: { sandboxId, version: result.stdout?.trim() ?? null, exitCode: result.exitCode } });
+    log('node -v succeeded', { level: 'info', meta: { version: result.stdout?.trim() ?? null, exitCode: result.exitCode } });
   } finally {
     if (sandbox) {
       await step('destroy', () =>
         withTimeout(sandbox!.destroy(), participant.destroyTimeoutMs ?? DESTROY_TIMEOUT_MS, 'Destroy timeout'),
         { reportConcurrency: false },
-      ).catch((err: unknown) => log('destroy failed', { level: 'warn', meta: { sandboxId, error: formatError(err) } }));
+      ).catch((err: unknown) => log('destroy failed', { level: 'warn', meta: { error: formatError(err) } }));
+      log('sandbox', { level: 'info', meta: { provider: participant.name, sandboxId: sandboxId(sandbox) } });
     }
   }
 
