@@ -31,6 +31,56 @@ import { BENCH_SCRIPT_PATH } from './dax.js';
 import type { DaxTimingResult } from './dax.js';
 import { writeDaxLegacyResults } from './dax-legacy-results.js';
 
+/** Raw build output kept alongside the timing so failures can be diagnosed from the logs. */
+interface DaxBuildOutput {
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+  failedPhase?: string;
+}
+
+const OUTPUT_TAIL_LINES = 40;
+const ERROR_MAX_CHARS = 1200;
+
+/** Lines the benchmark script prints for its own bookkeeping, not diagnostics. */
+function isStructuredLine(line: string): boolean {
+  return /^BENCH_(PHASE|META|DISK|DONE|CACHE|ERROR)\t/.test(line) || /^\|/.test(line) || line.trim() === '';
+}
+
+function humanLines(output: string): string[] {
+  return output.split('\n').map((l) => l.trimEnd()).filter((l) => !isStructuredLine(l));
+}
+
+function tail(output: string, n = OUTPUT_TAIL_LINES): string {
+  return humanLines(output).slice(-n).join('\n');
+}
+
+const INTERESTING = /\b(error|fatal|failed|killed|panic|denied|not found|no space|out of memory|timed? ?out|ENOSPC|ENOMEM|EACCES|SIGKILL|E:)\b/i;
+
+/**
+ * Build a compact, human-meaningful failure summary from the script output:
+ * lines that look like real errors (from stdout and stderr, since bun/turbo/tsc
+ * print theirs to stdout) followed by the stderr tail. Structured BENCH_* lines,
+ * the result table and blank lines are dropped; the whole thing is capped so it
+ * stays usable as a single `error` string.
+ */
+function summarizeFailure(stdout: string, stderr: string): string {
+  const seen = new Set<string>();
+  const picked: string[] = [];
+  const push = (line: string) => {
+    if (seen.has(line)) return;
+    seen.add(line);
+    picked.push(line);
+  };
+  for (const line of [...humanLines(stdout), ...humanLines(stderr)]) {
+    if (INTERESTING.test(line)) push(line);
+  }
+  for (const line of humanLines(stderr).slice(-5)) push(line);
+  if (picked.length === 0) for (const line of humanLines(stdout).slice(-5)) push(line);
+  const summary = picked.slice(-12).join(' | ');
+  return summary.length > ERROR_MAX_CHARS ? summary.slice(0, ERROR_MAX_CHARS - 1) + '…' : summary;
+}
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const timeout = 600_000;
@@ -135,7 +185,11 @@ function getSandboxOptionsWithResources(providerName: string, baseOptions?: Reco
 }
 
 /** Runs the build script inside `sandbox` and parses its structured output. */
-async function runDaxBuild(sandbox: any, providerName: string, buildTimeout: number): Promise<DaxTimingResult> {
+async function runDaxBuild(
+  sandbox: any,
+  providerName: string,
+  buildTimeout: number,
+): Promise<{ timing: DaxTimingResult; output: DaxBuildOutput }> {
   // Load the benchmark script from the local filesystem rather than fetching
   // it over HTTP inside the sandbox. This eliminates a curl dependency
   // (several providers don't ship curl in their sandboxes).
@@ -155,11 +209,17 @@ async function runDaxBuild(sandbox: any, providerName: string, buildTimeout: num
     `BENCH_PROVIDER=${providerName} BENCH_REGION=unknown bash /tmp/dax-benchmark.sh`;
 
   const totalStart = Date.now();
-  const result = await withTimeout(
-    sandbox.runCommand(shellCmd, { timeout: buildTimeout }),
-    buildTimeout,
-    'Dax benchmark timed out',
-  ) as { exitCode: number; stdout?: string; stderr?: string };
+  let result: { exitCode: number; stdout?: string; stderr?: string };
+  try {
+    result = await withTimeout(
+      sandbox.runCommand(shellCmd, { timeout: buildTimeout }),
+      buildTimeout,
+      `Dax benchmark timed out after ${buildTimeout}ms`,
+    ) as { exitCode: number; stdout?: string; stderr?: string };
+  } catch (err) {
+    const elapsedMs = Date.now() - totalStart;
+    throw new Error(`runCommand failed after ${elapsedMs}ms: ${formatError(err)}`, { cause: err });
+  }
   const totalMs = Date.now() - totalStart;
 
   const stdout = result.stdout || '';
@@ -189,36 +249,44 @@ async function runDaxBuild(sandbox: any, providerName: string, buildTimeout: num
     }
   }
 
+  // The script emits BENCH_ERROR\t<phase>\t<reason> for failures it detects itself.
+  let scriptErrorPhase: string | null = null;
   for (const line of stderr.split('\n')) {
     if (line.startsWith('BENCH_ERROR\t')) {
       const parts = line.split('\t');
+      scriptErrorPhase = parts[1] ?? null;
       benchError = parts.slice(1).join(': ');
     }
-  }
-
-  if (exitCode !== 0 && !benchError) {
-    // Include last few lines of stderr for diagnostics
-    const tail = stderr.trim().split('\n').slice(-3).join(' | ');
-    benchError = 'Script exited with code ' + exitCode + (tail ? ': ' + tail : '');
   }
 
   // Count completed phases
   const phaseKeys = ['prepare', 'cache_clear', 'bun_download', 'bun_unpack', 'clone', 'install', 'typecheck'];
   const rawPhasesCompleted = phaseKeys.filter(k => phases[k] !== undefined).length;
+  const failed = exitCode !== 0 || benchError !== null || doneCommit === null;
   // The script's phase() function emits BENCH_PHASE even for the failing phase (it prints timing before checking exit code).
-  // When there's an error, the last phase that emitted a BENCH_PHASE line is the one that failed, so don't count it.
-  const phasesCompleted = benchError ? Math.max(0, rawPhasesCompleted - 1) : rawPhasesCompleted;
+  // When the run failed, the last phase that emitted a BENCH_PHASE line is the one that failed, so don't count it.
+  const phasesCompleted = failed ? Math.max(0, rawPhasesCompleted - 1) : rawPhasesCompleted;
   // Determine which phase failed so we can exclude its timing from the result.
   // The failed phase is the last one that emitted BENCH_PHASE (index rawPhasesCompleted - 1).
-  const failedPhaseKey = benchError && rawPhasesCompleted > 0 ? phaseKeys[rawPhasesCompleted - 1] : null;
+  const failedPhaseKey = failed && rawPhasesCompleted > 0 ? phaseKeys[rawPhasesCompleted - 1] : null;
+  const failedPhase = scriptErrorPhase ?? failedPhaseKey ?? undefined;
 
-  // If no phases completed, the script didn't actually run (e.g. heredoc failure)
-  if (phasesCompleted === 0 && !benchError) {
-    const tail = stderr.trim().split('\n').slice(-2).join(' | ');
-    benchError = 'No benchmark phases completed' + (tail ? ': ' + tail : '');
+  if (failed && !benchError) {
+    const detail = summarizeFailure(stdout, stderr);
+    const where = failedPhase
+      ? `${failedPhase} phase failed`
+      : rawPhasesCompleted === 0
+        ? 'no benchmark phases ran (script did not start)'
+        : 'script failed';
+    benchError = `${where} (exit code ${exitCode}, ${phasesCompleted}/${phaseKeys.length} phases completed)` + (detail ? `: ${detail}` : '');
+  } else if (benchError) {
+    const detail = summarizeFailure(stdout, stderr.split('\n').filter((l) => !l.startsWith('BENCH_ERROR\t')).join('\n'));
+    if (detail) benchError += `: ${detail}`;
   }
 
-  return {
+  const output: DaxBuildOutput = { exitCode, stdout, stderr, ...(failedPhase ? { failedPhase } : {}) };
+
+  const timing: DaxTimingResult = {
     totalMs,
     phasesCompleted,
     phasesTotal: phaseKeys.length,
@@ -242,6 +310,11 @@ async function runDaxBuild(sandbox: any, providerName: string, buildTimeout: num
     memoryKib: meta.memory_kib,
     ...(benchError ? { error: benchError } : {}),
   };
+  return { timing, output };
+}
+
+function indent(text: string): string {
+  return text.split('\n').map((l) => `    ${l}`).join('\n');
 }
 
 /** Emit each measured build phase as a pre-measured platform step. */
@@ -269,18 +342,27 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
   const compute = p.createCompute();
   const opts = getSandboxOptionsWithResources(p.name, p.sandboxOptions);
 
+  const createStart = Date.now();
   const sandbox = await ctx.step('create', () =>
     withTimeout<{ destroy(): Promise<unknown> }>(
       compute.sandbox.create(opts),
       p.timeout ?? timeout,
       'Sandbox creation timed out',
     ),
-  );
+  ).catch((err: unknown) => {
+    const message = `sandbox create failed after ${Date.now() - createStart}ms: ${formatError(err)}`;
+    log('Sandbox create failed', { level: 'error', meta: { provider: p.name, error: message } });
+    console.error(`  [${p.name}] ${message}`);
+    throw new TaskError(message, { code: 'create_failed', data: { error: message } });
+  });
 
   let timing: DaxTimingResult;
+  let output: DaxBuildOutput | undefined;
   try {
     timing = await ctx.step('build', async () => {
-      const t = await runDaxBuild(sandbox, p.name, p.timeout ?? timeout);
+      const build = await runDaxBuild(sandbox, p.name, p.timeout ?? timeout);
+      output = build.output;
+      const t = build.timing;
       const buildMetrics: JsonObject = { totalMs: t.totalMs };
       if (t.phasesCompleted !== undefined) buildMetrics.phasesCompleted = t.phasesCompleted;
       if (t.phasesTotal !== undefined) buildMetrics.phasesTotal = t.phasesTotal;
@@ -298,19 +380,33 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
       .catch((err: unknown) => log('destroy failed', { level: 'warn', meta: { error: formatError(err) } }));
   }
 
-  const data = timing as unknown as JsonObject;
+  const data = { ...(timing as unknown as JsonObject), ...(output?.failedPhase ? { failedPhase: output.failedPhase } : {}) };
   const steps = daxPhaseSteps(timing);
 
   if (timing.error) {
+    const stdoutTail = output ? tail(output.stdout) : '';
+    const stderrTail = output ? tail(output.stderr) : '';
     log('Dax build failed', {
       level: 'error',
       meta: {
         provider: p.name,
         totalMs: timing.totalMs,
         phasesCompleted: `${timing.phasesCompleted}/${timing.phasesTotal}`,
+        ...(output?.failedPhase ? { failedPhase: output.failedPhase } : {}),
+        ...(output ? { exitCode: output.exitCode } : {}),
         error: timing.error,
+        ...(stdoutTail ? { stdoutTail } : {}),
+        ...(stderrTail ? { stderrTail } : {}),
       },
     });
+    console.error(
+      [
+        `  [${p.name}] Dax build failed${output?.failedPhase ? ` in ${output.failedPhase}` : ''}` +
+          ` (${timing.phasesCompleted}/${timing.phasesTotal} phases, exit ${output?.exitCode ?? 'n/a'}): ${timing.error}`,
+        ...(stderrTail ? ['  --- stderr (tail) ---', indent(stderrTail)] : []),
+        ...(stdoutTail ? ['  --- stdout (tail) ---', indent(stdoutTail)] : []),
+      ].join('\n'),
+    );
     throw new TaskError(timing.error, { code: 'dax_failed', data, steps });
   }
 
