@@ -8,6 +8,7 @@ REPO_URL="${BENCH_REPO_URL:-https://github.com/anomalyco/opencode.git}"
 COMMIT="${BENCH_COMMIT:-08fb47373509ba64b13441061314eeacf4264f51}"
 BUN_VERSION="${BENCH_BUN_VERSION:-1.3.14}"
 NODE_VERSION="${BENCH_NODE_VERSION:-24.14.1}"
+MIN_NODE_MAJOR=22
 ROOT="${BENCH_ROOT:-/tmp/opencode-provider-benchmark}"
 KEEP_ROOT="${BENCH_KEEP_ROOT:-false}"
 PROVIDER="${BENCH_PROVIDER:-unknown}"
@@ -36,7 +37,7 @@ esac
 # Detect the C library. Alpine (and other minimal images) ship musl instead of
 # glibc, and Bun publishes separate `-musl` release assets that must be used
 # there — the default glibc binary segfaults on musl. Node.js has no official
-# musl build, but Alpine images ship Node pre-installed, so prepare() reuses it.
+# musl build, so prepare() installs Alpine's native Node package instead.
 BUN_MUSL_SUFFIX=""
 if [ -f /lib/ld-musl-x86_64.so.1 ] || [ -f /lib/ld-musl-aarch64.so.1 ] || (ldd --version 2>&1 | grep -qi musl); then
   BUN_MUSL_SUFFIX="-musl"
@@ -150,17 +151,29 @@ prepare() {
     apk)
       # build-base is Alpine's meta-package for gcc/g++/make/libc-dev.
       "${SUDO[@]}" apk add --no-cache \
-        bash build-base ca-certificates curl git python3 py3-setuptools unzip
+        bash build-base ca-certificates curl git nodejs python3 py3-setuptools unzip
       ;;
   esac
 
   # setuptools is optional - only needed for node-gyp native module compilation,
   # not for the clone/install/typecheck benchmark. Skip the check entirely.
 
-  # Install Node.js only if it's not already available. Some sandboxes (e.g.
-  # Vercel) ship Node.js pre-installed; respect that rather than trying to
-  # override it (the symlink may not take precedence in PATH).
-  if ! command -v node >/dev/null 2>&1; then
+  if [[ -n "$BUN_MUSL_SUFFIX" ]]; then
+    export PATH="/usr/bin:$PATH"
+    hash -r
+  fi
+
+  # Keep the benchmark runtime consistent on glibc images. Alpine uses its
+  # native Node package because the official Node archives are not musl builds.
+  local install_node=false
+  if [[ -z "$BUN_MUSL_SUFFIX" ]] && {
+    ! command -v node >/dev/null 2>&1 ||
+      [[ "$(node --version 2>/dev/null || true)" != "v${NODE_VERSION}" ]]
+  }; then
+    install_node=true
+  fi
+
+  if [[ "$install_node" == true ]]; then
     local archive="node-v${NODE_VERSION}-${NODE_ARCH}.tar.gz"
     local prefix="/opt/node-v${NODE_VERSION}-${NODE_ARCH}"
     if ! curl -fsSL "https://nodejs.org/download/release/v${NODE_VERSION}/${archive}" -o "/tmp/${archive}"; then
@@ -176,10 +189,29 @@ prepare() {
     for executable in node npm npx corepack; do
       "${SUDO[@]}" ln -sfn "$prefix/bin/$executable" "/usr/local/bin/$executable"
     done
+    export PATH="$prefix/bin:$PATH"
+    hash -r
   fi
+
   if ! command -v node >/dev/null 2>&1; then
     printf 'BENCH_ERROR\tprepare\tnode_not_found\n' >&2
     return 1
+  fi
+
+  local node_version
+  node_version="$(node --version 2>/dev/null || true)"
+  if [[ -z "$BUN_MUSL_SUFFIX" ]]; then
+    if [[ "$node_version" != "v${NODE_VERSION}" ]]; then
+      printf 'BENCH_ERROR\tprepare\tpinned_node_not_active_%s\n' "$node_version" >&2
+      return 1
+    fi
+  else
+    local node_major="${node_version#v}"
+    node_major="${node_major%%.*}"
+    if [[ ! "$node_major" =~ ^[0-9]+$ ]] || (( 10#$node_major < MIN_NODE_MAJOR )); then
+      printf 'BENCH_ERROR\tprepare\tunsupported_node_version_%s\n' "$node_version" >&2
+      return 1
+    fi
   fi
 }
 
