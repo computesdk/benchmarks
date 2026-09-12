@@ -43,7 +43,7 @@ importers:
         version: 0.4.11
       '@computesdk/arker':
         specifier: ^0.1.4
-        version: 0.1.4(@computesdk/daytona@1.7.33(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@computesdk/e2b@1.7.53)(@computesdk/modal@1.9.5)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 0.1.4(@computesdk/daytona@1.7.33(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@computesdk/e2b@1.7.53)(@computesdk/modal@1.9.6)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@computesdk/beam':
         specifier: ^0.3.3
         version: 0.3.3(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
@@ -114,8 +114,8 @@ importers:
         specifier: ^1.0.4
         version: 1.0.4
       '@computesdk/modal':
-        specifier: ^1.9.5
-        version: 1.9.5
+        specifier: ^1.9.6
+        version: 1.9.6
       '@computesdk/mosaic':
         specifier: ^0.1.4
         version: 0.1.4
@@ -826,8 +826,8 @@ packages:
   '@computesdk/miosa@1.0.4':
     resolution: {integrity: sha512-74nFk4+5Wc6px716U6/A0nLqvQcefzWJrccst2BUsp/FRZ+n9HUl7PRTe1aIagF6y9KTJV8YP87RnjaZ5dQdhQ==}
 
-  '@computesdk/modal@1.9.5':
-    resolution: {integrity: sha512-WTZZwN73htUFrkRTkCEtNofxS4tmYQwzPPYvdQ4MysjLwq2nZP8gYZk6awloV051o/dG1miZDPBnRHfz9gw/vA==}
+  '@computesdk/modal@1.9.6':
+    resolution: {integrity: sha512-SZixFjPEG4QgWiv6HsEwnGw1uD/sdwlIFFk17DGRV1v2flkOKnLdKqxj7uYSPGUGnHaeD3eAZVOUG+H70PAS6w==}
 
   '@computesdk/mosaic@0.1.4':
     resolution: {integrity: sha512-+Nl2XmPErrZyEiPG28wOYmFOHC4Kw7J5xngUcfGVFxVZQ2eA+ytfyraOmFA4DVGXq3geT8wcJ8SCWO5grJTFpg==}
@@ -5708,7 +5708,7 @@ snapshots:
 
   '@archildata/api-types@0.0.24': {}
 
-  '@arker-ai/sdk@1.2.7(@computesdk/daytona@1.7.33(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@computesdk/e2b@1.7.53)(@computesdk/modal@1.9.5)(bufferutil@4.1.0)(computesdk@4.1.4)(utf-8-validate@6.0.6)':
+  '@arker-ai/sdk@1.2.7(@computesdk/daytona@1.7.33(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@computesdk/e2b@1.7.53)(@computesdk/modal@1.9.6)(bufferutil@4.1.0)(computesdk@4.1.4)(utf-8-validate@6.0.6)':
     dependencies:
       dockerfile-ast: 0.7.1
       tar: 7.5.22
@@ -5716,7 +5716,7 @@ snapshots:
     optionalDependencies:
       '@computesdk/daytona': 1.7.33(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@computesdk/e2b': 1.7.53
-      '@computesdk/modal': 1.9.5
+      '@computesdk/modal': 1.9.6
       computesdk: 4.1.4
     transitivePeerDependencies:
       - bufferutil
@@ -6348,9 +6348,9 @@ snapshots:
       computesdk: 4.1.4
       disk: 1.1.2
 
-  '@computesdk/arker@0.1.4(@computesdk/daytona@1.7.33(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@computesdk/e2b@1.7.53)(@computesdk/modal@1.9.5)(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
+  '@computesdk/arker@0.1.4(@computesdk/daytona@1.7.33(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@computesdk/e2b@1.7.53)(@computesdk/modal@1.9.6)(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
     dependencies:
-      '@arker-ai/sdk': 1.2.7(@computesdk/daytona@1.7.33(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@computesdk/e2b@1.7.53)(@computesdk/modal@1.9.5)(bufferutil@4.1.0)(computesdk@4.1.4)(utf-8-validate@6.0.6)
+      '@arker-ai/sdk': 1.2.7(@computesdk/daytona@1.7.33(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@computesdk/e2b@1.7.53)(@computesdk/modal@1.9.6)(bufferutil@4.1.0)(computesdk@4.1.4)(utf-8-validate@6.0.6)
       '@computesdk/provider': 2.1.5
       computesdk: 4.1.4
     transitivePeerDependencies:
@@ -6558,7 +6558,7 @@ snapshots:
       '@computesdk/provider': 2.1.5
       computesdk: 4.1.4
 
-  '@computesdk/modal@1.9.5':
+  '@computesdk/modal@1.9.6':
     dependencies:
       '@computesdk/provider': 2.1.5
       computesdk: 4.1.4
