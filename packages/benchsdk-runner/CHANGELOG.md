@@ -1,5 +1,22 @@
 # @benchsdk/runner
 
+## 0.4.0
+
+### Minor Changes
+
+- cdd2819: Record how a run was triggered.
+
+  - New `BENCH_TRIGGER_SOURCE` / `BENCH_TRIGGER_REQUESTED_BY` / `BENCH_TRIGGER_REQUEST_ID` env vars, set by workflows dispatched from the platform (`platform-retrigger`).
+  - Run config now includes `trigger: { source, event?, requestedBy?, requestId? }`; summary `triggeredBy` uses the same resolved source (falls back to `GITHUB_EVENT_NAME`, then `manual`).
+  - Exports `resolveTriggerSource(env?)`.
+
+### Patch Changes
+
+- Updated dependencies [6f37302]
+  - @benchsdk/api@0.4.0
+  - @benchsdk/cli@0.4.0
+  - @benchsdk/worker@0.2.2
+
 ## 0.3.1
 
 ### Patch Changes

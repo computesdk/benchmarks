@@ -1,5 +1,19 @@
 # @benchsdk/cli
 
+## 0.4.0
+
+### Minor Changes
+
+- 6f37302: List runs across all visible benchmarks.
+
+  - New `client.listAllRuns({ limit?, offset?, benchmarkSlug? })` hitting `GET /api/v1/runs`; items are `BenchmarkRunListItem` (run row + `organizationSlug` + `benchmarkSlug`).
+  - `bench runs list` now takes an optional slug: `bench runs list` lists every run the caller can read (own + subscribed benchmarks); `bench runs list <slug>` is unchanged.
+
+### Patch Changes
+
+- Updated dependencies [6f37302]
+  - @benchsdk/api@0.4.0
+
 ## 0.3.0
 
 ### Minor Changes
