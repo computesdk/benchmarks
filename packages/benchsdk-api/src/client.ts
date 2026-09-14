@@ -300,12 +300,13 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
       return data.items;
     },
 
-    // GET /api/v1/runs — every run the caller can read across all visible
-    // benchmarks (own + entitled foreign feeds like Daily subscriptions).
+    // GET /api/v1/benchmarks/runs — every run the caller can read across all
+    // visible benchmarks (own + entitled foreign feeds like Daily
+    // subscriptions).
     async listAllRuns(options: ListAllRunsOptions = {}) {
       const data = await request<{ items: BenchmarkRunListItem[] }>(
         'GET',
-        `/runs${queryString({ limit: options.limit, offset: options.offset, benchmarkSlug: options.benchmarkSlug })}`,
+        `/benchmarks/runs${queryString({ limit: options.limit, offset: options.offset, benchmarkSlug: options.benchmarkSlug })}`,
       );
       return data.items;
     },
