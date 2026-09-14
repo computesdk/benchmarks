@@ -118,11 +118,7 @@ export const config = defineBenchmarkConfig({
 // the provider factory in providers.ts — the SDK ignores an instanceType passed to create().
 const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   arker:        { templateId: 'ubuntu-full-8' },           // 8 vCPU / 16 GiB golden
-  // Modal: 1 core = 2 vCPUs, so 4 cores = 8 vCPUs. @computesdk/modal resolves the
-  // registry image from `templateId` and defaults to node:20. The build needs
-  // Node >= 22: `bun install` compiles tree-sitter-powershell via
-  // `bunx node-gyp@latest`, whose undici requires worker_threads.markAsUncloneable.
-  modal:        { cpu: 4, cpuLimit: 4, memoryMiB: 16384, templateId: 'node:22' },
+  modal:        { cpu: 4, cpuLimit: 4, memoryMiB: 16384, templateId: 'node:22' }, // Modal: 1 core = 2 vCPUs, so 4 cores = 8 vCPUs
   tenki:        { cpuCores: 8, memoryMb: 16384, diskSizeGb: 20 }, // default disk cannot hold the OpenCode install
   tensorlake:   { cpus: 8, memoryMb: 16384 },
   isorun:       { vcpus: 8, memMiB: 16384 },
