@@ -49,8 +49,9 @@ Commands:
   org use <slug>                     Set active organization
   benchmarks list [--limit N] [--offset N]
                                      List benchmarks
-  runs list <benchmark-slug> [--limit N] [--offset N]
-                                     List benchmark runs
+  runs list [benchmark-slug] [--limit N] [--offset N]
+                                     List benchmark runs (omit slug to list runs
+                                     across every benchmark you can read)
   runs show <benchmark-slug> <runId> Show a single run
   results <benchmark-slug> [--run <id>] [--format json|table]
                                      Show benchmark or run results
@@ -200,7 +201,7 @@ Subcommands:
     case 'benchmarks':
       return `Usage: bench benchmarks list [--limit N] [--offset N]`;
     case 'runs':
-      return `Usage: bench runs list <benchmark-slug> [--limit N] [--offset N]
+      return `Usage: bench runs list [benchmark-slug] [--limit N] [--offset N]
        bench runs show <benchmark-slug> <runId>`;
     case 'results':
       return `Usage: bench results <benchmark-slug> [--run <id>] [--format json|table]`;
@@ -347,13 +348,15 @@ async function handleBenchmarksList(
 }
 
 async function handleRunsList(
-  benchmarkSlug: string,
+  benchmarkSlug: string | undefined,
   options: { limit?: number; offset?: number },
   overrides: { baseUrl?: string; apiKey?: string; org?: string },
   outputOptions: OutputOptions = {},
 ): Promise<void> {
   const { api } = await createApiClient(overrides);
-  const runs = await api.listRuns(benchmarkSlug, options);
+  const runs = benchmarkSlug
+    ? await api.listRuns(benchmarkSlug, options)
+    : await api.listAllRuns(options);
   printData(runs, outputOptions);
 }
 
@@ -538,7 +541,6 @@ export async function run(argv: string[]): Promise<void> {
         const { options, positionals: subPositionals } = parseSubcommandOptions(rest);
         const [sub, slug, runId] = subPositionals;
         if (sub === 'list') {
-          if (!slug) throw new Error('Benchmark slug required: bench runs list <benchmark-slug>');
           await handleRunsList(slug, options, overrides, outputOptions);
         } else if (sub === 'show') {
           if (!slug || !runId) throw new Error('Usage: bench runs show <benchmark-slug> <runId>');

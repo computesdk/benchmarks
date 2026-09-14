@@ -21,6 +21,8 @@ export type {
   BenchmarkResultsOverviewRun,
   BenchmarkResultSummary,
   BenchmarkRun,
+  BenchmarkRunListItem,
+  ListAllRunsOptions,
   BenchmarkRunImports,
   BenchmarkRunAnalyticsSummary,
   BenchmarkRunImportsSummary,

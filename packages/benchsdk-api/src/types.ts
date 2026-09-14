@@ -44,6 +44,21 @@ export interface BenchmarkRun {
   updatedAt?: string;
 }
 
+/** A run row as returned by the cross-benchmark `GET /runs` listing. */
+export interface BenchmarkRunListItem extends BenchmarkRun {
+  /** Slug of the org that owns the run — distinguishes curator runs from the caller's own. */
+  organizationSlug?: string;
+  /** Slug of the benchmark the run belongs to. */
+  benchmarkSlug?: string;
+}
+
+export interface ListAllRunsOptions {
+  limit?: number;
+  offset?: number;
+  /** Restrict the listing to a single benchmark slug. */
+  benchmarkSlug?: string;
+}
+
 export interface BenchmarkParticipant {
   id: string;
   benchmarkId: string;
@@ -745,6 +760,7 @@ export interface BenchmarkClient {
     organizationSlug: string;
   }>;
   listRuns(benchmarkSlug: string, options?: { limit?: number; offset?: number }): Promise<BenchmarkRun[]>;
+  listAllRuns(options?: ListAllRunsOptions): Promise<BenchmarkRunListItem[]>;
   getRun(benchmarkSlug: string, runId: string): Promise<BenchmarkRun>;
   updateRun(benchmarkSlug: string, runId: string, input: UpdateRunInput): Promise<BenchmarkRun>;
   upsertParticipant(
