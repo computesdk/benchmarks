@@ -1,5 +1,13 @@
 # @benchsdk/client
 
+## 0.4.3
+
+### Patch Changes
+
+- Updated dependencies [43eb478]
+  - @benchsdk/api@0.4.1
+  - @benchsdk/worker@0.2.3
+
 ## 0.4.2
 
 ### Patch Changes

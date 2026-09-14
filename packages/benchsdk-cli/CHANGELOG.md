@@ -1,5 +1,13 @@
 # @benchsdk/cli
 
+## 0.4.1
+
+### Patch Changes
+
+- 43eb478: `listAllRuns` now calls the canonical `GET /api/v1/benchmarks/runs` — the platform moved the endpoint under `/benchmarks/` and the old `/api/v1/runs` path was removed.
+- Updated dependencies [43eb478]
+  - @benchsdk/api@0.4.1
+
 ## 0.4.0
 
 ### Minor Changes
