@@ -24,6 +24,7 @@ import type {
   BenchmarkRunTimelineInput,
   BenchmarkRunIterationInput,
   BenchmarkRunWorker,
+  BenchmarkUpgradeNotice,
   BenchmarkWorkerAttempt,
   CreateWorkerArtifactInput,
   CreateWorkerArtifactResponse,
@@ -87,6 +88,38 @@ function iterationsExtraParams(input: BenchmarkRunIterationInput = {}): string {
   if (input.steps?.length) params.set('steps', input.steps.join(','));
   const value = params.toString();
   return value ? `&${value}` : '';
+}
+
+/**
+ * Forward any `upgrade` offer in a response body to the client's
+ * onUpgradeNotice hook. Success bodies carry it top-level; error bodies nest
+ * it under `details.upgrade`.
+ */
+function emitUpgradeNotice(config: BenchmarkClientConfig, body: unknown): void {
+  if (!config.onUpgradeNotice || !body) return;
+
+  let payload: unknown = body;
+  if (typeof body === 'string') {
+    try {
+      payload = JSON.parse(body);
+    } catch {
+      return;
+    }
+  }
+  if (!payload || typeof payload !== 'object') return;
+
+  const direct = (payload as Record<string, unknown>).upgrade;
+  const nested = (payload as Record<string, unknown>).details;
+  const notice =
+    direct && typeof direct === 'object'
+      ? direct
+      : nested && typeof nested === 'object'
+        ? (nested as Record<string, unknown>).upgrade
+        : undefined;
+
+  if (notice && typeof notice === 'object') {
+    config.onUpgradeNotice(notice as BenchmarkUpgradeNotice);
+  }
 }
 
 function getApiKey(input?: string): string | undefined {
@@ -216,6 +249,7 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
     const text = await response.text();
 
     if (!response.ok) {
+      emitUpgradeNotice(config, text);
       throw new BenchmarkApiError(
         `Benchmark API request failed: ${response.status} ${response.statusText}`,
         response.status,
@@ -223,7 +257,9 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
       );
     }
 
-    return (text ? JSON.parse(text) : {}) as T;
+    const parsed = (text ? JSON.parse(text) : {}) as T;
+    emitUpgradeNotice(config, parsed);
+    return parsed;
   }
 
   async function sendTaskResults(input: SendTaskResultsInput): Promise<TaskResultsResponse> {
