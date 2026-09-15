@@ -293,7 +293,7 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
     },
 
     async listRuns(benchmarkSlug, options: { limit?: number; offset?: number } = {}) {
-      const data = await request<{ items: BenchmarkRun[] }>(
+      const data = await request<{ items: BenchmarkRunListItem[] }>(
         'GET',
         `/benchmarks/${encodePath(benchmarkSlug)}/runs${queryString(options)}`,
       );
