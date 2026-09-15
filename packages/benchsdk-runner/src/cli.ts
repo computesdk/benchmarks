@@ -21,6 +21,7 @@ import type { CliAuth } from '@benchsdk/cli';
 import { createBenchmarkClient, type BenchmarkClient } from '@benchsdk/api';
 import { filterParticipantsByEnv, selectParticipants } from '@benchsdk/worker';
 import { parseCliArgs, resolveShape, runBenchmark } from './runner.js';
+import { cliDefaultsFromConfig, resolveApiKey, resolveProjectConfig, type BenchSdkConfig } from './project-config.js';
 import { NoAvailableParticipantsError } from './no-available-participants.js';
 import { validateBenchmarkConfig, BenchmarkConfigError, type BenchmarkConfig as TypedBenchmarkConfig } from './bench-config.js';
 import { scoringConfigToSpec, validateScoringSpec, lowerIsBetter, higherIsBetter } from './scoring.js';
@@ -32,8 +33,8 @@ const USAGE =
   '  bench run <file.bench.ts> [--shape name] [--provider a,b] [--run-key key]\n' +
   '      [--benchmark slug] [--name "My benchmark"]\n' +
   '      [--iterations N] [--concurrency N] [--stagger-delay-ms N] [--group-by participant|round]\n' +
-  '      [--no-ingest | --dry-run] [--check]\n' +
-  '  bench check <file.bench.ts> [--base-url <url>] [--api-key <key>]';
+  '      [--no-ingest | --dry-run] [--check] [--config <file>]\n' +
+  '  bench check <file.bench.ts> [--base-url <url>] [--api-key <key>] [--config <file>]';
 
 /** A benchmark module is expected to export `config` and `task`. */
 interface BenchmarkModule {
@@ -77,11 +78,31 @@ function shiftFlag(argv: string[], name: string): { value: string | undefined; a
   return { value, argv: result };
 }
 
-/** Splits `--base-url` / `--api-key` off the flag list shared by `run` and `check`. */
-function shiftPlatformFlags(flags: string[]): { baseUrl?: string; apiKey?: string; flags: string[] } {
-  const { value: baseUrl, argv: withoutBaseUrl } = shiftFlag(flags, 'base-url');
+interface PlatformFlags {
+  baseUrl?: string;
+  apiKey?: string;
+  projectConfig: BenchSdkConfig;
+  configPath?: string;
+  flags: string[];
+}
+
+/**
+ * Splits `--base-url` / `--api-key` / `--config` off the flag list shared by
+ * `run` and `check`, loading the project config file (explicit or
+ * `bench.config.ts` in cwd). Flags win over config-file values.
+ */
+async function shiftPlatformFlags(flags: string[]): Promise<PlatformFlags> {
+  const { value: configFlag, argv: withoutConfig } = shiftFlag(flags, 'config');
+  const { value: baseUrl, argv: withoutBaseUrl } = shiftFlag(withoutConfig, 'base-url');
   const { value: apiKey, argv: rest } = shiftFlag(withoutBaseUrl, 'api-key');
-  return { baseUrl, apiKey, flags: rest };
+  const { config: projectConfig, configPath } = await resolveProjectConfig(process.cwd(), configFlag);
+  return {
+    baseUrl: baseUrl ?? projectConfig.baseUrl,
+    apiKey: apiKey ?? resolveApiKey(projectConfig),
+    projectConfig,
+    configPath,
+    flags: rest,
+  };
 }
 
 /**
@@ -109,8 +130,8 @@ export async function runCheck(argv: string[]): Promise<void> {
     throw new BenchmarkConfigError(configIssues);
   }
 
-  const { baseUrl, apiKey, flags: runnerFlags } = shiftPlatformFlags(flags);
-  const parsed = parseCliArgs(runnerFlags, cfg.customCliFlags ?? []);
+  const { baseUrl, apiKey, projectConfig, flags: runnerFlags } = await shiftPlatformFlags(flags);
+  const parsed = parseCliArgs(runnerFlags, cfg.customCliFlags ?? [], cliDefaultsFromConfig(projectConfig));
   resolveShape(cfg, parsed.shape);
   const dryRun = parsed.noIngest ?? false;
 
@@ -215,7 +236,7 @@ export async function runBenchmarkFile(argv: string[]): Promise<void> {
     return runCheck(['check', file, ...checkFlags]);
   }
 
-  const { baseUrl, apiKey, flags: runnerFlags } = shiftPlatformFlags(flags);
+  const { baseUrl, apiKey, projectConfig, flags: runnerFlags } = await shiftPlatformFlags(flags);
 
   const mod = (await import(pathToFileURL(resolve(process.cwd(), file)).href)) as BenchmarkModule;
   const config = mod.config;
@@ -240,7 +261,7 @@ export async function runBenchmarkFile(argv: string[]): Promise<void> {
     config as BenchmarkConfig<BaseParticipant>,
     task as BenchmarkTask<BaseParticipant>,
     [...envFlags, ...runnerFlags],
-    { baseUrl, apiKey },
+    { baseUrl, apiKey, cliArgs: cliDefaultsFromConfig(projectConfig) },
   );
 }
 
