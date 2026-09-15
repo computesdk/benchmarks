@@ -15,7 +15,6 @@ Fold operator surface into `@benchsdk/runner` and add ergonomics/observability h
 - Add `runBenchmarkWorker(options)` one-shot helper for running a single participant's worker without a `*.bench.ts` file.
 - Add `bench check <file.bench.ts>` for preflight validation of config, auth, participants, and scoring weights.
 - Add `bench run --check` to validate before executing.
-- Add `bench.config.ts`/`.benchrc` CLI config file support for project-level defaults.
 - Add `validateBenchmarkConfig(config)` returning structured `{ field, message }[]`; `defineBenchmarkConfig` throws `BenchmarkConfigError`.
 - Add `defineOnComplete(handler)` typed helper for `onComplete` callbacks.
 - Default `RunWorkerOptions.processKey` to `os.hostname()`.
@@ -26,7 +25,6 @@ Fold operator surface into `@benchsdk/runner` and add ergonomics/observability h
 - `@benchsdk/cli` now has a README documenting its programmatic API, auth precedence, config/credentials files, and CLI commands.
 - `@benchsdk/cli` `printData` now honors `--format table` for objects as well as arrays and prints `No results.` for empty objects.
 - `@benchsdk/runner` re-exports `resolveAuth`, `createApiClient`, `AuthError`, and the `CliAuth` type from `@benchsdk/cli` so operators only need one package import.
-- `@benchsdk/runner` project config files (`bench.config.ts` / `.benchrc`) are validated; `dryRun` and other fields must have correct types, and `apiKey` is removed in favor of `apiKeyEnv` to keep secrets out of source control.
 - `@benchsdk/worker` `onTelemetryError` is now also invoked for `completeWorker` and `failWorker` telemetry failures in the normal completion path.
 - `bench check` now extracts and validates `--base-url` and `--api-key` flags with required-value semantics instead of treating them as pass-through custom flags.
 - `validateBenchmarkConfig` no longer throws when `phases`, `participants`, or `shapes` entries are `null`/primitives; it returns structured `BenchmarkConfigErrorItem` issues instead.

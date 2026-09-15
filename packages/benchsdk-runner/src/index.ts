@@ -26,7 +26,6 @@ export { runBenchmark, runBenchmarkWorker, parseCliArgs, mergeConfig } from './r
 export type { CliArgs, RunBenchmarkWorkerOptions, RunBenchmarkOptions, PlatformConfig } from './runner.js';
 export { defineOnComplete } from './bench-config.js';
 export { run, runBenchmarkFile } from './cli.js';
-export type { BenchSdkConfig } from './cli.js';
 
 // Platform authentication and data-query primitives (re-exported from
 // `@benchsdk/cli` so the runner package is the single canonical operator surface).

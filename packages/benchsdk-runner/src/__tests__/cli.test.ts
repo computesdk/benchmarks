@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { runBenchmarkFile, runCheck } from '../cli';
 import { NoAvailableParticipantsError } from '../no-available-participants.js';
 import { AuthError } from '@benchsdk/cli';
@@ -99,36 +99,9 @@ describe('runBenchmarkFile', () => {
     ).rejects.toThrow(/Benchmark check failed/);
   });
 
-  it('loads a project config file via --config and applies defaults', async () => {
-    const logs: string[] = [];
-    const spy = vi.spyOn(console, 'log').mockImplementation((...args: unknown[]) => {
-      logs.push(args.join(' '));
-    });
-    try {
-      await runBenchmarkFile(['run', fixture('local.bench.ts'), '--config', fixture('bench.config.ts')]);
-      const knobLine = logs.find((l) => l.includes('Knobs:'));
-      expect(knobLine).toMatch(/iterations=2/);
-      expect(knobLine).toMatch(/concurrency=2/);
-    } finally {
-      spy.mockRestore();
-    }
-  });
-
-  it('rejects a project config file with invalid field types', async () => {
+  it('rejects --base-url when its value is another flag', async () => {
     await expect(
-      runBenchmarkFile(['run', fixture('local.bench.ts'), '--config', fixture('invalid-config.json'), '--dry-run']),
-    ).rejects.toThrow(/dryRun must be a boolean/);
-  });
-
-  it('rejects a project config file that is not an object', async () => {
-    await expect(
-      runBenchmarkFile(['run', fixture('local.bench.ts'), '--config', fixture('array-config.json'), '--dry-run']),
-    ).rejects.toThrow(/config must be an object/);
-  });
-
-  it('rejects --config when its value is another flag', async () => {
-    await expect(
-      runBenchmarkFile(['run', fixture('local.bench.ts'), '--config', '--dry-run']),
+      runBenchmarkFile(['run', fixture('local.bench.ts'), '--base-url', '--dry-run']),
     ).rejects.toThrow(/Usage:/);
   });
 

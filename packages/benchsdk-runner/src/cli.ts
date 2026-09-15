@@ -15,14 +15,12 @@
  * it can be unit-tested by calling `runBenchmarkFile` directly.
  */
 import { resolve } from 'node:path';
-import { readFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { run as runPlatformCli, resolveAuth } from '@benchsdk/cli';
 import type { CliAuth } from '@benchsdk/cli';
-import { createBenchmarkClient, type BenchmarkClient, type BenchmarkClientConfig } from '@benchsdk/api';
+import { createBenchmarkClient, type BenchmarkClient } from '@benchsdk/api';
 import { filterParticipantsByEnv, selectParticipants } from '@benchsdk/worker';
-import { parseCliArgs, resolveShape, runBenchmark, type CliArgs } from './runner.js';
+import { parseCliArgs, resolveShape, runBenchmark } from './runner.js';
 import { NoAvailableParticipantsError } from './no-available-participants.js';
 import { validateBenchmarkConfig, BenchmarkConfigError, type BenchmarkConfig as TypedBenchmarkConfig } from './bench-config.js';
 import { scoringConfigToSpec, validateScoringSpec, lowerIsBetter, higherIsBetter } from './scoring.js';
@@ -34,8 +32,8 @@ const USAGE =
   '  bench run <file.bench.ts> [--shape name] [--provider a,b] [--run-key key]\n' +
   '      [--benchmark slug] [--name "My benchmark"]\n' +
   '      [--iterations N] [--concurrency N] [--stagger-delay-ms N] [--group-by participant|round]\n' +
-  '      [--no-ingest | --dry-run] [--check] [--config <file>]\n' +
-  '  bench check <file.bench.ts> [--base-url <url>] [--api-key <key>] [--config <file>]';
+  '      [--no-ingest | --dry-run] [--check]\n' +
+  '  bench check <file.bench.ts> [--base-url <url>] [--api-key <key>]';
 
 /** A benchmark module is expected to export `config` and `task`. */
 interface BenchmarkModule {
@@ -50,21 +48,11 @@ function isBenchmarkConfig(value: unknown): value is BenchmarkConfig {
   return typeof candidate.benchmarkSlug === 'string' && Array.isArray(candidate.participants);
 }
 
-function getFlag(argv: string[], name: string): string | undefined {
-  const prefix = `--${name}`;
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i];
-    if (arg === prefix) {
-      const value = argv[i + 1];
-      return value?.startsWith('--') ? undefined : value;
-    }
-    if (arg.startsWith(`${prefix}=`)) {
-      return arg.slice(prefix.length + 1);
-    }
-  }
-  return undefined;
-}
-
+/**
+ * Extracts `--name value` / `--name=value` from argv, returning the value and
+ * the remaining args. Throws usage when the value is missing or looks like
+ * another flag.
+ */
 function shiftFlag(argv: string[], name: string): { value: string | undefined; argv: string[] } {
   const prefix = `--${name}`;
   const prefixEq = `${prefix}=`;
@@ -89,137 +77,11 @@ function shiftFlag(argv: string[], name: string): { value: string | undefined; a
   return { value, argv: result };
 }
 
-/** Project-level CLI config defaults. */
-export interface BenchSdkConfig {
-  baseUrl?: string;
-  /** Environment variable name to read the API key from. Project config files should not store secrets. */
-  apiKeyEnv?: string;
-  providers?: string[];
-  iterations?: number;
-  concurrency?: number;
-  staggerDelayMs?: number;
-  groupBy?: 'participant' | 'round';
-  shape?: string;
-  runKey?: string;
-  benchmark?: string;
-  name?: string;
-  dryRun?: boolean;
-}
-
-const DEFAULT_CONFIG_NAMES = ['bench.config.ts', 'bench.config.js', 'bench.config.json', '.benchrc', '.benchrc.js', '.benchrc.json'];
-
-function shiftConfigFlag(argv: string[]): { configPath?: string; argv: string[] } {
-  const result: string[] = [];
-  let configPath: string | undefined;
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i];
-    if (arg === '--config') {
-      const next = argv[++i];
-      if (!next || next.startsWith('--')) throw new Error(USAGE);
-      configPath = next;
-      continue;
-    }
-    if (arg.startsWith('--config=')) {
-      configPath = arg.slice('--config='.length);
-      if (!configPath) throw new Error(USAGE);
-      continue;
-    }
-    result.push(arg);
-  }
-  return { configPath, argv: result };
-}
-
-async function loadConfigFile(fullPath: string): Promise<BenchSdkConfig> {
-  if (fullPath.endsWith('.json') || fullPath.endsWith('.benchrc')) {
-    const raw = await readFile(fullPath, 'utf-8');
-    return JSON.parse(raw) as BenchSdkConfig;
-  }
-  const mod = (await import(pathToFileURL(fullPath).href)) as { default?: BenchSdkConfig; config?: BenchSdkConfig };
-  return (mod.default ?? mod.config ?? {}) as BenchSdkConfig;
-}
-
-function validateBenchSdkConfig(value: unknown, path?: string): string[] {
-  const prefix = path ? `${path}: ` : '';
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    return [`${prefix}config must be an object`];
-  }
-  const config = value as Record<string, unknown>;
-  const issues: string[] = [];
-  const checkString = (key: string) => {
-    if (config[key] !== undefined && typeof config[key] !== 'string') issues.push(`${prefix}${key} must be a string`);
-  };
-  const checkPositiveInt = (key: string) => {
-    if (config[key] !== undefined && (!Number.isInteger(config[key]) || (config[key] as number) < 1)) {
-      issues.push(`${prefix}${key} must be a positive integer`);
-    }
-  };
-  const checkNonNegativeInt = (key: string) => {
-    if (config[key] !== undefined && (!Number.isInteger(config[key]) || (config[key] as number) < 0)) {
-      issues.push(`${prefix}${key} must be a non-negative integer`);
-    }
-  };
-
-  checkString('baseUrl');
-  checkString('apiKeyEnv');
-  if (config.providers !== undefined) {
-    if (!Array.isArray(config.providers) || !config.providers.every((p) => typeof p === 'string')) {
-      issues.push(`${prefix}providers must be an array of strings`);
-    }
-  }
-  checkPositiveInt('iterations');
-  checkPositiveInt('concurrency');
-  checkNonNegativeInt('staggerDelayMs');
-  if (config.groupBy !== undefined && config.groupBy !== 'participant' && config.groupBy !== 'round') {
-    issues.push(`${prefix}groupBy must be 'participant' or 'round'`);
-  }
-  checkString('shape');
-  checkString('runKey');
-  checkString('benchmark');
-  checkString('name');
-  if (config.dryRun !== undefined && typeof config.dryRun !== 'boolean') {
-    issues.push(`${prefix}dryRun must be a boolean`);
-  }
-  return issues;
-}
-
-async function resolveProjectConfig(argv: string[], cwd: string): Promise<{ config: BenchSdkConfig; configPath?: string; argv: string[] }> {
-  const { configPath, argv: cleanArgv } = shiftConfigFlag(argv);
-  if (configPath) {
-    const full = resolve(cwd, configPath);
-    const config = await loadConfigFile(full);
-    const issues = validateBenchSdkConfig(config, full);
-    if (issues.length > 0) throw new Error(`Invalid bench config:\n${issues.map((i) => `  - ${i}`).join('\n')}`);
-    return { config, configPath: full, argv: cleanArgv };
-  }
-  for (const name of DEFAULT_CONFIG_NAMES) {
-    const full = resolve(cwd, name);
-    if (existsSync(full)) {
-      const config = await loadConfigFile(full);
-      const issues = validateBenchSdkConfig(config, full);
-      if (issues.length > 0) throw new Error(`Invalid bench config:\n${issues.map((i) => `  - ${i}`).join('\n')}`);
-      return { config, configPath: full, argv: cleanArgv };
-    }
-  }
-  return { config: {}, argv: cleanArgv };
-}
-
-function cliDefaultsFromConfig(config: BenchSdkConfig): Partial<CliArgs> {
-  const defaults: Partial<CliArgs> = {};
-  if (config.iterations !== undefined) defaults.iterations = config.iterations;
-  if (config.concurrency !== undefined) defaults.concurrency = config.concurrency;
-  if (config.staggerDelayMs !== undefined) defaults.staggerDelayMs = config.staggerDelayMs;
-  if (config.groupBy !== undefined) defaults.groupBy = config.groupBy;
-  if (config.shape !== undefined) defaults.shape = config.shape;
-  if (config.runKey !== undefined) defaults.runKey = config.runKey;
-  if (config.benchmark !== undefined) defaults.benchmark = config.benchmark;
-  if (config.name !== undefined) defaults.name = config.name;
-  if (config.providers !== undefined) defaults.providers = config.providers;
-  if (config.dryRun !== undefined) defaults.noIngest = config.dryRun;
-  return defaults;
-}
-
-function resolveApiKey(config: BenchSdkConfig): string | undefined {
-  return config.apiKeyEnv ? process.env[config.apiKeyEnv] : undefined;
+/** Splits `--base-url` / `--api-key` off the flag list shared by `run` and `check`. */
+function shiftPlatformFlags(flags: string[]): { baseUrl?: string; apiKey?: string; flags: string[] } {
+  const { value: baseUrl, argv: withoutBaseUrl } = shiftFlag(flags, 'base-url');
+  const { value: apiKey, argv: rest } = shiftFlag(withoutBaseUrl, 'api-key');
+  return { baseUrl, apiKey, flags: rest };
 }
 
 /**
@@ -227,8 +89,7 @@ function resolveApiKey(config: BenchSdkConfig): string | undefined {
  * weights for a `*.bench.ts` module without executing any tasks.
  */
 export async function runCheck(argv: string[]): Promise<void> {
-  const { config: projectConfig, argv: cleanArgv } = await resolveProjectConfig(argv, process.cwd());
-  const [command, ...rest] = cleanArgv;
+  const [command, ...rest] = argv;
   const [file, ...flags] = rest;
   if (command !== 'check' || !file || file.startsWith('-')) throw new Error(USAGE);
 
@@ -248,21 +109,17 @@ export async function runCheck(argv: string[]): Promise<void> {
     throw new BenchmarkConfigError(configIssues);
   }
 
-  const { value: baseUrl, argv: flagsWithoutBaseUrl } = shiftFlag(flags, 'base-url');
-  const { value: apiKey, argv: flagsWithoutApiKey } = shiftFlag(flagsWithoutBaseUrl, 'api-key');
-  const parsed = parseCliArgs(flagsWithoutApiKey, cfg.customCliFlags ?? [], cliDefaultsFromConfig(projectConfig));
+  const { baseUrl, apiKey, flags: runnerFlags } = shiftPlatformFlags(flags);
+  const parsed = parseCliArgs(runnerFlags, cfg.customCliFlags ?? []);
   resolveShape(cfg, parsed.shape);
-  const dryRun = parsed.noIngest ?? projectConfig.dryRun ?? false;
+  const dryRun = parsed.noIngest ?? false;
 
   let client: BenchmarkClient | undefined;
   let apiOk = dryRun;
   let auth: CliAuth | null = null;
   if (!dryRun) {
     try {
-      auth = await resolveAuth({
-        baseUrl: baseUrl ?? projectConfig.baseUrl,
-        apiKey: apiKey ?? resolveApiKey(projectConfig),
-      });
+      auth = await resolveAuth({ baseUrl, apiKey });
       client = createBenchmarkClient({
         baseUrl: auth.apiBaseUrl,
         apiKey: auth.apiKey,
@@ -348,20 +205,17 @@ export async function runCheck(argv: string[]): Promise<void> {
  * exit. Does not call `process.exit`.
  */
 export async function runBenchmarkFile(argv: string[]): Promise<void> {
-  const { config: projectConfig, configPath, argv: cleanArgv } = await resolveProjectConfig(argv, process.cwd());
-  const [command, ...rest] = cleanArgv;
+  const [command, ...rest] = argv;
   const [file, ...flags] = rest;
   if (command !== 'run' || !file || file.startsWith('-')) throw new Error(USAGE);
 
   const check = flags.includes('--check') || flags.includes('--validate');
   if (check) {
     const checkFlags = flags.filter((f) => f !== '--check' && f !== '--validate');
-    return runCheck(['check', file, ...(configPath ? ['--config', configPath] : []), ...checkFlags]);
+    return runCheck(['check', file, ...checkFlags]);
   }
 
-  const { value: baseUrl, argv: flagsWithoutBaseUrl } = shiftFlag(flags, 'base-url');
-  const { value: apiKey, argv: flagsWithoutApiKey } = shiftFlag(flagsWithoutBaseUrl, 'api-key');
-  const runnerFlags = flagsWithoutApiKey.filter((f) => f !== '--check' && f !== '--validate' && !f.startsWith('--config'));
+  const { baseUrl, apiKey, flags: runnerFlags } = shiftPlatformFlags(flags);
 
   const mod = (await import(pathToFileURL(resolve(process.cwd(), file)).href)) as BenchmarkModule;
   const config = mod.config;
@@ -386,7 +240,7 @@ export async function runBenchmarkFile(argv: string[]): Promise<void> {
     config as BenchmarkConfig<BaseParticipant>,
     task as BenchmarkTask<BaseParticipant>,
     [...envFlags, ...runnerFlags],
-    { baseUrl: baseUrl ?? projectConfig.baseUrl, apiKey: apiKey ?? resolveApiKey(projectConfig), cliArgs: cliDefaultsFromConfig(projectConfig) },
+    { baseUrl, apiKey },
   );
 }
 

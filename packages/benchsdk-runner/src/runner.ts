@@ -247,7 +247,7 @@ async function runStepWithClient<R, C extends number = 1>(
  * `process.argv` itself; the runner validates and skips them without choking on
  * their values.
  */
-export function parseCliArgs(argv: string[], allowedCustomFlags?: readonly string[], defaults: Partial<CliArgs> = {}): CliArgs {
+export function parseCliArgs(argv: string[], allowedCustomFlags?: readonly string[]): CliArgs {
   const args: CliArgs = {};
   const unknown: string[] = [];
   const allowed = new Set(allowedCustomFlags ?? []);
@@ -380,17 +380,6 @@ export function parseCliArgs(argv: string[], allowedCustomFlags?: readonly strin
     args.noIngest = true;
   }
 
-  // Apply project-level config defaults where the CLI did not provide a value.
-  args.noIngest ??= defaults.noIngest;
-  args.iterations ??= defaults.iterations;
-  args.concurrency ??= defaults.concurrency;
-  args.staggerDelayMs ??= defaults.staggerDelayMs;
-  args.groupBy ??= defaults.groupBy;
-  args.shape ??= defaults.shape;
-  args.runKey ??= defaults.runKey;
-  args.benchmark ??= defaults.benchmark;
-  args.name ??= defaults.name;
-  args.providers ??= defaults.providers;
 
   return args;
 }
@@ -481,9 +470,7 @@ export interface PlatformConfig {
   apiKey?: string;
 }
 
-export interface RunBenchmarkOptions extends PlatformConfig {
-  cliArgs?: Partial<CliArgs>;
-}
+export type RunBenchmarkOptions = PlatformConfig;
 
 /**
  * Resolves `--shape <name>` against the config's declared `shapes`. Throws with
@@ -618,7 +605,7 @@ export async function runBenchmark<T extends BaseParticipant>(
   argv: string[] = [],
   options: RunBenchmarkOptions = {},
 ): Promise<BenchmarkRunOutcome> {
-  const args = parseCliArgs(argv, fileConfig.customCliFlags, options.cliArgs);
+  const args = parseCliArgs(argv, fileConfig.customCliFlags);
   const noIngest = args.noIngest ?? isEnvNoIngest();
   const shaped = applyShape(fileConfig, resolveShape(fileConfig, args.shape));
   const config = applyIdentityOverrides(shaped, args);
