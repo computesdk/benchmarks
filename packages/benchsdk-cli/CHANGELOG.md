@@ -1,5 +1,13 @@
 # @benchsdk/cli
 
+## 0.4.2
+
+### Patch Changes
+
+- 1f3555b: Run-list responses are now slimmer: `listRuns`/`listAllRuns` return `BenchmarkRunListItem` (id, benchmarkId, organizationId, name, status, sizing, timestamps, organizationSlug, benchmarkSlug) instead of the full run row — `config`, `summary`, `runKey`, `participantSized`, and creator attribution are no longer included. `BenchmarkResource` gains optional `organizationId`/`organizationSlug` for the catalog response.
+- Updated dependencies [1f3555b]
+  - @benchsdk/api@0.5.0
+
 ## 0.4.1
 
 ### Patch Changes
