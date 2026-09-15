@@ -15,14 +15,14 @@ import { givemeanode } from '@computesdk/givemeanode';
 import { hopx } from '@computesdk/hopx';
 import { isorun } from '@computesdk/isorun';
 // import { lelantos } from '@computesdk/lelantos';
-import { lightning } from '@computesdk/lightning';
+// import { lightning } from '@computesdk/lightning';
 import { modal } from '@computesdk/modal';
 import { microsandbox } from '@computesdk/microsandbox';
 import { miosa } from '@computesdk/miosa';
 import { mosaic } from '@computesdk/mosaic';
 import { namespace } from '@computesdk/namespace';
 import { northflank } from '@computesdk/northflank';
-import { opencomputer } from '@computesdk/opencomputer';
+// import { opencomputer } from '@computesdk/opencomputer';
 // import { quilt } from '@computesdk/quilt';
 // import { railway } from '@computesdk/railway';
 import { runCloud } from '@computesdk/run-cloud';
@@ -144,19 +144,19 @@ export const providers: ProviderConfig[] = [
   //   requiredEnvVars: ['LELANTOS_API_KEY'],
   //   createCompute: () => lelantos({ apiKey: process.env.LELANTOS_API_KEY! }),
   // },
-  {
-    name: 'lightning',
-    requiredEnvVars: ['LIGHTNING_API_KEY'],
-    // Lightning sizes sandboxes via `instanceType` on the provider factory (the SDK
-    // ignores an instanceType passed to sandbox.create()), so it can't be sized through
-    // DAX_RESOURCE_OPTIONS like most providers. The dax workflow sets
-    // LIGHTNING_INSTANCE_TYPE=cpu-8 for the standardized 8 vCPU / 16 GiB profile;
-    // it defaults to cpu-1 (the SDK default) everywhere else.
-    createCompute: () => lightning({
-      apiKey: process.env.LIGHTNING_API_KEY!,
-      instanceType: process.env.LIGHTNING_INSTANCE_TYPE || 'cpu-1',
-    }),
-  },
+  // {
+  //   name: 'lightning',
+  //   requiredEnvVars: ['LIGHTNING_API_KEY'],
+  //   // Lightning sizes sandboxes via `instanceType` on the provider factory (the SDK
+  //   // ignores an instanceType passed to sandbox.create()), so it can't be sized through
+  //   // DAX_RESOURCE_OPTIONS like most providers. The dax workflow sets
+  //   // LIGHTNING_INSTANCE_TYPE=cpu-8 for the standardized 8 vCPU / 16 GiB profile;
+  //   // it defaults to cpu-1 (the SDK default) everywhere else.
+  //   createCompute: () => lightning({
+  //     apiKey: process.env.LIGHTNING_API_KEY!,
+  //     instanceType: process.env.LIGHTNING_INSTANCE_TYPE || 'cpu-1',
+  //   }),
+  // },
   {
     name: 'modal',
     requiredEnvVars: ['MODAL_TOKEN_ID', 'MODAL_TOKEN_SECRET'],
@@ -202,15 +202,15 @@ export const providers: ProviderConfig[] = [
       runtime: 'node',
     }),
   },
-  {
-    name: 'opencomputer',
-    requiredEnvVars: ['OPENCOMPUTER_API_KEY', 'OPENCOMPUTER_API_URL'],
-    createCompute: () => opencomputer({
-      apiKey: process.env.OPENCOMPUTER_API_KEY!,
-      apiUrl: process.env.OPENCOMPUTER_API_URL!,
-    }),
-    sandboxOptions: { timeout: 600_000 },
-  },
+  // {
+  //   name: 'opencomputer',
+  //   requiredEnvVars: ['OPENCOMPUTER_API_KEY', 'OPENCOMPUTER_API_URL'],
+  //   createCompute: () => opencomputer({
+  //     apiKey: process.env.OPENCOMPUTER_API_KEY!,
+  //     apiUrl: process.env.OPENCOMPUTER_API_URL!,
+  //   }),
+  //   sandboxOptions: { timeout: 600_000 },
+  // },
   // {
   //   name: 'quilt',
   //   requiredEnvVars: ['QUILT_API_KEY', 'QUILT_BASE_URL'],
