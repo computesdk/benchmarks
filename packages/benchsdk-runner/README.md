@@ -60,6 +60,24 @@ bench run benchmarks/sandbox/sandbox-tti.bench.ts --iterations 100 --concurrency
 
 `bench run` requires platform auth — `BENCHMARKS_PLATFORM_API_KEY`, `BENCHMARKS_PLATFORM_TOKEN`, or a token saved via `bench auth login` — even for `--dry-run` / `--no-ingest` / `BENCHSDK_NO_INGEST=1`; those flags only skip uploading, they do not skip auth.
 
+### Project defaults (`bench.config.ts`)
+
+Put a `bench.config.ts` in the directory you run `bench` from to stop repeating flags. CLI flags always win over the file; `--config <path>` points at a file elsewhere. Config files hold no secrets — `apiKeyEnv` names the env var to read the key from.
+
+```ts
+import { defineBenchConfig } from '@benchsdk/runner';
+
+export default defineBenchConfig({
+  baseUrl: 'https://benchmarks.computesdk.com',
+  apiKeyEnv: 'BENCHMARKS_PLATFORM_API_KEY',
+  providers: ['e2b', 'modal'],
+  iterations: 20,
+  concurrency: 5,
+});
+```
+
+Invalid files fail fast with a `BenchmarkConfigError` listing every bad field.
+
 To load a TypeScript benchmark without a build step, run the CLI under a TS loader:
 
 ```sh

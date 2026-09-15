@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { runBenchmarkFile, runCheck } from '../cli';
+import { resolveProjectConfig } from '../project-config.js';
 import { NoAvailableParticipantsError } from '../no-available-participants.js';
 import { AuthError } from '@benchsdk/cli';
 
@@ -102,6 +103,61 @@ describe('runBenchmarkFile', () => {
   it('rejects --base-url when its value is another flag', async () => {
     await expect(
       runBenchmarkFile(['run', fixture('local.bench.ts'), '--base-url', '--dry-run']),
+    ).rejects.toThrow(/Usage:/);
+  });
+
+  it('loads bench.config.ts via --config and applies defaults', async () => {
+    const logs: string[] = [];
+    const spy = vi.spyOn(console, 'log').mockImplementation((...args: unknown[]) => {
+      logs.push(args.join(' '));
+    });
+    try {
+      await runBenchmarkFile(['run', fixture('local.bench.ts'), '--config', fixture('config-project/bench.config.ts')]);
+      const knobLine = logs.find((l) => l.includes('Knobs:'));
+      expect(knobLine).toMatch(/iterations=2/);
+      expect(knobLine).toMatch(/concurrency=2/);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('lets CLI flags override bench.config.ts values', async () => {
+    const logs: string[] = [];
+    const spy = vi.spyOn(console, 'log').mockImplementation((...args: unknown[]) => {
+      logs.push(args.join(' '));
+    });
+    try {
+      await runBenchmarkFile(['run', fixture('local.bench.ts'), '--config', fixture('config-project/bench.config.ts'), '--iterations', '1']);
+      expect(logs.find((l) => l.includes('Knobs:'))).toMatch(/iterations=1/);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('auto-loads bench.config.ts from cwd when present', async () => {
+    const { config, configPath } = await resolveProjectConfig(fixture('config-project'));
+    expect(configPath).toMatch(/fixtures\/config-project\/bench\.config\.ts$/);
+    expect(config).toEqual({ iterations: 2, concurrency: 2, dryRun: true });
+
+    const missing = await resolveProjectConfig(fixture(''));
+    expect(missing).toEqual({ config: {} });
+  });
+
+  it('rejects a config file with invalid field types as a BenchmarkConfigError', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('local.bench.ts'), '--config', fixture('invalid.config.ts'), '--dry-run']),
+    ).rejects.toThrow(/noIngest: unknown field[\s\S]*iterations: must be a positive integer[\s\S]*dryRun: must be a boolean/);
+  });
+
+  it('rejects a config file that is not an object', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('local.bench.ts'), '--config', fixture('array.config.ts'), '--dry-run']),
+    ).rejects.toThrow(/config: must be an object/);
+  });
+
+  it('rejects --config when its value is another flag', async () => {
+    await expect(
+      runBenchmarkFile(['run', fixture('local.bench.ts'), '--config', '--dry-run']),
     ).rejects.toThrow(/Usage:/);
   });
 

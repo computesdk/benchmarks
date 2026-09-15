@@ -24,6 +24,8 @@ export type {
 export { NoAvailableParticipantsError } from './no-available-participants.js';
 export { runBenchmark, runBenchmarkWorker, parseCliArgs, mergeConfig } from './runner.js';
 export type { CliArgs, RunBenchmarkWorkerOptions, RunBenchmarkOptions, PlatformConfig } from './runner.js';
+export { defineBenchConfig, validateBenchSdkConfig } from './project-config.js';
+export type { BenchSdkConfig } from './project-config.js';
 export { defineOnComplete } from './bench-config.js';
 export { run, runBenchmarkFile } from './cli.js';
 
