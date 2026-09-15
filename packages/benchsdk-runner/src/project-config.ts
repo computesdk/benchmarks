@@ -54,7 +54,7 @@ export function validateBenchSdkConfig(value: unknown): BenchmarkConfigErrorItem
   check('groupBy', (v) => v === 'participant' || v === 'round', "must be 'participant' or 'round'");
   check('shape', isString, 'must be a string');
   check('runKey', isString, 'must be a string');
-  check('benchmark', isString, 'must be a string');
+  check('benchmark', (v) => typeof v === 'string' && /^[a-z0-9][a-z0-9-]*$/.test(v), 'must be a lowercase benchmark slug');
   check('name', isString, 'must be a string');
   check('dryRun', (v) => typeof v === 'boolean', 'must be a boolean');
   return issues;
