@@ -1,1 +1,1 @@
-export default { dryRun: 'yes', iterations: 0 };
+export default { dryRun: 'yes', iterations: 0, noIngest: true };

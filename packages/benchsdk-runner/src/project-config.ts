@@ -27,6 +27,11 @@ export interface BenchSdkConfig {
   dryRun?: boolean;
 }
 
+const BENCH_SDK_CONFIG_KEYS: ReadonlySet<string> = new Set<keyof BenchSdkConfig>([
+  'baseUrl', 'apiKeyEnv', 'providers', 'iterations', 'concurrency', 'staggerDelayMs',
+  'groupBy', 'shape', 'runKey', 'benchmark', 'name', 'dryRun',
+]);
+
 /** Identity helper so `bench.config.ts` gets autocomplete: `export default defineBenchConfig({...})`. */
 export function defineBenchConfig(config: BenchSdkConfig): BenchSdkConfig {
   return config;
@@ -38,6 +43,9 @@ export function validateBenchSdkConfig(value: unknown): BenchmarkConfigErrorItem
   }
   const config = value as Record<string, unknown>;
   const issues: BenchmarkConfigErrorItem[] = [];
+  for (const key of Object.keys(config)) {
+    if (!BENCH_SDK_CONFIG_KEYS.has(key)) issues.push({ field: key, message: 'unknown field' });
+  }
   const check = (field: string, ok: (v: unknown) => boolean, message: string) => {
     if (config[field] !== undefined && !ok(config[field])) issues.push({ field, message });
   };
@@ -86,10 +94,19 @@ export async function resolveProjectConfig(cwd: string, configPath?: string): Pr
 }
 
 export function cliDefaultsFromConfig(config: BenchSdkConfig): Partial<CliArgs> {
-  const { baseUrl: _baseUrl, apiKeyEnv: _apiKeyEnv, dryRun, ...knobs } = config;
-  const defaults: Partial<CliArgs> = { ...knobs };
-  if (dryRun !== undefined) defaults.noIngest = dryRun;
-  return defaults;
+  const defaults: Partial<CliArgs> = {
+    providers: config.providers,
+    iterations: config.iterations,
+    concurrency: config.concurrency,
+    staggerDelayMs: config.staggerDelayMs,
+    groupBy: config.groupBy,
+    shape: config.shape,
+    runKey: config.runKey,
+    benchmark: config.benchmark,
+    name: config.name,
+    noIngest: config.dryRun,
+  };
+  return Object.fromEntries(Object.entries(defaults).filter(([, v]) => v !== undefined)) as Partial<CliArgs>;
 }
 
 export function resolveApiKey(config: BenchSdkConfig): string | undefined {

@@ -146,7 +146,7 @@ describe('runBenchmarkFile', () => {
   it('rejects a config file with invalid field types as a BenchmarkConfigError', async () => {
     await expect(
       runBenchmarkFile(['run', fixture('local.bench.ts'), '--config', fixture('invalid.config.ts'), '--dry-run']),
-    ).rejects.toThrow(/iterations: must be a positive integer[\s\S]*dryRun: must be a boolean/);
+    ).rejects.toThrow(/noIngest: unknown field[\s\S]*iterations: must be a positive integer[\s\S]*dryRun: must be a boolean/);
   });
 
   it('rejects a config file that is not an object', async () => {
