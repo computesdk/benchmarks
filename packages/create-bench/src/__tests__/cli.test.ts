@@ -35,7 +35,7 @@ describe('create-bench CLI', () => {
     );
 
     expect(pkg.name).toBe(path.basename(tempDir).toLowerCase());
-    expect(pkg.dependencies['@benchsdk/runner']).toBe('^0.2.0');
+    expect(pkg.dependencies['@benchsdk/runner']).toBe('^0.5.0');
   });
 
   it('sanitizes project names into valid package.json names', async () => {

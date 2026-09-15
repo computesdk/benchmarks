@@ -30,7 +30,7 @@ function scaffold(targetDir: string, projectName: string): void {
       typecheck: 'tsc --noEmit',
     },
     dependencies: {
-      '@benchsdk/runner': '^0.2.0',
+      '@benchsdk/runner': '^0.5.0',
     },
     devDependencies: {
       tsx: '^4.22.4',
