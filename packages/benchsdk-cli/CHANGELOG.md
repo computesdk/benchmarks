@@ -1,5 +1,50 @@
 # @benchsdk/cli
 
+## 0.4.2
+
+### Patch Changes
+
+- 1f3555b: Run-list responses are now slimmer: `listRuns`/`listAllRuns` return `BenchmarkRunListItem` (id, benchmarkId, organizationId, name, status, sizing, timestamps, organizationSlug, benchmarkSlug) instead of the full run row — `config`, `summary`, `runKey`, `participantSized`, and creator attribution are no longer included. `BenchmarkResource` gains optional `organizationId`/`organizationSlug` for the catalog response.
+- Updated dependencies [1f3555b]
+  - @benchsdk/api@0.5.0
+
+## 0.4.1
+
+### Patch Changes
+
+- 43eb478: `listAllRuns` now calls the canonical `GET /api/v1/benchmarks/runs` — the platform moved the endpoint under `/benchmarks/` and the old `/api/v1/runs` path was removed.
+- Updated dependencies [43eb478]
+  - @benchsdk/api@0.4.1
+
+## 0.4.0
+
+### Minor Changes
+
+- 6f37302: List runs across all visible benchmarks.
+
+  - New `client.listAllRuns({ limit?, offset?, benchmarkSlug? })` hitting `GET /api/v1/runs`; items are `BenchmarkRunListItem` (run row + `organizationSlug` + `benchmarkSlug`).
+  - `bench runs list` now takes an optional slug: `bench runs list` lists every run the caller can read (own + subscribed benchmarks); `bench runs list <slug>` is unchanged.
+
+### Patch Changes
+
+- Updated dependencies [6f37302]
+  - @benchsdk/api@0.4.0
+
+## 0.3.0
+
+### Minor Changes
+
+- 0b1916f: Expose per-iteration benchmark results and sandbox reuse metadata.
+
+  - `@benchsdk/api` adds `getRunTaskIterations` and `getRunStepIterations` plus the `BenchmarkRunIterationInput`, `BenchmarkTaskIteration`, `BenchmarkStepIteration`, `BenchmarkRunTaskIterations`, and `BenchmarkRunStepIterations` types.
+  - `@benchsdk/cli` adds `bench iterations <benchmark-slug> --run <id> [--participant <slug>] [--steps <list>] [--format json|table]`.
+  - `benchmarks/sandbox/tti.bench.ts` records `sandboxId`, `createdAt`, and `createMs` in the `create` step for sandbox reuse detection.
+
+### Patch Changes
+
+- Updated dependencies [0b1916f]
+  - @benchsdk/api@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes

@@ -23,6 +23,9 @@ export interface BenchmarkResource {
   status?: string;
   config?: JsonObject;
   defaultRunConfig?: JsonObject;
+  organizationId?: string;
+  /** Slug of the org that owns the benchmark — distinguishes subscribed feeds from your own. */
+  organizationSlug?: string | null;
 }
 
 export type BenchmarkRunStatus = 'planned' | 'in_progress' | 'completed' | 'failed';
@@ -42,6 +45,34 @@ export interface BenchmarkRun {
   config?: JsonObject;
   createdAt?: string;
   updatedAt?: string;
+}
+
+/** A run row as returned by the run-listing endpoints (`GET .../runs`).
+ * Slimmer than {@link BenchmarkRun}: no config, summary, or creator attribution. */
+export interface BenchmarkRunListItem {
+  id: string;
+  benchmarkId: string;
+  organizationId: string;
+  name?: string | null;
+  status: BenchmarkRunStatus | string;
+  totalTasks: number;
+  workerCount: number;
+  createdAt?: string;
+  updatedAt?: string;
+  startedAt?: string | null;
+  endedAt?: string | null;
+  archivedAt?: string | null;
+  /** Slug of the org that owns the run — distinguishes curator runs from the caller's own. */
+  organizationSlug?: string;
+  /** Slug of the benchmark the run belongs to (cross-benchmark listing only). */
+  benchmarkSlug?: string;
+}
+
+export interface ListAllRunsOptions {
+  limit?: number;
+  offset?: number;
+  /** Restrict the listing to a single benchmark slug. */
+  benchmarkSlug?: string;
 }
 
 export interface BenchmarkParticipant {
@@ -750,7 +781,8 @@ export interface BenchmarkClient {
     /** The slug of the org the run was attributed to, resolved server-side from the caller's API key. */
     organizationSlug: string;
   }>;
-  listRuns(benchmarkSlug: string, options?: { limit?: number; offset?: number }): Promise<BenchmarkRun[]>;
+  listRuns(benchmarkSlug: string, options?: { limit?: number; offset?: number }): Promise<BenchmarkRunListItem[]>;
+  listAllRuns(options?: ListAllRunsOptions): Promise<BenchmarkRunListItem[]>;
   getRun(benchmarkSlug: string, runId: string): Promise<BenchmarkRun>;
   updateRun(benchmarkSlug: string, runId: string, input: UpdateRunInput): Promise<BenchmarkRun>;
   upsertParticipant(

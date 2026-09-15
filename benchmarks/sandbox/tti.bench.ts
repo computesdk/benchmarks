@@ -24,6 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { defineBenchmarkConfig, defineTask } from '@benchsdk/runner';
 import { withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
+import { sandboxId } from '../src/util/sandbox-id.js';
 import { providers } from './providers.js';
 import type { ProviderConfig } from './types.js';
 import { writeSandboxLegacyResults } from './legacy-results.js';
@@ -42,9 +43,6 @@ export const config = defineBenchmarkConfig({
   concurrency: 1,
   participants: providers,
   display: {
-    metrics: [
-      { key: 'ttiMs', label: 'Time to interactive', unit: 'ms', direction: 'lower-better', decimals: 0 },
-    ],
     steps: [
       { key: 'create', label: 'Create sandbox' },
       { key: 'exec.task', label: 'Run first command' },
@@ -54,7 +52,7 @@ export const config = defineBenchmarkConfig({
   },
   scoring: {
     metrics: [
-      { key: 'ttiMs', ceiling: 10000, weights: { median: 0.60, p95: 0.25, p99: 0.15 } },
+      { key: 'ttiMs', unit: 'ms', ceiling: 10000, weights: { median: 0.60, p95: 0.25, p99: 0.15 } },
     ],
   },
   // Legacy JSON labels a burst run 'concurrent' (see merge-results /
@@ -88,9 +86,6 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
         'Sandbox creation timed out',
       );
       createMs = performance.now() - createStart;
-      measure({ sandboxId: s.sandboxId, createMs });
-      const info = await s.getInfo();
-      measure({ createdAt: info.createdAt.toISOString() });
       return s;
     });
     if (sandbox === undefined) {
@@ -113,9 +108,12 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
         throw new Error('create step did not produce a createMs measurement');
       }
       ttiMs = createMs + (performance.now() - commandStart);
-      measure({ ttiMs });
       return r;
     });
+    if (ttiMs === undefined) {
+      throw new Error('exec.task did not produce a ttiMs measurement');
+    }
+    measure({ ttiMs });
     log('node -v succeeded', { level: 'info', meta: { version: result.stdout?.trim() ?? null, exitCode: result.exitCode } });
   } finally {
     if (sandbox) {
@@ -123,6 +121,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
         withTimeout(sandbox!.destroy(), participant.destroyTimeoutMs ?? DESTROY_TIMEOUT_MS, 'Destroy timeout'),
         { reportConcurrency: false },
       ).catch((err: unknown) => log('destroy failed', { level: 'warn', meta: { error: formatError(err) } }));
+      log('sandbox', { level: 'info', meta: { provider: participant.name, sandboxId: sandboxId(sandbox) } });
     }
   }
 

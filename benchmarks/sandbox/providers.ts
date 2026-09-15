@@ -275,8 +275,11 @@ export const providers: ProviderConfig[] = [
     sandboxOptions: { ephemeral: true },
   },
   {
+    // Vercel sandboxes are persistent by default: every stop() auto-snapshots
+    // the filesystem, which accrues Snapshot Storage. Benchmarks never resume.
     name: 'vercel',
     requiredEnvVars: ['VERCEL_TOKEN', 'VERCEL_TEAM_ID', 'VERCEL_PROJECT_ID'],
     createCompute: () => vercel({ token: process.env.VERCEL_TOKEN!, teamId: process.env.VERCEL_TEAM_ID!, projectId: process.env.VERCEL_PROJECT_ID! }),
+    sandboxOptions: { persistent: false },
   },
 ];

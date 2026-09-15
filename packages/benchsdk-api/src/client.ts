@@ -30,6 +30,8 @@ import type {
   ClaimWorkerInput,
   CreateRunInput,
   JsonObject,
+  BenchmarkRunListItem,
+  ListAllRunsOptions,
   SendTaskResultsInput,
   PlanWorkersInput,
   TaskResultRecord,
@@ -70,7 +72,7 @@ function encodePath(value: string): string {
   return encodeURIComponent(value);
 }
 
-function queryString(input: Record<string, number | undefined>): string {
+function queryString(input: Record<string, number | string | undefined>): string {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(input)) {
     if (value !== undefined) params.set(key, String(value));
@@ -291,9 +293,20 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
     },
 
     async listRuns(benchmarkSlug, options: { limit?: number; offset?: number } = {}) {
-      const data = await request<{ items: BenchmarkRun[] }>(
+      const data = await request<{ items: BenchmarkRunListItem[] }>(
         'GET',
         `/benchmarks/${encodePath(benchmarkSlug)}/runs${queryString(options)}`,
+      );
+      return data.items;
+    },
+
+    // GET /api/v1/benchmarks/runs — every run the caller can read across all
+    // visible benchmarks (own + entitled foreign feeds like Daily
+    // subscriptions).
+    async listAllRuns(options: ListAllRunsOptions = {}) {
+      const data = await request<{ items: BenchmarkRunListItem[] }>(
+        'GET',
+        `/benchmarks/runs${queryString({ limit: options.limit, offset: options.offset, benchmarkSlug: options.benchmarkSlug })}`,
       );
       return data.items;
     },

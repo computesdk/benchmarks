@@ -63,6 +63,18 @@ on:
         required: false
         default: false
         type: boolean
+      trigger_source:
+        description: 'Recorded on platform runs as their trigger (e.g. platform-retrigger); leave empty for a plain manual run'
+        required: false
+        default: ''
+      trigger_requested_by:
+        description: 'Who asked for this run (e.g. the platform org slug); recorded alongside trigger_source'
+        required: false
+        default: ''
+      trigger_request_id:
+        description: 'Platform re-trigger request id; recorded so the platform can link this run back to the request'
+        required: false
+        default: ''
 
 concurrency:
   group: ai-gateway-benchmarks
@@ -75,6 +87,9 @@ permissions:
 
 env:
   BENCHMARK_SLUG: ${{ github.event.inputs.slug || '' }}
+  BENCH_TRIGGER_SOURCE: ${{ github.event.inputs.trigger_source || '' }}
+  BENCH_TRIGGER_REQUESTED_BY: ${{ github.event.inputs.trigger_requested_by || '' }}
+  BENCH_TRIGGER_REQUEST_ID: ${{ github.event.inputs.trigger_request_id || '' }}
   BENCHMARK_NAME: ${{ github.event.inputs.name || '' }}
 
 jobs:
@@ -101,6 +116,7 @@ jobs:
             svgScript: generate-ai-gateway-svg
             svgFile: ai-gateway.svg
             timeout: 60
+            scheduleIterations: 50
           - slug: openai
             label: OpenAI
             benchScript: benchmarks/ai-gateway/ai-gateway-openai.bench.ts
@@ -108,6 +124,7 @@ jobs:
             svgScript: generate-ai-gateway-openai-svg
             svgFile: ai-gateway-openai.svg
             timeout: 60
+            scheduleIterations: 50
           - slug: gemini
             label: Gemini
             benchScript: benchmarks/ai-gateway/ai-gateway-gemini.bench.ts
@@ -115,6 +132,7 @@ jobs:
             svgScript: generate-ai-gateway-gemini-svg
             svgFile: ai-gateway-gemini.svg
             timeout: 60
+            scheduleIterations: 50
           - slug: kimi
             label: Kimi
             benchScript: benchmarks/ai-gateway/ai-gateway-kimi.bench.ts
@@ -122,6 +140,7 @@ jobs:
             svgScript: generate-ai-gateway-kimi-svg
             svgFile: ai-gateway-kimi.svg
             timeout: 150
+            scheduleIterations: 25
             iterations: 25
     # Manual runs can scope to one family via the `family` input; push/schedule
     # triggers always run all four.
@@ -167,11 +186,7 @@ jobs:
           fi
 
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            if [ "${{ matrix.family.slug }}" = "kimi" ]; then
-              ITERATIONS="25"
-            else
-              ITERATIONS="50"
-            fi
+            ITERATIONS="${{ matrix.family.scheduleIterations }}"
           elif [ "${{ github.event_name }}" = "push" ]; then
             ITERATIONS="10"
           elif [ -n "$INPUT_ITERATIONS" ]; then
