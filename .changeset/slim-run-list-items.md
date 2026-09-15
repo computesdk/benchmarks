@@ -1,5 +1,5 @@
 ---
-"@benchsdk/api": patch
+"@benchsdk/api": minor
 "@benchsdk/cli": patch
 ---
 
