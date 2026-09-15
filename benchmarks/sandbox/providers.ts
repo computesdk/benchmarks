@@ -24,7 +24,7 @@ import { namespace } from '@computesdk/namespace';
 import { northflank } from '@computesdk/northflank';
 import { opencomputer } from '@computesdk/opencomputer';
 // import { quilt } from '@computesdk/quilt';
-// import { railway } from '@computesdk/railway';
+import { railway } from '@computesdk/railway';
 import { runCloud } from '@computesdk/run-cloud';
 import { runloop } from '@computesdk/runloop';
 import { sandbox0 } from '@computesdk/sandbox0';
@@ -216,11 +216,11 @@ export const providers: ProviderConfig[] = [
   //   requiredEnvVars: ['QUILT_API_KEY', 'QUILT_BASE_URL'],
   //   createCompute: () => quilt({ apiKey: process.env.QUILT_API_KEY!, baseUrl: process.env.QUILT_BASE_URL! }),
   // },
-  // {
-  //   name: 'railway',
-  //   requiredEnvVars: ['RAILWAY_API_TOKEN', 'RAILWAY_ENVIRONMENT_ID'],
-  //   createCompute: () => railway({ token: process.env.RAILWAY_API_TOKEN!, environmentId: process.env.RAILWAY_ENVIRONMENT_ID! }),
-  // },
+  {
+    name: 'railway',
+    requiredEnvVars: ['RAILWAY_API_TOKEN', 'RAILWAY_ENVIRONMENT_ID'],
+    createCompute: () => railway({ token: process.env.RAILWAY_API_TOKEN!, environmentId: process.env.RAILWAY_ENVIRONMENT_ID! }),
+  },
   {
     name: 'runloop',
     requiredEnvVars: ['RUNLOOP_API_KEY'],
