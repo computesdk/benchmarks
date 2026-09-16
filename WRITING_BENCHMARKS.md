@@ -308,6 +308,7 @@ Rules:
 - `weights.median + weights.p95 + weights.p99` across **all metrics** must sum to `1.0` (within 0.01).
 - `ceiling` is the worst acceptable value; the score is `100 * (1 - value/ceiling)` for `lowerIsBetter`.
 - `higherIsBetter` flips the formula and uses `floor` as the minimum score threshold.
+- `trim` (optional, per metric, default `0.05`) — the fraction trimmed off each end of the metric's sorted samples before computing median/p95/p99, to dampen outlier effects like cold starts and network blips. `trim: 0.05` drops the bottom and top 5%; set `trim: 0` to score on the raw distribution. The platform re-derives the same trimmed stats when it renders the run, so the displayed composite matches what the runner computed.
 - `success.requireData` makes a record count as successful only when every listed data field matches the given value. Records that fail or do not match lower the success rate.
 
 If you need to extract metric values with a function, use `onScore` instead:
