@@ -311,15 +311,29 @@ Rules:
 - `trim` (optional, per metric, default `0.05`) — the fraction trimmed off each end of the metric's sorted samples before computing median/p95/p99, to dampen outlier effects like cold starts and network blips. `trim: 0.05` drops the bottom and top 5%; set `trim: 0` to score on the raw distribution. The platform re-derives the same trimmed stats when it renders the run, so the displayed composite matches what the runner computed.
 - `success.requireData` makes a record count as successful only when every listed data field matches the given value. Records that fail or do not match lower the success rate.
 
-If you need to extract metric values with a function, use `onScore` instead:
+### `scoring` vs `onScore`
+
+`scoring` and `onScore` are two ways to produce the same `ScoringSpec` — declare **one**, not both (if both are set, `onScore` wins):
+
+- Prefer `scoring`. It's a plain serializable object: the runner validates it at startup (weights sum, shape, unit conflicts with `display.metrics`), and the platform stores the spec and recomputes the same composite when rendering the run.
+- Use `onScore` only when a metric's value can't be named by a key — i.e. extracting a custom metric out of the task record with a function. The hook receives `lowerIsBetter` / `higherIsBetter` helpers and may be async.
 
 ```ts
+// Score on a custom metric the task reports via measure() — here `ttiMs`
+// lives on each record's `data`, not under a fixed metric key.
 onScore: (lowerIsBetter) => ({
   metrics: [
-    lowerIsBetter('ttiMs', { unit: 'ms', ceiling: 10000, weights: { median: 0.6, p95: 0.25, p99: 0.15 }, value: (record) => record.data?.ttiMs as number }),
+    lowerIsBetter('ttiMs', {
+      unit: 'ms',
+      ceiling: 10000,
+      weights: { median: 0.6, p95: 0.25, p99: 0.15 },
+      value: (record) => record.data?.ttiMs as number,
+    }),
   ],
 }),
 ```
+
+Both paths enforce the weight-sum rule — but `onScore` specs are only validated when scoring runs, so a bad spec surfaces as a run error rather than a startup failure.
 
 ## Display & platform rendering
 
