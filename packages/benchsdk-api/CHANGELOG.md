@@ -1,5 +1,15 @@
 # @benchsdk/api
 
+## 0.7.0
+
+### Minor Changes
+
+- f0574f0: Add `getParticipantLogs` to `@benchsdk/api` and a `bench logs` command for viewing parsed participant worker logs (the dashboard log view) via the platform's new `GET .../participants/:slug/logs` endpoint:
+
+  ```
+  bench logs <slug> <runId> [--participant <slug>] [--worker <id>] [--max-lines N]
+  ```
+
 ## 0.6.0
 
 ### Minor Changes
