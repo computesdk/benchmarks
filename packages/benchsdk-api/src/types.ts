@@ -285,6 +285,36 @@ export interface BenchmarkArtifactDownload {
   downloadUrlExpiresAt?: string;
 }
 
+export interface BenchmarkWorkerLogLine {
+  n: number;
+  ts: string | null;
+  level: string;
+  msg: string;
+}
+
+export interface BenchmarkWorkerLog {
+  runId: string;
+  provider: string;
+  lines: BenchmarkWorkerLogLine[];
+  totalLines: number;
+  okSampleRate: number;
+  artifactId?: string;
+  attemptId?: string;
+}
+
+export interface BenchmarkParticipantWorkerLog {
+  workerId: string;
+  workerIndex: number;
+  status: string;
+  artifact: BenchmarkArtifact | null;
+  log: BenchmarkWorkerLog | null;
+}
+
+export interface BenchmarkParticipantLogs {
+  participant: string;
+  workers: BenchmarkParticipantWorkerLog[];
+}
+
 export interface CreateWorkerArtifactResponse {
   artifact?: BenchmarkArtifact;
   artifactId?: string;
@@ -822,6 +852,12 @@ export interface BenchmarkClient {
     input: UpdateWorkerInput,
   ): Promise<BenchmarkRunWorker>;
   getRunProgress(benchmarkSlug: string, runId: string): Promise<RunProgress>;
+  getParticipantLogs(
+    benchmarkSlug: string,
+    runId: string,
+    participantSlug: string,
+    options?: { maxLines?: number },
+  ): Promise<BenchmarkParticipantLogs>;
   claimWorker(
     benchmarkSlug: string,
     runId: string,

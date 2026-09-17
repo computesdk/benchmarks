@@ -59,6 +59,9 @@ Commands:
                                      Show per-iteration step latencies
   artifacts list <benchmark-slug> <runId> [--worker <id>]
                                      List run artifacts
+  logs <benchmark-slug> <runId> [--participant <slug>] [--worker <id>] [--max-lines N]
+                                     Show participant worker logs (parsed, like
+                                     the dashboard log view)
   export <benchmark-slug> [--run <id>] [--out <dir>]
                                      Export benchmark or run results to JSON
 
@@ -139,6 +142,7 @@ const subcommandOptionSchema = {
   participant: { type: 'string' as const },
   steps: { type: 'string' as const },
   worker: { type: 'string' as const },
+  'max-lines': { type: 'number' as const },
   out: { type: 'string' as const },
 };
 
@@ -209,6 +213,8 @@ Subcommands:
       return `Usage: bench iterations <benchmark-slug> --run <id> [--participant <slug>] [--steps <list>] [--format json|table]`;
     case 'artifacts':
       return `Usage: bench artifacts list <benchmark-slug> <runId> [--worker <id>]`;
+    case 'logs':
+      return `Usage: bench logs <benchmark-slug> <runId> [--participant <slug>] [--worker <id>] [--max-lines N]`;
     case 'export':
       return `Usage: bench export <benchmark-slug> [--run <id>] [--out <dir>]`;
     default:
@@ -428,6 +434,59 @@ async function handleArtifactsList(
   printData(artifacts, outputOptions);
 }
 
+function formatLogLine(line: { n: number; ts: string | null; level: string; msg: string }): string {
+  const ts = line.ts ? line.ts.slice(11, 23) : ''.padEnd(12);
+  return `${ts} ${line.level.padEnd(5)} ${line.msg}`;
+}
+
+async function handleLogs(
+  benchmarkSlug: string,
+  runId: string,
+  options: { participant?: string; worker?: string; 'max-lines'?: string | number },
+  overrides: { baseUrl?: string; apiKey?: string; org?: string },
+  outputOptions: OutputOptions = {},
+): Promise<void> {
+  const { api } = await createApiClient(overrides);
+  const maxLines = options['max-lines'] !== undefined ? Number(options['max-lines']) : undefined;
+  if (maxLines !== undefined && (!Number.isFinite(maxLines) || maxLines < 1)) {
+    throw new Error('--max-lines must be a positive integer');
+  }
+
+  const participantSlugs = options.participant
+    ? [options.participant]
+    : (await api.listParticipants(benchmarkSlug, runId)).map((p) => p.slug);
+
+  const results = [];
+  for (const slug of participantSlugs) {
+    const logs = await api.getParticipantLogs(benchmarkSlug, runId, slug, { maxLines });
+    if (options.worker) {
+      logs.workers = logs.workers.filter((w) => w.workerId === options.worker);
+    }
+    results.push(logs);
+  }
+
+  if (outputOptions.json || outputOptions.format === 'json') {
+    printData(options.participant ? results[0] : results, outputOptions);
+    return;
+  }
+
+  for (const result of results) {
+    for (const worker of result.workers) {
+      console.log(`== ${result.participant} worker ${worker.workerIndex} (${worker.workerId}) ==`);
+      if (!worker.log) {
+        console.log('  (no log artifact)');
+        continue;
+      }
+      for (const line of worker.log.lines) {
+        console.log(formatLogLine(line));
+      }
+      if (worker.log.totalLines > worker.log.lines.length) {
+        console.log(`  ... ${worker.log.totalLines - worker.log.lines.length} earlier lines truncated`);
+      }
+    }
+  }
+}
+
 async function handleExport(
   benchmarkSlug: string,
   options: { run?: string; out?: string },
@@ -574,6 +633,13 @@ export async function run(argv: string[]): Promise<void> {
         } else {
           throw new Error(USAGE);
         }
+        break;
+      }
+      case 'logs': {
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest);
+        const [slug, runId] = subPositionals;
+        if (!slug || !runId) throw new Error('Usage: bench logs <benchmark-slug> <runId>');
+        await handleLogs(slug, runId, options, overrides, outputOptions);
         break;
       }
       case 'export': {

@@ -9,6 +9,7 @@ import type {
   BenchmarkClient,
   BenchmarkClientConfig,
   BenchmarkParticipant,
+  BenchmarkParticipantLogs,
   BenchmarkResource,
   BenchmarkRun,
   BenchmarkResultsOverview,
@@ -363,6 +364,13 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
       return request<RunProgress>(
         'GET',
         `/benchmarks/${encodePath(benchmarkSlug)}/runs/${encodePath(runId)}/progress`,
+      );
+    },
+
+    async getParticipantLogs(benchmarkSlug, runId, participantSlug, options = {}) {
+      return request<BenchmarkParticipantLogs>(
+        'GET',
+        `/benchmarks/${encodePath(benchmarkSlug)}/runs/${encodePath(runId)}/participants/${encodePath(participantSlug)}/logs${queryString({ maxLines: options.maxLines })}`,
       );
     },
 
