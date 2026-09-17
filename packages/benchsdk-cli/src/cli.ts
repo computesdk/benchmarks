@@ -448,7 +448,7 @@ async function handleLogs(
 ): Promise<void> {
   const { api } = await createApiClient(overrides);
   const maxLines = options['max-lines'] !== undefined ? Number(options['max-lines']) : undefined;
-  if (maxLines !== undefined && (!Number.isFinite(maxLines) || maxLines < 1)) {
+  if (maxLines !== undefined && (!Number.isInteger(maxLines) || maxLines < 1)) {
     throw new Error('--max-lines must be a positive integer');
   }
 
