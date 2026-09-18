@@ -88,10 +88,9 @@ jobs:
         run: |
           . benchmarks/scripts/load-vault-secrets.sh "^($(jq -r '.["ai-gateway-model-index"] | to_entries[] | .value[]?' benchmarks/scripts/provider-vars.json | sort -u | paste -sd'|')|BENCHMARKS_PLATFORM_API_KEY)"
 
-          # GitHub Copilot is kept in the daily runs but excluded from the weekly run.
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            unset GITHUB_COPILOT_API_KEY GITHUB_COPILOT_OAUTH_TOKEN
-          fi
+          # GitHub Copilot only runs via the daily benchmarks-daily pipeline;
+          # exclude it from every trigger of this workflow.
+          unset GITHUB_COPILOT_API_KEY GITHUB_COPILOT_OAUTH_TOKEN
 
           provider_args=()
           if [ -n "$PROVIDER" ]; then
