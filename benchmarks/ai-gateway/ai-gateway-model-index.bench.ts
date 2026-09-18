@@ -49,8 +49,11 @@ function writeModelIndexResults(outcome: BenchmarkRunOutcome, resultsDir: string
   };
 
   const date = timestamp.slice(0, 10);
-  const datedPath = path.join(resultsDir, `${date}.json`);
-  const latestPath = path.join(resultsDir, `latest.json`);
+  // Explicit `--provider` selections get their own files so a targeted rerun
+  // can't clobber the canonical full-roster results.
+  const suffix = outcome.config.providers?.length ? `-${outcome.config.providers.join('+')}` : '';
+  const datedPath = path.join(resultsDir, `${date}${suffix}.json`);
+  const latestPath = path.join(resultsDir, `latest${suffix}.json`);
 
   fs.writeFileSync(datedPath, JSON.stringify(payload, null, 2));
   fs.writeFileSync(latestPath, JSON.stringify(payload, null, 2));
