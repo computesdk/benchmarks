@@ -32,7 +32,6 @@ on:
           - ngrok
           - llmapi
           - novita
-          - github-copilot
       dry_run:
         description: 'Run without ingesting or committing results'
         required: false
@@ -91,6 +90,10 @@ jobs:
           # GitHub Copilot only runs via the daily benchmarks-daily pipeline;
           # exclude it from every trigger of this workflow.
           unset GITHUB_COPILOT_API_KEY GITHUB_COPILOT_OAUTH_TOKEN
+          if [ "$PROVIDER" = "github-copilot" ]; then
+            echo "github-copilot only runs via the daily benchmarks-daily pipeline"
+            exit 1
+          fi
 
           provider_args=()
           if [ -n "$PROVIDER" ]; then
