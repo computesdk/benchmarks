@@ -40,6 +40,7 @@ export type {
   BenchmarkRunSummaryScalar,
   BenchmarkRunTaskResults,
   BenchmarkRunTaskResultsInput,
+  BenchmarkUpgradeNotice,
   BenchmarkRunTimeline,
   BenchmarkRunTimelineInput,
   BenchmarkRunWorker,

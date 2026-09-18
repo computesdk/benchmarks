@@ -186,6 +186,7 @@ describe('createApiClient', () => {
       token: undefined,
       orgSlug: 'my-org',
       orgId: 'my-org-id',
+      onUpgradeNotice: expect.any(Function),
     });
   });
 });
