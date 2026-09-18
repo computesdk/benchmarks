@@ -318,7 +318,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json pnpm-lock.yaml browser-throughput.svg results/browser-throughput/
+          git add package.json packages/*/package.json pnpm-lock.yaml browser-throughput.svg results/browser-throughput/
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "chore: update browser throughput benchmark results [skip ci]"
 
