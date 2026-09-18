@@ -116,3 +116,85 @@ export interface AIGatewayBenchmarkResult {
   skipped?: boolean;
   skipReason?: string;
 }
+
+export type AIGatewayModelListFormat = 'openai' | 'openrouter' | 'anthropic' | 'pydantic';
+
+export interface AIGatewayModelIndexProviderConfig {
+  /** Provider name */
+  name: string;
+  /** Environment variables that must all be set to run this participant */
+  requiredEnvVars: string[];
+  /** Hostname to connect to over TLS (port 443) */
+  host: string;
+  /** Request path for the model list endpoint */
+  modelsPath: string;
+  /** Auth (and any gateway-specific) headers. Evaluated per-request so env vars can be read lazily. */
+  buildHeaders: () => Record<string, string>;
+  /**
+   * Optional async host discovery. When provided, the model-list fetch calls
+   * this first and uses the returned host (and any extra headers) instead of
+   * the static `host` field. Useful for gateways whose API base URL depends on
+   * the authenticated account (e.g. GitHub Copilot individual vs enterprise).
+   */
+  resolveHost?: (
+    headers: Record<string, string>,
+    log?: (message: string) => void,
+  ) => Promise<{ host: string; headers?: Record<string, string> } | undefined>;
+  /** Expected response schema for the model list endpoint */
+  modelListFormat: AIGatewayModelListFormat;
+  /** Optional separate pricing catalog used to enrich model-list entries. */
+  pricingCatalog?:
+    | { format: 'concentrate'; host: string; pathTemplate: string; buildHeaders: () => Record<string, string> }
+    | { format: 'neon'; host: string; path: string; buildHeaders: () => Record<string, string> };
+}
+
+export interface AIGatewayModelPricing {
+  /** Cost per input/prompt token (or per unit) as a string, when exposed by the gateway. */
+  input?: string;
+  /** Cost per output/completion token (or per unit) as a string, when exposed by the gateway. */
+  output?: string;
+  /** OpenRouter-style prompt token cost. */
+  prompt?: string;
+  /** OpenRouter-style completion token cost. */
+  completion?: string;
+  /** Any other provider-specific pricing fields (image, audio, tiers, cache read/write, ...). */
+  [key: string]: unknown;
+}
+
+export type AIGatewayModelPricingUnit =
+  | 'per_token'
+  | 'per_1m_tokens'
+  | 'per_1k_characters'
+  | 'per_minute'
+  | 'per_second'
+  | 'per_image'
+  | 'per_request'
+  | 'unknown';
+
+export interface AIGatewayModelIndexEntry {
+  id: string;
+  name?: string;
+  displayName?: string;
+  ownedBy?: string;
+  /** Routing/upstream provider options exposed by the gateway for this model */
+  providers?: string[];
+  contextLength?: number;
+  maxOutputTokens?: number;
+  createdAt?: string;
+  /** Raw input/output/completion pricing from the gateway catalog. */
+  pricing?: AIGatewayModelPricing;
+  /** Unit for the primary input/output pricing fields. */
+  pricingUnit?: AIGatewayModelPricingUnit;
+  /** Per-provider/routing-option pricing when the gateway exposes different prices per provider. */
+  providerPricing?: Record<string, AIGatewayModelPricing>;
+}
+
+export interface AIGatewayModelIndexProviderResult {
+  provider: string;
+  statusCode?: number;
+  /** Gateway response time (request sent -> body parsed) in milliseconds */
+  responseMs: number;
+  modelCount: number;
+  models: AIGatewayModelIndexEntry[];
+  error?: string;
+}
