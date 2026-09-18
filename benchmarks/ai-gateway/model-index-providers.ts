@@ -38,7 +38,7 @@ export const modelIndexProviders: AIGatewayModelIndexProviderConfig[] = [
       'OPENAI_API_KEY',
     ],
     host: 'gateway.ai.cloudflare.com',
-    modelsPath: `/v1/${process.env.CLOUDFLARE_AI_GATEWAY_ACCOUNT_ID}/${process.env.CLOUDFLARE_AI_GATEWAY_GATEWAY_ID}/openai/v1/models`,
+    modelsPath: `/v1/${process.env.CLOUDFLARE_AI_GATEWAY_ACCOUNT_ID}/${process.env.CLOUDFLARE_AI_GATEWAY_GATEWAY_ID}/openai/models`,
     modelListFormat: 'openai',
     buildHeaders: () => ({
       ...(process.env.OPENAI_API_KEY ? { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` } : {}),

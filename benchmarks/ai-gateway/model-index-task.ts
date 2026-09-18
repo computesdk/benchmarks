@@ -437,7 +437,7 @@ async function fetchModelList(
   }
   return fetchJson(host, config.modelsPath, headers, log, config.name).then((result) => {
     if (result.error || result.body === undefined) return result;
-    const data = config.modelListFormat === 'pydantic' ? result.body : (result.body as AnyModel).data;
+    const data = config.modelListFormat === 'pydantic' ? result.body : asModel(result.body)?.data;
     return Array.isArray(data) ? result : { ...result, error: 'Response did not contain a model list' };
   });
 }
@@ -584,8 +584,6 @@ function inferPricingUnit(
   gateway: string,
   model: AIGatewayModelIndexEntry,
 ): AIGatewayModelPricingUnit {
-  if (['ramp', 'neon', 'concentrate-ai-gateway'].includes(gateway)) return 'per_1m_tokens';
-
   const source = model.pricing ?? (model.providerPricing ? Object.values(model.providerPricing)[0] : undefined);
   const identity = `${model.id} ${model.name ?? ''}`.toLowerCase();
   const providerNames = (model.providers ?? []).map((provider) => provider.toLowerCase());
@@ -598,6 +596,7 @@ function inferPricingUnit(
   if (explicitUnit === 'per_1k_characters') return explicitUnit;
   if (explicitUnit === 'per_image') return explicitUnit;
   if (explicitUnit === 'per_request') return explicitUnit;
+  if (['ramp', 'neon', 'concentrate-ai-gateway'].includes(gateway)) return 'per_1m_tokens';
   if (providerNames.includes('deepgram') || providerNames.includes('elevenlabs') || providerNames.includes('assemblyai')) {
     return 'per_1k_characters';
   }
