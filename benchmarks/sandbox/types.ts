@@ -68,3 +68,19 @@ export interface StaggeredBenchmarkResult extends BenchmarkResult {
   /** Per-sandbox timing profile showing launch offset and TTI */
   rampProfile: { launchedAt: number; readyAt: number; ttiMs: number }[];
 }
+
+/** Result of probing a single ComputeSDK capability. */
+export interface CapabilityFeatureResult {
+  passed: boolean;
+  error?: string;
+}
+
+/** Per-provider feature matrix for the sandbox capabilities benchmark. */
+export type ProviderCapabilityMatrix = Record<string, CapabilityFeatureResult>;
+
+/** One provider's capability matrix result. */
+export interface CapabilityMatrixResult {
+  provider: string;
+  features: ProviderCapabilityMatrix;
+}
+

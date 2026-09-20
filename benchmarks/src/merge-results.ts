@@ -48,6 +48,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '../..');
 const SANDBOX_WORKLOAD_DIRS = new Set([
   'sandbox-dax',
+  'sandbox-capabilities',
 ]);
 
 const args = process.argv.slice(2);
@@ -87,6 +88,7 @@ function modeToDir(mode: string): string {
     case 'burst':
     case 'concurrent': return 'burst_tti';
     case 'sandbox-dax': return 'sandbox-dax';
+    case 'sandbox-capabilities': return 'sandbox-capabilities';
     default: return `${mode}_tti`;
   }
 }
