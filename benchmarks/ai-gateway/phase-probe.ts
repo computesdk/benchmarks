@@ -73,7 +73,7 @@ function now(): number {
   return performance.now();
 }
 
-function buildRequestBody(config: AIGatewayProviderConfig, prompt: string, maxTokens: number): string {
+export function buildRequestBody(config: AIGatewayProviderConfig, prompt: string, maxTokens: number): string {
   if (config.wireFormat === 'openai') {
     return JSON.stringify({
       model: config.model,
@@ -136,7 +136,7 @@ function buildRequestBody(config: AIGatewayProviderConfig, prompt: string, maxTo
 }
 
 /** Cheap regex extraction of the latest known output-token count from the raw SSE buffer so far. */
-function extractOutputTokens(wireFormat: AIGatewayWireFormat, buf: string): number | undefined {
+export function extractOutputTokens(wireFormat: AIGatewayWireFormat, buf: string): number | undefined {
   if (wireFormat === 'openai') {
     // Take the last match per field: some gateways stream cumulative usage on
     // early chunks, not just the final one. Fields are matched independently
@@ -200,6 +200,24 @@ function extractOutputTokens(wireFormat: AIGatewayWireFormat, buf: string): numb
  * not exhaustive, but strictly additive: if this finds nothing, the caller
  * falls back to the original generic message exactly as before.
  */
+/** Cheap regex extraction of the latest known input-token count from the raw SSE buffer so far. */
+export function extractInputTokens(wireFormat: AIGatewayWireFormat, buf: string): number | undefined {
+  if (wireFormat === 'openai') {
+    const m = [...buf.matchAll(/"usage"\s*:\s*\{[^}]*"prompt_tokens"\s*:\s*(\d+)/g)];
+    return m.length > 0 ? Number(m[m.length - 1][1]) : undefined;
+  }
+  if (wireFormat === 'gemini') {
+    const m = [...buf.matchAll(/"usageMetadata"\s*:\s*\{[^}]*"promptTokenCount"\s*:\s*(\d+)/g)];
+    return m.length > 0 ? Number(m[m.length - 1][1]) : undefined;
+  }
+  // Anthropic and the Responses API both stream cumulative usage under a
+  // "usage" object keyed by "input_tokens". Use the same usage-scoped regex
+  // pattern as extractOutputTokens so an unrelated "input_tokens" field outside
+  // the usage object is not mistaken for the real count.
+  const matches = [...buf.matchAll(/"usage"\s*:\s*\{(?:[^{}]|\{[^{}]*\})*?"input_tokens"\s*:\s*(\d+)/g)];
+  return matches.length > 0 ? Number(matches[matches.length - 1][1]) : undefined;
+}
+
 function extractStreamErrorMessage(buf: string): string | undefined {
   const matches = [...buf.matchAll(/"error"\s*:\s*\{(?:[^{}]|\{[^{}]*\})*?"message"\s*:\s*"([^"]*)"/g)];
   return matches.length > 0 ? matches[matches.length - 1][1] : undefined;
@@ -214,17 +232,18 @@ function extractReceipts(headers: Record<string, string | string[] | undefined>)
   return receipts;
 }
 
-interface RawProbeOutcome {
+export interface RawProbeOutcome {
   ttfbMs: number;
   ttftMs: number;
   totalMs: number;
   outputTokens?: number;
+  inputTokens?: number;
   resolvedProvider?: string;
   receipts: Record<string, string>;
 }
 
 /** Sends one request over `agent` and resolves once the SSE stream ends. */
-function sendAndMeasure(
+export function sendAndMeasure(
   config: AIGatewayProviderConfig,
   body: string,
   agent: https.Agent,
@@ -261,6 +280,7 @@ function sendAndMeasure(
       let buf = '';
       let ttftMs = 0;
       let outputTokens: number | undefined;
+      let inputTokens: number | undefined;
       let resolvedProvider: string | undefined;
 
       res.on('data', (chunk: Buffer) => {
@@ -269,6 +289,7 @@ function sendAndMeasure(
           ttftMs = now() - start;
         }
         outputTokens = extractOutputTokens(config.wireFormat, buf) ?? outputTokens;
+        inputTokens = extractInputTokens(config.wireFormat, buf) ?? inputTokens;
         resolvedProvider = config.extractResolvedProvider?.(buf) ?? resolvedProvider;
       });
       res.on('end', () => {
@@ -281,7 +302,7 @@ function sendAndMeasure(
           ));
           return;
         }
-        resolve({ ttfbMs, ttftMs, totalMs: now() - start, outputTokens, resolvedProvider, receipts });
+        resolve({ ttfbMs, ttftMs, totalMs: now() - start, outputTokens, inputTokens, resolvedProvider, receipts });
       });
       res.on('error', reject);
     });
