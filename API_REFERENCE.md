@@ -21,7 +21,20 @@ The data model the API moves between a `*.bench.ts` file and the benchmarks plat
 | `artifact` | A file attached to a worker (worker log, system metrics, custom output). | Two-step upload: `POST …/artifacts` returns a presigned `uploadUrl`, then the body is `PUT` directly to it. |
 | `event batch` | An ordered chunk of task records (`type: 'task_results'`) streamed to the run. | Sent incrementally with a monotonically increasing `sequenceNumber`; the last batch is `isFinal: true`. Batches queue for import into the analytics store. |
 | `summary` | The computed scorecard for a run: per-provider metrics, composite score, success rate. | Computed by the runner from `config.scoring`/`onScore` and submitted once after all tasks finish; the platform can recompute it from the same stored spec. |
-| `shape` / `phase` / `groupBy` | Runner-side orchestration knobs — not API resources. | `shapes` = named platform identities (slug+name) selected with `--shape`. `phases` = named iteration arms tagged into `record.data.phase`. `groupBy` = task ordering (`'participant'` drives real platform workers; `'round'` interleaves participants via per-participant reporters). |
+| `shape` / `phase` / `groupBy` | Runner-side orchestration knobs — not API resources. | `shapes` = named platform identities (slug+name) selected with `--shape`. `phases` = named iteration arms tagged into `record.data.phase` (see *Concepts* below). `groupBy` = task ordering (`'participant'` drives real platform workers; `'round'` interleaves participants via per-participant reporters). |
+| `dimensions` | Static run-level key/value tags (e.g. `{ file_size: '10MB' }`), not a runtime channel. | Copied from `config.dimensions` into the run `config` snapshot and onto every `results[].dimensions` row in the submitted summary (see *Concepts* below). |
+
+## Concepts: dimensions and phases
+
+These two config knobs answer different questions, and it matters on the wire:
+
+- **`phases` — *which arm of the comparison produced this record* (input side).** Declared as `phases: [{ name, iterations }]` in `defineBenchmarkConfig`; mutually exclusive with `iterations`. Each phase is a named run segment with its own iteration count (e.g. `cold`/`warm`, or one phase per file size in `storage.bench.ts`). The framework owns the phase boundary: it writes `record.data.phase` **before** the task runs, so even a failed record carries its phase and groups correctly with its arm. Inside the task, `ctx.phase` exposes the current name so the workload can branch on identity instead of index arithmetic. On the wire, phases appear in two places: the `config.phases` snapshot sent in `POST …/runs`, and `data.phase` on every `task_results` record. CLI note: `--iterations` scales **each** phase equally (`phaseIterations`) — it does not divide a total between arms — and is ignored with a warning when phases declare uneven iteration counts.
+- **`dimensions` — *what distinguishes this result slice* (output side).** `config.dimensions` is a static `Record<string, unknown>` (e.g. `{ region: 'us-east-1' }`, `{ file_size: '10MB' }`) attached to the run — it changes nothing about scheduling; it tags the submitted summary so runs of the same benchmark that differ by an external parameter stay distinguishable on the dashboard.
+- **`scoring.groupBy` — the bridge.** A *data* key (any key your `measure()` payloads or the phase tag wrote to `record.data`) that splits each participant's records into per-group score rows. Each group row's `dimensions` = `config.dimensions` merged with `{ [groupByKey]: groupValue }`. Example: `scoring.groupBy: 'phase'` on a phased benchmark emits one `results[]` row per (participant × phase), each tagged `dimensions.phase = 'cold' | 'warm'`; a benchmark that measures `file_size` per record gets one row per size (`AWS S3 · 16MB`). Caveats:
+  - Despite the name, `scoring.groupBy` is unrelated to the top-level `groupBy` — the former is a *reporting* breakout; the latter is *execution* interleaving (`'participant'`/`'round'`).
+  - The breakout only renders when the run produced **2–12 distinct values** for the key — one value means no real variation (the platform serves the run blended), more than twelve is unreadable. A run that would produce a single value should drop `scoring.groupBy` but keep tagging records — see `singleSizeConfig` vs `multiSizeConfig` in `benchmarks/storage/storage.bench.ts`.
+
+In short: phases partition the *schedule* and tag every record; dimensions label the *summary rows*. `scoring.groupBy` turns a record-data key — often the phase itself — into a dimension on the scorecard.
 
 ## Transport & conventions
 
@@ -246,7 +259,7 @@ Response carries `uploadUrl` + `artifactId`; the body is then `PUT` straight to 
 }
 ```
 
-- `dimensions` — `config.dimensions` + the `scoring.groupBy` value
+- `dimensions` — `config.dimensions` + the `scoring.groupBy` value (see *Concepts: dimensions and phases*)
 - `compositeScore` — Σ per-metric score × weight × successRate, 0–100
 
 Only sent when the config declares `scoring` or `onScore`. A malformed spec (`ScoringSpecError`) fails the run; transport failures degrade to a warning.
