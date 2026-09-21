@@ -1,5 +1,8 @@
 name: Storage Concurrency Benchmark
 
+# computesdk:secrets=NSC_TOKEN
+# computesdk:secrets-env=declared
+
 on:
   push:
     branches: [master]
@@ -58,6 +61,20 @@ jobs:
         with:
           node-version: 24
           cache: 'pnpm'
+      # ComputeSDK runners get no GitHub OIDC token, so nscloud-setup's
+      # `nsc auth exchange-github-token` cannot work there. Pre-seed the
+      # workload token file it checks for when NSC_TOKEN is available;
+      # accepts either the raw bearer token or a full token JSON document.
+      - name: Seed Namespace token file
+        run: |
+          if [ -n "${NSC_TOKEN:-}" ] && [ ! -f /var/run/nsc/token.json ]; then
+            mkdir -p /var/run/nsc
+            case "$NSC_TOKEN" in
+              \{*) printf '%s\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+              *) printf '{"bearer_token":"%s"}\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+            esac
+            chmod 600 /var/run/nsc/token.json
+          fi
       - uses: namespacelabs/nscloud-setup@df198f982fcecfb8264bea3f1274b56a61b6dfdc # v0.0.12
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
