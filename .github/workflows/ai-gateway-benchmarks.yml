@@ -162,6 +162,9 @@ jobs:
       # `nsc auth exchange-github-token` cannot work there. Pre-seed the
       # workload token file it checks for when NSC_TOKEN is available;
       # accepts either the raw bearer token or a full token JSON document.
+      # It also exports NSC_DOCKER_LOGIN/NSC_CONTAINER_REGISTRY so
+      # nscloud-setup skips `nsc docker login`, which this token is not
+      # granted for — the benchmarks only need vault access.
       - name: Seed Namespace token file
         run: |
           if [ -n "${NSC_TOKEN:-}" ] && [ ! -f /var/run/nsc/token.json ]; then
@@ -171,6 +174,10 @@ jobs:
               *) printf '{"bearer_token":"%s"}\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
             esac
             chmod 600 /var/run/nsc/token.json
+            # The seeded token has no container-registry grant; tell
+            # nscloud-setup to skip `nsc docker login` for later steps.
+            echo "NSC_DOCKER_LOGIN=1" >> "$GITHUB_ENV"
+            echo "NSC_CONTAINER_REGISTRY=nscr.io" >> "$GITHUB_ENV"
           fi
       - uses: namespacelabs/nscloud-setup@v0
       - name: Install dependencies
