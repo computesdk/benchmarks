@@ -29,7 +29,7 @@ import type { BenchmarkConfig, BenchmarkTask } from './bench-config.js';
 
 const USAGE =
   'Usage:\n' +
-  '  bench run <file.bench.ts> [--shape name] [--provider a,b] [--run-key key]\n' +
+  '  bench run <file.bench.ts> [--shape name] [--provider a,b] [--run-key key] [--worker-pool N]\n' +
   '      [--benchmark slug] [--name "My benchmark"]\n' +
   '      [--iterations N] [--concurrency N] [--stagger-delay-ms N] [--group-by participant|round]\n' +
   '      [--no-ingest | --dry-run] [--check]\n' +

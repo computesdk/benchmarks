@@ -40,7 +40,7 @@ vi.mock('@benchsdk/cli', async (importOriginal) => {
   };
 });
 
-import { parseCliArgs, mergeConfig, runBenchmark } from '../runner';
+import { parseCliArgs, mergeConfig, runBenchmark, runBenchmarkWorker } from '../runner';
 import { BenchmarkApiError } from '@benchsdk/api';
 import { TaskError, defineTask } from '../bench-config';
 import { NoAvailableParticipantsError } from '../no-available-participants';
@@ -86,6 +86,23 @@ describe('parseCliArgs', () => {
     expect(parseCliArgs(['--run-key=ci-123'])).toEqual({ runKey: 'ci-123' });
     expect(() => parseCliArgs(['--shape', ''])).toThrow('--shape');
     expect(() => parseCliArgs(['--run-key', ''])).toThrow('--run-key');
+  });
+
+  it('parses --worker-pool', () => {
+    expect(parseCliArgs(['--worker-pool', '4', '--run-key', 'ci-123'])).toEqual({ workerPool: 4, runKey: 'ci-123' });
+    expect(parseCliArgs(['--worker-pool=4', '--run-key', 'ci-123'])).toEqual({ workerPool: 4, runKey: 'ci-123' });
+  });
+
+  it('rejects --worker-pool without --run-key', () => {
+    expect(() => parseCliArgs(['--worker-pool', '4'])).toThrow('--worker-pool requires --run-key');
+    expect(() => parseCliArgs(['--worker-pool=4'])).toThrow('--worker-pool requires --run-key');
+  });
+
+  it('throws on empty, negative, zero, or non-integer --worker-pool', () => {
+    expect(() => parseCliArgs(['--worker-pool', '', '--run-key', 'ci-123'])).toThrow('--worker-pool');
+    expect(() => parseCliArgs(['--worker-pool', '-3', '--run-key', 'ci-123'])).toThrow('--worker-pool');
+    expect(() => parseCliArgs(['--worker-pool', '0', '--run-key', 'ci-123'])).toThrow('--worker-pool');
+    expect(() => parseCliArgs(['--worker-pool', '1.5', '--run-key', 'ci-123'])).toThrow('--worker-pool');
   });
 
   it('throws on a non-slug --benchmark', () => {
@@ -225,6 +242,40 @@ describe('runBenchmark', () => {
   let calls: Record<string, any[]>;
   let fakeClient: any;
   let taskRangeStart: number;
+
+  /**
+   * Pool-mode variant of the `runWorker` mock: like the platform, it hands out
+   * contiguous per-worker task ranges, so each invocation claims the next
+   * worker and runs only its own iteration count (vs. the `beforeEach` mock,
+   * where one worker covers the whole run).
+   */
+  function claimNextWorkerMock(perWorker: number) {
+    let claimed = 0;
+    return async (_client: any, opts: any) => {
+      calls.runWorker.push(opts);
+      const start = claimed++ * perWorker;
+      const assignment = {
+        workerId: `w${claimed}`,
+        taskRange: { start, end: start + perWorker - 1, count: perWorker },
+      };
+      const records: any[] = [];
+      for (let ti = start; ti < start + perWorker; ti++) {
+        const measures: Record<string, unknown> = {};
+        const ctx = {
+          taskIndex: ti,
+          assignment,
+          step: async (_n: string, fn: any) => await fn(),
+          measure: (d: Record<string, unknown>) => Object.assign(measures, d),
+          log: () => {},
+        };
+        const returned = await opts.task(ctx);
+        const rec = { taskIndex: ti, status: 'success', data: { ...measures, ...(returned ?? {}) }, steps: [] };
+        opts.onResult?.(rec);
+        records.push(rec);
+      }
+      return { assignment, records };
+    };
+  }
 
   beforeEach(() => {
     taskRangeStart = 0;
@@ -561,6 +612,102 @@ describe('runBenchmark', () => {
     expect(calls.upsertParticipant[0].slice(0, 3)).toEqual(['sandbox-tti-local', 'run-1', 'e2b']);
     expect(calls.upsertParticipant[0][3]).toMatchObject({ totalTasks: 2 });
     expect(calls.runWorker[0]).toMatchObject({ runId: 'run-1' });
+    expect(outcome.runId).toBe('run-1');
+    expect(outcome.participants[0].records).toHaveLength(2);
+  });
+
+  it('sizes a pool for the whole --worker-pool, tolerates an already-planned pool, and claims the next worker per invocation', async () => {
+    const config: BenchmarkConfig<typeof participants[number]> = {
+      benchmarkSlug: 'sandbox-tti-local',
+      benchmarkName: 'Sandbox TTI',
+      iterations: 2,
+      participants: [participants[0]],
+    };
+    // The first invocation plans the pool; the second is told it already
+    // exists (409 is the shared-run contract working in pool mode).
+    fakeClient.planWorkers.mockImplementation((...a: any[]) => {
+      calls.planWorkers.push(a);
+      if (calls.planWorkers.length === 2) {
+        return Promise.reject(new BenchmarkApiError('Workers already planned', 409, ''));
+      }
+      return Promise.resolve([]);
+    });
+    // Each invocation claims the next worker of the pool and runs its own
+    // iteration count from that worker's task range.
+    runWorker.mockImplementation(claimNextWorkerMock(2));
+
+    const task = defineTask(async () => ({}));
+    await runBenchmark(config, task, ['--run-key', 'ci-123', '--worker-pool', '3', '--provider', 'e2b']);
+    const outcome = await runBenchmark(config, task, ['--run-key', 'ci-123', '--worker-pool', '3', '--provider', 'e2b']);
+
+    // Both invocations converge on the same keyed run, registered pool-sized:
+    // iterations * pool workers, claiming workerCount = pool.
+    expect(calls.createRun).toHaveLength(2);
+    expect(calls.createRun[0][1]).toMatchObject({ runKey: 'ci-123' });
+    expect(calls.createRun[0][1].totalTasks).toBeUndefined();
+    expect(calls.upsertParticipant).toHaveLength(2);
+    expect(calls.upsertParticipant[0].slice(0, 3)).toEqual(['sandbox-tti-local', 'run-1', 'e2b']);
+    expect(calls.upsertParticipant[0][3]).toMatchObject({ totalTasks: 6, workerCount: 3 });
+    // The second invocation's 409 was tolerated, and it still claimed a worker.
+    expect(calls.planWorkers).toHaveLength(2);
+    expect(calls.runWorker).toHaveLength(2);
+    expect(calls.runWorker[0]).toMatchObject({ runId: 'run-1' });
+    // The second invocation ran worker 2's slice (task indices 2-3), not the
+    // whole pool.
+    expect(outcome.runId).toBe('run-1');
+    expect(outcome.participants[0].records).toHaveLength(2);
+    expect(outcome.participants[0].records.map((r) => r.taskIndex)).toEqual([2, 3]);
+  });
+
+  it('propagates a planWorkers 409 outside pool mode', async () => {
+    const config: BenchmarkConfig<typeof participants[number]> = {
+      benchmarkSlug: 'sandbox-tti-local',
+      benchmarkName: 'Sandbox TTI',
+      iterations: 1,
+      participants: [participants[0]],
+    };
+    fakeClient.planWorkers.mockRejectedValueOnce(new BenchmarkApiError('Workers already planned', 409, ''));
+
+    await expect(
+      runBenchmark(config, defineTask(async () => ({})), ['--run-key', 'ci-123', '--provider', 'e2b']),
+    ).rejects.toThrow('Workers already planned');
+  });
+
+  it('rejects --worker-pool with round grouping', async () => {
+    const config: BenchmarkConfig<typeof participants[number]> = {
+      benchmarkSlug: 'sandbox-tti-local',
+      benchmarkName: 'Sandbox TTI',
+      iterations: 1,
+      participants,
+    };
+
+    await expect(
+      runBenchmark(config, defineTask(async () => ({})), [
+        '--run-key',
+        'ci-123',
+        '--worker-pool',
+        '2',
+        '--group-by',
+        'round',
+      ]),
+    ).rejects.toThrow('--worker-pool is only supported with --group-by participant');
+  });
+
+  it('forwards --worker-pool through runBenchmarkWorker', async () => {
+    runWorker.mockImplementation(claimNextWorkerMock(2));
+
+    const outcome = await runBenchmarkWorker({
+      benchmarkSlug: 'sandbox-tti-local',
+      runKey: 'ci-123',
+      workerPool: 3,
+      participant: participants[0],
+      task: defineTask(async () => ({})),
+      iterations: 2,
+    });
+
+    expect(calls.createRun).toHaveLength(1);
+    expect(calls.createRun[0][1]).toMatchObject({ runKey: 'ci-123' });
+    expect(calls.upsertParticipant[0][3]).toMatchObject({ totalTasks: 6, workerCount: 3 });
     expect(outcome.runId).toBe('run-1');
     expect(outcome.participants[0].records).toHaveLength(2);
   });

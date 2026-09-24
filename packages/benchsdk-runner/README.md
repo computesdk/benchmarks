@@ -58,6 +58,30 @@ Run it with the CLI (flags override the config knobs):
 bench run benchmarks/sandbox/sandbox-tti.bench.ts --iterations 100 --concurrency 20 --provider e2b,modal
 ```
 
+### Shared runs and worker pools
+
+By default each `bench run` opens its own run. `--run-key key` makes sibling
+invocations converge on one run instead: the run is get-or-created by key, and
+each sibling registers only its own participants — the pattern for one CI job
+per provider reporting into a single run.
+
+`--worker-pool N` (requires `--run-key`) sizes the run for N sequential
+invocations over its lifetime instead of one: the participant is registered for
+the whole pool, the platform plans N workers once, and each invocation claims
+the next pending worker and does its work. This lets a scheduled canary (e.g.
+one fire per minute) claim a worker per invocation, so one keyed run spans an
+entire day of scheduled fires:
+
+```sh
+bench run benchmarks/canary.bench.ts --run-key "2024-06-01" --worker-pool 1440 --provider e2b
+```
+
+`--worker-pool` is only supported with participant grouping (the default);
+round-mode runs plan a reporter per participant and don't claim workers.
+Siblings that join after the pool is planned are told the pool already exists
+(the plan route answers 409) and proceed to claim the next worker — that is the
+contract working, not an error.
+
 `bench run` requires platform auth — `BENCHMARKS_PLATFORM_API_KEY`, `BENCHMARKS_PLATFORM_TOKEN`, or a token saved via `bench auth login` — even for `--dry-run` / `--no-ingest` / `BENCHSDK_NO_INGEST=1`; those flags only skip uploading, they do not skip auth.
 
 To load a TypeScript benchmark without a build step, run the CLI under a TS loader:

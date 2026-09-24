@@ -66,6 +66,14 @@ export interface CliArgs {
    * one run (get-or-created), instead of each opening its own.
    */
   runKey?: string;
+  /**
+   * Worker pool size (`--worker-pool N`), for a keyed run driven by N sibling
+   * invocations over its lifetime: the participant is sized for the whole pool
+   * and N workers are planned once, and each invocation claims the next one.
+   * Requires `--run-key`; the per-sibling default stays one worker per
+   * invocation.
+   */
+  workerPool?: number;
   iterations?: number;
   concurrency?: number;
   staggerDelayMs?: number;
@@ -308,6 +316,12 @@ export function parseCliArgs(argv: string[], allowedCustomFlags?: readonly strin
         i = nextIndex;
         break;
       }
+      case '--worker-pool': {
+        const { value, nextIndex } = readValue(arg, i);
+        args.workerPool = intFlag(value, '--worker-pool');
+        i = nextIndex;
+        break;
+      }
       case '--iterations': {
         const { value, nextIndex } = readValue(arg, i);
         args.iterations = intFlag(value, '--iterations');
@@ -374,6 +388,12 @@ export function parseCliArgs(argv: string[], allowedCustomFlags?: readonly strin
 
   if (unknown.length > 0) {
     throw new Error(`Unknown flag(s): ${unknown.join(', ')}`);
+  }
+
+  // A pool is meaningless without a shared run to plan it into: every
+  // invocation would create its own run and plan its own workers anyway.
+  if (args.workerPool !== undefined && args.runKey === undefined) {
+    throw new Error('--worker-pool requires --run-key');
   }
 
   if (!args.noIngest && isEnvNoIngest()) {
@@ -597,7 +617,10 @@ export function runConfigToJson<T extends BaseParticipant>(
  * `--name` retarget the run at a different platform benchmark, so one entrypoint
  * can report under several slugs. With `--run-key`, sibling processes (e.g. one
  * CI job per provider) get-or-create one shared run and each registers only its
- * own participants.
+ * own participants; adding `--worker-pool N` sizes that run for N sequential
+ * invocations instead — the pool is planned once and each invocation claims
+ * the next worker, so a keyed run can be driven over time (e.g. a scheduled
+ * canary reporting into one run per day).
  */
 export async function runBenchmark<T extends BaseParticipant>(
   fileConfig: BenchmarkConfig<T>,
@@ -610,6 +633,13 @@ export async function runBenchmark<T extends BaseParticipant>(
   const shaped = applyShape(fileConfig, resolveShape(fileConfig, args.shape));
   const config = applyIdentityOverrides(shaped, args);
   const resolved = mergeConfig(config, args);
+
+  // Round mode plans one reporter per participant and streams records at it
+  // (no claimable worker pool), so a pool has no meaning there — refuse the
+  // combination rather than half-apply it.
+  if (args.workerPool !== undefined && resolved.groupBy === 'round') {
+    throw new Error('--worker-pool is only supported with --group-by participant');
+  }
 
   let baseUrl = '';
   let apiKey = '';
@@ -704,6 +734,12 @@ export async function runBenchmark<T extends BaseParticipant>(
       // converge on one run. Opened participant-sized — register only the
       // providers this process runs and let each sibling register its own, so the
       // run lists exactly who's benchmarked and each brings its own task count.
+      //
+      // With `--worker-pool N`, the run is instead driven by N sibling
+      // invocations over its lifetime (e.g. one scheduled fire per minute): the
+      // participant is sized for the whole pool — N workers' worth of this
+      // invocation's task count — and planned once, so every invocation claims
+      // the next pending worker instead of each planning its own.
       const { run, organizationSlug } = await client!.createRun(config.benchmarkSlug, {
         runKey: args.runKey,
         config: runConfig,
@@ -711,7 +747,14 @@ export async function runBenchmark<T extends BaseParticipant>(
       runId = run.id;
       dashboardUrl = dashboardUrlFor(baseUrl, organizationSlug, config.benchmarkSlug, run.id);
       for (const participant of available) {
-        await client!.upsertParticipant(config.benchmarkSlug, runId, participant.name, { totalTasks });
+        if (args.workerPool === undefined) {
+          await client!.upsertParticipant(config.benchmarkSlug, runId, participant.name, { totalTasks });
+        } else {
+          await client!.upsertParticipant(config.benchmarkSlug, runId, participant.name, {
+            totalTasks: totalTasks * args.workerPool,
+            workerCount: args.workerPool,
+          });
+        }
       }
       console.log(`Shared run (key "${args.runKey}"): ${run.name} (${runId})`);
       console.log(`View at: ${dashboardUrl}\n`);
@@ -735,7 +778,7 @@ export async function runBenchmark<T extends BaseParticipant>(
   if (resolved.groupBy === 'round') {
     participantRecords = await runGroupedByRound(config, schedule, available, resolved, client, runId, baseUrl, apiKey, token, orgSlug, orgId, onResult, noIngest);
   } else {
-    participantRecords = await runGroupedByParticipant(config, schedule, available, resolved, client, runId, onResult, noIngest);
+    participantRecords = await runGroupedByParticipant(config, schedule, available, resolved, client, runId, onResult, noIngest, args.workerPool);
   }
 
   console.log(`All done. ${noIngest ? 'No platform run created.' : `View at: ${dashboardUrl}`}`);
@@ -781,6 +824,8 @@ export interface RunBenchmarkWorkerOptions<T extends BaseParticipant = BaseParti
   benchmarkSlug: string;
   benchmarkName?: string;
   runKey?: string;
+  /** See `--worker-pool`; requires `runKey`. */
+  workerPool?: number;
   participant: T;
   task: BenchmarkTask<T>;
   iterations?: number;
@@ -811,6 +856,7 @@ export async function runBenchmarkWorker<T extends BaseParticipant>(
   });
   const argv: string[] = [];
   if (options.runKey) argv.push('--run-key', options.runKey);
+  if (options.workerPool !== undefined) argv.push('--worker-pool', String(options.workerPool));
   if (options.noIngest) argv.push('--dry-run');
   return runBenchmark(config, options.task, argv);
 }
@@ -835,6 +881,37 @@ function getGitRef(): string | undefined {
 }
 
 /**
+ * Plans a participant's workers on the platform.
+ *
+ * In pool mode the first invocation of a keyed run plans the whole pool and
+ * every later sibling is told the pool already exists (the plan route answers
+ * 409 "Workers already planned") — that is the shared-run contract working,
+ * not an error, so it is tolerated and the sibling goes on to claim the next
+ * pending worker. Any other failure still propagates. Without a pool the 409
+ * is a genuine surprise (nothing should have planned before us) and throws.
+ */
+async function planParticipantWorkers(
+  client: BenchmarkClient,
+  benchmarkSlug: string,
+  runId: string,
+  participantSlug: string,
+  workerPool: number | undefined,
+): Promise<void> {
+  try {
+    await client.planWorkers(benchmarkSlug, runId, participantSlug);
+  } catch (error) {
+    if (
+      workerPool === undefined ||
+      !(error instanceof BenchmarkApiError) ||
+      error.status !== 409
+    ) {
+      throw error;
+    }
+    console.log(`  Worker pool already planned for ${participantSlug} — joining it.`);
+  }
+}
+
+/**
  * 'participant' ordering: one `runWorker` call per participant, in turn.
  * `staggerDelayMs` here launches task N at `workerStart + N * staggerDelayMs`
  * (vs. round mode's fixed delay between rounds — intentionally different).
@@ -850,6 +927,7 @@ async function runGroupedByParticipant<T extends BaseParticipant>(
   runId: string,
   onResult: OnResult,
   noIngest: boolean,
+  workerPool: number | undefined = undefined,
 ): Promise<ParticipantRecords[]> {
   const participantRecords: ParticipantRecords[] = [];
   for (const participant of available) {
@@ -896,7 +974,7 @@ async function runGroupedByParticipant<T extends BaseParticipant>(
     // count can't inflate launch offsets: a task whose slot frees after its
     // scheduled launch time starts immediately instead of sleeping index*delay.
     let rampStartMs: number | undefined;
-    await client.planWorkers(config.benchmarkSlug, runId, participant.name);
+    await planParticipantWorkers(client, config.benchmarkSlug, runId, participant.name, workerPool);
 
     const result = await runWorker(client, {
       benchmarkSlug: config.benchmarkSlug,
