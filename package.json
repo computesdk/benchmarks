@@ -28,7 +28,7 @@
     "bench:sail": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --iterations 3 --concurrency 3 --provider sail",
     "bench:opencomputer": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --iterations 3 --concurrency 3 --provider opencomputer",
     "bench:tensorlake": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --iterations 3 --concurrency 3 --provider tensorlake",
-    "bench:reliability:tensorlake:opencode": "bench run benchmarks/reliability/sandbox-opencode.bench.ts --provider tensorlake --iterations 3",
+    "bench:reliability:tensorlake:opencode": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/reliability/sandbox-opencode.bench.ts --provider tensorlake --iterations 3",
     "bench:browser": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/browser/browser.bench.ts",
     "bench:browser:browserbase": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/browser/browser.bench.ts --provider browserbase",
     "bench:browser:hyperbrowser": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/browser/browser.bench.ts --provider hyperbrowser",
