@@ -113,7 +113,7 @@ export const config = defineBenchmarkConfig({
 // Target: 8 vCPU, 16 GiB RAM.
 // Each provider uses different parameter names and units, so we map per-provider.
 // Providers not listed here don't support CPU/memory configuration at sandbox creation time.
-// Note: E2B sets CPU/memory at template build time, not at sandbox creation.
+// Note: E2B and Novita set CPU/memory at template build time, not at sandbox creation.
 // Note: lightning is sized via LIGHTNING_INSTANCE_TYPE=cpu-8 (8 vCPU / 16 GiB), applied on
 // the provider factory in providers.ts — the SDK ignores an instanceType passed to create().
 const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {

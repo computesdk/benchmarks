@@ -22,6 +22,7 @@ import { miosa } from '@computesdk/miosa';
 import { mosaic } from '@computesdk/mosaic';
 import { namespace } from '@computesdk/namespace';
 import { northflank } from '@computesdk/northflank';
+import { novita } from '@computesdk/novita';
 import { opencomputer } from '@computesdk/opencomputer';
 // import { quilt } from '@computesdk/quilt';
 import { railway } from '@computesdk/railway';
@@ -201,6 +202,17 @@ export const providers: ProviderConfig[] = [
       projectId: process.env.NORTHFLANK_PROJECT_ID!,
       runtime: 'node',
     }),
+  },
+  {
+    name: 'novita',
+    requiredEnvVars: ['NOVITA_API_KEY'],
+    createCompute: () => novita({ apiKey: process.env.NOVITA_API_KEY! }),
+    // DAX and TTI share one prebuilt template (built by
+    // benchmarks/scripts/build-novita-template.ts). It includes Node.js because
+    // TTI runs `node -v` as its first command.
+    sandboxOptions: {
+      templateId: process.env.NOVITA_TEMPLATE_ID || 'base-8c-16g',
+    },
   },
   {
     name: 'opencomputer',
