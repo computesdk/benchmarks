@@ -181,7 +181,14 @@ async function main(): Promise<void> {
   await createBench(projectName);
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+// npm links bins through a `.bin` symlink, so process.argv[1] is the symlink
+// path while import.meta.url resolves to the real file — compare realpaths.
+const isMain =
+  process.argv[1] !== undefined &&
+  fs.existsSync(process.argv[1]) &&
+  fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url));
+
+if (isMain) {
   main().catch((err) => {
     console.error(err);
     process.exit(1);
