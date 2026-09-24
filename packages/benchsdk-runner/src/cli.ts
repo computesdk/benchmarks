@@ -32,7 +32,7 @@ const USAGE =
   '  bench run <file.bench.ts> [--shape name] [--provider a,b] [--run-key key] [--worker-pool N]\n' +
   '      [--benchmark slug] [--name "My benchmark"]\n' +
   '      [--iterations N] [--concurrency N] [--stagger-delay-ms N] [--group-by participant|round]\n' +
-  '      [--no-ingest | --dry-run] [--check]\n' +
+  '      [--close-after-ms N] [--no-ingest | --dry-run] [--check]\n' +
   '  bench check <file.bench.ts> [--base-url <url>] [--api-key <key>]';
 
 /** A benchmark module is expected to export `config` and `task`. */

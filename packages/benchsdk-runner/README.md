@@ -82,6 +82,19 @@ Siblings that join after the pool is planned are told the pool already exists
 (the plan route answers 409) and proceed to claim the next worker — that is the
 contract working, not an error.
 
+Pooled runs set `closeAfterMs` (from `config.closeAfterMs` or `--close-after-ms
+N`): the platform gates run-finalization on that deadline, and the invocation
+that claims the **last** worker closes the run — finalizing the day and
+surfacing the accounting (workers completed, never claimed = missing fires,
+reaped = abandoned fires). If the day ends with a missed fire, the backstop
+cron closes the still-in_progress run after its deadline. The run's own
+`config.closeAfterMs` is stored on the run so every sibling sees the same
+deadline; a manual close can override it per call.
+
+```sh
+bench run benchmarks/canary.bench.ts --run-key "2024-06-01" --worker-pool 1440 --close-after-ms 86400000 --provider e2b
+```
+
 `bench run` requires platform auth — `BENCHMARKS_PLATFORM_API_KEY`, `BENCHMARKS_PLATFORM_TOKEN`, or a token saved via `bench auth login` — even for `--dry-run` / `--no-ingest` / `BENCHSDK_NO_INGEST=1`; those flags only skip uploading, they do not skip auth.
 
 To load a TypeScript benchmark without a build step, run the CLI under a TS loader:

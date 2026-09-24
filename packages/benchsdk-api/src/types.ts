@@ -172,6 +172,27 @@ export interface UpdateRunInput {
   config?: JsonObject;
 }
 
+export interface CloseRunInput {
+  /**
+   * Optional deadline override for a close call; the run's own
+   * config.closeAfterMs wins when present.
+   */
+  closeAfterMs?: number;
+}
+
+export interface CloseRunOutcome {
+  /** Total workers across all participants (expected unit count for the day). */
+  workerCount: number;
+  /** Workers that completed. */
+  completedWorkers: number;
+  /** Workers still pending (never claimed) when the run closed — missing fires. */
+  pendingWorkers: number;
+  /** Workers that were running (stale) and were reaped at close — abandoned fires. */
+  reapedWorkers: number;
+  /** Per-participant attempts created across the run. */
+  attemptCount: number;
+}
+
 export interface UpsertParticipantInput {
   label?: string;
   provider?: string;
@@ -937,4 +958,12 @@ export interface BenchmarkClient {
   ): Promise<BenchmarkRunStepIterations>;
   getRunImports(benchmarkSlug: string, runId: string): Promise<BenchmarkRunImports>;
   submitRunSummary(benchmarkSlug: string, runId: string, input: BenchmarkRunSummaryInput): Promise<void>;
+  closeRun(
+    benchmarkSlug: string,
+    runId: string,
+    input?: CloseRunInput,
+  ): Promise<{
+    run: { id: string; status: string; endedAt: string | null };
+    outcome: CloseRunOutcome;
+  }>;
 }

@@ -82,6 +82,12 @@ export interface CliArgs {
   providers?: string[];
   /** When true, run locally and do not ingest/report to the platform. */
   noIngest?: boolean;
+  /**
+   * For keyed runs: override the run's config.closeAfterMs. After this many
+   * milliseconds from run creation, the platform allows a close call to
+   * finalize the run (see closeRun in @benchsdk/api).
+   */
+  closeAfterMs?: number;
 }
 
 function isEnvNoIngest(): boolean {
@@ -340,6 +346,12 @@ export function parseCliArgs(argv: string[], allowedCustomFlags?: readonly strin
         i = nextIndex;
         break;
       }
+      case '--close-after-ms': {
+        const { value, nextIndex } = readValue(arg, i);
+        args.closeAfterMs = nonNegFlag(value, '--close-after-ms');
+        i = nextIndex;
+        break;
+      }
       case '--group-by': {
         const { value, nextIndex } = readValue(arg, i);
         if (value !== 'participant' && value !== 'round') {
@@ -433,6 +445,7 @@ export function mergeConfig<T extends BaseParticipant>(
     staggerDelayMs: args.staggerDelayMs ?? config.staggerDelayMs ?? 0,
     groupBy: args.groupBy ?? config.groupBy ?? 'participant',
     providers: args.providers ?? config.defaultProviders,
+    closeAfterMs: args.closeAfterMs ?? config.closeAfterMs,
   };
   if (!Number.isInteger(resolved.iterations) || resolved.iterations < 1) {
     throw new Error(`iterations must be an integer >= 1 (got ${resolved.iterations})`);
@@ -604,6 +617,7 @@ export function runConfigToJson<T extends BaseParticipant>(
     groupBy: resolved.groupBy,
     ...(config.dimensions ? { dimensions: config.dimensions } : {}),
     ...(config.scoring ? { scoring: config.scoring } : {}),
+    ...(config.closeAfterMs !== undefined ? { closeAfterMs: config.closeAfterMs } : {}),
     participants,
     trigger: triggerToJson(env),
   };
@@ -826,6 +840,8 @@ export interface RunBenchmarkWorkerOptions<T extends BaseParticipant = BaseParti
   runKey?: string;
   /** See `--worker-pool`; requires `runKey`. */
   workerPool?: number;
+  /** See `--close-after-ms`: keyed-run close deadline override. */
+  closeAfterMs?: number;
   participant: T;
   task: BenchmarkTask<T>;
   iterations?: number;
@@ -853,10 +869,12 @@ export async function runBenchmarkWorker<T extends BaseParticipant>(
     staggerDelayMs: options.staggerDelayMs ?? 0,
     groupBy: options.groupBy ?? 'participant',
     defaultProviders: [options.participant.name],
+    closeAfterMs: options.closeAfterMs,
   });
   const argv: string[] = [];
   if (options.runKey) argv.push('--run-key', options.runKey);
   if (options.workerPool !== undefined) argv.push('--worker-pool', String(options.workerPool));
+  if (options.closeAfterMs !== undefined) argv.push('--close-after-ms', String(options.closeAfterMs));
   if (options.noIngest) argv.push('--dry-run');
   return runBenchmark(config, options.task, argv);
 }
@@ -908,6 +926,33 @@ async function planParticipantWorkers(
       throw error;
     }
     console.log(`  Worker pool already planned for ${participantSlug} — joining it.`);
+  }
+}
+
+/**
+ * Updates a pooled run's stale-running worker (the owning fire died or was
+ * superseded) to failed. Mirrors the reaper's write for a single worker; the
+ * close path (see closeRun in @benchsdk/api) owns the run-level finalization.
+ * Best-effort: a failure here shouldn't fail the whole run, only be noted.
+ */
+async function runWorkerClose(
+  client: BenchmarkClient | null,
+  benchmarkSlug: string,
+  runId: string,
+): Promise<string | null> {
+  if (!client) return null;
+  try {
+    const result = await client.closeRun(benchmarkSlug, runId);
+    const o = result.outcome;
+    return (
+      `  Closed run ${runId} (${result.run.status}) — ` +
+      `workers ${o.completedWorkers}/${o.workerCount} completed, ` +
+      `${o.pendingWorkers} pending (missing fires), ${o.reapedWorkers} reaped, ${o.attemptCount} attempts.`
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`  Failed to close run ${runId}: ${message}`);
+    return null;
   }
 }
 
@@ -1018,6 +1063,21 @@ async function runGroupedByParticipant<T extends BaseParticipant>(
       },
       onResult: (record) => onResult(record, { iterations: schedule.length, participant: participant.name }),
     });
+
+    // Pooled keyed runs: the invocation that claimed the last worker (the
+    // highest workerIndex) is, by construction, the last fire — it closes the
+    // run so the platform finalizes the day and returns the accounting (how
+    // many workers were never claimed = missing fires). Fires even if this
+    // worker's tasks failed — the run is ending either way and the accounting
+    // must reflect it.
+    const claimedLast =
+      workerPool !== undefined && result.assignment !== null &&
+      result.assignment.workerIndex === result.assignment.workerCount - 1;
+
+    if (claimedLast) {
+      const closeLog = await runWorkerClose(client, config.benchmarkSlug, runId);
+      if (closeLog) console.log(closeLog);
+    }
 
     if (!result.assignment) {
       console.error(`  No pending worker to claim for run ${runId} — it may already be fully claimed.`);

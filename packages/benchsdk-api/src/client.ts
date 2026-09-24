@@ -47,6 +47,8 @@ import type {
   UploadWorkerArtifactInput,
   WorkerConcurrencySample,
   WorkerHeartbeatInput,
+  CloseRunInput,
+  CloseRunOutcome,
 } from './types';
 
 const DEFAULT_BASE_URL = 'https://platform.computesdk.com/api/v1';
@@ -573,6 +575,15 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
         `/benchmarks/${encodePath(benchmarkSlug)}/runs/${encodePath(runId)}/summary`,
         input as unknown as JsonObject,
       );
+    },
+
+    async closeRun(benchmarkSlug, runId, input: CloseRunInput = {}) {
+      const data = await request<{ run: { id: string; status: string; endedAt: string | null }; outcome: CloseRunOutcome }>(
+        'POST',
+        `/benchmarks/${encodePath(benchmarkSlug)}/runs/${encodePath(runId)}/close`,
+        input as unknown as JsonObject,
+      );
+      return data;
     },
   };
 

@@ -146,6 +146,12 @@ describe('parseCliArgs', () => {
     expect(() => parseCliArgs(['--stagger-delay-ms', '-1'])).toThrow('--stagger-delay-ms');
   });
 
+  it('parses --close-after-ms', () => {
+    expect(parseCliArgs(['--close-after-ms', '86400000'])).toEqual({ closeAfterMs: 86400000 });
+    expect(parseCliArgs(['--close-after-ms=3600000'])).toEqual({ closeAfterMs: 3600000 });
+    expect(() => parseCliArgs(['--close-after-ms', '-1'])).toThrow('--close-after-ms');
+  });
+
   it('returns empty object for no args', () => {
     expect(parseCliArgs([])).toEqual({});
   });
@@ -253,13 +259,15 @@ describe('runBenchmark', () => {
     let claimed = 0;
     return async (_client: any, opts: any) => {
       calls.runWorker.push(opts);
-      const start = claimed++ * perWorker;
+      const start = claimed++;
       const assignment = {
-        workerId: `w${claimed}`,
-        taskRange: { start, end: start + perWorker - 1, count: perWorker },
+        workerId: `w${start}`,
+        workerIndex: start,
+        workerCount: perWorker,
+        taskRange: { start: start * perWorker, end: start * perWorker + perWorker - 1, count: perWorker },
       };
       const records: any[] = [];
-      for (let ti = start; ti < start + perWorker; ti++) {
+      for (let ti = assignment.taskRange.start; ti <= assignment.taskRange.end; ti++) {
         const measures: Record<string, unknown> = {};
         const ctx = {
           taskIndex: ti,
@@ -288,7 +296,7 @@ describe('runBenchmark', () => {
     process.env.E2B_API_KEY = 'x';
     process.env.MODAL_TOKEN = 'y';
     process.env.BENCHMARKS_PLATFORM_API_KEY = 'test-key';
-    calls = { upsertBenchmark: [], getBenchmark: [], createRun: [], planWorkers: [], upsertParticipant: [], getRun: [], runWorker: [], taskData: [], submitRunSummary: [] };
+    calls = { upsertBenchmark: [], getBenchmark: [], createRun: [], planWorkers: [], upsertParticipant: [], getRun: [], runWorker: [], taskData: [], submitRunSummary: [], closeRun: [] };
     fakeClient = {
       upsertBenchmark: vi.fn(async (...a: any[]) => { calls.upsertBenchmark.push(a); return {}; }),
       getBenchmark: vi.fn(async (slug: string) => { calls.getBenchmark.push([slug]); return { slug }; }),
@@ -299,6 +307,10 @@ describe('runBenchmark', () => {
       getRun: vi.fn(async (slug: string, runId: string) => {
         calls.getRun.push([slug, runId]);
         return { id: runId, totalTasks: 3, participantSized: runId === 'run-open' };
+      }),
+      closeRun: vi.fn(async (...a: any[]) => {
+        calls.closeRun.push(a);
+        return { run: { id: 'run-1', status: 'completed', endedAt: new Date().toISOString() }, outcome: { workerCount: 3, completedWorkers: 3, pendingWorkers: 0, reapedWorkers: 0, attemptCount: 3 } };
       }),
     };
     runWorker.mockImplementation(async (_client: any, opts: any) => {
@@ -659,6 +671,30 @@ describe('runBenchmark', () => {
     expect(outcome.participants[0].records.map((r) => r.taskIndex)).toEqual([2, 3]);
   });
 
+  it('closes the run when the last worker of the pool completes', async () => {
+    const config: BenchmarkConfig<typeof participants[number]> = {
+      benchmarkSlug: 'sandbox-tti-local',
+      benchmarkName: 'Sandbox TTI',
+      iterations: 2,
+      participants: [participants[0]],
+    };
+    // The first invocation plans the pool; subsequent invocations join it.
+    runWorker.mockImplementation(claimNextWorkerMock(2));
+
+    const task = defineTask(async () => ({}));
+    // Fire 1 claims worker 0, fire 2 claims worker 1 (the last), fire 3 has no
+    // worker left (already fully claimed).
+    await runBenchmark(config, task, ['--run-key', 'ci-123', '--worker-pool', '2', '--provider', 'e2b']);
+    await runBenchmark(config, task, ['--run-key', 'ci-123', '--worker-pool', '2', '--provider', 'e2b']);
+    await runBenchmark(config, task, ['--run-key', 'ci-123', '--worker-pool', '2', '--provider', 'e2b']);
+
+    expect(calls.runWorker).toHaveLength(3);
+    // Worker 0 (index 0): no close. Worker 1 (index 1, last): close. Worker 2:
+    // no claim (assignment null), no close.
+    expect(calls.closeRun).toHaveLength(1);
+    expect(calls.closeRun[0].slice(0, 2)).toEqual(['sandbox-tti-local', 'run-1']);
+  });
+
   it('propagates a planWorkers 409 outside pool mode', async () => {
     const config: BenchmarkConfig<typeof participants[number]> = {
       benchmarkSlug: 'sandbox-tti-local',
@@ -693,20 +729,21 @@ describe('runBenchmark', () => {
     ).rejects.toThrow('--worker-pool is only supported with --group-by participant');
   });
 
-  it('forwards --worker-pool through runBenchmarkWorker', async () => {
+  it('forwards --worker-pool and --close-after-ms through runBenchmarkWorker', async () => {
     runWorker.mockImplementation(claimNextWorkerMock(2));
 
     const outcome = await runBenchmarkWorker({
       benchmarkSlug: 'sandbox-tti-local',
       runKey: 'ci-123',
       workerPool: 3,
+      closeAfterMs: 86400000,
       participant: participants[0],
       task: defineTask(async () => ({})),
       iterations: 2,
     });
 
     expect(calls.createRun).toHaveLength(1);
-    expect(calls.createRun[0][1]).toMatchObject({ runKey: 'ci-123' });
+    expect(calls.createRun[0][1]).toMatchObject({ runKey: 'ci-123', config: { closeAfterMs: 86400000 } });
     expect(calls.upsertParticipant[0][3]).toMatchObject({ totalTasks: 6, workerCount: 3 });
     expect(outcome.runId).toBe('run-1');
     expect(outcome.participants[0].records).toHaveLength(2);

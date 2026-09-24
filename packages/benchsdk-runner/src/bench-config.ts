@@ -201,6 +201,8 @@ export interface ResolvedRunConfig {
   staggerDelayMs: number;
   groupBy: GroupBy;
   providers?: string[];
+  /** Keyed-run close deadline override (see BenchmarkConfig.closeAfterMs). */
+  closeAfterMs?: number;
 }
 
 /**
@@ -290,6 +292,14 @@ export interface BenchmarkConfig<T extends BaseParticipant = BaseParticipant> {
    * The platform can recompute `compositeScore` from the same spec at read time.
    */
   scoring?: BenchmarkScoringConfig;
+  /**
+   * For keyed runs: how long after run creation the platform should wait before
+   * a close call finalizes it (milliseconds). The last invocation of a pooled
+   * run closes the day; the platform also runs a backstop for runs whose close
+   * never fires. Stored in the run's config so every sibling sees the same
+   * deadline. Fed through closeRun / the platform's close-overdue-runs cron.
+   */
+  closeAfterMs?: number;
   /**
    * Custom CLI flags this benchmark reads from `process.argv` (e.g. `--file-size`).
    * Declaring them lets the runner distinguish intentional pass-through flags
