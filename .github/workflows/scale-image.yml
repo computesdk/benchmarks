@@ -1,9 +1,6 @@
 name: Scale Image
 
 on:
-  pull_request:
-    paths:
-      - 'benchmarks/scale/**'
   workflow_dispatch:
 
 concurrency:
