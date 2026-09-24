@@ -568,7 +568,9 @@ describe('runBenchmark', () => {
     };
 
     await runBenchmark(config, defineTask(async () => ({})), ['--benchmark', 'sandbox-burst-local']);
-    expect(calls.upsertBenchmark).toEqual([]);
+    // Still upserts (so a brand-new slug exists for createRun) but passes no
+    // name, leaving any existing benchmark's name untouched.
+    expect(calls.upsertBenchmark).toEqual([['sandbox-burst-local', {}]]);
 
     await runBenchmark(config, defineTask(async () => ({})), [
       '--benchmark',
@@ -576,7 +578,7 @@ describe('runBenchmark', () => {
       '--name',
       'Sandbox burst TTI',
     ]);
-    expect(calls.upsertBenchmark[0]).toEqual(['sandbox-burst-local', { name: 'Sandbox burst TTI' }]);
+    expect(calls.upsertBenchmark[1]).toEqual(['sandbox-burst-local', { name: 'Sandbox burst TTI' }]);
   });
 
   it('selects a declared shape by --shape, reporting under its slug and name', async () => {

@@ -668,15 +668,21 @@ export async function runBenchmark<T extends BaseParticipant>(
     runId = 'no-ingest';
     dashboardUrl = '';
   } else {
-    if (identityIsOurs) {
+    {
       const benchmarkConfig: JsonObject = {
         ...(config.scoring ? { scoring: config.scoring as unknown as JsonObject } : {}),
         ...(config.display ? { display: config.display as unknown as JsonObject } : {}),
       };
-      await client!.upsertBenchmark(config.benchmarkSlug, {
-        name: config.benchmarkName,
-        ...(Object.keys(benchmarkConfig).length > 0 ? { config: benchmarkConfig } : {}),
-      });
+      // Always upsert the target slug so createRun can't 404 on a brand-new
+      // --benchmark. A bare retarget passes no name/config: PUT only writes
+      // fields that were provided, so an existing benchmark is left untouched
+      // while a missing one is created.
+      const upsertInput: Parameters<BenchmarkClient['upsertBenchmark']>[1] = {};
+      if (identityIsOurs) {
+        upsertInput.name = config.benchmarkName;
+        if (Object.keys(benchmarkConfig).length > 0) upsertInput.config = benchmarkConfig;
+      }
+      await client!.upsertBenchmark(config.benchmarkSlug, upsertInput);
     }
 
     const runConfig = client
