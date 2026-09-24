@@ -8,9 +8,6 @@ on:
     branches: [master]
     paths:
       - 'benchmarks/ai-gateway/**'
-      - 'benchmarks/src/util/**'
-      - 'benchmarks/src/merge-results.ts'
-      - 'package.json'
       - '.github/workflows/ai-gateway-benchmarks.yml'
   schedule:
     - cron: '0 9 * * 5' # Weekly on Friday at 9am UTC (4am CDT)
