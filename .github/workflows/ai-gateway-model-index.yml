@@ -8,9 +8,7 @@ on:
     branches: [master]
     paths:
       - 'benchmarks/ai-gateway/**'
-      - 'benchmarks/src/util/**'
       - 'benchmarks/scripts/provider-vars.json'
-      - 'package.json'
       - '.github/workflows/ai-gateway-model-index.yml'
   schedule:
     - cron: '0 9 * * 5' # Weekly on Friday at 9am UTC (4am CDT)

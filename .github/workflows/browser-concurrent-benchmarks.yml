@@ -9,9 +9,6 @@ on:
     paths:
       - 'benchmarks/browser/*concurrent*'
       - 'benchmarks/browser/concurrent-*'
-      - 'benchmarks/src/util/**'
-      - 'benchmarks/src/merge-results.ts'
-      - 'package.json'
   schedule:
     - cron: '0 4 * * 1' # Weekly on Monday at 04:00 UTC (offset from other browser benchmarks)
   workflow_dispatch:

@@ -8,9 +8,6 @@ on:
     branches: [master]
     paths:
       - 'benchmarks/browser/**'
-      - 'benchmarks/src/util/**'
-      - 'benchmarks/src/merge-results.ts'
-      - 'package.json'
   schedule:
     - cron: '30 10 * * 5' # Weekly on Friday at 10:30am UTC (5:30am CDT, offset from main browser benchmark to avoid provider contention)
   workflow_dispatch:

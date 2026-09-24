@@ -8,9 +8,6 @@ on:
     branches: [master]
     paths:
       - 'benchmarks/sandbox/**'
-      - 'benchmarks/src/util/**'
-      - 'benchmarks/src/merge-results.ts'
-      - 'package.json'
   schedule:
     - cron: '0 13 * * 5' # Weekly on Friday at 1pm UTC (8am CDT)
   workflow_dispatch:

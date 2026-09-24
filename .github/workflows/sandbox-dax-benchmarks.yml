@@ -9,11 +9,9 @@ on:
     paths:
       - 'benchmarks/sandbox/dax.ts'
       - 'benchmarks/sandbox/providers.ts'
-      - 'benchmarks/src/merge-results.ts'
       - 'benchmarks/scripts/dax-benchmark.sh'
       - 'benchmarks/sandbox/generate-dax-svg.ts'
       - 'dax.svg'
-      - 'package.json'
       - '.github/workflows/sandbox-dax-benchmarks.yml'
   schedule:
     - cron: '30 13 * * 5' # Weekly on Friday at 1:30pm UTC (8:30am CDT, offset from TTI to avoid provider contention)

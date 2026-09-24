@@ -10,9 +10,6 @@ on:
       - 'benchmarks/storage/storage-concurrency.*'
       - 'benchmarks/storage/report-storage-concurrency.ts'
       - 'benchmarks/storage/providers.ts'
-      - 'benchmarks/src/util/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
   schedule:
     - cron: '0 13 * * 3' # Weekly on Wednesday at 13:00 UTC
   workflow_dispatch:
