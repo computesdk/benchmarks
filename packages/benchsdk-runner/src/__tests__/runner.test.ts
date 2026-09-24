@@ -4,9 +4,13 @@ const createBenchmarkClient = vi.fn();
 const runWorker = vi.fn();
 const reporterClaim = vi.fn();
 
-vi.mock('@benchsdk/api', () => ({
-  createBenchmarkClient: (...args: unknown[]) => createBenchmarkClient(...args),
-}));
+vi.mock('@benchsdk/api', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@benchsdk/api')>();
+  return {
+    ...original,
+    createBenchmarkClient: (...args: unknown[]) => createBenchmarkClient(...args),
+  };
+});
 
 vi.mock('@benchsdk/worker', () => ({
   BenchmarkReporter: { claim: (...args: unknown[]) => reporterClaim(...args) },
@@ -37,6 +41,7 @@ vi.mock('@benchsdk/cli', async (importOriginal) => {
 });
 
 import { parseCliArgs, mergeConfig, runBenchmark } from '../runner';
+import { BenchmarkApiError } from '@benchsdk/api';
 import { TaskError, defineTask } from '../bench-config';
 import { NoAvailableParticipantsError } from '../no-available-participants';
 import { resolveAuth, AuthError } from '@benchsdk/cli';
@@ -232,9 +237,10 @@ describe('runBenchmark', () => {
     process.env.E2B_API_KEY = 'x';
     process.env.MODAL_TOKEN = 'y';
     process.env.BENCHMARKS_PLATFORM_API_KEY = 'test-key';
-    calls = { upsertBenchmark: [], createRun: [], planWorkers: [], upsertParticipant: [], getRun: [], runWorker: [], taskData: [], submitRunSummary: [] };
+    calls = { upsertBenchmark: [], getBenchmark: [], createRun: [], planWorkers: [], upsertParticipant: [], getRun: [], runWorker: [], taskData: [], submitRunSummary: [] };
     fakeClient = {
       upsertBenchmark: vi.fn(async (...a: any[]) => { calls.upsertBenchmark.push(a); return {}; }),
+      getBenchmark: vi.fn(async (slug: string) => { calls.getBenchmark.push([slug]); return { slug }; }),
       createRun: vi.fn(async (...a: any[]) => { calls.createRun.push(a); return { run: { id: 'run-1' }, participants: [] }; }),
       planWorkers: vi.fn(async (...a: any[]) => { calls.planWorkers.push(a); return []; }),
       upsertParticipant: vi.fn(async (...a: any[]) => { calls.upsertParticipant.push(a); return {}; }),
@@ -568,8 +574,9 @@ describe('runBenchmark', () => {
     };
 
     await runBenchmark(config, defineTask(async () => ({})), ['--benchmark', 'sandbox-burst-local']);
-    // Still upserts (so a brand-new slug exists for createRun) but passes no
-    // name, leaving any existing benchmark's name untouched.
+    // Existing target: still upserts (so createRun can't 404) but passes no
+    // name, leaving the benchmark untouched.
+    expect(calls.getBenchmark).toEqual([['sandbox-burst-local']]);
     expect(calls.upsertBenchmark).toEqual([['sandbox-burst-local', {}]]);
 
     await runBenchmark(config, defineTask(async () => ({})), [
@@ -579,6 +586,24 @@ describe('runBenchmark', () => {
       'Sandbox burst TTI',
     ]);
     expect(calls.upsertBenchmark[1]).toEqual(['sandbox-burst-local', { name: 'Sandbox burst TTI' }]);
+  });
+
+  it('creates a brand-new retargeted slug with the file identity', async () => {
+    const config: BenchmarkConfig<typeof participants[number]> = {
+      benchmarkSlug: 'sandbox-tti-local',
+      benchmarkName: 'Sandbox TTI',
+      iterations: 1,
+      participants: [participants[0]],
+      scoring: { metrics: [{ key: 'ttiMs', ceiling: 60000, weights: { median: 1 } }] },
+    };
+    fakeClient.getBenchmark.mockRejectedValueOnce(new BenchmarkApiError('not found', 404, ''));
+
+    await runBenchmark(config, defineTask(async () => ({})), ['--benchmark', 'sandbox-test-1']);
+
+    expect(calls.upsertBenchmark[0][0]).toBe('sandbox-test-1');
+    expect(calls.upsertBenchmark[0][1].name).toBe('Sandbox TTI');
+    expect(calls.upsertBenchmark[0][1].config).toBeDefined();
+    expect(calls.createRun[0][0]).toBe('sandbox-test-1');
   });
 
   it('selects a declared shape by --shape, reporting under its slug and name', async () => {
