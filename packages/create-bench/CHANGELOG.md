@@ -1,5 +1,11 @@
 # create-bench
 
+## 0.1.4
+
+### Patch Changes
+
+- 8d071c0: Fix `npx create-bench` / `npm create bench` silently creating nothing. The entry guard compared `process.argv[1]` to `import.meta.url` literally, but npm invokes the bin through a `.bin` symlink, so the paths never matched and `main()` never ran. The guard now compares realpaths.
+
 ## 0.1.3
 
 ### Patch Changes
