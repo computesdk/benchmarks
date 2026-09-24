@@ -139,7 +139,9 @@ export interface BenchmarkAssignment {
 }
 
 export interface UpsertBenchmarkInput {
-  name: string;
+  // Optional so a caller can create-or-touch a slug without renaming an
+  // existing benchmark: the API only writes `name` when it is provided.
+  name?: string;
   status?: string;
   config?: JsonObject;
   defaultRunConfig?: JsonObject;

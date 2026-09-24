@@ -16,7 +16,7 @@
  */
 import { execSync } from 'node:child_process';
 import os from 'node:os';
-import { createBenchmarkClient } from '@benchsdk/api';
+import { createBenchmarkClient, BenchmarkApiError } from '@benchsdk/api';
 import { resolveAuth } from '@benchsdk/cli';
 import type { CliAuth } from '@benchsdk/cli';
 import {
@@ -668,15 +668,31 @@ export async function runBenchmark<T extends BaseParticipant>(
     runId = 'no-ingest';
     dashboardUrl = '';
   } else {
-    if (identityIsOurs) {
+    {
       const benchmarkConfig: JsonObject = {
         ...(config.scoring ? { scoring: config.scoring as unknown as JsonObject } : {}),
         ...(config.display ? { display: config.display as unknown as JsonObject } : {}),
       };
-      await client!.upsertBenchmark(config.benchmarkSlug, {
-        name: config.benchmarkName,
-        ...(Object.keys(benchmarkConfig).length > 0 ? { config: benchmarkConfig } : {}),
-      });
+      // Always upsert the target slug so createRun can't 404 on a brand-new
+      // --benchmark. A bare retarget leaves an existing benchmark untouched
+      // (PUT only writes provided fields), but a missing one is created with
+      // the file's name and scoring/display manifest — a new slug has nothing
+      // to preserve.
+      let initializeTarget = identityIsOurs;
+      if (!initializeTarget) {
+        try {
+          await client!.getBenchmark(config.benchmarkSlug);
+        } catch (error) {
+          if (!(error instanceof BenchmarkApiError && error.status === 404)) throw error;
+          initializeTarget = true;
+        }
+      }
+      const upsertInput: Parameters<BenchmarkClient['upsertBenchmark']>[1] = {};
+      if (initializeTarget) {
+        upsertInput.name = config.benchmarkName;
+        if (Object.keys(benchmarkConfig).length > 0) upsertInput.config = benchmarkConfig;
+      }
+      await client!.upsertBenchmark(config.benchmarkSlug, upsertInput);
     }
 
     const runConfig = client
