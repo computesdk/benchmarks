@@ -460,7 +460,14 @@ function defaultOnResult(record: TaskResultRecord, meta: { iterations: number; p
     console.log(`  [${meta.participant}] Task ${n}/${meta.iterations}: success${data}`);
   } else {
     const detail = record.data?.errorMessage ?? record.data?.error;
-    const suffix = typeof detail === 'string' && detail.length > 0 ? `: ${detail}` : '';
+    const cause = record.data?.errorCause;
+    let suffix = '';
+    if (typeof detail === 'string' && detail.length > 0) {
+      suffix = `: ${detail}`;
+    }
+    if (typeof cause === 'string' && cause.length > 0) {
+      suffix += ` (cause: ${cause})`;
+    }
     console.log(`  [${meta.participant}] Task ${n}/${meta.iterations}: FAILED — ${record.errorCode ?? 'unknown error'}${suffix}`);
   }
 }
@@ -1215,12 +1222,27 @@ async function runTaskRecord<T extends BaseParticipant>(
     record.status = 'error';
     if (isTaskError(error)) {
       record.errorCode = error.code ?? error.name;
-      record.data = mergeData({ ...taskMeasures, ...(error.data ?? {}) }, phase);
+      record.data = mergeData(
+        {
+          ...taskMeasures,
+          ...(error.data ?? {}),
+          ...(error.cause !== undefined
+            ? { errorCause: error.cause instanceof Error ? error.cause.message : String(error.cause) }
+            : {}),
+        },
+        phase,
+      );
       if (error.steps?.length) frameworkSteps.push(...error.steps);
     } else {
       record.errorCode = getErrorCode(error);
       record.data = mergeData(
-        { ...taskMeasures, errorMessage: error instanceof Error ? error.message : String(error) },
+        {
+          ...taskMeasures,
+          errorMessage: error instanceof Error ? error.message : String(error),
+          ...(error instanceof Error && error.cause !== undefined
+            ? { errorCause: error.cause instanceof Error ? error.cause.message : String(error.cause) }
+            : {}),
+        },
         phase,
       );
     }

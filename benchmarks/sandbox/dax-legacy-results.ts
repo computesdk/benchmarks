@@ -93,6 +93,15 @@ export async function writeDaxLegacyResults(
 ): Promise<void> {
   const results = recordsToDaxResults(participants);
 
+  const failedProviders = results
+    .filter((r) => !r.skipped && r.successRate === 0)
+    .map((r) => r.provider);
+  if (failedProviders.length > 0) {
+    throw new Error(
+      `Sandbox DAX smoke test failed: the following providers had 0% success: ${failedProviders.join(', ')}`,
+    );
+  }
+
   mkdirSync(opts.resultsDir, { recursive: true });
 
   const timestamp = new Date().toISOString().slice(0, 10);
