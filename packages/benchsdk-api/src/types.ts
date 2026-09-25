@@ -14,6 +14,29 @@ export interface BenchmarkClientConfig {
   orgId?: string;
   /** Custom fetch implementation, mostly useful for tests. */
   fetch?: typeof fetch;
+  /**
+   * Called whenever a response (success or error) carries an `upgrade`
+   * offer — e.g. when the caller's org could subscribe to daily runs of the
+   * benchmark it just read. CLIs can print it; JSON consumers already see it
+   * in-band.
+   */
+  onUpgradeNotice?: (notice: BenchmarkUpgradeNotice) => void;
+}
+
+/**
+ * "Upgrade to daily runs" offer attached to v1 read responses (and to the
+ * 403 returned when an org reads a ComputeSDK-run benchmark it isn't
+ * subscribed to). Machine-readable so agents can relay it to a human.
+ */
+export interface BenchmarkUpgradeNotice {
+  offer: 'daily-benchmarks';
+  /** Category whose subscription unlocks the daily version. */
+  category: string;
+  categoryName: string;
+  cadence: 'weekly';
+  message: string;
+  learnMoreUrl: string;
+  billingUrl: string | null;
 }
 
 export interface BenchmarkResource {
@@ -414,6 +437,7 @@ export interface BenchmarkResultsOverviewRun {
 export interface BenchmarkResultsOverview {
   benchmark: Pick<BenchmarkResource, 'id' | 'slug' | 'name'>;
   generatedAt: string;
+  upgrade?: BenchmarkUpgradeNotice | null;
   analytics: BenchmarkResultsOverviewAnalytics;
   items: BenchmarkResultsOverviewRun[];
 }
@@ -422,6 +446,7 @@ export interface BenchmarkRunResults {
   benchmark: Pick<BenchmarkResource, 'id' | 'slug' | 'name'>;
   run: Pick<BenchmarkRun, 'id' | 'status' | 'totalTasks' | 'workerCount'>;
   generatedAt: string;
+  upgrade?: BenchmarkUpgradeNotice | null;
   overall: BenchmarkResultSummary;
   participants: BenchmarkParticipantResultSummary[];
   steps: BenchmarkStepResultSummary[];

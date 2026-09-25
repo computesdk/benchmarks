@@ -9,6 +9,7 @@ import {
 } from './config.js';
 import { refreshAccessToken, AuthError } from './auth.js';
 import { getApiBaseUrl, getAuthBaseUrl, getPlatformBaseUrl } from './platform.js';
+import { collectUpgradeNotice } from './output.js';
 
 export interface CliAuth {
   token?: string;
@@ -194,6 +195,7 @@ export async function createApiClient(override?: { baseUrl?: string; apiKey?: st
     apiKey: auth.apiKey,
     orgSlug: auth.orgSlug,
     orgId: auth.orgId,
+    onUpgradeNotice: collectUpgradeNotice,
   });
   return { api, auth };
 }

@@ -5,7 +5,7 @@ import { BenchmarkApiError } from '@benchsdk/api';
 import { requestDeviceCode, pollDeviceToken, AuthError } from './auth.js';
 import { loadCredentials, saveCredentials, clearCredentials, loadConfig } from './config.js';
 import { createApiClient, getMe, listOrganizations, setActiveOrganization } from './client.js';
-import { printData, type OutputOptions } from './output.js';
+import { printData, printUpgradeNotices, type OutputOptions } from './output.js';
 import { getPlatformBaseUrl } from './platform.js';
 
 let packageVersion: string | undefined;
@@ -652,8 +652,12 @@ export async function run(argv: string[]): Promise<void> {
       default:
         throw new Error(USAGE);
     }
+    printUpgradeNotices();
     process.exit(0);
   } catch (err) {
+    // Still surface any upgrade offer the failure carried (e.g. a 403 on a
+    // benchmark the org hasn't subscribed to).
+    printUpgradeNotices();
     await printErrorAndExit(err, values.verbose);
   }
 }
