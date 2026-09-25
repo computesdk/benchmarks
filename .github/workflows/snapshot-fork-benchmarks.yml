@@ -76,7 +76,7 @@ jobs:
     # single iteration; the weekly schedule runs 100 for trend data and commits
     # the combined results. Fork PRs without secrets skip gracefully
     # (missing-creds path) rather than failing.
-    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
     # runs-on: self-hosted
     timeout-minutes: 90
     strategy:
@@ -160,7 +160,7 @@ jobs:
 
   collect:
     name: Collect Results
-    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
     # runs-on: self-hosted
     needs: [snapshot-fork]
     if: always()

@@ -95,7 +95,7 @@ env:
 jobs:
   bench:
     name: AI Gateway Benchmark (${{ matrix.family.slug }})
-    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
     # Matrixed by *family* (target model), not by gateway provider — each leg
     # below still runs as a single job internally. The round-robin methodology
     # (see AI_GATEWAYS.md) requires every gateway within one family to run
