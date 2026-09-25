@@ -82,8 +82,8 @@ export const providers: ProviderConfig[] = [
   },
   {
     name: 'cloudflare',
-    requiredEnvVars: ['CLOUDFLARE_SANDBOX_URL', 'CLOUDFLARE_SANDBOX_SECRET'],
-    createCompute: () => cloudflare({ sandboxUrl: process.env.CLOUDFLARE_SANDBOX_URL!, sandboxSecret: process.env.CLOUDFLARE_SANDBOX_SECRET! }),
+    requiredEnvVars: ['CLOUDFLARE_SANDBOX_URL', 'SANDBOX_API_KEY'],
+    createCompute: () => cloudflare({ sandboxUrl: process.env.CLOUDFLARE_SANDBOX_URL!, sandboxApiKey: process.env.SANDBOX_API_KEY! }),
   },
   {
     name: 'codesandbox',
