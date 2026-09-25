@@ -1,0 +1,95 @@
+name: Sandbox Pricing Benchmark
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'benchmarks/sandbox/pricing.ts'
+      - 'benchmarks/sandbox/pricing.bench.ts'
+      - 'benchmarks/sandbox/pricing-legacy-results.ts'
+      - '.github/workflows/sandbox-pricing-benchmarks.yml'
+  schedule:
+    - cron: '30 14 * * 3' # Weekly on Wednesday at 2:30pm UTC (offset from Friday benchmark runs)
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: 'Optional platform benchmark slug override'
+        required: false
+        default: ''
+      name:
+        description: 'Optional platform benchmark name override'
+        required: false
+        default: ''
+      provider:
+        description: 'Provider to run (leave empty for all)'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Run without ingesting or committing results'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: sandbox-pricing-benchmarks
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+env:
+  BENCHMARK_SLUG: ${{ github.event.inputs.slug || '' }}
+  BENCHMARK_NAME: ${{ github.event.inputs.name || '' }}
+
+jobs:
+  pricing:
+    name: Sandbox Pricing
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      - uses: namespacelabs/nscloud-setup@v0
+      - name: Install dependencies
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            pnpm -r update --ignore-scripts
+          else
+            pnpm install --frozen-lockfile --ignore-scripts
+          fi
+          pnpm -r --filter './packages/**' run build
+      - name: Clear stale results from checkout
+        run: rm -rf results/
+      - name: Run pricing benchmark
+        run: |
+          . benchmarks/scripts/load-vault-secrets.sh '^(BENCHMARKS_PLATFORM_API_KEY)'
+          npx tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/pricing.bench.ts \
+            ${{ github.event.inputs.provider != '' && format('--provider {0}', github.event.inputs.provider) || '' }} \
+            ${{ (github.event_name == 'push' || github.event.inputs.dry_run == 'true') && '--no-ingest' || '' }}
+      - name: Commit and push
+        if: github.event_name != 'push' && github.event.inputs.dry_run != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add results/sandbox-pricing/
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore: update sandbox pricing results [skip ci]"
+
+          branch="${GITHUB_REF#refs/heads/}"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "${branch}"
+            git rebase --autostash "origin/${branch}" || { git rebase --abort; exit 1; }
+            if git push origin "HEAD:${branch}"; then
+              echo "Pushed on attempt ${attempt}"
+              exit 0
+            fi
+            echo "Push rejected (attempt ${attempt}); will rebase and retry"
+          done
+          echo "Failed to push after multiple attempts" >&2
+          exit 1
