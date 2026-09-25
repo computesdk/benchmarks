@@ -46,7 +46,7 @@ permissions:
 jobs:
   benchmark:
     name: Compare storage providers
-    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
     # runs-on: self-hosted
     timeout-minutes: 120
     steps:

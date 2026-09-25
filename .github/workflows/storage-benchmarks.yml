@@ -76,7 +76,7 @@ env:
 jobs:
   bench:
     name: Bench ${{ matrix.provider }}
-    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
     # runs-on: self-hosted
     # One job now covers all four sizes, so it does ~4x the work a per-size job did.
     timeout-minutes: 300
@@ -164,7 +164,7 @@ jobs:
 
   collect:
     name: Collect Results
-    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
     # runs-on: self-hosted
     needs: [bench]
     if: always()
