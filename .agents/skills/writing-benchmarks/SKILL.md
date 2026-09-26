@@ -31,11 +31,46 @@ Before writing code, pin down:
   inside the task.
 - **Headline metric(s)** — the numbers the task reports via `measure()` and
   what counts as a success (exit-code checks, `scoring.success.requireData`).
-- **Scale knobs** — which of `iterations`, `concurrency`, `staggerDelayMs`
+- **Load profile** — which of `iterations`, `concurrency`, `staggerDelayMs`
   define the benchmark vs. stay CLI-overridable. A `shape` may set
-  slug/name/staggerDelayMs, never `iterations`/`concurrency`.
+  slug/name/staggerDelayMs, never `iterations`/`concurrency`. See
+  [§ Horizontal load](#horizontal-load).
 
-## 2. Decompose the work into steps
+## 2. Horizontal load — iterations × concurrency
+
+Horizontal load (how many units of work run at once, and how fast they ramp)
+is controlled entirely by three config/CLI knobs — the task function itself
+never manages parallelism:
+
+- **`iterations`** — total tasks per participant. Each iteration is one full
+  unit of work (one sandbox create → work → destroy). This is the horizontal
+  volume knob: `iterations: 100` launches 100 sandboxes per participant.
+- **`concurrency`** — max tasks in flight at once. `1` = sequential
+  (one-at-a-time cold starts), `N` = up to N units of work running
+  simultaneously. `iterations: N, concurrency: N` is a **burst**: all N
+  sandboxes launch at once.
+- **`staggerDelayMs`** — task i launches at `i * staggerDelayMs`. Combined with
+  `concurrency: N` this is a **staggered** ramp (e.g. 100 sandboxes, one every
+  200ms) — measures how TTI degrades as load ramps.
+
+The named run shapes are just presets over these knobs:
+`sequential = {concurrency: 1}`, `burst = {concurrency: N}`,
+`staggered = {concurrency: N, staggerDelayMs: D}`.
+
+Two related knobs that change ordering/fan-out, not load:
+
+- **`groupBy`** — `'participant'` (default: each participant runs to
+  completion before the next) vs `'round'` (participants take turns per
+  iteration, so every participant's Nth task sees the same external
+  conditions).
+- **`phases`** — split iterations into named segments (cold/warm). Total
+  iterations = sum of phase iterations; `--iterations` scales *each* phase.
+
+In CI, horizontal scale comes from the matrix: one job per provider, each
+passing `--provider <name>` plus the same `--run-key` so they share one
+platform run, and `--iterations/--concurrency` from workflow inputs.
+
+## 3. Decompose the work into steps
 
 Wrap each phase in `step('name', fn)` — each step becomes a timed, labeled row
 on the platform run page.
@@ -59,7 +94,7 @@ Sandbox-benchmark conventions (follow `tti.bench.ts`):
 - Errors: throw `TaskError` (code + data) for domain failures; let plain
   Errors bubble for unexpected ones.
 
-## 3. Write the file
+## 4. Write the file
 
 - Place under `benchmarks/<area>/<name>.bench.ts`. Start from the closest
   existing benchmark, not from scratch.
@@ -69,7 +104,7 @@ Sandbox-benchmark conventions (follow `tti.bench.ts`):
   `phases`, `groupBy`, `defaultProviders`, `dimensions`, `onComplete`,
   `customCliFlags` — see WRITING_BENCHMARKS.md before reaching for them.
 
-## 4. Participants
+## 5. Participants
 
 - Sandbox benchmarks share `benchmarks/sandbox/providers.ts`
   (`ProviderConfig`: `name`, `requiredEnvVars`, `createCompute`,
@@ -82,7 +117,7 @@ Sandbox-benchmark conventions (follow `tti.bench.ts`):
 - `defaultProviders` limits what runs without `--provider` (e.g. dax runs a
   subset by default).
 
-## 5. Scoring and display
+## 6. Scoring and display
 
 - `scoring.metrics`: `weights.median + p95 + p99` across **all** metrics must
   sum to 1.0; `ceiling` = worst acceptable value; `higherIsBetter: true` +
@@ -96,7 +131,7 @@ Sandbox-benchmark conventions (follow `tti.bench.ts`):
 - `scoring.groupBy` renders a breakout per distinct `data` value (only with
   2–12 values) — different from top-level `groupBy` (execution ordering).
 
-## 6. Verify
+## 7. Verify
 
 ```bash
 # packages/*/dist is not committed — build once first
@@ -113,7 +148,7 @@ BENCHMARKS_PLATFORM_API_KEY=bp-... pnpm exec bench run \
   a local benchmarks-platform.
 - Check the run page URL printed by the runner when not dry-running.
 
-## 7. Wire it in
+## 8. Wire it in
 
 - `package.json`: add `"bench:<name>"` (and `bench:<name>:<provider>` variants
   when useful) following the existing script shape.
