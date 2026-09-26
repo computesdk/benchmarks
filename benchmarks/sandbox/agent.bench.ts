@@ -207,13 +207,30 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
   let mockRequests: number | undefined;
 
   try {
-    sandbox = await step('create', () =>
-      withTimeout(
+    sandbox = await step('create', async () => {
+      let timedOut = false;
+      const pending = Promise.resolve(
         compute.sandbox.create({ ...participant.sandboxOptions, timeout: 600_000 }),
-        participant.timeout ?? CREATE_TIMEOUT_MS,
-        'Sandbox creation timed out',
-      ),
-    );
+      ) as Promise<SandboxInterface>;
+      // A timed-out create may still resolve later — destroy that sandbox so it
+      // isn't leaked.
+      void pending
+        .then((late) => {
+          if (timedOut) {
+            return late.destroy().catch((err: unknown) =>
+              log('destroyed sandbox that resolved after create timeout', { level: 'warn', meta: { error: formatError(err) } }),
+            );
+          }
+          return undefined;
+        })
+        .catch(() => {});
+      try {
+        return await withTimeout(pending, participant.timeout ?? CREATE_TIMEOUT_MS, 'Sandbox creation timed out');
+      } catch (err) {
+        timedOut = true;
+        throw err;
+      }
+    });
     if (sandbox === undefined) {
       throw new Error('create step did not return a sandbox');
     }
@@ -264,7 +281,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
 
     await step('verify', async () => {
       const result = await s.runCommand(
-        `test -f ${PROJ_DIR}/index.js && test -f ${PROJ_DIR}/package.json && cat ${PROJ_DIR}/run.log && echo --- && curl -sf http://127.0.0.1:${MOCK_PORT}/stats`,
+        `test -f ${PROJ_DIR}/index.js && grep -q '"bench-proj"' ${PROJ_DIR}/package.json && cat ${PROJ_DIR}/run.log && echo --- && curl -sf http://127.0.0.1:${MOCK_PORT}/stats`,
         { timeout: VERIFY_TIMEOUT_MS },
       );
       if (result.exitCode !== 0) {
