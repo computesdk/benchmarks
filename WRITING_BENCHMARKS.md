@@ -201,7 +201,7 @@ Step options:
 | Option | Description |
 |--------|-------------|
 | `timeoutMs` | Abort and throw a `step_timeout` `TaskError` if the step exceeds this time. |
-| `concurrency` | Run `fn` this many times in parallel and return an array. |
+| `parallelInvocations` | Invoke `fn` this many times in parallel and return an array of results. (`concurrency` is a deprecated alias.) |
 | `reportConcurrency` | Whether to include this step in worker heartbeat concurrency samples. Default `true`. |
 | `captureOutput` | When `true` (default), a step returning a `BenchmarkStepOutcome`-shaped object (`stdout`, `stderr`, `error`, `exitCode`, `code`, `signal`, `pid`) is captured as step output and appended to the worker log. Set to `false` to return such an object as a normal result. |
 
