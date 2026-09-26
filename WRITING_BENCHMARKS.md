@@ -277,6 +277,21 @@ const s3: S3Participant = {
 
 At run time, the runner calls `filterParticipantsByEnv` and skips any participant whose env vars are missing. If `--provider` is passed, the runner further filters to that subset and errors on unknown names.
 
+### Sandbox participants: `sandboxOptions`
+
+Sandbox benchmarks (`benchmarks/sandbox/providers.ts`, and the vendored `providers.ts` copies in the per-benchmark repos) give each participant a `sandboxOptions` field that is passed verbatim to `compute.sandbox.create()`. Use it for provider-specific create-time options — `templateId`, `image`, sizing, etc.
+
+One rule is easy to miss: **Vercel sandboxes must always be created with `persistent: false`**. Vercel sandboxes are persistent by default — every `stop()` auto-snapshots the filesystem, which accrues Snapshot Storage — and benchmarks never resume them. Any `vercel` participant (in this repo or a vendored copy) must carry it:
+
+```ts
+{
+  name: 'vercel',
+  requiredEnvVars: ['VERCEL_TOKEN', 'VERCEL_TEAM_ID', 'VERCEL_PROJECT_ID'],
+  createCompute: () => vercel({ /* creds */ }),
+  sandboxOptions: { persistent: false },
+},
+```
+
 ## Shapes of a run
 
 There is no single `mode` switch. The shape of a run emerges from the knobs:
@@ -530,3 +545,4 @@ BENCHMARKS_PLATFORM_API_KEY=bp-... pnpm exec bench run examples/01-hello.bench.t
 - **Scoring weights sum to 1.0.** The runner validates this at config-evaluation time.
 - **Step return values that look like `{ stdout, stderr, error }`.** The runner treats them as step output and writes them to the worker log. To return them as a result, either wrap the data under a different key or pass `captureOutput: false` to `step`.
 - **Round mode and pre-measured steps.** In `groupBy: 'round'` the runner builds records manually and honors `TaskResult.steps` and `TaskResult.latencyMs`. This is useful for socket-level probes that measure sub-step timing themselves. In `groupBy: 'participant'` the platform worker owns the steps, so `steps`/`latencyMs` are ignored.
+- **Vercel sandboxes need `persistent: false`.** Left at the default, every sandbox `stop()` auto-snapshots the filesystem and accrues Snapshot Storage. See [Sandbox participants: `sandboxOptions`](#sandbox-participants-sandboxoptions).
