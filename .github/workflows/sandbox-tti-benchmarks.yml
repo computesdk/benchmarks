@@ -196,7 +196,7 @@ jobs:
 
   collect:
     name: Collect Results
-    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe
     # runs-on: self-hosted
     needs: bench
     if: always()
