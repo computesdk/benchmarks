@@ -144,7 +144,7 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   superserve:   { templateId: 'node22-8cpu-16gb' },           // 8 vCPU / 16 GiB template built in the pre-step
   createos:     { shape: 's-8vcpu-16gb', ephemeralDiskMb: 61440 }, // 8 vCPU, 16 GiB RAM, 60 GiB disk
   opencomputer: { cpuCount: 4, memoryMB: 16384, timeout: 600_000 },
-  microsandbox: { cpus: 8, memoryMib: 16384 },
+  microsandbox: { cpus: 8, memoryMib: 16384, rootDiskMib: 20480 }, // 20 GiB writable disk
   mosaic:       { vcpus: 8, memoryMb: 16384 },
   miosa:        { vcpus: 8, memory: 16384 },               // maps to MIOSA size contract "large" (8 vCPU / 16 GiB)
   // givemeanode has no 8 vCPU / 16 GiB named shape; asking for 8 vCPU and 16 GiB

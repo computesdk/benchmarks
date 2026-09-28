@@ -206,7 +206,7 @@ clone_repo() {
 
 install_dependencies() {
   cd "$ROOT/repo"
-  bun install
+  bun install || return $?
   git diff --exit-code -- bun.lock package.json
 }
 
