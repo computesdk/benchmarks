@@ -162,8 +162,8 @@ importers:
         specifier: ^0.1.8
         version: 0.1.8(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@computesdk/tensorlake':
-        specifier: ^0.1.14
-        version: 0.1.14(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        specifier: ^0.1.16
+        version: 0.1.16(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@computesdk/tilion':
         specifier: ^0.1.4
         version: 0.1.4
@@ -827,6 +827,9 @@ packages:
   '@computesdk/provider@2.1.8':
     resolution: {integrity: sha512-LO8cVwxPO538237AJrPIQuURPn3d1tGerP/HmzkmoopsPFuXuKSSrcohHcKRV4V55GJSYp+bFN5YLLxEgOHXEw==}
 
+  '@computesdk/provider@2.1.9':
+    resolution: {integrity: sha512-Gw2V+LuxwUWwXGibcL7aG7ao1zv/xW88Ggt22Afna+62Br0yQmhDgpNQ+ans2UihcIBBAQjfgwMiE29pGNCB5Q==}
+
   '@computesdk/quilt@1.0.6':
     resolution: {integrity: sha512-hkw62JOVmv3ieYtrps9STEUx846nvwqUy5R/PgDJTt39wpHX9vjUWoU/keHrZJ3l+rHMxW5pA/ODo7Y7eIZ5/w==}
     engines: {node: '>=22'}
@@ -862,8 +865,8 @@ packages:
     resolution: {integrity: sha512-RCrMhg2pK6aL8cJDYA2jLU4KmEhm0k/pyq9oLdMDp3xDbeYbZ+gF5xuanHbF9utwvBIK/iOmlvNCmCWou/3Eog==}
     engines: {node: '>=20'}
 
-  '@computesdk/tensorlake@0.1.14':
-    resolution: {integrity: sha512-DZX1zolvRskgYltzHiGYUySWkXWHZC7XxoeBhhWi5y41nYM6MqFJCnh8Z4SMeEN8Vrll41Nsbv/+HGzW1TSczw==}
+  '@computesdk/tensorlake@0.1.16':
+    resolution: {integrity: sha512-gzkbJUjOvzW0TByahgkUGxGJccIZhqdl9gbHGbR8RMnqv6n5FU27sKeLOp+T+ZThsHeE1hEpVs2pk0d9dP7SgQ==}
 
   '@computesdk/tilion@0.1.4':
     resolution: {integrity: sha512-hl9ESufoJSTPsngBHSKCqX7x0n8YQfRgJ30sWUyDciO4tVlgksP+83tw8a1LWXdctku7dh2tCzsobLSucVN7Mg==}
@@ -3046,6 +3049,9 @@ packages:
   computesdk@4.1.7:
     resolution: {integrity: sha512-yw+xi681xn4mlOpyXzrzCnf9ulzvYc8n92otrnkNw+Z3GjTzeImmK255K7ONs5c2Kpb2d24F1O2+M0ZYSoDoiw==}
 
+  computesdk@4.1.8:
+    resolution: {integrity: sha512-UhEPuh9EMsVuOFPKHrAllyACGm8UYKGsUklH8uFJ24mdLUT11PkU4NTCFmG0V1O8Oyhi8d2riaUoavTnGa8PSA==}
+
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
@@ -3108,6 +3114,11 @@ packages:
 
   daemond@0.1.5:
     resolution: {integrity: sha512-6GPOnLDtylHF5Dnl/6TDNC6JzVHzomcMx2yKvy/2zLBV4zZgr0WE2RipcK8rmhsKD1vr6DXbtjNXpNtY2Ps2+Q==}
+    engines: {node: '>=18.0.0'}
+    os: [linux, darwin]
+
+  daemond@0.1.6:
+    resolution: {integrity: sha512-vpYT4ToRHKRSIYmKG/ovUMNF6+7e1s3m/4eJ10AxmegIW7t0XcxSVzp3pYbz+X4rFeykyy02N7kFa6sHh1YZsA==}
     engines: {node: '>=18.0.0'}
     os: [linux, darwin]
 
@@ -5262,11 +5273,6 @@ packages:
     engines: {node: '>=22.0.0'}
     hasBin: true
 
-  tensorlake@0.5.33:
-    resolution: {integrity: sha512-9TX/hKkEL7w6tbZy/yKAJ522Fps9kMkGcoCKibb4XT7OANmwdS3A5GLLsq4ufkVeSxQjaswnmVUoghzFzF1XtQ==}
-    engines: {node: '>=22.0.0'}
-    hasBin: true
-
   term-canvas@0.0.5:
     resolution: {integrity: sha512-eZ3rIWi5yLnKiUcsW8P79fKyooaLmyLWAGqBhFspqMxRNUiB4GmHHk5AzQ4LxvFbJILaXqQZLwbbATLOhCFwkw==}
 
@@ -5446,10 +5452,6 @@ packages:
 
   undici@8.11.2:
     resolution: {integrity: sha512-u4UB2/IrKdU6lFxumHmmo1a3fCQO5tzQllRorfoRS63txhrB7xTpSn1PftwC4qEHkOaqP95fCWW4lJzwErwzhQ==}
-    engines: {node: '>=22.19.0'}
-
-  undici@8.3.0:
-    resolution: {integrity: sha512-TkUDgb6tl7KOGZ+7e8E3d2FYgUQgF6z5YypqjWmixVQSQERFcVrVg0ySADm2LVLRh5ljAaHTCR5Fmz3Q34rB7Q==}
     engines: {node: '>=22.19.0'}
 
   universalify@0.1.2:
@@ -6625,6 +6627,12 @@ snapshots:
       computesdk: 4.1.7
       daemond: 0.1.5
 
+  '@computesdk/provider@2.1.9':
+    dependencies:
+      '@computesdk/cmd': 0.4.1
+      computesdk: 4.1.8
+      daemond: 0.1.6
+
   '@computesdk/quilt@1.0.6':
     dependencies:
       '@computesdk/provider': 2.1.8
@@ -6698,11 +6706,11 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@computesdk/tensorlake@0.1.14(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
+  '@computesdk/tensorlake@0.1.16(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
     dependencies:
-      '@computesdk/provider': 2.1.8
-      computesdk: 4.1.7
-      tensorlake: 0.5.33(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      '@computesdk/provider': 2.1.9
+      computesdk: 4.1.8
+      tensorlake: 0.5.135(bufferutil@4.1.0)(utf-8-validate@6.0.6)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -8968,6 +8976,11 @@ snapshots:
       '@computesdk/cmd': 0.4.1
       daemond: 0.1.5
 
+  computesdk@4.1.8:
+    dependencies:
+      '@computesdk/cmd': 0.4.1
+      daemond: 0.1.6
+
   concat-map@0.0.1: {}
 
   confbox@0.1.8: {}
@@ -9011,6 +9024,8 @@ snapshots:
       which: 2.0.2
 
   daemond@0.1.5: {}
+
+  daemond@0.1.6: {}
 
   date-fns@4.4.0: {}
 
@@ -11407,14 +11422,6 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  tensorlake@0.5.33(bufferutil@4.1.0)(utf-8-validate@6.0.6):
-    dependencies:
-      undici: 8.3.0
-      ws: 8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
   term-canvas@0.0.5: {}
 
   term-size@2.2.1: {}
@@ -11573,8 +11580,6 @@ snapshots:
 
   undici@8.11.2:
     optional: true
-
-  undici@8.3.0: {}
 
   universalify@0.1.2: {}
 
