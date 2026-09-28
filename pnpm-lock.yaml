@@ -181,7 +181,7 @@ importers:
         version: 7.22.0
       '@storagesdk/adapters':
         specifier: ^0.11.0
-        version: 0.11.0(@aws-sdk/client-s3@3.1140.0)(@aws-sdk/lib-storage@3.1140.0(@aws-sdk/client-s3@3.1140.0))(@aws-sdk/s3-presigned-post@3.1140.0)(@aws-sdk/s3-request-presigner@3.1140.0)(@azure/storage-blob@12.34.0)(@google-cloud/storage@7.22.0)(@tigrisdata/storage@3.21.0)(@vercel/blob@2.8.0)(tensorlake@0.5.89(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 0.11.0(@aws-sdk/client-s3@3.1140.0)(@aws-sdk/lib-storage@3.1140.0(@aws-sdk/client-s3@3.1140.0))(@aws-sdk/s3-presigned-post@3.1140.0)(@aws-sdk/s3-request-presigner@3.1140.0)(@azure/storage-blob@12.34.0)(@google-cloud/storage@7.22.0)(@tigrisdata/storage@3.21.0)(@vercel/blob@2.8.0)(tensorlake@0.5.135(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@storagesdk/core':
         specifier: ^0.5.0
         version: 0.5.0
@@ -216,8 +216,8 @@ importers:
         specifier: ^1.14.2
         version: 1.14.2
       tensorlake:
-        specifier: 0.5.89
-        version: 0.5.89(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        specifier: ^0.5.135
+        version: 0.5.135(bufferutil@4.1.0)(utf-8-validate@6.0.6)
     devDependencies:
       '@changesets/cli':
         specifier: ^2.31.1
@@ -3670,6 +3670,10 @@ packages:
     resolution: {integrity: sha512-NEgUnEcBiP5HrPzufUkBzJOD/Sxsco3rLNo1F1TNf7ieU8ryUzBhqba8r756CjLX7rn3fHl6iLEwPYuqpoKgQQ==}
     engines: {node: '>=14'}
 
+  google-proto-files@5.0.3:
+    resolution: {integrity: sha512-HrKG4IIPUHaU1E4+J8yETm41N39+pm9z+ZBERNcq+q8ltHRcFwTcxSviqJSuxPiZJNTWmdBhp03xcElCRlQPxA==}
+    engines: {node: '>=18'}
+
   gopd@1.2.0:
     resolution: {integrity: sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==}
     engines: {node: '>= 0.4'}
@@ -5213,13 +5217,53 @@ packages:
   teex@1.0.1:
     resolution: {integrity: sha512-eYE6iEI62Ni1H8oIa7KlDU6uQBtqr4Eajni3wX7rpfXD8ysFx8z0+dri+KWEPWpBsxXfxu58x/0jvTVT1ekOSg==}
 
-  tensorlake@0.5.33:
-    resolution: {integrity: sha512-9TX/hKkEL7w6tbZy/yKAJ522Fps9kMkGcoCKibb4XT7OANmwdS3A5GLLsq4ufkVeSxQjaswnmVUoghzFzF1XtQ==}
+  tensorlake-native-darwin-arm64@0.5.135:
+    resolution: {integrity: sha512-4M8wN62tQwskSNf8umP22N/ZuvkBGMp20QsJT7yUl08GHEIH21e722l6RPzVvmRdl3JwmSwE8gnyVz3sMUMGrw==}
+    engines: {node: '>=22.0.0'}
+    cpu: [arm64]
+    os: [darwin]
+
+  tensorlake-native-linux-arm64-gnu@0.5.135:
+    resolution: {integrity: sha512-EzkRLTfVdi6UWaM6xNDRLTqwqQr4IN0CODc+la1rGGYm4zkiHafou1ksk0/RUQi2+B3IoYGqxdwJbNgZLRTBpg==}
+    engines: {node: '>=22.0.0'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  tensorlake-native-linux-arm64-musl@0.5.135:
+    resolution: {integrity: sha512-no06meA4yj0NT4iYfHng0MTIlJpuSNisN56LCNLjSYn9bqMLjgqWX/bt9cGwkxuqLeUxmd0RMGpannxzsfx7+g==}
+    engines: {node: '>=22.0.0'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
+  tensorlake-native-linux-x64-gnu@0.5.135:
+    resolution: {integrity: sha512-uv0NohBsy9O9Whl2LVI+De+c/stobeBqsmGnVTcLL9chg4oFqjJASVnjZ6hAlOcn/vdMc1/uzbytvf4FkN7QHg==}
+    engines: {node: '>=22.0.0'}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  tensorlake-native-linux-x64-musl@0.5.135:
+    resolution: {integrity: sha512-kvyJJ5nOFb20sAjyY3Ef2DtYyoBbXsb9gUY+JAU4J1eY4zenBXA0znJfZmsHmz7ndQdx2K3ffkCezK8fcwJ0sA==}
+    engines: {node: '>=22.0.0'}
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
+  tensorlake-native-win32-x64@0.5.135:
+    resolution: {integrity: sha512-0jhjlFaWT89Os2dJR7B08SnF4UG6gJ64ImjuVT9wtOIdRElHCkDxeOH8RqgrvAYJAXKdLCiQun6iIvqh6N90tQ==}
+    engines: {node: '>=22.0.0'}
+    cpu: [x64]
+    os: [win32]
+
+  tensorlake@0.5.135:
+    resolution: {integrity: sha512-dam3hNkvS3BApbLg7A2nr/byYhJBFYsZdLhtsw11rvaA7bfydFjvTtSQx7tmrGLVTiUMe2ZBzjwlvxwOjwQslA==}
     engines: {node: '>=22.0.0'}
     hasBin: true
 
-  tensorlake@0.5.89:
-    resolution: {integrity: sha512-ibLb35jxG0B77Rpmu6trjYYJ+qEBU5YhtQvzCYrTtkA3d8tCJIOYkKTfwULTyz6sgNO7lj5JPFA+vHnSHZvszw==}
+  tensorlake@0.5.33:
+    resolution: {integrity: sha512-9TX/hKkEL7w6tbZy/yKAJ522Fps9kMkGcoCKibb4XT7OANmwdS3A5GLLsq4ufkVeSxQjaswnmVUoghzFzF1XtQ==}
     engines: {node: '>=22.0.0'}
     hasBin: true
 
@@ -5515,6 +5559,10 @@ packages:
 
   vscode-languageserver-types@3.18.4:
     resolution: {integrity: sha512-nQsacoiijvl0fRf2q28uFDrAVwRhdCa3QveiF7/CX0r18mLR5FU/1WskSsCKOjmEbtteKUnY8x8Yzxop+k0zwg==}
+
+  walkdir@0.4.1:
+    resolution: {integrity: sha512-3eBwRyEln6E1MSzcxcVpQIhRG8Q1jLvEqRmCZqS3dsfXEDR/AhOF4d+jHg1qvDCpYaVRZjENPQyrVxAkQqxPgQ==}
+    engines: {node: '>=6.0.0'}
 
   web-streams-polyfill@4.0.0-beta.3:
     resolution: {integrity: sha512-QW95TCTaHmsYfHDybGMwO5IJIM93I/6vTRk+daHTWFPhwh+C8Cg7j7XyKrwrj8Ib6vYXe0ocYNrmzY4xAAN6ug==}
@@ -8151,7 +8199,7 @@ snapshots:
       '@smithy/util-buffer-from': 2.2.0
       tslib: 2.8.1
 
-  '@storagesdk/adapters@0.11.0(@aws-sdk/client-s3@3.1140.0)(@aws-sdk/lib-storage@3.1140.0(@aws-sdk/client-s3@3.1140.0))(@aws-sdk/s3-presigned-post@3.1140.0)(@aws-sdk/s3-request-presigner@3.1140.0)(@azure/storage-blob@12.34.0)(@google-cloud/storage@7.22.0)(@tigrisdata/storage@3.21.0)(@vercel/blob@2.8.0)(tensorlake@0.5.89(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
+  '@storagesdk/adapters@0.11.0(@aws-sdk/client-s3@3.1140.0)(@aws-sdk/lib-storage@3.1140.0(@aws-sdk/client-s3@3.1140.0))(@aws-sdk/s3-presigned-post@3.1140.0)(@aws-sdk/s3-request-presigner@3.1140.0)(@azure/storage-blob@12.34.0)(@google-cloud/storage@7.22.0)(@tigrisdata/storage@3.21.0)(@vercel/blob@2.8.0)(tensorlake@0.5.135(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
     dependencies:
       '@storagesdk/core': 0.5.0
     optionalDependencies:
@@ -8163,7 +8211,7 @@ snapshots:
       '@google-cloud/storage': 7.22.0
       '@tigrisdata/storage': 3.21.0
       '@vercel/blob': 2.8.0
-      tensorlake: 0.5.89(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      tensorlake: 0.5.135(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   '@storagesdk/core@0.5.0': {}
 
@@ -9702,6 +9750,11 @@ snapshots:
       - supports-color
 
   google-logging-utils@0.0.2: {}
+
+  google-proto-files@5.0.3:
+    dependencies:
+      protobufjs: 7.6.6
+      walkdir: 0.4.1
 
   gopd@1.2.0: {}
 
@@ -11316,15 +11369,45 @@ snapshots:
       - bare-abort-controller
       - react-native-b4a
 
-  tensorlake@0.5.33(bufferutil@4.1.0)(utf-8-validate@6.0.6):
+  tensorlake-native-darwin-arm64@0.5.135:
+    optional: true
+
+  tensorlake-native-linux-arm64-gnu@0.5.135:
+    optional: true
+
+  tensorlake-native-linux-arm64-musl@0.5.135:
+    optional: true
+
+  tensorlake-native-linux-x64-gnu@0.5.135:
+    optional: true
+
+  tensorlake-native-linux-x64-musl@0.5.135:
+    optional: true
+
+  tensorlake-native-win32-x64@0.5.135:
+    optional: true
+
+  tensorlake@0.5.135(bufferutil@4.1.0)(utf-8-validate@6.0.6):
     dependencies:
-      undici: 8.3.0
+      '@grpc/grpc-js': 1.14.5
+      '@grpc/proto-loader': 0.8.1
+      ajv: 8.20.0
+      fflate: 0.8.3
+      google-proto-files: 5.0.3
+      nanoid: 3.3.19
       ws: 8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+    optionalDependencies:
+      tensorlake-native-darwin-arm64: 0.5.135
+      tensorlake-native-linux-arm64-gnu: 0.5.135
+      tensorlake-native-linux-arm64-musl: 0.5.135
+      tensorlake-native-linux-x64-gnu: 0.5.135
+      tensorlake-native-linux-x64-musl: 0.5.135
+      tensorlake-native-win32-x64: 0.5.135
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  tensorlake@0.5.89(bufferutil@4.1.0)(utf-8-validate@6.0.6):
+  tensorlake@0.5.33(bufferutil@4.1.0)(utf-8-validate@6.0.6):
     dependencies:
       undici: 8.3.0
       ws: 8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -11591,6 +11674,8 @@ snapshots:
   vscode-languageserver-textdocument@1.0.15: {}
 
   vscode-languageserver-types@3.18.4: {}
+
+  walkdir@0.4.1: {}
 
   web-streams-polyfill@4.0.0-beta.3: {}
 
