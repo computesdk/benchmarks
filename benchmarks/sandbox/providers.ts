@@ -35,6 +35,7 @@ import { tenki } from '@computesdk/tenki';
 import { tensorlake } from '@computesdk/tensorlake'
 import { upstash } from '@computesdk/upstash';
 import { vercel } from '@computesdk/vercel';
+import { aliyunFc } from './aliyun-fc.js';
 import type { ProviderConfig } from './types.js';
 
 /**
@@ -45,6 +46,26 @@ import type { ProviderConfig } from './types.js';
  */
 export const providers: ProviderConfig[] = [
   // --- Direct mode (provider SDK packages) ---
+  {
+    // Alibaba Cloud Function Compute (FC) sandbox adapter.
+    // Requires an FC-side gateway that implements /create, /run, /destroy.
+    name: 'aliyun-fc',
+    requiredEnvVars: ['ALIYUN_FC_GATEWAY_URL'],
+    createCompute: () =>
+      aliyunFc({
+        gatewayUrl: process.env.ALIYUN_FC_GATEWAY_URL!,
+        gatewaySecret: process.env.ALIYUN_FC_GATEWAY_SECRET,
+        region: process.env.ALIYUN_FC_REGION,
+      }),
+    sandboxOptions: {
+      // DAX standardized profile: 8 vCPU / 16 GiB. The gateway may override
+      // these via its own configuration, but this keeps the benchmark intent
+      // explicit and comparable across providers.
+      image: 'node:22',
+      memory: 16384,
+      cpu: 8,
+    },
+  },
   {
     name: 'archil',
     requiredEnvVars: ['ARCHIL_API_KEY', 'ARCHIL_REGION', 'ARCHIL_DISK_ID'],
@@ -160,7 +181,7 @@ export const providers: ProviderConfig[] = [
   {
     name: 'modal',
     requiredEnvVars: ['MODAL_TOKEN_ID', 'MODAL_TOKEN_SECRET'],
-    createCompute: () => modal({ tokenId: process.env.MODAL_TOKEN_ID!, tokenSecret: process.env.MODAL_TOKEN_SECRET! }),
+    createCompute: () => modal({ tokenId: process.env.MODAL_TOKEN_ID!, tokenSecret: process.env.MODAL_TOKEN_SECRET!, scalableSandboxes: true }),
   },
   {
     name: 'microsandbox',
