@@ -144,11 +144,11 @@ function valueColorClass(score: number | null): string {
 }
 
 /**
- * Load live benchmark scores from sequential results.
+ * Load live benchmark scores from burst results.
  * Returns a map of provider id -> { score, success_rate } or null if no results found.
  */
 function loadLiveBenchmarkScores(): Map<string, { score: number; successRate: string }> | null {
-  const latestPath = path.join(RESULTS_DIR, 'sequential_tti', 'latest.json');
+  const latestPath = path.join(RESULTS_DIR, 'burst_tti', 'latest.json');
   if (!fs.existsSync(latestPath)) return null;
 
   try {
@@ -171,7 +171,7 @@ function loadLiveBenchmarkScores(): Map<string, { score: number; successRate: st
       });
     }
 
-    console.log(`Loaded live benchmark scores for ${scores.size} providers from sequential results`);
+    console.log(`Loaded live benchmark scores for ${scores.size} providers from burst results`);
     return scores;
   } catch (err) {
     console.warn(`Warning: failed to load live benchmark scores: ${err}`);

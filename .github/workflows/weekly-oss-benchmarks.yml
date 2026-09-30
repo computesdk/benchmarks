@@ -1,0 +1,514 @@
+name: Weekly OSS Benchmarks
+
+on:
+  schedule:
+    - cron: '0 10 * * 0' # Weekly on Sunday at 10am UTC (5am CDT)
+  workflow_dispatch:
+    inputs:
+      benchmark:
+        description: 'Benchmark category to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - sandbox
+          - dax
+          - storage
+          - snapshot-fork
+          - browser
+          - browser-throughput
+          - ai-gateway
+      provider:
+        description: 'Provider to run (leave empty for all)'
+        required: false
+        default: ''
+      iterations:
+        description: 'Override OSS iteration defaults for a manual run'
+        required: false
+        default: ''
+      sandbox_iterations:
+        description: 'Sandbox TTI iterations'
+        required: false
+        default: ''
+      dax_iterations:
+        description: 'DAX iterations'
+        required: false
+        default: ''
+      storage_iterations:
+        description: 'Storage iterations'
+        required: false
+        default: ''
+      snapshot_fork_iterations:
+        description: 'Snapshot/fork iterations'
+        required: false
+        default: ''
+      browser_iterations:
+        description: 'Browser session iterations'
+        required: false
+        default: ''
+      browser_throughput_iterations:
+        description: 'Browser throughput iterations'
+        required: false
+        default: ''
+      ai_gateway_iterations:
+        description: 'AI gateway iterations'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Run without committing results'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: weekly-oss-benchmarks
+  cancel-in-progress: false
+
+permissions: {}
+
+env:
+  OSS_REPOSITORY: computesdk/benchmarks
+  OSS_REF: weekly
+  OSS_PATH: oss
+
+jobs:
+  matrix:
+    name: Discover OSS providers
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe
+    permissions:
+      contents: read
+    outputs:
+      include: ${{ steps.matrix.outputs.include }}
+      oss_sha: ${{ steps.oss_sha.outputs.sha }}
+      throughput_iterations: ${{ steps.matrix.outputs.throughput_iterations }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: daily
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ env.OSS_REPOSITORY }}
+          ref: ${{ env.OSS_REF }}
+          path: ${{ env.OSS_PATH }}
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: oss/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: oss/pnpm-lock.yaml
+      - name: Install OSS dependencies
+        working-directory: oss
+        run: pnpm install --frozen-lockfile
+      - id: oss_sha
+        working-directory: oss
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - id: matrix
+        working-directory: oss
+        env:
+          PROVIDER_FILTER: ${{ github.event.inputs.provider || '' }}
+          BENCHMARK_FILTER: ${{ github.event.inputs.benchmark || 'all' }}
+          RUN_MODE: ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
+          ITERATIONS_OVERRIDE: ${{ github.event.inputs.iterations || '' }}
+          SANDBOX_ITERATIONS: ${{ github.event.inputs.sandbox_iterations || '' }}
+          DAX_ITERATIONS: ${{ github.event.inputs.dax_iterations || '' }}
+          STORAGE_ITERATIONS: ${{ github.event.inputs.storage_iterations || '' }}
+          SNAPSHOT_FORK_ITERATIONS: ${{ github.event.inputs.snapshot_fork_iterations || '' }}
+          BROWSER_ITERATIONS: ${{ github.event.inputs.browser_iterations || '' }}
+          BROWSER_THROUGHPUT_ITERATIONS: ${{ github.event.inputs.browser_throughput_iterations || '' }}
+          AI_GATEWAY_ITERATIONS: ${{ github.event.inputs.ai_gateway_iterations || '' }}
+        run: |
+          include="$(pnpm exec tsx ../daily/scripts/build-daily-matrix.mjs)"
+          echo "include=$include" >> "$GITHUB_OUTPUT"
+          throughput_iterations="$(node -e "const x=JSON.parse(process.argv[1]); console.log(x.include.find(i => i.kind === 'browser-throughput')?.iterations || 0)" "$include")"
+          echo "throughput_iterations=$throughput_iterations" >> "$GITHUB_OUTPUT"
+
+  throughput-pages:
+    name: Resolve throughput pages
+    needs: matrix
+    runs-on: ubuntu-latest
+    permissions: {}
+    outputs:
+      urls: ${{ steps.pages.outputs.urls }}
+    env:
+      THROUGHPUT_ITERATIONS: ${{ needs.matrix.outputs.throughput_iterations || '0' }}
+    steps:
+      - id: pages
+        run: |
+          count="$THROUGHPUT_ITERATIONS"
+          if [ "$count" -eq 0 ]; then
+            echo 'urls<<URLS_EOF' >> "$GITHUB_OUTPUT"
+            echo 'URLS_EOF' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          urls=()
+          for i in $(seq 1 "$count"); do
+            url=$(curl -sL -A 'ComputeSDK-Benchmark' -o /dev/null -w '%{url_effective}' \
+              'https://en.wikipedia.org/wiki/Special:Random')
+            urls+=("${url:-https://en.wikipedia.org/wiki/Special:Random}")
+          done
+          {
+            echo "urls<<URLS_EOF"
+            printf '%s\n' "${urls[@]}"
+            echo "URLS_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+  benchmark:
+    name: ${{ matrix.kind }} / ${{ matrix.provider }}${{ matrix.fileSize && format(' / {0}', matrix.fileSize) || '' }}
+    needs: [matrix, throughput-pages]
+    if: needs.matrix.result == 'success'
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe
+    permissions:
+      contents: read
+      id-token: write
+    timeout-minutes: 90
+    env:
+      BENCH_KIND: ${{ matrix.kind }}
+      BENCH_PROVIDER: ${{ matrix.provider }}
+      BENCH_FILE_SIZE: ${{ matrix.fileSize }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.matrix.outputs.include) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: daily
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ env.OSS_REPOSITORY }}
+          ref: ${{ needs.matrix.outputs.oss_sha }}
+          path: ${{ env.OSS_PATH }}
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: oss/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: oss/pnpm-lock.yaml
+      - name: Install OSS dependencies
+        working-directory: oss
+        run: pnpm install --frozen-lockfile
+      - name: Clear stale OSS results
+        working-directory: oss
+        run: rm -rf results/
+      - uses: namespacelabs/nscloud-setup@v0
+      - name: Build vault key list from OSS provider manifest
+        working-directory: oss
+        run: |
+          case "$BENCH_KIND" in
+            dax) manifest_kind=sandbox ;;
+            browser-throughput) manifest_kind=throughput ;;
+            *) manifest_kind="$BENCH_KIND" ;;
+          esac
+
+          if [ "$BENCH_PROVIDER" = "all" ]; then
+            jq -r --arg kind "$manifest_kind" \
+              '.[$kind] | to_entries[] | .value[]?' \
+              benchmarks/scripts/provider-vars.json
+          else
+            jq -r --arg kind "$manifest_kind" --arg provider "$BENCH_PROVIDER" \
+              '.[$kind][$provider][]?' \
+              benchmarks/scripts/provider-vars.json
+          fi | sort -u | grep -v '^$' > /tmp/oss-vault-keys
+          if [ "$BENCH_KIND" = "dax" ]; then
+            printf '%s\n' BL_DAX_API_KEY BL_DAX_WORKSPACE >> /tmp/oss-vault-keys
+          fi
+          printf '%s\n' COMPUTESDK_ADMIN_API_KEY BENCHMARKS_PLATFORM_API_KEY >> /tmp/oss-vault-keys
+          # Build a grep-compatible regex for load-vault-secrets.sh
+          regex="^($(paste -sd'|' /tmp/oss-vault-keys))"
+          echo "VAULT_KEYS_REGEX=$regex" >> "$GITHUB_ENV"
+      - name: Build E2B DAX template
+        if: matrix.kind == 'dax' && matrix.provider == 'e2b'
+        working-directory: oss
+        run: |
+          . ../daily/benchmarks/scripts/load-vault-secrets.sh "$VAULT_KEYS_REGEX"
+          npx tsx benchmarks/scripts/build-e2b-template.ts
+      - name: Build Superserve DAX template
+        if: matrix.kind == 'dax' && matrix.provider == 'superserve'
+        working-directory: oss
+        run: |
+          . ../daily/benchmarks/scripts/load-vault-secrets.sh "$VAULT_KEYS_REGEX"
+          npx tsx benchmarks/scripts/build-superserve-template.ts
+      - name: Resolve Northflank DAX plan
+        if: matrix.kind == 'dax' && matrix.provider == 'northflank'
+        working-directory: oss
+        run: |
+          . ../daily/benchmarks/scripts/load-vault-secrets.sh "$VAULT_KEYS_REGEX"
+          npx tsx benchmarks/scripts/find-northflank-plan.ts
+      - name: Run benchmark
+        working-directory: oss
+        env:
+          PROVIDER: ${{ matrix.provider }}
+          FILE_SIZE: ${{ matrix.fileSize }}
+          ITERATIONS: ${{ matrix.iterations }}
+          CONCURRENCY: '100'
+          DAX: ${{ matrix.kind == 'dax' && '1' || '' }}
+          THROUGHPUT_URLS: ${{ needs.throughput-pages.outputs.urls }}
+          DAILY_BENCH_SLUG: 'weekly'
+          DAILY_BENCH_NAME: 'Weekly'
+          NO_INGEST: ${{ (github.event_name == 'push' || github.event.inputs.dry_run == 'true') && '--no-ingest' || '' }}
+        run: |
+          . ../daily/benchmarks/scripts/load-vault-secrets.sh "$VAULT_KEYS_REGEX"
+
+          RUNNER=(npx tsx packages/benchsdk-runner/dist/bin.js run)
+          # Matrix jobs for the same benchmark share one platform run. The
+          # attempt number is included so re-runs do not rejoin completed runs.
+          case "$BENCH_KIND" in
+            sandbox)
+              RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+              "${RUNNER[@]}" benchmarks/sandbox/tti.bench.ts --provider "$PROVIDER" --iterations "$ITERATIONS" --concurrency "$CONCURRENCY" --run-key "$RUN_KEY" $NO_INGEST
+              ;;
+            dax)
+              export LIGHTNING_INSTANCE_TYPE=cpu-8
+              export ARKER_PLATFORMS=graviton4
+              if [ -n "${BL_DAX_API_KEY:-}" ] && [ -n "${BL_DAX_WORKSPACE:-}" ]; then
+                export BL_API_KEY="$BL_DAX_API_KEY"
+                export BL_WORKSPACE="$BL_DAX_WORKSPACE"
+                unset BL_DAX_API_KEY BL_DAX_WORKSPACE
+              fi
+              RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+              "${RUNNER[@]}" benchmarks/sandbox/dax.bench.ts --provider "$PROVIDER" --iterations "$ITERATIONS" --run-key "$RUN_KEY" $NO_INGEST
+              ;;
+            storage)
+              RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${FILE_SIZE}"
+              "${RUNNER[@]}" benchmarks/storage/storage.bench.ts --provider "$PROVIDER" --file-size "$FILE_SIZE" --concurrency 16 --iterations "$ITERATIONS" --run-key "$RUN_KEY" $NO_INGEST
+              ;;
+            snapshot-fork)
+              RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+              "${RUNNER[@]}" benchmarks/storage/snapshot-fork.bench.ts --provider "$PROVIDER" --dataset small --iterations "$ITERATIONS" --run-key "$RUN_KEY" $NO_INGEST
+              ;;
+            browser)
+              RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+              "${RUNNER[@]}" benchmarks/browser/browser.bench.ts --provider "$PROVIDER" --iterations "$ITERATIONS" --run-key "$RUN_KEY" $NO_INGEST
+              ;;
+            browser-throughput)
+              RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+              "${RUNNER[@]}" benchmarks/browser/browser-throughput.bench.ts --provider "$PROVIDER" --iterations "$ITERATIONS" --run-key "$RUN_KEY" $NO_INGEST
+              ;;
+            ai-gateway)
+              RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+              "${RUNNER[@]}" benchmarks/ai-gateway/ai-gateway.bench.ts --iterations "$ITERATIONS" --run-key "$RUN_KEY" $NO_INGEST
+              ;;
+          esac
+      - name: Upload raw results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: raw-${{ matrix.kind }}-${{ matrix.provider }}${{ matrix.fileSize && format('-{0}', matrix.fileSize) || '' }}
+          path: oss/results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  collect:
+    name: Merge, render, and publish
+    needs: [matrix, benchmark]
+    if: always() && needs.matrix.result == 'success'
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe
+    permissions:
+      contents: write
+    env:
+      BENCHMARK_FILTER: ${{ github.event.inputs.benchmark || 'all' }}
+      OSS_SHA: ${{ needs.matrix.outputs.oss_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ env.OSS_REPOSITORY }}
+          ref: ${{ needs.matrix.outputs.oss_sha }}
+          path: ${{ env.OSS_PATH }}
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: oss/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: oss/pnpm-lock.yaml
+      - name: Install OSS dependencies
+        working-directory: oss
+        run: pnpm install --frozen-lockfile
+      - name: Clear checked-in OSS results
+        working-directory: oss
+        run: rm -rf results artifacts *.svg
+      - name: Download raw results
+        uses: actions/download-artifact@v4
+        with:
+          path: oss/artifacts
+          pattern: raw-*
+      - name: Partition raw results by category
+        working-directory: oss
+        run: |
+          set -e
+          mkdir -p artifacts/by-category/{sandbox,dax,storage,snapshot-fork,browser,browser-throughput,ai-gateway}
+          for artifact in artifacts/raw-*; do
+            [ -d "$artifact" ] || continue
+            case "$(basename "$artifact")" in
+              raw-sandbox-*) target=artifacts/by-category/sandbox ;;
+              raw-dax-*) target=artifacts/by-category/dax ;;
+              raw-storage-*) target=artifacts/by-category/storage ;;
+              raw-snapshot-fork-*) target=artifacts/by-category/snapshot-fork ;;
+              raw-browser-throughput-*) target=artifacts/by-category/browser-throughput ;;
+              raw-browser-*) target=artifacts/by-category/browser ;;
+              raw-ai-gateway-*) target=artifacts/by-category/ai-gateway ;;
+              *) echo "Unexpected artifact: $artifact" >&2; exit 1 ;;
+            esac
+            cp -a "$artifact" "$target/"
+          done
+      - name: Merge OSS results
+        working-directory: oss
+        run: |
+          set -e
+          run_merge() {
+            input="$1"
+            shift
+            if find "$input" -name latest.json -print -quit | grep -q .; then
+              npx tsx benchmarks/src/merge-results.ts --input "$input" "$@"
+            else
+              echo "No results found for $input; skipping"
+            fi
+          }
+          case "$BENCHMARK_FILTER" in
+            all)
+              run_merge artifacts/by-category/sandbox
+              run_merge artifacts/by-category/dax
+              run_merge artifacts/by-category/storage --mode storage
+              run_merge artifacts/by-category/snapshot-fork --mode snapshot-fork
+              run_merge artifacts/by-category/browser --mode browser
+              run_merge artifacts/by-category/browser-throughput --mode browser-throughput
+              run_merge artifacts/by-category/ai-gateway --mode ai-gateway
+              ;;
+            sandbox|dax)
+              run_merge "artifacts/by-category/$BENCHMARK_FILTER"
+              ;;
+            storage)
+              run_merge artifacts/by-category/storage --mode storage
+              ;;
+            snapshot-fork)
+              run_merge artifacts/by-category/snapshot-fork --mode snapshot-fork
+              ;;
+            browser)
+              run_merge artifacts/by-category/browser --mode browser
+              ;;
+            browser-throughput)
+              run_merge artifacts/by-category/browser-throughput --mode browser-throughput
+              ;;
+            ai-gateway)
+              run_merge artifacts/by-category/ai-gateway --mode ai-gateway
+              ;;
+          esac
+      - name: Generate OSS charts
+        working-directory: oss
+        run: |
+          set -e
+          run_chart_if() {
+            input="$1"
+            shift
+            if [ -e "$input" ] || find "$input" -name latest.json -print -quit 2>/dev/null | grep -q .; then
+              "$@"
+            else
+              echo "No results found for $input; skipping chart"
+            fi
+          }
+          run_chart_if results/burst_tti/latest.json pnpm run generate-svg
+          run_chart_if results/burst_tti/latest.json pnpm run generate-pricing-svg
+          run_chart_if results/sandbox-dax/latest.json pnpm run generate-dax-svg
+          run_chart_if results/storage pnpm run generate-storage-svg
+          run_chart_if results/snapshot-fork pnpm run generate-snapshot-fork-svg
+          run_chart_if results/browser/latest.json pnpm run generate-browser-svg
+          run_chart_if results/browser-throughput/latest.json pnpm run generate-browser-throughput-svg
+          run_chart_if results/ai-gateway-latency/anthropic/latest.json pnpm run generate-ai-gateway-svg
+      - name: Copy generated results into repository
+        run: |
+          copy_tree_if() {
+            source="$1"
+            destination="$2"
+            if [ -d "$source" ]; then
+              mkdir -p "$destination"
+              cp -a "$source/." "$destination/"
+            else
+              echo "No directory found at $source; skipping"
+            fi
+          }
+          copy_file_if() {
+            source="$1"
+            dest="${2:-$(basename "$source")}"
+            if [ -f "$source" ]; then
+              cp "$source" "$dest"
+            else
+              echo "No file found at $source; skipping"
+            fi
+          }
+          copy_glob_if() {
+            directory="$1"
+            pattern="$2"
+            prefix="${3:-}"
+            find "$directory" -maxdepth 1 -type f -name "$pattern" -print0 | while IFS= read -r -d '' file; do
+              cp "$file" "./${prefix}$(basename "$file")"
+            done
+          }
+          case "$BENCHMARK_FILTER" in
+            all)
+              copy_tree_if oss/results results-weekly
+              copy_glob_if oss '*.svg' 'weekly-'
+              ;;
+            sandbox)
+              copy_tree_if oss/results/burst_tti results-weekly/burst_tti
+              copy_file_if oss/results.svg weekly-results.svg
+              copy_file_if oss/burst_tti.svg weekly-burst_tti.svg
+              copy_file_if oss/pricing.svg weekly-pricing.svg
+              ;;
+            dax)
+              copy_tree_if oss/results/sandbox-dax results-weekly/sandbox-dax
+              copy_file_if oss/dax.svg weekly-dax.svg
+              ;;
+            storage)
+              copy_tree_if oss/results/storage results-weekly/storage
+              copy_glob_if oss 'storage_*.svg' 'weekly-'
+              ;;
+            snapshot-fork)
+              copy_tree_if oss/results/snapshot-fork results-weekly/snapshot-fork
+              copy_glob_if oss 'snapshot_fork_*.svg' 'weekly-'
+              ;;
+            browser)
+              copy_tree_if oss/results/browser results-weekly/browser
+              copy_file_if oss/browser.svg weekly-browser.svg
+              ;;
+            browser-throughput)
+              copy_tree_if oss/results/browser-throughput results-weekly/browser-throughput
+              copy_file_if oss/browser-throughput.svg weekly-browser-throughput.svg
+              ;;
+            ai-gateway)
+              copy_tree_if oss/results/ai-gateway-latency/anthropic results-weekly/ai-gateway-latency/anthropic
+              copy_file_if oss/ai-gateway.svg weekly-ai-gateway.svg
+              ;;
+          esac
+          printf '%s\n' "$OSS_SHA" > .oss-benchmark-revision-weekly
+      - name: Commit and push weekly results
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          add_if_exists() {
+            for f in "$@"; do
+              if [ -e "$f" ]; then
+                git add -- "$f"
+              fi
+            done
+            return 0
+          }
+          add_if_exists .oss-benchmark-revision-weekly results-weekly/ weekly-*.svg
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore: update weekly OSS benchmark results [skip ci]"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin master
+            git rebase origin/master
+            if git push origin HEAD:master; then
+              exit 0
+            fi
+          done
+          exit 1
