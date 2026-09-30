@@ -1,0 +1,77 @@
+name: FC Sandbox Benchmark (aliyun-fc)
+
+# Standalone workflow for validating and running the Alibaba Cloud Function
+# Compute (FC) sandbox provider. It is intentionally trigger-only while the
+# FC-side gateway and secrets are being set up. Once the provider is stable,
+# add `aliyun-fc` to the matrix in `.github/workflows/sandbox-tti-benchmarks.yml`
+# so daily results are committed alongside every other provider.
+
+on:
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: 'Iterations per run'
+        required: false
+        default: '10'
+      concurrency:
+        description: 'Concurrent sandboxes'
+        required: false
+        default: '10'
+      dry_run:
+        description: 'Run without ingesting results to the platform'
+        required: false
+        default: true
+        type: boolean
+      runner_label:
+        description: 'Runner: ubuntu-latest (GitHub-hosted) or self-hosted'
+        required: false
+        default: 'ubuntu-latest'
+
+jobs:
+  bench:
+    name: Bench aliyun-fc
+    runs-on: ${{ github.event.inputs.runner_label || 'ubuntu-latest' }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      # Toolchain bootstrap is only needed on GitHub-hosted runners.
+      # Self-hosted runners (e.g. an in-VPC ECS that reaches the gateway over
+      # the intranet) use the system Node/pnpm, which may be older glibc
+      # builds that cannot run the official node 24 binaries.
+      - uses: pnpm/action-setup@v4
+        if: runner.environment == 'github-hosted'
+      - uses: actions/setup-node@v4
+        if: runner.environment == 'github-hosted'
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: |
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm -r --filter './packages/**' run build
+
+      - name: Clear stale results from checkout
+        run: rm -rf results/
+
+      - name: Run FC sandbox TTI benchmark
+        env:
+          BENCHMARKS_PLATFORM_API_KEY: ${{ secrets.BENCHMARKS_PLATFORM_API_KEY }}
+          ALIYUN_FC_GATEWAY_URL: ${{ secrets.ALIYUN_FC_GATEWAY_URL }}
+          ALIYUN_FC_GATEWAY_SECRET: ${{ secrets.ALIYUN_FC_GATEWAY_SECRET }}
+          ALIYUN_FC_REGION: ${{ secrets.ALIYUN_FC_REGION }}
+        run: |
+          npx tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts \
+            --provider aliyun-fc \
+            --iterations ${{ github.event.inputs.iterations }} \
+            --concurrency ${{ github.event.inputs.concurrency }} \
+            ${{ github.event.inputs.dry_run == 'true' && '--no-ingest' || '' }}
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: results-aliyun-fc
+          path: results/
+          if-no-files-found: ignore
+          retention-days: 7
