@@ -8,6 +8,7 @@
     "bench": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --iterations 3 --concurrency 3",
     "bench:burst": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --iterations 3 --concurrency 3",
     "bench:sandbox:dax": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/dax.bench.ts",
+    "bench:capabilities": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/capabilities.bench.ts",
     "bench:blaxel": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --iterations 3 --concurrency 3 --provider blaxel",
     "bench:codesandbox": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --iterations 3 --concurrency 3 --provider codesandbox",
     "bench:daytona": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --iterations 3 --concurrency 3 --provider daytona",
