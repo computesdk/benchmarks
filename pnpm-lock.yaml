@@ -56,6 +56,9 @@ importers:
       '@computesdk/browseruse':
         specifier: ^0.2.13
         version: 0.2.13
+      '@computesdk/buddy':
+        specifier: ^1.0.6
+        version: 1.0.6
       '@computesdk/cloud-run':
         specifier: ^0.1.12
         version: 0.1.12
@@ -611,6 +614,10 @@ packages:
   '@browserbasehq/sdk@2.21.0':
     resolution: {integrity: sha512-zer0+HIS7EtDtfprU1jNCWk9DjU+ZyYaK2MVr9+m2Ydthoh2YHjPrjbTcLHNAIKmu5S6UCt+P0bzL5sm6t35VA==}
 
+  '@buddy-works/sandbox-sdk@0.1.9':
+    resolution: {integrity: sha512-x9pGTSSRBtYtGwDLWHPAhyCDXnyFe8DQKoLOP9DiwNKBVXuHah8rROnoLW1lNp4USYgS6w8zrnHxjykF2jGIhw==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+
   '@bufbuild/protobuf@2.12.1':
     resolution: {integrity: sha512-BvAMfS6LrgZiryOAZ4pBYucu4wG/Ei/9o9DZ9akbREnMLbPJiom2i8b9C8IsKErQoiKqVhrerzt3kOT/RrzLHg==}
 
@@ -738,6 +745,10 @@ packages:
 
   '@computesdk/browseruse@0.2.13':
     resolution: {integrity: sha512-H+HlX7bAToB+7Qzp0E/oNJbMRK/GW6q9kCrmY7xGNC3/XMeorcHuH2T00i8mgclifFbPUld9mhAV4ovWRSseWQ==}
+
+  '@computesdk/buddy@1.0.6':
+    resolution: {integrity: sha512-YFb83gyEArk2z2s3VySllLtdDca6JfnKHU4dXrfk7CA0bUkVhK/xv8jGzjnwE0+Uey1/O+S2uw49ciPe2oTDmw==}
+    engines: {node: ^20.19.0 || >=22.12.0}
 
   '@computesdk/cloud-run@0.1.12':
     resolution: {integrity: sha512-01wbRzs3Z66T4x5Aqcgf5K5QTJPQ7OnxHWbxD055+IGLl/9n5pv4HF2IRth2IUNHd4pXwVPo4MZqspnsOm7Shw==}
@@ -3905,6 +3916,10 @@ packages:
     resolution: {integrity: sha512-qP1vozQRI+BMOPcjFzrjXuQvdak2pHNUMZoeG2eRbiSqyvbEf/wQtEOTOX1guk6E3t36RkaqiSt8A/6YElNxLQ==}
     engines: {node: '>=12'}
 
+  is-network-error@1.3.2:
+    resolution: {integrity: sha512-PhBY86zaxNZUuWP6h13Vu5oFe0XY6/UlKzQnYFELzGVHygP3MxmvTfYSG7GN3aIab/iWudSMgjSnG9Dq+nHrgA==}
+    engines: {node: '>=16'}
+
   is-node-process@1.2.0:
     resolution: {integrity: sha512-Vg4o6/fqPxIjtxgUH5QLJhwZ7gW5diGCVlXpuUfELC62CuxM1iHcRe51f2W1FDy04Ai4KJkagKjx3XaqyfRKXw==}
 
@@ -4494,6 +4509,10 @@ packages:
   p-map@2.1.0:
     resolution: {integrity: sha512-y3b8Kpd8OAN444hxfBbFfj1FY/RjtTd8tzYwhUqNYXx0fXx2iX4maP4Qr6qhIKbQXI02wTLAda4fYUbDagTUFw==}
     engines: {node: '>=6'}
+
+  p-retry@7.1.1:
+    resolution: {integrity: sha512-J5ApzjyRkkf601HpEeykoiCvzHQjWxPAHhyjFcEUP2SWq0+35NKh8TLhpLw+Dkq5TZBFvUM6UigdE9hIVYTl5w==}
+    engines: {node: '>=20'}
 
   p-try@2.2.0:
     resolution: {integrity: sha512-R4nPAVTAU0B9D35/Gk3uJf/7XYbQcyohSKdvAxIRSNghFl4e71hVoGnBNQz9cWaXxO2I10KTC+3jMdvvoKw6dQ==}
@@ -5727,6 +5746,9 @@ packages:
   zod@4.1.11:
     resolution: {integrity: sha512-WPsqwxITS2tzx1bzhIKsEs19ABD5vmCVa4xBo2tq/SrV4RNZtfws1EnCWQXM6yh8bD08a1idvkB5MZSBiZsjwg==}
 
+  zod@4.3.5:
+    resolution: {integrity: sha512-k7Nwx6vuWx1IJ9Bjuf4Zt1PEllcwe7cls3VNzm4CQ1/hgtFUK2bRNG3rvnpPUhFjmqJKAKtjV576KnUkHocg/g==}
+
   zod@4.4.3:
     resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
 
@@ -6153,6 +6175,11 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
+  '@buddy-works/sandbox-sdk@0.1.9':
+    dependencies:
+      p-retry: 7.1.1
+      zod: 4.3.5
+
   '@bufbuild/protobuf@2.12.1': {}
 
   '@bufbuild/protobuf@2.15.0': {}
@@ -6440,6 +6467,12 @@ snapshots:
       - '@x402/evm'
       - '@x402/fetch'
       - viem
+
+  '@computesdk/buddy@1.0.6':
+    dependencies:
+      '@buddy-works/sandbox-sdk': 0.1.9
+      '@computesdk/provider': 2.1.9
+      computesdk: 4.1.8
 
   '@computesdk/cloud-run@0.1.12':
     dependencies:
@@ -9997,6 +10030,8 @@ snapshots:
 
   is-interactive@2.0.0: {}
 
+  is-network-error@1.3.2: {}
+
   is-node-process@1.2.0: {}
 
   is-number@7.0.0: {}
@@ -10557,6 +10592,10 @@ snapshots:
       p-limit: 3.1.0
 
   p-map@2.1.0: {}
+
+  p-retry@7.1.1:
+    dependencies:
+      is-network-error: 1.3.2
 
   p-try@2.2.0: {}
 
@@ -11825,6 +11864,8 @@ snapshots:
   zod@3.25.76: {}
 
   zod@4.1.11: {}
+
+  zod@4.3.5: {}
 
   zod@4.4.3: {}
 

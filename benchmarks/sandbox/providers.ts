@@ -2,6 +2,7 @@ import { archil } from '@computesdk/archil';
 import { arker } from '@computesdk/arker';
 import { beam } from '@computesdk/beam';
 import { blaxel } from '@computesdk/blaxel';
+// import { buddy } from '@computesdk/buddy';
 import { codesandbox } from '@computesdk/codesandbox';
 import { cloudRun } from '@computesdk/cloud-run';
 // import { collimate } from '@computesdk/collimate';
@@ -75,6 +76,15 @@ export const providers: ProviderConfig[] = [
     requiredEnvVars: ['BL_API_KEY', 'BL_WORKSPACE'],
     createCompute: () => blaxel({ apiKey: process.env.BL_API_KEY!, workspace: process.env.BL_WORKSPACE!, region: 'us-was-1' }),
   },
+  // {
+  //   name: 'buddy',
+  //   requiredEnvVars: ['BUDDY_TOKEN', 'BUDDY_WORKSPACE', 'BUDDY_PROJECT'],
+  //   createCompute: () => buddy({
+  //     token: process.env.BUDDY_TOKEN!,
+  //     workspace: process.env.BUDDY_WORKSPACE!,
+  //     project: process.env.BUDDY_PROJECT!,
+  //   }),
+  // },
   {
     name: 'cloud-run',
     requiredEnvVars: ['CLOUD_RUN_SANDBOX_URL', 'CLOUD_RUN_SANDBOX_SECRET'],
