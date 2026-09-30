@@ -25,6 +25,10 @@ import type { AIGatewayProviderConfig, PhaseProbeResult } from './types.js';
 
 export const PROMPT = 'Write a two-sentence description of how distributed systems handle partial failures.';
 
+/** Default regions for a regional AI gateway benchmark. */
+export const DEFAULT_REGIONS = ['us-east-1', 'eu-west-1', 'ap-southeast-1', 'us-west-2'] as const;
+export type AIGatewayRegion = (typeof DEFAULT_REGIONS)[number];
+
 /** Parses `--flag N` or `--flag=N` from argv; mirrors run.ts's own flag parsing. */
 export function parseIntFlag(argv: string[], flag: string): number | undefined {
   const idx = argv.indexOf(flag);
@@ -59,6 +63,56 @@ export function resolveAIGatewayPhases(argv: string[]): Array<{ name: string; it
   ].filter((p) => p.iterations > 0);
 }
 
+function parseStringFlag(argv: string[], flag: string): string | undefined {
+  const idx = argv.indexOf(flag);
+  if (idx !== -1 && idx + 1 < argv.length) return argv[idx + 1];
+  const eq = argv.find((a) => a.startsWith(`${flag}=`));
+  if (eq) return eq.slice(flag.length + 1);
+  return undefined;
+}
+
+/** Parses `--ai-gateway-regions` as a comma-separated list (or repeated flags). */
+function parseRegions(argv: string[]): string[] {
+  const regions: string[] = [];
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === '--ai-gateway-regions') {
+      if (i + 1 >= argv.length) throw new Error('--ai-gateway-regions requires a value');
+      const value = argv[i + 1];
+      if (!value || value.startsWith('-')) {
+        throw new Error(`--ai-gateway-regions requires a non-empty region list (got "${value}")`);
+      }
+      regions.push(...value.split(',').map((r) => r.trim()).filter(Boolean));
+      i++;
+    } else if (argv[i].startsWith('--ai-gateway-regions=')) {
+      const value = argv[i].slice('--ai-gateway-regions='.length);
+      if (!value) throw new Error('--ai-gateway-regions= requires a non-empty value');
+      regions.push(...value.split(',').map((r) => r.trim()).filter(Boolean));
+    }
+  }
+  return regions.length > 0 ? regions : [...DEFAULT_REGIONS];
+}
+
+/**
+ * Resolves a regional cold/warm phase list. Each phase is named `<region>:<mode>`
+ * so the task can parse the region, route to a per-region endpoint if one is
+ * configured, and tag the result with `region` for `scoring.groupBy`.
+ */
+export function resolveAIGatewayRegionalPhases(argv: string[]): Array<{ name: string; iterations: number }> {
+  const iterationsOverride = parseIntFlag(argv, '--iterations');
+  if (iterationsOverride !== undefined && iterationsOverride <= 0) {
+    throw new Error('--iterations must be a positive integer');
+  }
+  const iterationsCold = parseIntFlag(argv, '--ai-gateway-iterations-cold') ?? iterationsOverride ?? 5;
+  const iterationsWarm = parseIntFlag(argv, '--ai-gateway-iterations-warm') ?? iterationsOverride ?? 5;
+  const regions = parseRegions(argv);
+  const phases: Array<{ name: string; iterations: number }> = [];
+  for (const region of regions) {
+    if (iterationsCold > 0) phases.push({ name: `${region}:cold`, iterations: iterationsCold });
+    if (iterationsWarm > 0) phases.push({ name: `${region}:warm`, iterations: iterationsWarm });
+  }
+  return phases;
+}
+
 /** Builds DNS/TCP/TLS (cold only) + TTFB/TTFT as pre-measured platform steps. */
 function phaseSteps(result: PhaseProbeResult): TaskStepRecord[] {
   const stepStatus: TaskStepRecord['status'] = result.error ? 'error' : 'success';
@@ -84,13 +138,14 @@ function phaseSteps(result: PhaseProbeResult): TaskStepRecord[] {
   return steps;
 }
 
-function probeData(result: PhaseProbeResult): JsonObject {
+function probeData(result: PhaseProbeResult, region?: string): JsonObject {
   // The scored latency is reported under a phase-specific key (`coldE2eMs` /
   // `warmTtftMs`) so cold and warm are separate metrics without a scoring-time
   // phase filter.
   const scoredLatencyMs = result.mode === 'cold' ? result.coldE2eMs ?? result.ttftMs : result.ttftMs;
   return {
     mode: result.mode,
+    ...(region ? { region } : {}),
     ...(typeof scoredLatencyMs === 'number' && Number.isFinite(scoredLatencyMs)
       ? { [result.mode === 'cold' ? 'coldE2eMs' : 'warmTtftMs']: scoredLatencyMs }
       : {}),
@@ -108,9 +163,18 @@ function probeData(result: PhaseProbeResult): JsonObject {
  * budget and a longer timeout than the rest — see `ai-gateway-kimi.bench.ts`)
  * without a shared constant forcing every family to the same values.
  */
+function parsePhase(phase: string | undefined): { region?: string; mode: 'cold' | 'warm' } {
+  if (phase && phase.includes(':')) {
+    const [region, mode] = phase.split(':');
+    return { region, mode: mode === 'warm' ? 'warm' : 'cold' };
+  }
+  return { mode: phase === 'warm' ? 'warm' : 'cold' };
+}
+
 export function makeAIGatewayTask(maxTokens: number, timeoutMs: number) {
   return async function aiGatewayTask(ctx: TaskContext<AIGatewayProviderConfig>): Promise<TaskResult> {
-    const isCold = ctx.phase === 'cold';
+    const { region, mode } = parsePhase(ctx.phase);
+    const isCold = mode === 'cold';
     const result = isCold
       ? await runColdProbe(ctx.participant, PROMPT, maxTokens, timeoutMs)
       : await runWarmProbe(ctx.participant, PROMPT, maxTokens, timeoutMs);
@@ -118,18 +182,18 @@ export function makeAIGatewayTask(maxTokens: number, timeoutMs: number) {
     const steps = phaseSteps(result);
 
     if (result.error) {
-      ctx.log(`${ctx.participant.name} ${result.mode} probe failed: ${result.error}`, {
+      ctx.log(`${ctx.participant.name}${region ? ` (${region})` : ''} ${result.mode} probe failed: ${result.error}`, {
         level: 'error',
-        meta: probeData(result),
+        meta: probeData(result, region),
       });
-      throw new TaskError(result.error, { code: 'probe_failed', data: probeData(result), steps });
+      throw new TaskError(result.error, { code: 'probe_failed', data: probeData(result, region), steps });
     }
     ctx.log(
-      `${ctx.participant.name} ${result.mode} probe: ttfb=${result.ttfbMs}ms ttft=${result.ttftMs}ms`,
-      { level: 'info', meta: probeData(result) },
+      `${ctx.participant.name}${region ? ` (${region})` : ''} ${result.mode} probe: ttfb=${result.ttfbMs}ms ttft=${result.ttftMs}ms`,
+      { level: 'info', meta: probeData(result, region) },
     );
     return {
-      data: probeData(result),
+      data: probeData(result, region),
       steps,
       latencyMs: isCold ? result.coldE2eMs ?? result.ttftMs : result.ttftMs,
     };

@@ -76,10 +76,11 @@ export function recordsToAIGatewayResults(
   opts: { providers: AIGatewayProviderConfig[] },
 ): AIGatewayBenchmarkResult[] {
   return participants.map((participant) => {
-    const model = opts.providers.find((p) => p.name === participant.participant)?.model ?? '';
+    const providerConfig = opts.providers.find((p) => p.name === participant.participant);
+    const model = providerConfig?.model ?? '';
     const iterations = byTaskIndex(participant.records).map(recordToProbe);
     return {
-      provider: participant.participant,
+      provider: providerConfig?.displayName ?? participant.participant,
       mode: 'ai-gateway' as const,
       model,
       iterations,
