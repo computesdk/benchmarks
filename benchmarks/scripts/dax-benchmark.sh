@@ -157,10 +157,22 @@ prepare() {
   # setuptools is optional - only needed for node-gyp native module compilation,
   # not for the clone/install/typecheck benchmark. Skip the check entirely.
 
-  # Install Node.js only if it's not already available. Some sandboxes (e.g.
-  # Vercel) ship Node.js pre-installed; respect that rather than trying to
-  # override it (the symlink may not take precedence in PATH).
-  if ! command -v node >/dev/null 2>&1; then
+  # Install the pinned Node.js if it is missing or older than 22. Some
+  # sandboxes (e.g. Vercel) ship a current Node.js; keep that rather than
+  # fighting PATH precedence. OpenCode's native-module install scripts
+  # require Node 22+ (recent node-gyp pulls an undici that needs
+  # util.markAsUncloneable).
+  local need_node=1
+  if command -v node >/dev/null 2>&1; then
+    local current_major
+    current_major="$(node -v 2>/dev/null || true)"
+    current_major="${current_major#v}"
+    current_major="${current_major%%.*}"
+    if [[ "$current_major" =~ ^[0-9]+$ ]] && (( current_major >= 22 )); then
+      need_node=0
+    fi
+  fi
+  if [[ "$need_node" -eq 1 ]]; then
     local archive="node-v${NODE_VERSION}-${NODE_ARCH}.tar.gz"
     local prefix="/opt/node-v${NODE_VERSION}-${NODE_ARCH}"
     if ! curl -fsSL "https://nodejs.org/download/release/v${NODE_VERSION}/${archive}" -o "/tmp/${archive}"; then
@@ -176,6 +188,7 @@ prepare() {
     for executable in node npm npx corepack; do
       "${SUDO[@]}" ln -sfn "$prefix/bin/$executable" "/usr/local/bin/$executable"
     done
+    hash -r 2>/dev/null || true
   fi
   if ! command -v node >/dev/null 2>&1; then
     printf 'BENCH_ERROR\tprepare\tnode_not_found\n' >&2
