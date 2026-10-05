@@ -138,6 +138,7 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
     ],
   },
   beam:         { cpu: 8, memory: 16384 },                   // cpu = cores, memory = MiB
+  cloudflare:   { vcpu: 8, memoryMib: 16384, diskMb: 20000, image: 'builder' },
   codesandbox:  { vmTier: VMTier.Small },                  // Small = 8 CPU, 16 GiB
   northflank:   { deploymentPlan: process.env.NORTHFLANK_DEPLOYMENT_PLAN || 'nf-compute-50', ephemeralStorageSize: 5120 },  // 5 GiB ephemeral storage
   declaw:       { templateId: 'node-large' },              // node-large template: 8 vCPU / 16 GiB RAM / 8 GiB disk
