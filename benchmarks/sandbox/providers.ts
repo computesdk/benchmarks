@@ -13,6 +13,7 @@ import { declaw } from '@computesdk/declaw';
 import { e2b } from '@computesdk/e2b';
 import { freestyle } from '@computesdk/freestyle';
 import { givemeanode } from '@computesdk/givemeanode';
+import { gravixlayer } from '@computesdk/gravixlayer';
 import { hopx } from '@computesdk/hopx';
 import { isorun } from '@computesdk/isorun';
 // import { lelantos } from '@computesdk/lelantos';
@@ -137,6 +138,11 @@ export const providers: ProviderConfig[] = [
     name: 'givemeanode',
     requiredEnvVars: ['GMN_TOKEN'],
     createCompute: () => givemeanode({ apiKey: process.env.GMN_TOKEN!, baseUrl: process.env.GMN_API_HOST }),
+  },
+  {
+    name: 'gravixlayer',
+    requiredEnvVars: ['GRAVIXLAYER_API_KEY'],
+    createCompute: () => gravixlayer({ apiKey: process.env.GRAVIXLAYER_API_KEY! }),
   },
   {
     name: 'hopx',

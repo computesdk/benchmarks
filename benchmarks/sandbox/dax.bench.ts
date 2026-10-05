@@ -151,6 +151,7 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // selects sandbox-lg (8 vCPU / 32 GiB). The actual memory is reported by the
   // benchmark script, so the mismatch is visible in results.
   givemeanode:  { vcpus: 8, memoryMiB: 16384 },
+  gravixlayer:  { templateId: 'base-4xlarge' },                // built-in template requested by the Gravix team
   // Sandbox0 exposes only memory. Override the 128 MiB TTI size;
   // getSandboxOptionsWithResources preserves hardTtl from providers.ts.
   sandbox0:     { memory: 16384 },
