@@ -63,8 +63,8 @@ importers:
         specifier: ^0.1.12
         version: 0.1.12
       '@computesdk/cloudflare':
-        specifier: ^2.0.1
-        version: 2.0.1
+        specifier: ^2.1.0
+        version: 2.1.0
       '@computesdk/codesandbox':
         specifier: ^1.5.56
         version: 1.5.56(@hey-api/openapi-ts@0.99.0(magicast@0.3.5)(typescript@5.9.3))(@xterm/xterm@5.5.0)(ink@7.1.1(bufferutil@4.1.0)(react@19.2.8)(utf-8-validate@6.0.6))
@@ -754,8 +754,8 @@ packages:
     resolution: {integrity: sha512-01wbRzs3Z66T4x5Aqcgf5K5QTJPQ7OnxHWbxD055+IGLl/9n5pv4HF2IRth2IUNHd4pXwVPo4MZqspnsOm7Shw==}
     hasBin: true
 
-  '@computesdk/cloudflare@2.0.1':
-    resolution: {integrity: sha512-aP1Gdomq+Ghn2K6lVv90bLlmKetp2SDqkYrP+It6mcHhtspD9z34FqixTOnih2kxGnBVmLk41M1qRqvUYAqO1Q==}
+  '@computesdk/cloudflare@2.1.0':
+    resolution: {integrity: sha512-6FgcwAzVJ55TzxuIgO9qcDSITryx5imQPW7WnAi94iaGu/5jIuPOdjqav/CVqmnA2fCNMp6J2yG9veD2NRdkvw==}
     hasBin: true
 
   '@computesdk/cmd@0.4.1':
@@ -834,6 +834,9 @@ packages:
 
   '@computesdk/opencomputer@1.0.8':
     resolution: {integrity: sha512-zwdQaC+Y0zrtxTldRoV2cSdfrfB+bAoVdq7fceJ+de7eNh23hJRs/U0TlWLBKRn8Mbzd8Gavq/sNOXwSsFPFLw==}
+
+  '@computesdk/provider@2.1.10':
+    resolution: {integrity: sha512-MsUtvoddvuUUiMrC3vLseK3wZYu/01KH02c0WqKWCE/p+cczmy0UNcwYNja/XQWgZXfkF+gKLL1vfd0635YUcA==}
 
   '@computesdk/provider@2.1.9':
     resolution: {integrity: sha512-Gw2V+LuxwUWwXGibcL7aG7ao1zv/xW88Ggt22Afna+62Br0yQmhDgpNQ+ans2UihcIBBAQjfgwMiE29pGNCB5Q==}
@@ -3057,6 +3060,9 @@ packages:
   computesdk@4.1.8:
     resolution: {integrity: sha512-UhEPuh9EMsVuOFPKHrAllyACGm8UYKGsUklH8uFJ24mdLUT11PkU4NTCFmG0V1O8Oyhi8d2riaUoavTnGa8PSA==}
 
+  computesdk@4.1.9:
+    resolution: {integrity: sha512-7NsJhX/CVSXNoCqUEPi/pvHRmBiSl3OoYHOGyn6YCmWU8l0jczi3S73SM4XTJP7xnRXhdlfmbK2M2ny/E2lspg==}
+
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
@@ -3119,6 +3125,11 @@ packages:
 
   daemond@0.1.6:
     resolution: {integrity: sha512-vpYT4ToRHKRSIYmKG/ovUMNF6+7e1s3m/4eJ10AxmegIW7t0XcxSVzp3pYbz+X4rFeykyy02N7kFa6sHh1YZsA==}
+    engines: {node: '>=18.0.0'}
+    os: [linux, darwin]
+
+  daemond@0.1.7:
+    resolution: {integrity: sha512-c5X2MBXh1gzOLB76853fnfrcRsW7diZNoQuYkBR9XSPNLn/RNrEeJYwjHBq10pVaMmN5swGShBdpHlSB7z6Fsg==}
     engines: {node: '>=18.0.0'}
     os: [linux, darwin]
 
@@ -3423,8 +3434,8 @@ packages:
     resolution: {integrity: sha512-hIS4idWWai69NezIdRt2xFVofaF4j+6INOpJlVOLDO8zXGpUVEVzIYk12UUi2JzjEzWL3IOAxcTubgz9Po0yXw==}
     engines: {node: '>= 18'}
 
-  exsolve@1.1.1:
-    resolution: {integrity: sha512-9U/jZUgjnSGyntRr6y5Muu1MJcwFl6kPu7k8qLF0IMNfLqvw0NZ4nnVDq0RVoZ0RvCyumib4Ez3KYrVfilrw+g==}
+  exsolve@1.1.3:
+    resolution: {integrity: sha512-kuzL9zherLQoqDeQaS55AiiIg1kb4KYXaSusTtgZTPlvKP2gGCI82LNmBNh5RjDVUXIcmgx+/Mx7vPwRzBbhJA==}
 
   extend@3.0.2:
     resolution: {integrity: sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g==}
@@ -4341,8 +4352,8 @@ packages:
   nice-grpc@2.1.17:
     resolution: {integrity: sha512-pu9xYPlWSeqoYQOCqb2ftQqZi/P2DaI70PSuwnxvoyIRiilaOVtktyPe6LmuXegWB4Ic1sPuDGCnCCASbwzK0w==}
 
-  node-abi@3.96.0:
-    resolution: {integrity: sha512-rebQ/lz7i0EkoLzUVSrKRzA69zMkwLp95kKMWoMDkkM00Suxz0D7zEQPwRml5fQum24mj7bPvmlgLAmu2JCiYg==}
+  node-abi@3.97.0:
+    resolution: {integrity: sha512-6Pu8F0eXGZlyz0EepPJrWgWDcBI8rKt2Wj8exOJU1tjVbu/VyZy5ZaLYS5N+Jp/Y3IP3sIRKcIOElTu7uC6KKA==}
     engines: {node: '>=10'}
 
   node-addon-api@8.9.2:
@@ -6475,10 +6486,10 @@ snapshots:
       '@computesdk/provider': 2.1.9
       computesdk: 4.1.8
 
-  '@computesdk/cloudflare@2.0.1':
+  '@computesdk/cloudflare@2.1.0':
     dependencies:
-      '@computesdk/provider': 2.1.9
-      computesdk: 4.1.8
+      '@computesdk/provider': 2.1.10
+      computesdk: 4.1.9
 
   '@computesdk/cmd@0.4.1': {}
 
@@ -6653,6 +6664,12 @@ snapshots:
       '@computesdk/provider': 2.1.9
       '@opencomputer/sdk': 2.3.0
       computesdk: 4.1.8
+
+  '@computesdk/provider@2.1.10':
+    dependencies:
+      '@computesdk/cmd': 0.4.1
+      computesdk: 4.1.9
+      daemond: 0.1.7
 
   '@computesdk/provider@2.1.9':
     dependencies:
@@ -8827,7 +8844,7 @@ snapshots:
       confbox: 0.2.4
       defu: 6.1.7
       dotenv: 17.4.2
-      exsolve: 1.1.1
+      exsolve: 1.1.3
       giget: 3.3.1
       jiti: 2.7.0
       ohash: 2.0.12
@@ -9003,6 +9020,11 @@ snapshots:
       '@computesdk/cmd': 0.4.1
       daemond: 0.1.6
 
+  computesdk@4.1.9:
+    dependencies:
+      '@computesdk/cmd': 0.4.1
+      daemond: 0.1.7
+
   concat-map@0.0.1: {}
 
   confbox@0.1.8: {}
@@ -9046,6 +9068,8 @@ snapshots:
       which: 2.0.2
 
   daemond@0.1.6: {}
+
+  daemond@0.1.7: {}
 
   date-fns@4.4.0: {}
 
@@ -9476,7 +9500,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  exsolve@1.1.1: {}
+  exsolve@1.1.3: {}
 
   extend@3.0.2: {}
 
@@ -10413,7 +10437,7 @@ snapshots:
       abort-controller-x: 0.5.0
       nice-grpc-common: 2.0.4
 
-  node-abi@3.96.0:
+  node-abi@3.97.0:
     dependencies:
       semver: 7.8.5
     optional: true
@@ -10709,7 +10733,7 @@ snapshots:
   pkg-types@2.3.3:
     dependencies:
       confbox: 0.3.1
-      exsolve: 1.1.1
+      exsolve: 1.1.3
       pathe: 2.0.3
 
   platform@1.3.6: {}
@@ -10759,7 +10783,7 @@ snapshots:
       minimist: 1.2.8
       mkdirp-classic: 0.5.3
       napi-build-utils: 2.0.0
-      node-abi: 3.96.0
+      node-abi: 3.97.0
       pump: 3.0.4
       rc: 1.2.8
       simple-get: 4.0.1
