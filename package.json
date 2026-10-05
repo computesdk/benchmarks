@@ -148,7 +148,11 @@
     "bench:ai-gateway-model-index:ngrok": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-model-index.bench.ts --provider ngrok",
     "bench:ai-gateway-model-index:llmapi": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-model-index.bench.ts --provider llmapi",
     "bench:ai-gateway-model-index:novita": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-model-index.bench.ts --provider novita",
-    "bench:ai-gateway-model-index:github-copilot": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-model-index.bench.ts --provider github-copilot"
+    "bench:ai-gateway-model-index:github-copilot": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-model-index.bench.ts --provider github-copilot",
+    "bench:playwright-readiness": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/browser/playwright-readiness.bench.ts",
+    "bench:playwright-throughput": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/browser/playwright-throughput.bench.ts",
+    "bench:playwright-prepare-urls": "tsx benchmarks/browser/playwright-native/prepare-urls.ts",
+    "test:playwright-native": "tsx --test benchmarks/browser/playwright-native/native.test.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1145.0",
@@ -222,6 +226,7 @@
     "p-limit": "^7.3.3",
     "pg": "^8.23.1",
     "playwright-core": "^1.63.0",
+    "playwright-native-core": "npm:playwright-core@1.60.0",
     "sql.js": "^1.14.2",
     "tensorlake": "^0.5.139"
   },
