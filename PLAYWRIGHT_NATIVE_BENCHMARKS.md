@@ -1,9 +1,9 @@
 # Proposal: Playwright-native browser benchmarks
 
-This proposal requests ComputeSDK maintainer feedback before implementation,
-following Noah's request for a proposal PR. It proposes two separate benchmarks
-over `chromium.connect()`: **browser readiness** and **action throughput**.
-It contains no benchmark results or performance claims.
+This proposal requests ComputeSDK maintainer feedback, following Noah's request
+for a proposal PR. It includes runnable implementations of two separate
+benchmarks over `chromium.connect()`: **browser readiness** and **action
+throughput**. It contains no provider benchmark results or performance claims.
 
 ## Motivation and scope
 
@@ -15,9 +15,11 @@ specified workload, not evidence that either protocol is inherently faster.
 
 [CONTRIBUTING.md](./CONTRIBUTING.md) asks contributors to discuss methodology
 and wait for maintainer feedback before implementing changes, because historical
-comparability matters. This documentation-only PR supplies that discussion for
-approval or revision. It changes no APIs, types, dependencies, workflows, or
-runtime code.
+comparability matters. This PR supplies that discussion for approval or revision,
+alongside isolated native suites, local fixture validation, and run instructions.
+The existing CDP suites and their dependency version remain unchanged. Approval
+of the methodology and environment prerequisites is still required before a
+published provider comparison.
 
 ## Initial participants and disclosure
 
@@ -45,7 +47,7 @@ contribution guidance.
   physical host or empty provider cache.
 - Require both providers' browsers to execute in the **same Azure region** and
   keep the runner location fixed for the entire initial comparison. Agree the
-  exact region and runner location before implementation. Record the actual
+  exact region and runner location before a provider comparison. Record the actual
   browser regions, runner region/location, routing configuration, and evidence
   of effective placement; a workspace or requested region alone is insufficient
   if routing can select another region.
@@ -58,7 +60,7 @@ contribution guidance.
   server versions. [Playwright's connection contract](https://playwright.dev/docs/api/class-browsertype#browser-type-connect)
   requires matching client/server major and minor versions. Record the exact
   client, server Playwright, and Chromium versions, plus runner OS and Node.js
-  version. Confirm provider support and version reporting before implementation;
+  version. Confirm provider support and version reporting before a provider comparison;
   do not silently change versions during a run.
 
 ## Suite 1: browser readiness
@@ -148,7 +150,7 @@ records when a session-level operation fails.
 
 Bound provisioning/polling, per-session authentication, connection, context/page
 creation, navigation, and every cleanup operation. Agree and record limits
-before implementation. `chromium.connect()` needs an explicit timeout because
+before a provider comparison. `chromium.connect()` needs an explicit timeout because
 its default is unbounded. Attempt cleanup in `finally` after success or failure,
 including partial setup. Closing a connection must not be assumed to release
 provider resources: verify each provider's lifecycle semantics, retain session
@@ -173,7 +175,7 @@ contribution guidance describes provider integration in
 [`computesdk/computesdk`](https://github.com/computesdk/computesdk), package
 publication, and credentials for ongoing tests. Maintainers should confirm how
 Playwright-native endpoint/authentication and cleanup requirements fit that
-process before implementation; this PR proposes no new SDK API or package.
+process before a provider comparison; this PR proposes no new SDK API or package.
 
 ## Results and methodology review
 
@@ -230,21 +232,126 @@ The proposal uses current code and workflows to resolve documentation drift:
 
 ## Prerequisites and follow-up work
 
-Before launching implementation, obtain maintainer agreement on these timing
+Before launching a provider comparison, obtain maintainer agreement on these timing
 boundaries, the 50-action workload, reliability and summary definitions, and
 provider integration requirements. Select and verify the shared Azure region
 and fixed runner location, compatible pinned versions, credential setup, Azure
 funding arrangement, lifecycle timeouts, and cleanup behavior for both providers.
-These are outstanding prerequisites, not capabilities validated by this PR.
+These are outstanding prerequisites, not provider capabilities validated by the
+local fixture tests.
 
 Validate the eventual implementation with repeatable checks of timing boundaries,
 identical round inputs, exact action counts, timeout/dependency behavior, partial
 result retention, actual placement/settings, and resource cleanup after failures.
-For this proposal, validation is limited to Markdown rendering and links,
-methodology correspondence with source/workflows, metric definitions, whitespace
-checks, and normal PR CI. No provider sessions or performance measurements are
-part of this documentation change.
+The included test exercises the real native protocol and existing declarative
+runner against local HTTP/TLS fixtures. It validates the 50-action workload,
+round interleaving, load boundary, authentication headers, partial results,
+lost-response reconciliation, cleanup failures, credential redaction, and
+untrimmed summaries. This does not validate the deployed providers, their
+placement, or their resource-release semantics.
 
 Concurrency testing, multiple regions, composite scoring, provider/workspace
 provisioning, SDK/package publication, and benchmark publication are follow-up
 work after methodology review.
+
+## Running the implementations
+
+The runnable entrypoints are
+[playwright-readiness.bench.ts](./benchmarks/browser/playwright-readiness.bench.ts)
+and [playwright-throughput.bench.ts](./benchmarks/browser/playwright-throughput.bench.ts).
+They use a separate, exact `playwright-core@1.60.0` dependency alias; the existing
+CDP dependency remains unchanged. Compatibility with deployed providers must be
+verified before running a comparison.
+
+```bash
+pnpm install --frozen-lockfile --ignore-scripts
+pnpm -r --filter './packages/**' run build
+
+# Install the local browser used only to prepare inputs and run fixture tests.
+node node_modules/playwright-native-core/cli.js install chromium
+pnpm test:playwright-native
+
+# Resolve and DOM-validate the shared inputs before provider measurement.
+pnpm bench:playwright-prepare-urls 100 playwright-native-urls.json
+
+# Run separately; --no-ingest writes local records without platform publication.
+pnpm bench:playwright-readiness --no-ingest
+pnpm bench:playwright-throughput --no-ingest
+```
+
+Store credentials in your shell or the ignored `benchmarks/.env`, never in Git:
+
+- `MOMENTIC_BROWSER_FLEET_URL`: the Browser Fleet API base URL.
+- `MOMENTIC_BROWSER_FLEET_API_KEY`: a credential authorized to create, read, and
+  delete benchmark sessions. A normal Momentic app API key is not interchangeable.
+- `AZURE_PLAYWRIGHT_SERVICE_URL`: the workspace browser endpoint ending in
+  `/playwrightworkspaces/<workspace-id>/browsers`. The adapter resolves the
+  [documented browser redirect](https://learn.microsoft.com/en-us/rest/api/playwright/dataplane/workspaces/get-browsers?view=rest-playwright-dataplane-2025-09-01)
+  inside measurement, then connects with bearer authentication and `os=Linux`.
+- `AZURE_PLAYWRIGHT_ACCESS_TOKEN`: a reusable Entra or workspace access token
+  prepared before measurement; its authentication mode must already be enabled.
+- `PLAYWRIGHT_NATIVE_URLS_FILE`: the prepared `playwright-native-urls.json` path.
+- `PLAYWRIGHT_NATIVE_ENVIRONMENT_FILE`: an operator-verified environment manifest
+  path. The manifest validates the shared region, compatible versions, and fixed
+  settings and records evidence; it does not discover actual placement itself.
+- `PLAYWRIGHT_NATIVE_RESULTS_DIR`: optional local output directory (default
+  `results/playwright-native`). Each suite writes a fresh JSON file with all task
+  and action records, reliability denominators, and untrimmed summaries.
+
+Create an ignored `playwright-native-environment.json` only after verifying the
+environment. Use this shape for **both** entries in `providers` (`momentic` and
+`azure`), replacing the evidence placeholders with non-secret verification
+references:
+
+```json
+{
+  "region": "<verified shared Azure region>",
+  "runnerLocation": "<fixed runner location>",
+  "providers": {
+    "momentic": {
+      "region": "<same shared Azure region>",
+      "playwrightVersion": "1.60.0",
+      "os": "linux",
+      "headless": true,
+      "stealth": false,
+      "proxy": false,
+      "recording": false,
+      "placementEvidence": "<verified effective placement>",
+      "versionEvidence": "<verified server version>",
+      "cleanupEvidence": "<verified termination semantics>"
+    },
+    "azure": {
+      "region": "<same shared Azure region>",
+      "playwrightVersion": "1.60.0",
+      "os": "linux",
+      "headless": true,
+      "stealth": false,
+      "proxy": false,
+      "recording": false,
+      "placementEvidence": "<verified effective placement>",
+      "versionEvidence": "<verified server version>",
+      "cleanupEvidence": "<verified termination on connection close>"
+    }
+  }
+}
+```
+
+Momentic provisioning creates a session with an idempotency key and polls READY;
+cleanup requests deletion and polls a terminal state. A lost creation response
+is reconciled with the same key during cleanup, without replacing the failed
+sample. Azure teardown closes the context and connection and relies on the
+service's verified release semantics.
+If Azure provisioning/connection fails without an owned connection to close,
+cleanup is recorded as uncertain and further allocations stop for that
+participant; the implementation does not claim it released an unknown resource.
+Provisioning has a 120-second bound;
+connection, context/page creation, and navigation have 30-second bounds; each
+cleanup operation has a 15-second bound. After uncertain cleanup, the process
+refuses further allocations for that participant and records unstarted tasks
+separately from attempted-session reliability denominators.
+
+No real credentials are used by fixture tests. Local fixture credentials and
+certificates are disposable, and the CI fixture job runs without provider
+credentials. Shared input/setup files and generated result files are ignored by
+Git. Actual Chromium versions are collected from each connected browser;
+server versions and placement evidence are labeled by their source in raw data.
