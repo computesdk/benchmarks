@@ -159,11 +159,11 @@ jobs:
         run: |
           . benchmarks/scripts/load-vault-secrets.sh '^(SUPERSERVE_API_KEY)'
           npx tsx benchmarks/scripts/build-superserve-template.ts
-      - name: Build GravixLayer template with 8 vCPU / 16 GiB
+      - name: Prepare GravixLayer (egress policy + 8 vCPU / 16 GiB template)
         if: matrix.provider == 'gravixlayer'
         run: |
           . benchmarks/scripts/load-vault-secrets.sh '^(GRAVIXLAYER_API_KEY)'
-          npx tsx benchmarks/scripts/build-gravixlayer-template.ts
+          npx tsx benchmarks/scripts/prepare-gravixlayer.ts
       - name: Find Northflank plan for 8 vCPU / 16 GiB
         if: matrix.provider == 'northflank'
         run: |
