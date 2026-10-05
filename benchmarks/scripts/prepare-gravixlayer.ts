@@ -1,35 +1,7 @@
 import 'dotenv/config';
 import { GravixLayer } from 'gravixlayer';
-import { gravixlayer } from '@computesdk/gravixlayer';
 
-const TEMPLATE_NAME = 'node22-8cpu-16gb';
 const POLICY_NAME = 'computesdk-benchmarks-egress';
-
-async function ensureTemplate(apiKey: string) {
-  const provider = gravixlayer({ apiKey });
-  try {
-    await provider.template.create({
-      name: TEMPLATE_NAME,
-      fromImage: 'node:22',
-      vcpu: 8,
-      memoryMb: 16384,
-      diskMb: 10240,
-    });
-    console.log(`GravixLayer template ${TEMPLATE_NAME} built successfully`);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    if (
-      message.toLowerCase().includes('already exists') ||
-      message.toLowerCase().includes('already taken') ||
-      message.toLowerCase().includes('duplicate') ||
-      message.includes('409')
-    ) {
-      console.log('Template already exists, skipping');
-      return;
-    }
-    throw error;
-  }
-}
 
 // Runtimes are egress fail-closed and @computesdk/gravixlayer cannot pass
 // networkPolicyIds per sandbox.create, so benchmarks rely on a default
@@ -62,7 +34,6 @@ async function main() {
   }
 
   await ensureDefaultEgressPolicy(new GravixLayer({ apiKey }));
-  await ensureTemplate(apiKey);
 }
 
 main().catch((error) => {

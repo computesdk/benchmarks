@@ -159,7 +159,7 @@ jobs:
         run: |
           . benchmarks/scripts/load-vault-secrets.sh '^(SUPERSERVE_API_KEY)'
           npx tsx benchmarks/scripts/build-superserve-template.ts
-      - name: Prepare GravixLayer (egress policy + 8 vCPU / 16 GiB template)
+      - name: Ensure GravixLayer default egress policy
         if: matrix.provider == 'gravixlayer'
         run: |
           . benchmarks/scripts/load-vault-secrets.sh '^(GRAVIXLAYER_API_KEY)'
