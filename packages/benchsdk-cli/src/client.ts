@@ -2,6 +2,7 @@ import { createBenchmarkClient, type BenchmarkClient, BenchmarkApiError } from '
 import {
   loadCredentials,
   saveCredentials,
+  clearCredentials,
   loadConfig,
   mergeConfig,
   type Credentials,
@@ -38,16 +39,29 @@ function computeTokenExpiry(expiresInSeconds: number): number {
   return Date.now() + expiresInSeconds * 1000;
 }
 
+function isLegacyCredentials(credentials: Credentials): boolean {
+  if (!credentials.token && !credentials.refreshToken) return false;
+  if (credentials.clientId) return false;
+  return (
+    credentials.refreshToken?.startsWith('bcs_') === true ||
+    (credentials.token !== undefined && credentials.kind === undefined)
+  );
+}
+
 function updateCredentialsWithTokenResponse(
   credentials: Credentials,
-  response: { access_token: string; refresh_token: string; expires_in: number; refresh_expires_in: number },
+  response: { access_token: string; refresh_token?: string; expires_in: number },
 ): Credentials {
   return {
     ...credentials,
     token: response.access_token,
-    refreshToken: response.refresh_token,
+    // The OAuth provider rotates the refresh token on every refresh; when the
+    // response omits one, keep the stored value.
+    refreshToken: response.refresh_token ?? credentials.refreshToken,
     tokenExpiresAt: computeTokenExpiry(response.expires_in),
-    refreshExpiresAt: computeTokenExpiry(response.refresh_expires_in),
+    // OAuth responses don't carry a refresh-token expiry — leave it unset and
+    // let a 400 on the refresh grant be the signal.
+    refreshExpiresAt: undefined,
   };
 }
 
@@ -64,14 +78,18 @@ async function refreshIfNeeded(auth: CliAuth, credentials: Credentials): Promise
     return credentials;
   }
 
-  if (!auth.refreshToken || now >= refreshExpiry) {
+  if (!auth.refreshToken || (refreshExpiry > 0 && now >= refreshExpiry)) {
     throw new AuthError(
       'Your session has expired. Run `bench auth login` or set BENCHMARKS_PLATFORM_API_KEY.',
     );
   }
 
   try {
-    const response = await refreshAccessToken(auth.authBaseUrl, auth.refreshToken);
+    const response = await refreshAccessToken(
+      auth.authBaseUrl,
+      auth.refreshToken,
+      credentials.clientId ?? 'benchsdk-runner',
+    );
     const updated = updateCredentialsWithTokenResponse(credentials, response);
     await saveCredentials(updated);
     return updated;
@@ -135,6 +153,15 @@ export async function resolveAuth(override?: {
     orgSlug = mergedConfig.org;
     orgId = undefined;
   } else {
+    if (isLegacyCredentials(credentials)) {
+      // Pre-OAuth entries (HS256 access tokens / `bcs_` refresh tokens) can't
+      // be redeemed against the new token endpoint — drop them and ask for a
+      // fresh login.
+      await clearCredentials();
+      throw new AuthError(
+        'Your saved login uses the retired CLI token format. Run `bench auth login` (or `compute login`) to sign in again.',
+      );
+    }
     token = credentials.token;
     apiKey = credentials.apiKey;
     refreshToken = credentials.refreshToken;

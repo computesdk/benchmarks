@@ -9,10 +9,9 @@ export interface DeviceCodeResponse {
 
 export interface TokenResponse {
   access_token: string;
-  refresh_token: string;
+  refresh_token?: string;
   token_type: string;
   expires_in: number;
-  refresh_expires_in: number;
   scope?: string;
 }
 
@@ -33,21 +32,42 @@ export class AuthError extends Error {
   }
 }
 
-export async function requestDeviceCode(authBaseUrl: string, clientId = 'benchsdk-cli'): Promise<DeviceCodeResponse> {
-  const response = await fetch(`${authBaseUrl}/device/code`, {
+function formPost(url: string, params: Record<string, string>): Promise<Response> {
+  return fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ client_id: clientId }),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams(params),
+  });
+}
+
+async function errorDescription(response: Response, text: string): Promise<{ code: string; description: string }> {
+  let body: { error?: string; error_description?: string } = {};
+  try {
+    body = JSON.parse(text);
+  } catch {
+    // ignore
+  }
+  return {
+    code: body.error ?? 'server_error',
+    description:
+      body.error_description ?? `Request failed: ${response.status} ${response.statusText}`,
+  };
+}
+
+export async function requestDeviceCode(
+  authBaseUrl: string,
+  clientId: string,
+  resource: string,
+  scope: string,
+): Promise<DeviceCodeResponse> {
+  const response = await formPost(`${authBaseUrl}/device/code`, {
+    client_id: clientId,
+    resource,
+    scope,
   });
   const text = await response.text();
   if (!response.ok) {
-    let description = `Device code request failed: ${response.status} ${response.statusText}`;
-    try {
-      const body = JSON.parse(text) as { error_description?: string };
-      if (body.error_description) description = body.error_description;
-    } catch {
-      // ignore
-    }
+    const { description } = await errorDescription(response, text);
     throw new DeviceFlowError('server_error', description);
   }
   return JSON.parse(text) as DeviceCodeResponse;
@@ -56,26 +76,18 @@ export async function requestDeviceCode(authBaseUrl: string, clientId = 'benchsd
 export async function exchangeDeviceToken(
   authBaseUrl: string,
   deviceCode: string,
-  clientId = 'benchsdk-cli',
+  clientId: string,
+  resource: string,
 ): Promise<TokenResponse> {
-  const response = await fetch(`${authBaseUrl}/cli/device-token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
-      device_code: deviceCode,
-      client_id: clientId,
-    }),
+  const response = await formPost(`${authBaseUrl}/oauth2/token`, {
+    grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
+    device_code: deviceCode,
+    client_id: clientId,
+    resource,
   });
   const text = await response.text();
   if (!response.ok) {
-    let body: { error?: string; error_description?: string } = {};
-    try {
-      body = JSON.parse(text);
-    } catch {
-      // ignore
-    }
-    const code = body.error ?? 'server_error';
+    const { code, description } = await errorDescription(response, text);
     if (
       code === 'authorization_pending' ||
       code === 'slow_down' ||
@@ -83,9 +95,9 @@ export async function exchangeDeviceToken(
       code === 'access_denied' ||
       code === 'invalid_grant'
     ) {
-      throw new DeviceFlowError(code, body.error_description ?? `Device flow error: ${code}`);
+      throw new DeviceFlowError(code, description);
     }
-    throw new Error(body.error_description ?? `Device token exchange failed: ${response.status} ${response.statusText}`);
+    throw new Error(description);
   }
   return JSON.parse(text) as TokenResponse;
 }
@@ -93,25 +105,17 @@ export async function exchangeDeviceToken(
 export async function refreshAccessToken(
   authBaseUrl: string,
   refreshToken: string,
-  clientId = 'benchsdk-cli',
+  clientId: string,
 ): Promise<TokenResponse> {
-  const response = await fetch(`${authBaseUrl}/cli/refresh`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      refresh_token: refreshToken,
-      client_id: clientId,
-    }),
+  const response = await formPost(`${authBaseUrl}/oauth2/token`, {
+    grant_type: 'refresh_token',
+    refresh_token: refreshToken,
+    client_id: clientId,
   });
   const text = await response.text();
   if (!response.ok) {
-    let body: { error?: string; error_description?: string } = {};
-    try {
-      body = JSON.parse(text);
-    } catch {
-      // ignore
-    }
-    throw new AuthError(body.error_description ?? `Token refresh failed: ${response.status} ${response.statusText}`);
+    const { description } = await errorDescription(response, text);
+    throw new AuthError(description);
   }
   return JSON.parse(text) as TokenResponse;
 }
@@ -125,7 +129,8 @@ export async function pollDeviceToken(
   deviceCode: string,
   intervalSeconds: number,
   expiresInSeconds: number,
-  clientId = 'benchsdk-cli',
+  clientId: string,
+  resource: string,
 ): Promise<TokenResponse> {
   const start = Date.now();
   let interval = intervalSeconds * 1000;
@@ -135,7 +140,7 @@ export async function pollDeviceToken(
     await sleep(interval);
 
     try {
-      const token = await exchangeDeviceToken(authBaseUrl, deviceCode, clientId);
+      const token = await exchangeDeviceToken(authBaseUrl, deviceCode, clientId, resource);
       return token;
     } catch (err) {
       if (err instanceof DeviceFlowError) {

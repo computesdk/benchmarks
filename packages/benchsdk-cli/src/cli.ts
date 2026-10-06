@@ -239,26 +239,37 @@ async function printErrorAndExit(err: unknown, verbose = false): Promise<never> 
   process.exit(1);
 }
 
+const OAUTH_CLIENT_ID = 'benchsdk-runner';
+const OAUTH_SCOPE =
+  'benchmarks:read benchmarks:write billing:read org:read offline_access';
+
 async function handleAuthLogin(overrides: { baseUrl?: string; verbose?: boolean }): Promise<void> {
   const baseUrl = getPlatformBaseUrl(overrides.baseUrl);
   const authBaseUrl = `${baseUrl}/api/auth`;
-  const clientId = 'benchsdk-cli';
+  const resource = `${baseUrl}/api/v1`;
   const { device_code, user_code, verification_uri_complete, verification_uri, expires_in, interval } =
-    await requestDeviceCode(authBaseUrl, clientId);
+    await requestDeviceCode(authBaseUrl, OAUTH_CLIENT_ID, resource, OAUTH_SCOPE);
 
   console.log(`To sign in, visit:`);
   console.log(verification_uri_complete ?? verification_uri);
   console.log(`User code: ${user_code}`);
 
-  const response = await pollDeviceToken(authBaseUrl, device_code, interval, expires_in, clientId);
+  const response = await pollDeviceToken(
+    authBaseUrl,
+    device_code,
+    interval,
+    expires_in,
+    OAUTH_CLIENT_ID,
+    resource,
+  );
   const now = Date.now();
   await saveCredentials({
     baseUrl,
     token: response.access_token,
     refreshToken: response.refresh_token,
     tokenExpiresAt: now + response.expires_in * 1000,
-    refreshExpiresAt: now + response.refresh_expires_in * 1000,
     kind: 'oauth',
+    clientId: OAUTH_CLIENT_ID,
   });
 
   console.log('Authenticated.');

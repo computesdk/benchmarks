@@ -12,6 +12,8 @@ export interface Credentials {
   orgSlug?: string;
   orgId?: string;
   kind?: 'oauth' | 'api-key';
+  /** OAuth client the tokens were minted for (`benchsdk-cli` / `benchsdk-runner`). */
+  clientId?: string;
 }
 
 export interface Config {
