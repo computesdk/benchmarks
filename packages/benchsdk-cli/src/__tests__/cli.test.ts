@@ -118,7 +118,7 @@ describe('auth device flow', () => {
 
     const result = await requestDeviceCode(
       'http://localhost:3000/api/auth',
-      'benchsdk-runner',
+      'benchsdk-cli',
       'http://localhost:3000/api/v1',
       'benchmarks:read org:read',
     );
@@ -128,7 +128,7 @@ describe('auth device flow', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        client_id: 'benchsdk-runner',
+        client_id: 'benchsdk-cli',
         resource: 'http://localhost:3000/api/v1',
         scope: 'benchmarks:read org:read',
       }),

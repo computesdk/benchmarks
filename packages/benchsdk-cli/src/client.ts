@@ -93,7 +93,7 @@ async function refreshIfNeeded(auth: CliAuth, credentials: Credentials): Promise
     const response = await refreshAccessToken(
       auth.authBaseUrl,
       auth.refreshToken,
-      credentials.clientId ?? 'benchsdk-runner',
+      credentials.clientId ?? 'benchsdk-cli',
     );
     const updated = updateCredentialsWithTokenResponse(credentials, response);
     await saveCredentials(updated);

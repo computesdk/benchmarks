@@ -224,8 +224,15 @@ Subcommands:
 
 async function printErrorAndExit(err: unknown, verbose = false): Promise<never> {
   if (err instanceof BenchmarkApiError) {
+    const insufficientScope =
+      err.message.includes('insufficient_scope') || err.body?.includes('insufficient_scope');
     console.error(`API error: ${err.message}`);
     if (err.body) console.error(err.body);
+    if (insufficientScope) {
+      console.error(
+        'Your login does not cover this call — run `bench auth login` or `compute login` to sign in again.',
+      );
+    }
   } else if (err instanceof AuthError) {
     console.error(err.message);
     if (verbose && err.stack) console.error(err.stack);
@@ -239,16 +246,24 @@ async function printErrorAndExit(err: unknown, verbose = false): Promise<never> 
   process.exit(1);
 }
 
-export const BENCH_OAUTH_CLIENT_ID = 'benchsdk-runner';
+// Every first-party CLI (`compute`, `bench`) logs in as the same OAuth
+// client with the same scope set, so one login in ~/.benchsdk/credentials.json
+// covers all of them. Keep this list in sync with
+// FIRST_PARTY_CLIENT_SCOPES['benchsdk-cli'] in
+// benchmarks-platform lib/oauth/first-party.ts — a scope the client isn't
+// registered for fails the device request with `invalid_scope`.
+export const BENCH_OAUTH_CLIENT_ID = 'benchsdk-cli';
 export const BENCH_OAUTH_SCOPE =
-  'benchmarks:read benchmarks:write billing:read org:read offline_access';
+  'actions:read actions:write benchmarks:read benchmarks:write billing:read ' +
+  'market:read market:write org:read org:admin sandboxes:read sandboxes:write ' +
+  'vault:read vault:write offline_access';
 
 export interface OAuthLoginOptions {
   baseUrl?: string;
   verbose?: boolean;
-  /** Defaults to the narrowed `benchsdk-runner` client `bench` uses. */
+  /** Defaults to the shared `benchsdk-cli` client every first-party CLI uses. */
   clientId?: string;
-  /** Defaults to {@link BENCH_OAUTH_SCOPE}. */
+  /** Defaults to {@link BENCH_OAUTH_SCOPE} (the full first-party set). */
   scope?: string;
 }
 
