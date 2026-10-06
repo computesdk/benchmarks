@@ -239,16 +239,28 @@ async function printErrorAndExit(err: unknown, verbose = false): Promise<never> 
   process.exit(1);
 }
 
-const OAUTH_CLIENT_ID = 'benchsdk-runner';
-const OAUTH_SCOPE =
+export const BENCH_OAUTH_CLIENT_ID = 'benchsdk-runner';
+export const BENCH_OAUTH_SCOPE =
   'benchmarks:read benchmarks:write billing:read org:read offline_access';
 
-async function handleAuthLogin(overrides: { baseUrl?: string; verbose?: boolean }): Promise<void> {
-  const baseUrl = getPlatformBaseUrl(overrides.baseUrl);
+export interface OAuthLoginOptions {
+  baseUrl?: string;
+  verbose?: boolean;
+  /** Defaults to the narrowed `benchsdk-runner` client `bench` uses. */
+  clientId?: string;
+  /** Defaults to {@link BENCH_OAUTH_SCOPE}. */
+  scope?: string;
+}
+
+/** Interactive RFC 8628 device login; writes ~/.benchsdk/credentials.json. */
+export async function oauthLogin(options: OAuthLoginOptions = {}): Promise<void> {
+  const clientId = options.clientId ?? BENCH_OAUTH_CLIENT_ID;
+  const scope = options.scope ?? BENCH_OAUTH_SCOPE;
+  const baseUrl = getPlatformBaseUrl(options.baseUrl);
   const authBaseUrl = `${baseUrl}/api/auth`;
   const resource = `${baseUrl}/api/v1`;
   const { device_code, user_code, verification_uri_complete, verification_uri, expires_in, interval } =
-    await requestDeviceCode(authBaseUrl, OAUTH_CLIENT_ID, resource, OAUTH_SCOPE);
+    await requestDeviceCode(authBaseUrl, clientId, resource, scope);
 
   console.log(`To sign in, visit:`);
   console.log(verification_uri_complete ?? verification_uri);
@@ -259,7 +271,7 @@ async function handleAuthLogin(overrides: { baseUrl?: string; verbose?: boolean 
     device_code,
     interval,
     expires_in,
-    OAUTH_CLIENT_ID,
+    clientId,
     resource,
   );
   const now = Date.now();
@@ -269,7 +281,7 @@ async function handleAuthLogin(overrides: { baseUrl?: string; verbose?: boolean 
     refreshToken: response.refresh_token,
     tokenExpiresAt: now + response.expires_in * 1000,
     kind: 'oauth',
-    clientId: OAUTH_CLIENT_ID,
+    clientId,
   });
 
   console.log('Authenticated.');
@@ -291,11 +303,12 @@ async function handleAuthLogin(overrides: { baseUrl?: string; verbose?: boolean 
         orgSlug: org.slug,
         orgId: org.id,
         kind: 'oauth',
+        clientId,
       });
       console.log(`Set active organization to ${org.slug}`);
     }
   } catch (err) {
-    if (overrides.verbose) {
+    if (options.verbose) {
       console.error('Organization auto-select failed:', err instanceof Error ? err.message : err);
     }
     // organization auto-select is best-effort
@@ -573,7 +586,7 @@ export async function run(argv: string[]): Promise<void> {
       case 'auth': {
         const [sub, ...subRest] = rest;
         if (sub === 'login') {
-          await handleAuthLogin({ baseUrl: overrides.baseUrl, verbose: values.verbose });
+          await oauthLogin({ baseUrl: overrides.baseUrl, verbose: values.verbose });
         } else if (sub === 'logout') {
           await handleAuthLogout();
         } else if (sub === 'status') {
