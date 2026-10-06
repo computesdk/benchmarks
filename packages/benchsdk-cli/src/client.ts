@@ -69,7 +69,10 @@ async function refreshIfNeeded(auth: CliAuth, credentials: Credentials): Promise
   if (!auth.token || auth.apiKey) return credentials;
 
   const now = Date.now();
-  const expiry = auth.tokenExpiresAt ?? 0;
+  // Tokens without a recorded expiry (e.g. BENCHMARKS_PLATFORM_TOKEN) can't
+  // be judged locally — let the API answer 401 if it's dead.
+  if (auth.tokenExpiresAt === undefined) return credentials;
+  const expiry = auth.tokenExpiresAt;
   const refreshExpiry = auth.refreshExpiresAt ?? 0;
 
   // Refresh when the access token expires within 5 minutes or has already expired,
@@ -83,6 +86,8 @@ async function refreshIfNeeded(auth: CliAuth, credentials: Credentials): Promise
       'Your session has expired. Run `bench auth login` or set BENCHMARKS_PLATFORM_API_KEY.',
     );
   }
+
+  // `refreshExpiresAt` unknown (OAuth doesn't report it): still usable.
 
   try {
     const response = await refreshAccessToken(
@@ -190,14 +195,20 @@ export async function resolveAuth(override?: {
     format,
   };
 
-  if (auth.token && auth.refreshToken && !auth.apiKey) {
+  // Check expiry on the stored OAuth token: without a refresh token an
+  // expired access token is just dead — surface the expired-session error
+  // instead of sending it on every call. Skip when the bearer came from
+  // somewhere else (env var) — it isn't in the file and has no expiry data.
+  if (auth.token && !auth.apiKey && auth.token === credentials.token) {
     const updated = await refreshIfNeeded(auth, credentials);
+    // `updated` is the credentials file — an env-supplied token isn't in it,
+    // so fall back to the resolved values when it has nothing to offer.
     auth = {
       ...auth,
-      token: updated.token,
-      refreshToken: updated.refreshToken,
-      tokenExpiresAt: updated.tokenExpiresAt,
-      refreshExpiresAt: updated.refreshExpiresAt,
+      token: updated.token ?? auth.token,
+      refreshToken: updated.refreshToken ?? auth.refreshToken,
+      tokenExpiresAt: updated.tokenExpiresAt ?? auth.tokenExpiresAt,
+      refreshExpiresAt: updated.refreshExpiresAt ?? auth.refreshExpiresAt,
     };
   }
 

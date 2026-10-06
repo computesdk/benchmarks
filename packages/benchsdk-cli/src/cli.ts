@@ -6,7 +6,7 @@ import { requestDeviceCode, pollDeviceToken, AuthError } from './auth.js';
 import { loadCredentials, saveCredentials, clearCredentials, loadConfig } from './config.js';
 import { createApiClient, getMe, listOrganizations, setActiveOrganization } from './client.js';
 import { printData, type OutputOptions } from './output.js';
-import { getPlatformBaseUrl } from './platform.js';
+import { getApiBaseUrl, getAuthBaseUrl, getPlatformBaseUrl } from './platform.js';
 
 let packageVersion: string | undefined;
 
@@ -257,8 +257,10 @@ export async function oauthLogin(options: OAuthLoginOptions = {}): Promise<void>
   const clientId = options.clientId ?? BENCH_OAUTH_CLIENT_ID;
   const scope = options.scope ?? BENCH_OAUTH_SCOPE;
   const baseUrl = getPlatformBaseUrl(options.baseUrl);
-  const authBaseUrl = `${baseUrl}/api/auth`;
-  const resource = `${baseUrl}/api/v1`;
+  // getAuthBaseUrl/getApiBaseUrl tolerate a base URL that already ends in
+  // /api/v1; appending the suffixes by hand would double them.
+  const authBaseUrl = getAuthBaseUrl(options.baseUrl);
+  const resource = getApiBaseUrl(options.baseUrl);
   const { device_code, user_code, verification_uri_complete, verification_uri, expires_in, interval } =
     await requestDeviceCode(authBaseUrl, clientId, resource, scope);
 
