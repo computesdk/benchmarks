@@ -333,7 +333,7 @@ export const providers: AIGatewayProviderConfig[] = [
     name: 'github-copilot',
     requiredEnvVars: ['GITHUB_COPILOT_API_KEY'],
     wireFormat: 'openai',
-    model: 'kimi-k3',
+    model: 'kimi-k3-base-picker',
     host: 'api.githubcopilot.com',
     path: '/chat/completions',
     buildHeaders: () => ({
