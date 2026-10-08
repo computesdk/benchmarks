@@ -147,6 +147,7 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   opencomputer: { cpuCount: 4, memoryMB: 16384, timeout: 600_000 },
   microsandbox: { cpus: 8, memoryMib: 16384, rootDiskMib: 20480 }, // 20 GiB writable disk
   mosaic:       { vcpus: 8, memoryMb: 16384 },
+  buddy:        { cpu: 8, memoryMb: 16384 },               // provider maps cpu/memory to its 8x16 preset (8 vCPU / 16 GB)
   miosa:        { vcpus: 8, memory: 16384 },               // maps to MIOSA size contract "large" (8 vCPU / 16 GiB)
   // givemeanode has no 8 vCPU / 16 GiB named shape; asking for 8 vCPU and 16 GiB
   // selects sandbox-lg (8 vCPU / 32 GiB). The actual memory is reported by the
