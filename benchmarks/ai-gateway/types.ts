@@ -98,6 +98,12 @@ export interface PhaseProbeResult {
    * different provider than the one requested.
    */
   resolvedProvider?: string;
+  /**
+   * HTTP version the request ran on — `'h2'` when ALPN negotiated HTTP/2,
+   * `'http/1.1'` otherwise. Reported per iteration so a run's protocol mix is
+   * visible in the results rather than assumed.
+   */
+  protocol?: 'h2' | 'http/1.1';
   /** Request-identifying response headers (x-vercel-id, cf-ray, ...), for debugging. */
   receipts: Record<string, string>;
   error?: string;
