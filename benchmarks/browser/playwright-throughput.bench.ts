@@ -8,7 +8,11 @@ import type { ActionResult } from './throughput-types.js';
 
 // Load the frozen validated inputs before any measured provider request.
 const urls = loadArticleUrls();
-const iterationArgs = process.argv.flatMap((arg, index) => arg.startsWith('--iterations=') ? [arg] : arg === '--iterations' ? [arg, process.argv[index + 1] ?? ''] : []);
+const iterationArgs = process.argv.flatMap((arg, index) => {
+  if (arg.startsWith('--iterations=')) return [arg];
+  if (arg === '--iterations') return [arg, process.argv[index + 1] ?? ''];
+  return [];
+});
 const iterations = parseCliArgs(iterationArgs).iterations ?? nativeConfig.iterations;
 if (urls.length < iterations) throw new Error('Prepare a validated article URL for every requested iteration before measurement');
 
@@ -25,10 +29,10 @@ export const config = defineBenchmarkConfig({
     ],
     overview: { defaultMetric: 'actionsPerSecond', defaultLayout: 'chart' },
   },
-  onComplete: outcome => { writeNativeResults(outcome, 'throughput', urls); },
+  onComplete: outcome => writeNativeResults(outcome, 'throughput', urls),
 });
 
-export const task = defineTask<typeof nativeConfig.participants[number]>(async ctx => {
+export const task = defineTask<typeof nativeConfig.participants[number]>(ctx => {
   const url = urls[ctx.taskIndex];
   if (!url) throw new TaskError('Validated URL list is shorter than the requested run; prepare all inputs first', { code: 'MISSING_INPUT', data: { attemptStarted: false } });
   const actions: ActionResult[] = [];
@@ -42,7 +46,7 @@ export const task = defineTask<typeof nativeConfig.participants[number]>(async c
         const actionsCompleted = actions.filter(action => action.success).length;
         const screenshotMs = distribution(actions.filter(action => action.type === 'screenshot' && action.success).map(action => action.durationMs)).median;
         const metrics = { taskMs, actionsCompleted, actionsPerSecond: taskMs > 0 ? actionsCompleted / (taskMs / 1000) : 0, ...(screenshotMs !== null ? { screenshotMs } : {}) };
-        Object.assign(data, { actions: actions.map(action => ({ ...action })) }, metrics);
+        Object.assign(data, metrics, { actions });
         ctx.measure(metrics);
       }
     });

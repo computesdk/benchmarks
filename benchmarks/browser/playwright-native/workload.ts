@@ -4,7 +4,8 @@ import { withTimeout } from '../../src/util/timeout.js';
 import type { ActionResult, ActionType } from '../throughput-types.js';
 import { requiredEnv, safeError } from './providers.js';
 
-export const ACTIONS_PER_SESSION = 50;
+const LOOPS_PER_SESSION = 5;
+export const ACTIONS_PER_SESSION = LOOPS_PER_SESSION * 10;
 export const ACTION_TIMEOUT_MS = 30_000;
 export const ARTICLE_LINK_SELECTOR = '#mw-content-text a[href*="/wiki/"]';
 
@@ -35,24 +36,23 @@ export async function firstArticleLink(page: Page): Promise<ElementHandle> {
   throw new Error('No article body link found on page');
 }
 
-/** Same ten operations as CDP, repeated five times for both native providers. */
 export async function runActionLoop(page: Page, url: string, actions: ActionResult[]): Promise<void> {
-  for (let loop = 0; loop < 5; loop++) {
-    const operations: [ActionType, () => Promise<unknown>][] = [
-      ['navigate', () => page.goto(url, { waitUntil: 'load' })],
-      ['waitForSelector', () => page.waitForSelector('#firstHeading')],
-      ['screenshot', () => page.screenshot()],
-      ['textContent', () => page.textContent('#firstHeading')],
-      ['click', async () => { await (await firstArticleLink(page)).click(); }],
-      ['waitForSelector', () => page.waitForSelector('#firstHeading')],
-      ['screenshot', () => page.screenshot()],
-      ['textContent', () => page.textContent('#firstHeading')],
-      ['goBack', () => page.goBack({ waitUntil: 'commit' })],
-      ['waitForSelector', () => page.waitForSelector('#firstHeading')],
-    ];
+  const operations: [ActionType, () => Promise<unknown>][] = [
+    ['navigate', () => page.goto(url, { waitUntil: 'load' })],
+    ['waitForSelector', () => page.waitForSelector('#firstHeading')],
+    ['screenshot', () => page.screenshot()],
+    ['textContent', () => page.textContent('#firstHeading')],
+    ['click', async () => { await (await firstArticleLink(page)).click(); }],
+    ['waitForSelector', () => page.waitForSelector('#firstHeading')],
+    ['screenshot', () => page.screenshot()],
+    ['textContent', () => page.textContent('#firstHeading')],
+    ['goBack', () => page.goBack({ waitUntil: 'commit' })],
+    ['waitForSelector', () => page.waitForSelector('#firstHeading')],
+  ];
+  for (let loop = 0; loop < LOOPS_PER_SESSION; loop++) {
     let clickFailed = false;
     for (const [offset, [type, operation]] of operations.entries()) {
-      const index = loop * 10 + offset + 1;
+      const index = loop * operations.length + offset + 1;
       if (clickFailed && offset >= 5) {
         actions.push({ index, type, durationMs: 0, success: false, error: 'skipped: click failed' });
         continue;

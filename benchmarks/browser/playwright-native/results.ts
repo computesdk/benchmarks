@@ -18,7 +18,7 @@ export function distribution(values: number[]) {
   };
 }
 
-export function writeNativeResults(outcome: BenchmarkRunOutcome, suite: 'readiness' | 'throughput', articleUrls?: string[]): string {
+export function writeNativeResults(outcome: BenchmarkRunOutcome, suite: 'readiness' | 'throughput', articleUrls?: string[]): void {
   const summaries = outcome.participants.map(({ participant, records }) => {
     const attempted = records.filter(record => record.data?.attemptStarted === true);
     const complete = attempted.filter(record => record.data?.workloadSuccess === true);
@@ -28,14 +28,18 @@ export function writeNativeResults(outcome: BenchmarkRunOutcome, suite: 'readine
         return typeof value === 'number' && Number.isFinite(value) ? [value] : [];
       })),
     ]));
-    const perActionType = Object.fromEntries(ACTION_TYPES.map(type => [type, distribution(complete.flatMap(record => {
+    const actions = complete.flatMap(record => {
       const actions = record.data?.actions;
       if (!Array.isArray(actions)) return [];
       return actions.flatMap(action => {
         if (!action || typeof action !== 'object' || Array.isArray(action)) return [];
-        return action.type === type && action.success === true && typeof action.durationMs === 'number' ? [action.durationMs] : [];
+        if (action.success !== true || typeof action.durationMs !== 'number') return [];
+        return [{ type: action.type, durationMs: action.durationMs }];
       });
-    }))]));
+    });
+    const perActionType = Object.fromEntries(ACTION_TYPES.map(type => [type,
+      distribution(actions.filter(action => action.type === type).map(action => action.durationMs)),
+    ]));
     const rate = (key: string) => attempted.length ? attempted.filter(record => record.data?.[key] === true).length / attempted.length : null;
     return { participant, scheduled: records.length, attempts: attempted.length, workloadSuccessRate: rate('workloadSuccess'), cleanupSuccessRate: rate('cleanupSuccess'), successRate: rate('sessionSuccess'), metrics, perActionType };
   });
@@ -44,5 +48,4 @@ export function writeNativeResults(outcome: BenchmarkRunOutcome, suite: 'readine
   const filename = path.join(directory, `${randomUUID()}.json`);
   writeFileSync(filename, JSON.stringify({ suite, runId: outcome.runId, createdAt: new Date().toISOString(), config: outcome.config, ...(articleUrls ? { articleUrls } : {}), summaries, participants: outcome.participants }, null, 2));
   console.log(`Raw Playwright-native records and untrimmed summaries: ${filename}`);
-  return filename;
 }

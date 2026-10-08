@@ -13,9 +13,6 @@ import { runBenchmark, type BenchmarkRunOutcome } from '@benchsdk/runner';
 import { distribution } from './results.js';
 import { articleUrl } from './workload.js';
 
-// Plausible failures covered here: incomplete actions, wrong connection auth,
-// lost create response, malformed READY response, refused connection, release
-// failure, missing round input, leaked contexts, and trimmed/partial summaries.
 test('native suites use real Playwright connections and preserve reliability records', { timeout: 120_000 }, async () => {
   const directory = mkdtempSync(path.join(tmpdir(), 'native-bench-'));
   const envNames = ['MOMENTIC_BROWSER_FLEET_URL', 'MOMENTIC_BROWSER_FLEET_API_KEY', 'AZURE_PLAYWRIGHT_SERVICE_URL', 'AZURE_PLAYWRIGHT_ACCESS_TOKEN', 'PLAYWRIGHT_NATIVE_ENVIRONMENT_FILE', 'PLAYWRIGHT_NATIVE_URLS_FILE', 'PLAYWRIGHT_NATIVE_RESULTS_DIR'];
@@ -47,6 +44,7 @@ test('native suites use real Playwright connections and preserve reliability rec
   const terminated = new Set<string>();
   const order: string[] = [];
   const websocketAuth: string[] = [];
+  const azureRunIds = new Set<string>();
   let mode = '';
   let lost = false;
   let endpoint = '';
@@ -57,6 +55,9 @@ test('native suites use real Playwright connections and preserve reliability rec
       assert.equal(req.headers.authorization, 'Bearer local-azure-credential');
       assert.equal(url.searchParams.get('os'), 'Linux');
       assert.equal(url.searchParams.get('api-version'), '2025-09-01');
+      const runId = url.searchParams.get('runId');
+      assert.ok(runId);
+      azureRunIds.add(runId);
       order.push('azure');
       res.writeHead(302, { Location: mode === 'refused-connection' ? 'ws://127.0.0.1:1/refused?token=private-query' : `ws://127.0.0.1:${apiPort}/connect/azure/${url.searchParams.get('runId')}` });
       res.end();
@@ -127,6 +128,11 @@ test('native suites use real Playwright connections and preserve reliability rec
     const ready = await runBenchmark({ ...readiness.config, iterations: 2 }, readiness.task, ['--no-ingest']);
     assert.deepEqual(order, ['momentic', 'azure', 'momentic', 'azure']);
     assert.deepEqual(websocketAuth, order);
+    for (const { participant, records } of ready.participants) {
+      if (participant !== 'azure') continue;
+      assert.deepEqual(records.map(record => record.data?.runId), [...azureRunIds]);
+      assert.ok(records.every(record => record.data?.sessionId === undefined), 'run IDs must not be reported as service session IDs');
+    }
     for (const record of records(ready)) {
       assert.equal(record.status, 'success');
       assert.equal(record.data?.sessionSuccess, true);
@@ -212,7 +218,7 @@ test('native suites use real Playwright connections and preserve reliability rec
     const audit = await chromium.connect(endpoint);
     assert.equal(audit.contexts().length, 0, 'all benchmark contexts were closed');
     await audit.close();
-    console.log('Verified real native connections, 50-action records, round interleaving, load boundary, auth, partial failures, cleanup recovery, secret-free artifacts, and untrimmed summaries.');
+    console.log('Native benchmark end-to-end checks passed.');
   } finally {
     await server.close();
     for (const socket of sockets) socket.destroy();
