@@ -3,13 +3,14 @@ import { chromium } from 'playwright-native-core';
 import { writeFileSync } from 'node:fs';
 import { articleUrl, firstArticleLink } from './workload.js';
 import { withTimeout } from '../../src/util/timeout.js';
+import { VIEWPORT } from './providers.js';
 
 const count = Number(process.argv[2] ?? '100');
 const filename = process.argv[3] ?? 'playwright-native-urls.json';
 if (!Number.isInteger(count) || count < 1) throw new Error('Count must be a positive integer');
 const browser = await chromium.launch({ headless: true, timeout: 30_000 });
 try {
-  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+  const page = await browser.newPage({ viewport: VIEWPORT });
   page.setDefaultTimeout(30_000);
   page.setDefaultNavigationTimeout(30_000);
   const urls: string[] = [];

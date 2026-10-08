@@ -15,7 +15,7 @@ export const config = defineBenchmarkConfig({
     ],
     overview: { defaultMetric: 'readinessMs', defaultLayout: 'chart' },
   },
-  onComplete: outcome => { writeNativeResults(outcome, 'readiness'); },
+  onComplete: outcome => writeNativeResults(outcome, 'readiness'),
 });
 
 export const task = defineTask<typeof nativeConfig.participants[number]>(ctx => runSession(ctx, async (page, startedAt, data) => {

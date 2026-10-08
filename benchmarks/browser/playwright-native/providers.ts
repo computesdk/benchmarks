@@ -6,6 +6,7 @@ export const PLAYWRIGHT_VERSION = '1.60.0';
 export const PROVISION_TIMEOUT_MS = 120_000;
 export const CONNECT_TIMEOUT_MS = 30_000;
 export const CLEANUP_TIMEOUT_MS = 15_000;
+export const VIEWPORT = { width: 1920, height: 1080 };
 
 export interface NativeSession {
   metadata: JsonObject;
@@ -35,7 +36,6 @@ function string(value: unknown): string {
   return value;
 }
 
-/** Only publish explicit, non-secret environment attestations. */
 function environment(provider: string): JsonObject {
   const filename = requiredEnv('PLAYWRIGHT_NATIVE_ENVIRONMENT_FILE');
   let parsed: unknown;
@@ -60,7 +60,7 @@ function environment(provider: string): JsonObject {
     serverPlaywrightVersion: serverVersion,
     serverPlaywrightVersionSource: 'operator-verified environment manifest',
     clientPlaywrightVersion: PLAYWRIGHT_VERSION,
-    browserOs: 'linux', headless: true, viewport: { width: 1920, height: 1080 },
+    browserOs: 'linux', headless: true, viewport: VIEWPORT,
     stealth: false, proxy: false, recording: false,
     metadataSource: 'operator-verified environment manifest',
   };
@@ -155,14 +155,14 @@ export const nativeParticipants: NativeParticipant[] = [
     session(identity) {
       const url = new URL(requiredEnv('AZURE_PLAYWRIGHT_SERVICE_URL'));
       const headers = { Authorization: `Bearer ${requiredEnv('AZURE_PLAYWRIGHT_ACCESS_TOKEN')}` };
-      const metadata = environment('azure');
+      const metadata = { ...environment('azure'), runId: identity };
       url.protocol = url.protocol === 'wss:' ? 'https:' : url.protocol === 'ws:' ? 'http:' : url.protocol;
       url.searchParams.set('api-version', '2025-09-01');
       url.searchParams.set('os', 'Linux');
       url.searchParams.set('runId', identity);
       let allocationUncertain = false;
       return {
-        metadata: { ...metadata, sessionId: identity },
+        metadata,
         async provision() {
           // Resolve the documented redirect inside the measured interval.
           allocationUncertain = true;
