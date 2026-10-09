@@ -2,21 +2,15 @@ import { chromium, type Page, type Browser, type BrowserContext } from 'playwrig
 import { randomUUID } from 'node:crypto';
 import { TaskError, type TaskContext, type TaskStepOptions } from '@benchsdk/runner';
 import type { JsonObject } from '@benchsdk/api';
-import { withTimeout } from '../../src/util/timeout.js';
-import { CLEANUP_TIMEOUT_MS, CONNECT_TIMEOUT_MS, VIEWPORT, nativeParticipants, safeError, type NativeParticipant } from './providers.js';
+import { withTimeout } from '../src/util/timeout.js';
+import { CLEANUP_TIMEOUT_MS, CONNECT_TIMEOUT_MS, VIEWPORT, safeError } from './playwright-providers.js';
+import type { PlaywrightProviderConfig } from './playwright-types.js';
 
-const unsafeParticipants = new WeakSet<NativeParticipant>();
-
-export const nativeConfig = {
-  iterations: 100,
-  concurrency: 1,
-  groupBy: 'round' as const,
-  participants: nativeParticipants,
-};
+const unsafeParticipants = new WeakSet<PlaywrightProviderConfig>();
 
 /** Timer spans the first provider request through workload completion only. */
 export async function runSession(
-  ctx: TaskContext<NativeParticipant>,
+  ctx: TaskContext<PlaywrightProviderConfig>,
   workload: (page: Page, startedAt: number, data: JsonObject) => Promise<void>,
 ): Promise<{ data: JsonObject }> {
   if (unsafeParticipants.has(ctx.participant)) {
@@ -29,6 +23,8 @@ export async function runSession(
   const data: JsonObject = { ...session.metadata, attemptStarted: true, workloadSuccess: false, cleanupSuccess: false };
   let browser: Browser | undefined;
   let context: BrowserContext | undefined;
+  let pendingContext: Promise<BrowserContext> | undefined;
+  let closeLateContext = false;
   let secrets: string[] = [];
   let failure: string | undefined;
   const cleanupErrors: string[] = [];
@@ -48,7 +44,13 @@ export async function runSession(
     data.nodeVersion = process.version;
     const connected = browser;
     const page = await step('page', async () => {
-      context = await withTimeout(connected.newContext({ viewport: VIEWPORT }), CONNECT_TIMEOUT_MS, 'Context creation timed out');
+      // Keep ownership even when the caller's timeout wins the race.
+      pendingContext = connected.newContext({ viewport: VIEWPORT }).then(async created => {
+        context = created;
+        if (closeLateContext) await withTimeout(created.close(), CLEANUP_TIMEOUT_MS, 'Late context cleanup timed out');
+        return created;
+      });
+      context = await withTimeout(pendingContext, CONNECT_TIMEOUT_MS, 'Context creation timed out');
       context.setDefaultTimeout(30_000);
       context.setDefaultNavigationTimeout(30_000);
       return withTimeout(context.newPage(), CONNECT_TIMEOUT_MS, 'Page creation timed out');
@@ -65,6 +67,12 @@ export async function runSession(
         await step(name, () => withTimeout(fn(), CLEANUP_TIMEOUT_MS, `${name} timed out`), { reportConcurrency: false });
       } catch (error) { cleanupErrors.push(safeError(error, secrets)); }
     };
+    const creation = pendingContext;
+    if (creation && !context) {
+      // A rejected creation owns no context; an unresolved one makes cleanup uncertain.
+      await cleanup('reconcile-context', () => creation.catch(() => undefined));
+    }
+    closeLateContext = true;
     for (const [name, resource] of [['close-context', context], ['close-browser', browser]] as const) {
       if (resource) await cleanup(name, () => resource.close());
     }

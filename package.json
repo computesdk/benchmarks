@@ -151,8 +151,8 @@
     "bench:ai-gateway-model-index:github-copilot": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-model-index.bench.ts --provider github-copilot",
     "bench:playwright-readiness": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/browser/playwright-readiness.bench.ts",
     "bench:playwright-throughput": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/browser/playwright-throughput.bench.ts",
-    "bench:playwright-prepare-urls": "tsx benchmarks/browser/playwright-native/prepare-urls.ts",
-    "test:playwright-native": "tsx --test benchmarks/browser/playwright-native/native.test.ts"
+    "bench:playwright-prepare-urls": "tsx benchmarks/browser/playwright-prepare-urls.ts",
+    "test:playwright-native": "tsx --test benchmarks/browser/playwright-native.test.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1145.0",

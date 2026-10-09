@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import type { Page, ElementHandle } from 'playwright-native-core';
-import { withTimeout } from '../../src/util/timeout.js';
-import type { ActionResult, ActionType } from '../throughput-types.js';
-import { requiredEnv, safeError } from './providers.js';
+import { withTimeout } from '../src/util/timeout.js';
+import type { ActionResult, ActionType } from './throughput-types.js';
+import { requiredEnv, safeError } from './playwright-providers.js';
 
 const LOOPS_PER_SESSION = 5;
 export const ACTIONS_PER_SESSION = LOOPS_PER_SESSION * 10;

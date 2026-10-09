@@ -1,9 +1,9 @@
 /** Resolve and DOM-validate shared Wikipedia inputs before measured sessions. */
 import { chromium } from 'playwright-native-core';
 import { writeFileSync } from 'node:fs';
-import { articleUrl, firstArticleLink } from './workload.js';
-import { withTimeout } from '../../src/util/timeout.js';
-import { VIEWPORT } from './providers.js';
+import { articleUrl, firstArticleLink } from './playwright-workload.js';
+import { withTimeout } from '../src/util/timeout.js';
+import { VIEWPORT } from './playwright-providers.js';
 
 const count = Number(process.argv[2] ?? '100');
 const filename = process.argv[3] ?? 'playwright-native-urls.json';
