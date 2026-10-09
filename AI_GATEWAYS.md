@@ -16,14 +16,16 @@ A result from one family is **not** directly comparable to the same gateway's re
 
 Gateway latency discussions online routinely conflate metrics that behave very differently: connection-setup overhead (DNS, TCP, TLS) vs. actual routing/model-dispatch overhead, and a fresh connection's cost vs. an already-open connection's cost. A single aggregate "latency" number hides which of those is actually responsible for a gateway feeling fast or slow. This benchmark separates them explicitly, so a claim like "Gateway X is slower" can be traced to a specific phase rather than taken on faith.
 
-The phase-separation methodology (cold vs. warm, DNS/TCP/TLS/TTFB/TTFT, round-robin execution, no-session-resumption cold connections) is adapted from [rbadillap/ai-gateways-benchmark](https://github.com/rbadillap/ai-gateways-benchmark), an independent open-source benchmark using the same approach. We reimplemented it in TypeScript on top of Node's `https` module rather than raw sockets, added a direct-to-Anthropic baseline and a fourth gateway routed without any intermediary hop, and extended it with tokens/sec and a composite score — see [Comparison to the reference implementation](#comparison-to-the-reference-implementation) for the full list of what matches and what's deliberately different.
+The phase-separation methodology (cold vs. warm, DNS/TCP/TLS/TTFB/TTFT, round-robin execution, no-session-resumption cold connections) is adapted from [rbadillap/ai-gateways-benchmark](https://github.com/rbadillap/ai-gateways-benchmark), an independent open-source benchmark using the same approach. We reimplemented it in TypeScript on top of Node's `tls`/`https`/`http2` modules rather than raw sockets, added a direct-to-Anthropic baseline and a fourth gateway routed without any intermediary hop, and extended it with tokens/sec and a composite score — see [Comparison to the reference implementation](#comparison-to-the-reference-implementation) for the full list of what matches and what's deliberately different.
 
 ## What gets measured
 
 For each gateway, every probe request is one of two kinds:
 
 - **Cold** — a brand-new TCP+TLS connection, opened from scratch for this single request. We time each connection phase individually (see below), plus the request itself.
-- **Warm** — one throwaway request completes and is discarded on a freshly-opened keep-alive connection, then a **second** request is sent and measured on that same still-open socket. This isolates the connection-pool case: no DNS, no TCP, no TLS, just the request/response over a connection that's already up.
+- **Warm** — one throwaway request completes and is discarded on a freshly-opened connection, then a **second** request is sent and measured on that same still-open connection: a second stream on the same HTTP/2 session where the server negotiated `h2`, or the reused keep-alive socket on HTTP/1.1 hosts. This isolates the connection-pool case: no DNS, no TCP, no TLS, just the request/response over a connection that's already up.
+
+Every connection advertises both `h2` and `http/1.1` in its TLS ALPN extension, so each gateway runs on HTTP/2 where its server supports it and HTTP/1.1 otherwise — the negotiated protocol is cached per host for the run and recorded per iteration as `protocol` in the results, so a run's protocol mix is stated rather than assumed. Gateways on different protocols are still compared head-to-head, which mirrors what a real HTTP/2-capable client (curl, browsers, most SDK HTTP stacks) would experience against each of them.
 
 Every probe (cold or warm) also records:
 
@@ -42,7 +44,7 @@ Every probe (cold or warm) also records:
 | `ttftMs` | Request fully sent → first content token observed in the SSE stream |
 | `coldE2eMs` | `dnsMs + tcpMs + tlsMs + ttftMs` — what a short-lived process (a serverless function, a CLI tool, an edge function) actually pays end to end for one request |
 
-These are real socket timestamps, not estimates: Node's `https.request` exposes `lookup`/`connect`/`secureConnect` events directly on the underlying `TLSSocket` (`benchmarks/ai-gateway/phase-probe.ts`), so DNS/TCP/TLS are each timed from the actual connection lifecycle rather than inferred.
+These are real socket timestamps, not estimates: the cold probe opens the TLS connection explicitly (`tls.connect` in `benchmarks/ai-gateway/phase-probe.ts`), so DNS/TCP/TLS are each timed from the socket's `lookup`/`connect`/`secureConnect` events rather than inferred — and the same connection then carries the request itself, as an HTTP/2 stream or an HTTP/1.1 request depending on what ALPN negotiated.
 
 ### Warm-phase metrics
 
@@ -303,7 +305,7 @@ Since the core methodology is adapted from [rbadillap/ai-gateways-benchmark](htt
 - The TTFT-detection regex (`"(?:content|text)"\s*:\s*"[^"]`), which matches both OpenAI's and Anthropic's streaming delta fields — used as-is from the reference.
 - The "cold ≠ provider-side cold start" distinction, stated in both.
 - Receipt-header capture (`x-vercel-id`, `cf-ray`, `x-request-id`, etc.) for tracing a specific measured request.
-- No TLS session resumption between cold connections. The reference guarantees this with a fresh `SSLContext` per connection; we use a fresh `https.Agent` per cold call instead. We verified this empirically rather than assuming it: six consecutive cold connections to the same host held steady at ~43–46ms TLS handshake time with no drop after the first call — a resumed handshake would show a sharp drop after connection 1, since it skips certificate verification and asymmetric key exchange.
+- No TLS session resumption between cold connections. The reference guarantees this with a fresh `SSLContext` per connection; we use a fresh `tls.connect` (no session ticket reuse) per cold call instead. We verified this empirically rather than assuming it: six consecutive cold connections to the same host held steady at ~43–46ms TLS handshake time with no drop after the first call — a resumed handshake would show a sharp drop after connection 1, since it skips certificate verification and asymmetric key exchange.
 
 **Deliberately different** (all decided earlier in this benchmark's design, not accidental):
 
@@ -315,8 +317,8 @@ Since the core methodology is adapted from [rbadillap/ai-gateways-benchmark](htt
 | Prompt / `max_tokens` | `"Reply with: pong"`, 16 tokens | Longer prompt, 200 tokens | Needed a real generation to measure tokens/sec |
 | Tokens/sec | Not measured | Measured | Extends the reference's latency-only scope |
 | Ranking | None — a medians table only | 0–100 composite score | Matches this repo's convention for every other benchmark category; full raw stats are still preserved so anyone can compute their own ranking from the JSON |
-| Harness | Raw sockets (no higher-level DNS/TCP/TLS timing API in Python) | Node's `https.request`, listening on the socket's `lookup`/`connect`/`secureConnect` events | Equivalent timestamps without hand-rolling socket/TLS handling |
-| Stream-end detection | Hand-matched byte markers per gateway (`data: [DONE]`, `"type":"message_stop"`, chunked terminator) | Node's HTTP parser (`res.on('end')`) | Framing-generic — doesn't need to enumerate each gateway's termination convention |
+| Harness | Raw sockets (no higher-level DNS/TCP/TLS timing API in Python) | `tls.connect` for the timed connection (with `h2`/`http/1.1` ALPN), then Node's `http2` or `https` client for the request | Equivalent timestamps without hand-rolling socket/TLS handling |
+| Stream-end detection | Hand-matched byte markers per gateway (`data: [DONE]`, `"type":"message_stop"`, chunked terminator) | Node's HTTP parser (`res.on('end')`, HTTP/2 stream `'end'`) | Framing-generic — doesn't need to enumerate each gateway's termination convention |
 
 ## Limitations
 
