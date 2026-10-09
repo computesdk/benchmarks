@@ -5,7 +5,7 @@ import { isorun } from '@computesdk/isorun';
 import { modal } from '@computesdk/modal';
 import { northflank } from '@computesdk/northflank';
 import { opencomputer } from '@computesdk/opencomputer';
-import { runloop } from '@computesdk/runloop';
+// import { runloop } from '@computesdk/runloop';
 import { tensorlake } from '@computesdk/tensorlake';
 //import { vercel } from '@computesdk/vercel';
 import type { BurstProviderConfig } from './types.js';
@@ -55,14 +55,14 @@ export const providers: BurstProviderConfig[] = [
     concurrencyTarget: 100_000,
     perRequestTimeoutMs: 120_000,
   },
-  {
-    name: 'runloop',
-    requiredEnvVars: ['RUNLOOP_API_KEY'],
-    createCompute: () => runloop({ apiKey: process.env.RUNLOOP_API_KEY! }),
-    concurrencyTarget: 100_000,
-    perRequestTimeoutMs: 120_000,
-    sandboxOptions: { timeout: KEEP_ALIVE_MS },
-  },
+  // {
+  //   name: 'runloop',
+  //   requiredEnvVars: ['RUNLOOP_API_KEY'],
+  //   createCompute: () => runloop({ apiKey: process.env.RUNLOOP_API_KEY! }),
+  //   concurrencyTarget: 100_000,
+  //   perRequestTimeoutMs: 120_000,
+  //   sandboxOptions: { timeout: KEEP_ALIVE_MS },
+  // },
   {
     name: 'tensorlake',
     requiredEnvVars: ['TENSORLAKE_API_KEY'],

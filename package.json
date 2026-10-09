@@ -20,7 +20,6 @@
     "bench:northflank": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --iterations 3 --concurrency 3 --provider northflank",
     "bench:railway": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --iterations 3 --concurrency 3 --provider railway",
     "bench:render": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --iterations 3 --concurrency 3 --provider render",
-    "bench:runloop": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --iterations 3 --concurrency 3 --provider runloop",
     "bench:vercel": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --iterations 3 --concurrency 3 --provider vercel",
     "bench:just-bash": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --iterations 3 --concurrency 3 --provider just-bash",
     "bench:sprites": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --iterations 3 --concurrency 3 --provider sprites",

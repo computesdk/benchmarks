@@ -28,7 +28,7 @@ import { opencomputer } from '@computesdk/opencomputer';
 // import { quilt } from '@computesdk/quilt';
 import { railway } from '@computesdk/railway';
 import { runCloud } from '@computesdk/run-cloud';
-import { runloop } from '@computesdk/runloop';
+// import { runloop } from '@computesdk/runloop';
 import { sandbox0 } from '@computesdk/sandbox0';
 import { sail } from '@computesdk/sail';
 import { sprites } from '@computesdk/sprites';
@@ -237,11 +237,11 @@ export const providers: ProviderConfig[] = [
     requiredEnvVars: ['RAILWAY_API_TOKEN', 'RAILWAY_ENVIRONMENT_ID'],
     createCompute: () => railway({ token: process.env.RAILWAY_API_TOKEN!, environmentId: process.env.RAILWAY_ENVIRONMENT_ID! }),
   },
-  {
-    name: 'runloop',
-    requiredEnvVars: ['RUNLOOP_API_KEY'],
-    createCompute: () => runloop({ apiKey: process.env.RUNLOOP_API_KEY! }),
-  },
+  // {
+  //   name: 'runloop',
+  //   requiredEnvVars: ['RUNLOOP_API_KEY'],
+  //   createCompute: () => runloop({ apiKey: process.env.RUNLOOP_API_KEY! }),
+  // },
   {
     name: 'run-cloud',
     requiredEnvVars: ['RUN_CLOUD_API_KEY'],
