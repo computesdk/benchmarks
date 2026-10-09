@@ -195,6 +195,9 @@ export const providers: ProviderConfig[] = [
     createCompute: () => mosaic({
       baseUrl: process.env.MOSAIC_API_URL!,
       apiKey: process.env.MOSAIC_API_TOKEN!,
+      // The burst benchmark starts 100 lifecycles at once; the adapter's
+      // default cap of 32 in-flight requests queues the rest client-side.
+      maxConcurrentRequests: 100,
     }),
     sandboxOptions: { templateId: 'node-20' },
   },
