@@ -1,6 +1,8 @@
 import { setTimeout as delay } from 'node:timers/promises';
 import { readFileSync } from 'node:fs';
 import type { JsonObject } from '@benchsdk/api';
+import { parseCliArgs, selectParticipants, filterParticipantsByEnv } from '@benchsdk/runner';
+import type { PlaywrightProviderConfig } from './playwright-types.js';
 
 export const PLAYWRIGHT_VERSION = '1.60.0';
 export const PROVISION_TIMEOUT_MS = 120_000;
@@ -8,16 +10,20 @@ export const CONNECT_TIMEOUT_MS = 30_000;
 export const CLEANUP_TIMEOUT_MS = 15_000;
 export const VIEWPORT = { width: 1920, height: 1080 };
 
-export interface NativeSession {
-  metadata: JsonObject;
-  provision(): Promise<{ endpoint: string; headers: Record<string, string> }>;
-  cleanup(options: { connected: boolean }): Promise<void>;
-}
+// Parse only flags owned by the suites; the runner handles the rest of the CLI.
+export const playwrightArgs = parseCliArgs(process.argv.flatMap((arg, index) => {
+  if (/^--(?:provider|iterations)=/.test(arg)) return [arg];
+  if (arg === '--provider' || arg === '--iterations') return [arg, process.argv[index + 1] ?? ''];
+  return [];
+}));
 
-export interface NativeParticipant {
-  name: string;
-  requiredEnvVars: string[];
-  session(identity: string): NativeSession;
+export function requireProviderCredentials(): void {
+  const selected = selectParticipants(playwrightProviders, playwrightArgs.providers);
+  const { skipped } = filterParticipantsByEnv(selected);
+  if (skipped.length) {
+    const missing = skipped.map(({ name, missing }) => `${name}: ${missing.join(', ')}`).join('; ');
+    throw new Error(`Unavailable Playwright participant(s): ${missing}. Supply credentials for every selected provider; use --provider for an explicit diagnostic run.`);
+  }
 }
 
 export function requiredEnv(name: string): string {
@@ -88,7 +94,7 @@ async function sessionResponse(response: Response): Promise<Record<string, unkno
   catch { throw new Error('Provider returned invalid session JSON'); }
 }
 
-export const nativeParticipants: NativeParticipant[] = [
+export const playwrightProviders: PlaywrightProviderConfig[] = [
   {
     name: 'momentic',
     requiredEnvVars: ['MOMENTIC_BROWSER_FLEET_URL', 'MOMENTIC_BROWSER_FLEET_API_KEY', 'PLAYWRIGHT_NATIVE_ENVIRONMENT_FILE'],
@@ -129,7 +135,7 @@ export const nativeParticipants: NativeParticipant[] = [
             data = await retrieve(signal);
           }
           if (data.status !== 'READY') throw new Error('Momentic session did not become READY');
-          if (data.playwrightVersion !== PLAYWRIGHT_VERSION) throw new Error('Momentic returned an incompatible Playwright version');
+          if (typeof data.playwrightVersion !== 'string' || !/^1\.60\.\d+$/.test(data.playwrightVersion)) throw new Error('Momentic returned an incompatible Playwright version');
           metadata.serverPlaywrightVersion = string(data.playwrightVersion);
           metadata.serverPlaywrightVersionSource = 'Momentic session response';
           return { endpoint: string(data.wsEndpoint), headers: { Authorization: `Bearer ${string(data.connectToken)}` } };

@@ -8,12 +8,13 @@ import { promisify } from 'node:util';
 import { mkdtempSync, readFileSync, writeFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { chromium } from 'playwright-native-core';
+import { chromium, type BrowserContext, type BrowserContextOptions } from 'playwright-native-core';
+import { withTimeout } from '../src/util/timeout.js';
 import { runBenchmark, type BenchmarkRunOutcome } from '@benchsdk/runner';
-import { distribution } from './results.js';
-import { articleUrl } from './workload.js';
+import { distribution } from './playwright-results.js';
+import { articleUrl } from './playwright-workload.js';
 
-test('native suites use real Playwright connections and preserve reliability records', { timeout: 120_000 }, async () => {
+test('native suites use real Playwright connections and preserve reliability records', { timeout: 180_000 }, async t => {
   const directory = mkdtempSync(path.join(tmpdir(), 'native-bench-'));
   const envNames = ['MOMENTIC_BROWSER_FLEET_URL', 'MOMENTIC_BROWSER_FLEET_API_KEY', 'AZURE_PLAYWRIGHT_SERVICE_URL', 'AZURE_PLAYWRIGHT_ACCESS_TOKEN', 'PLAYWRIGHT_NATIVE_ENVIRONMENT_FILE', 'PLAYWRIGHT_NATIVE_URLS_FILE', 'PLAYWRIGHT_NATIVE_RESULTS_DIR'];
   const previous = new Map(envNames.map(key => [key, process.env[key]]));
@@ -76,7 +77,7 @@ test('native suites use real Playwright connections and preserve reliability rec
       const sessionId = sessions.get(key);
       if (mode === 'lost-response' && !lost) { lost = true; req.socket.destroy(); return; }
       if (mode === 'malformed-json') { res.end('{"connectToken":"local-unpublished-credential'); return; }
-      res.end(JSON.stringify({ id: sessionId, status: 'READY', playwrightVersion: '1.60.0', wsEndpoint: mode === 'refused-connection' ? 'ws://127.0.0.1:1/refused?token=private-query' : `ws://127.0.0.1:${apiPort}/connect/momentic/${sessionId}`, ...(mode !== 'malformed-ready' ? { connectToken: 'local-connect-credential' } : {}) }));
+      res.end(JSON.stringify({ id: sessionId, status: 'READY', playwrightVersion: mode === 'compatible-patch' ? '1.60.1' : mode === 'incompatible-version' ? '1.61.0' : '1.60.0', wsEndpoint: mode === 'refused-connection' ? 'ws://127.0.0.1:1/refused?token=private-query' : `ws://127.0.0.1:${apiPort}/connect/momentic/${sessionId}`, ...(mode !== 'malformed-ready' ? { connectToken: 'local-connect-credential' } : {}) }));
     } else if (req.method === 'DELETE') {
       if (mode === 'cleanup-failure') { res.writeHead(500); res.end('{}'); return; }
       if (id) terminated.add(id);
@@ -122,8 +123,8 @@ test('native suites use real Playwright connections and preserve reliability rec
     writeFileSync(environmentFile, JSON.stringify(environment));
     writeFileSync(urlsFile, JSON.stringify(urls));
     Object.assign(process.env, { MOMENTIC_BROWSER_FLEET_URL: `http://127.0.0.1:${apiPort}`, MOMENTIC_BROWSER_FLEET_API_KEY: 'local-momentic-credential', AZURE_PLAYWRIGHT_SERVICE_URL: `http://127.0.0.1:${apiPort}/browsers`, AZURE_PLAYWRIGHT_ACCESS_TOKEN: 'local-azure-credential', PLAYWRIGHT_NATIVE_ENVIRONMENT_FILE: environmentFile, PLAYWRIGHT_NATIVE_URLS_FILE: urlsFile, PLAYWRIGHT_NATIVE_RESULTS_DIR: directory });
-    const readiness = await import('../playwright-readiness.bench.js');
-    const throughput = await import('../playwright-throughput.bench.js');
+    const readiness = await import('./playwright-readiness.bench.js');
+    const throughput = await import('./playwright-throughput.bench.js');
     const records = (outcome: BenchmarkRunOutcome) => outcome.participants.flatMap(p => p.records);
     const ready = await runBenchmark({ ...readiness.config, iterations: 2 }, readiness.task, ['--no-ingest']);
     assert.deepEqual(order, ['momentic', 'azure', 'momentic', 'azure']);
@@ -173,7 +174,7 @@ test('native suites use real Playwright connections and preserve reliability rec
       assert.equal(summary.metrics.actionsPerSecond.count, 2);
       assert.equal(summary.perActionType.screenshot.count, 20);
     }
-    for (const failureMode of ['lost-response', 'malformed-ready', 'refused-connection', 'cleanup-failure']) {
+    for (const failureMode of ['lost-response', 'malformed-ready', 'refused-connection', 'incompatible-version', 'cleanup-failure']) {
       mode = failureMode;
       order.length = 0;
       const participants = readiness.config.participants.filter(p => p.name === 'momentic').map(p => ({ ...p }));
@@ -187,6 +188,10 @@ test('native suites use real Playwright connections and preserve reliability rec
         assert.deepEqual(order, ['momentic'], 'uncertain cleanup stops new allocations');
       } else assert.equal(terminated.size, sessions.size);
     }
+    mode = 'compatible-patch';
+    const compatible = await runBenchmark({ ...readiness.config, participants: readiness.config.participants.filter(p => p.name === 'momentic').map(p => ({ ...p })), iterations: 1 }, readiness.task, ['--no-ingest']);
+    assert.equal(records(compatible)[0].status, 'success');
+    assert.equal(records(compatible)[0].data?.serverPlaywrightVersion, '1.60.1');
     mode = 'refused-connection';
     const azureFailure = await runBenchmark({ ...readiness.config, participants: readiness.config.participants.filter(p => p.name === 'azure').map(p => ({ ...p })), iterations: 2 }, readiness.task, ['--no-ingest']);
     assert.equal(records(azureFailure)[0].data?.cleanupSuccess, false);
@@ -214,6 +219,60 @@ test('native suites use real Playwright connections and preserve reliability rec
       const { stdout } = await promisify(execFile)(process.execPath, ['node_modules/tsx/dist/cli.mjs', 'packages/benchsdk-runner/dist/bin.js', 'run', `benchmarks/browser/${entry}.bench.ts`, '--no-ingest', '--iterations', '1'], { env: process.env });
       assert.ok(stdout.includes('All done. No platform run created.'));
       assert.ok(!stdout.includes('FAILED'));
+    }
+    // Missing credentials must fail the comparison before any allocation.
+    const diagnosticEnv = { ...process.env };
+    delete diagnosticEnv.AZURE_PLAYWRIGHT_ACCESS_TOKEN;
+    for (const entry of ['playwright-readiness', 'playwright-throughput']) {
+      const command = ['node_modules/tsx/dist/cli.mjs', 'packages/benchsdk-runner/dist/bin.js', 'run', `benchmarks/browser/${entry}.bench.ts`, '--no-ingest', '--iterations=1'];
+      order.length = 0;
+      await assert.rejects(promisify(execFile)(process.execPath, command, { env: diagnosticEnv }), /Unavailable Playwright participant\(s\): azure: AZURE_PLAYWRIGHT_ACCESS_TOKEN/);
+      assert.deepEqual(order, []);
+      const { stdout } = await promisify(execFile)(process.execPath, [...command, '--provider=momentic'], { env: diagnosticEnv });
+      assert.deepEqual(order, ['momentic']);
+      const match = stdout.match(/Raw Playwright-native records and untrimmed summaries: (.+)/);
+      assert.ok(match);
+      const diagnostic = JSON.parse(readFileSync(match[1].trim(), 'utf8'));
+      assert.equal(diagnostic.mode, 'provider-diagnostic');
+      assert.deepEqual(diagnostic.unavailableParticipants, [{ name: 'azure', missing: ['AZURE_PLAYWRIGHT_ACCESS_TOKEN'] }]);
+    }
+    // Delay returning an actual remote context beyond the 30-second deadline.
+    // Cover reconciliation within cleanup, and ownership still unresolved at its bound.
+    for (const delayMs of [31_000, 46_000]) {
+      const client = await chromium.connect(endpoint);
+      const newContext = client.newContext.bind(client);
+      let pending: Promise<BrowserContext> | undefined;
+      let closed: Promise<void> | undefined;
+      const contextMock = t.mock.method(client, 'newContext', (options: BrowserContextOptions) => {
+        pending = newContext(options).then(async created => {
+          closed = new Promise<void>(resolve => created.once('close', () => resolve()));
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+          return created;
+        });
+        return pending;
+      });
+      const connectMock = t.mock.method(chromium, 'connect', async () => client);
+      const closeMock = delayMs === 46_000 ? t.mock.method(client, 'close', async () => { throw new Error('fixture disconnect failed'); }) : undefined;
+      try {
+        order.length = 0;
+        const participants = readiness.config.participants.filter(p => p.name === 'momentic').map(p => ({ ...p }));
+        const late = await runBenchmark({ ...readiness.config, participants, iterations: delayMs === 46_000 ? 2 : 1 }, readiness.task, ['--no-ingest']);
+        const [first, second] = records(late);
+        assert.equal(first.status, 'error');
+        assert.match(String(first.data?.errorMessage), /Context creation timed out/);
+        assert.equal(first.data?.cleanupSuccess, delayMs === 31_000);
+        if (delayMs === 46_000) {
+          assert.equal(second.data?.attemptStarted, false);
+          assert.deepEqual(order, ['momentic'], 'unresolved context ownership stops allocations');
+        }
+        assert.ok(pending && closed);
+        await pending;
+        await withTimeout(closed, 5_000, 'Late context was not closed');
+        assert.equal(client.contexts().length, 0);
+      } finally {
+        contextMock.mock.restore(); connectMock.mock.restore(); closeMock?.mock.restore();
+        await client.close();
+      }
     }
     const audit = await chromium.connect(endpoint);
     assert.equal(audit.contexts().length, 0, 'all benchmark contexts were closed');

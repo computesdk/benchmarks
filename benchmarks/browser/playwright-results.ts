@@ -1,8 +1,9 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
-import type { BenchmarkRunOutcome } from '@benchsdk/runner';
-import { ACTION_TYPES } from '../throughput-types.js';
+import { filterParticipantsByEnv, type BenchmarkRunOutcome } from '@benchsdk/runner';
+import { playwrightProviders } from './playwright-providers.js';
+import { ACTION_TYPES } from './throughput-types.js';
 
 /** Untrimmed nearest-rank percentiles; missing observations are not zeroes. */
 export function distribution(values: number[]) {
@@ -19,6 +20,8 @@ export function distribution(values: number[]) {
 }
 
 export function writeNativeResults(outcome: BenchmarkRunOutcome, suite: 'readiness' | 'throughput', articleUrls?: string[]): void {
+  const comparison = playwrightProviders.every(provider => outcome.participants.some(p => p.participant === provider.name));
+  const { skipped: unavailableParticipants } = filterParticipantsByEnv(playwrightProviders);
   const summaries = outcome.participants.map(({ participant, records }) => {
     const attempted = records.filter(record => record.data?.attemptStarted === true);
     const complete = attempted.filter(record => record.data?.workloadSuccess === true);
@@ -46,6 +49,6 @@ export function writeNativeResults(outcome: BenchmarkRunOutcome, suite: 'readine
   const directory = path.resolve(process.env.PLAYWRIGHT_NATIVE_RESULTS_DIR ?? 'results/playwright-native', suite);
   mkdirSync(directory, { recursive: true });
   const filename = path.join(directory, `${randomUUID()}.json`);
-  writeFileSync(filename, JSON.stringify({ suite, runId: outcome.runId, createdAt: new Date().toISOString(), config: outcome.config, ...(articleUrls ? { articleUrls } : {}), summaries, participants: outcome.participants }, null, 2));
+  writeFileSync(filename, JSON.stringify({ suite, mode: comparison ? 'comparison' : 'provider-diagnostic', unavailableParticipants, runId: outcome.runId, createdAt: new Date().toISOString(), config: outcome.config, ...(articleUrls ? { articleUrls } : {}), summaries, participants: outcome.participants }, null, 2));
   console.log(`Raw Playwright-native records and untrimmed summaries: ${filename}`);
 }

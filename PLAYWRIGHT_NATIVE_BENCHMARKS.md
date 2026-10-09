@@ -279,6 +279,12 @@ pnpm bench:playwright-readiness --no-ingest
 pnpm bench:playwright-throughput --no-ingest
 ```
 
+The default commands require credentials for both providers and fail before any
+provider request if either is unavailable. For an explicit single-provider
+diagnostic, pass `--provider momentic` or `--provider azure`. Raw diagnostic
+outputs are labeled `provider-diagnostic` and list unavailable participants
+separately from attempted-session denominators.
+
 Store credentials in your shell or the ignored `benchmarks/.env`, never in Git:
 
 - `MOMENTIC_BROWSER_FLEET_URL`: the Browser Fleet API base URL.
@@ -346,8 +352,10 @@ cleanup is recorded as uncertain and further allocations stop for that
 participant; the implementation does not claim it released an unknown resource.
 Provisioning has a 120-second bound;
 connection, context/page creation, and navigation have 30-second bounds; each
-cleanup operation has a 15-second bound. After uncertain cleanup, the process
-refuses further allocations for that participant and records unstarted tasks
+cleanup operation has a 15-second bound. Timed-out context creation is retained
+and reconciled within that cleanup bound; late contexts are explicitly closed.
+Unresolved context ownership makes cleanup uncertain. After uncertain cleanup,
+the process refuses further allocations for that participant and records unstarted tasks
 separately from attempted-session reliability denominators.
 
 No real credentials are used by fixture tests. Local fixture credentials and
