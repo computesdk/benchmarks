@@ -47,6 +47,24 @@ jobs:
       - name: Test create-bench
         run: pnpm --filter create-bench run test
 
+  playwright-native:
+    name: Test Playwright-native benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm -r --filter './packages/**' run build
+      - name: Install fixture browser
+        run: node node_modules/playwright-native-core/cli.js install --with-deps chromium
+      - name: Exercise native suites against local fixtures
+        run: pnpm test:playwright-native
+
   actionlint:
     name: Lint workflows
     runs-on: ubuntu-latest
