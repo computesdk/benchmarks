@@ -620,8 +620,8 @@ packages:
   '@browserbasehq/sdk@2.21.0':
     resolution: {integrity: sha512-zer0+HIS7EtDtfprU1jNCWk9DjU+ZyYaK2MVr9+m2Ydthoh2YHjPrjbTcLHNAIKmu5S6UCt+P0bzL5sm6t35VA==}
 
-  '@buddy-works/sandbox-sdk@0.1.10':
-    resolution: {integrity: sha512-0ljIDEAPA6Qc+P8wWpHJzNsx/CXSdtb2Jsrum+4jhn5v0jrgPo4FcdzsIYQx4cTRjMPRBnN1rqIMuUQya3+UQg==}
+  '@buddy-works/sandbox-sdk@0.1.11':
+    resolution: {integrity: sha512-2LMuxfogJc+BRqe8689wKTC9fR6kwvi/mVK8B4Gzaus+aanWZupkQoKYncQtrOcWQ40By7stD+Lm4BVN1U8j8Q==}
     engines: {node: ^20.19.0 || >=22.12.0}
 
   '@bufbuild/protobuf@2.12.1':
@@ -6194,7 +6194,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@buddy-works/sandbox-sdk@0.1.10':
+  '@buddy-works/sandbox-sdk@0.1.11':
     dependencies:
       p-retry: 7.1.1
       zod: 4.3.5
@@ -6489,7 +6489,7 @@ snapshots:
 
   '@computesdk/buddy@1.0.9':
     dependencies:
-      '@buddy-works/sandbox-sdk': 0.1.10
+      '@buddy-works/sandbox-sdk': 0.1.11
       '@computesdk/provider': 2.1.11
       computesdk: 4.1.10
 
