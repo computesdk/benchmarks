@@ -117,8 +117,8 @@ importers:
         specifier: ^0.1.9
         version: 0.1.9
       '@computesdk/miosa':
-        specifier: ^1.1.0
-        version: 1.1.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        specifier: ^1.1.1
+        version: 1.1.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@computesdk/modal':
         specifier: ^1.9.15
         version: 1.9.15
@@ -824,8 +824,8 @@ packages:
     resolution: {integrity: sha512-rubqPUimslCNb6NuU1L7Z/sQmQUhWZXmzJtaM2SD8I5SSIr2rxH6V36z7Lx6FiXcxvO1/f4+zSnbVLZHv8uqyw==}
     engines: {node: '>=22'}
 
-  '@computesdk/miosa@1.1.0':
-    resolution: {integrity: sha512-nw7SDQcHzVXdmA/lW2enZhztS0hEfqyMmUuA9tkCPje/JU5O7z20ts1+MvIiPyI/XAeRjMMLQhNhROD50oDEdw==}
+  '@computesdk/miosa@1.1.1':
+    resolution: {integrity: sha512-ivvb25jMJJerqTk1WMAEYUOrBUj0SDFXsrp2SFZc6ykaQzhwlk7et4dTECClqmuaEIAn7ZWrKWpoqHoYysV76g==}
 
   '@computesdk/modal@1.9.15':
     resolution: {integrity: sha512-ikwmTzsxsBwlDahyfFRQSPaVttLE9j1V3UaVwJ+FBwfzJuwLMgA6okKVEpPPIOhaLRDMPeo7zd15lvYnVRnWqg==}
@@ -1607,8 +1607,8 @@ packages:
   '@manypkg/get-packages@1.1.3':
     resolution: {integrity: sha512-fo+QhuU3qE/2TQMQmbVMqaQ6EWbMhi4ABWP+O4AM1NqPBuy0OrApV5LO6BrrgnhtAHS2NH6RrVk9OL181tTi8A==}
 
-  '@miosa/sdk@3.3.1':
-    resolution: {integrity: sha512-Wj6YUP59gQW/hTJ8G9MQgW9WxZThaQU+C7R9ZlGusmKu3PhD20qpSUxYt9p3675dho0z6LkjQWrDLlrtjUzGQg==}
+  '@miosa/sdk@3.4.0':
+    resolution: {integrity: sha512-iaam3HtsCoZuOApfYf1SsE7cRu97DvoT+49lmbzn3ZErxGDMLXXKea7f9r9CwzbNRCl/ijNAlbju6tsEg98gZg==}
     engines: {node: '>=18.0.0'}
 
   '@mixmark-io/domino@2.2.0':
@@ -4364,8 +4364,8 @@ packages:
   nice-grpc@2.1.17:
     resolution: {integrity: sha512-pu9xYPlWSeqoYQOCqb2ftQqZi/P2DaI70PSuwnxvoyIRiilaOVtktyPe6LmuXegWB4Ic1sPuDGCnCCASbwzK0w==}
 
-  node-abi@3.97.0:
-    resolution: {integrity: sha512-6Pu8F0eXGZlyz0EepPJrWgWDcBI8rKt2Wj8exOJU1tjVbu/VyZy5ZaLYS5N+Jp/Y3IP3sIRKcIOElTu7uC6KKA==}
+  node-abi@3.98.0:
+    resolution: {integrity: sha512-Llh8noNw7s15m+rmIrZnZQbe4gLyasL9loT74rC92PkmwWKeEedKvc7o6pjp8B3MhrYT/Cl846NOYZbz1wmddw==}
     engines: {node: '>=10'}
 
   node-addon-api@8.9.2:
@@ -6639,10 +6639,10 @@ snapshots:
       computesdk: 4.1.10
       microsandbox: 0.6.18
 
-  '@computesdk/miosa@1.1.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
+  '@computesdk/miosa@1.1.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
     dependencies:
       '@computesdk/provider': 2.1.11
-      '@miosa/sdk': 3.3.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      '@miosa/sdk': 3.4.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       computesdk: 4.1.10
     transitivePeerDependencies:
       - bufferutil
@@ -7374,7 +7374,7 @@ snapshots:
       globby: 11.1.0
       read-yaml-file: 1.1.0
 
-  '@miosa/sdk@3.3.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
+  '@miosa/sdk@3.4.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
     optionalDependencies:
       undici: 7.30.0
       ws: 8.22.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -10460,7 +10460,7 @@ snapshots:
       abort-controller-x: 0.5.0
       nice-grpc-common: 2.0.4
 
-  node-abi@3.97.0:
+  node-abi@3.98.0:
     dependencies:
       semver: 7.8.5
     optional: true
@@ -10806,7 +10806,7 @@ snapshots:
       minimist: 1.2.8
       mkdirp-classic: 0.5.3
       napi-build-utils: 2.0.0
-      node-abi: 3.97.0
+      node-abi: 3.98.0
       pump: 3.0.4
       rc: 1.2.8
       simple-get: 4.0.1
