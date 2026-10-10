@@ -12,6 +12,18 @@ import { resolveNeonHost } from './neon-host.js';
  */
 export const providers: AIGatewayProviderConfig[] = [
   {
+    name: 'cocoonstack-gateway',
+    requiredEnvVars: ['COCOONSTACK_GATEWAY_API_KEY'],
+    wireFormat: 'anthropic',
+    model: 'claude-haiku-4-5-20251001',
+    host: 'gw-bench.simular.cloud',
+    path: '/v1/messages',
+    buildHeaders: () => ({
+      'x-api-key': process.env.COCOONSTACK_GATEWAY_API_KEY || '',
+      'anthropic-version': '2023-06-01',
+    }),
+  },
+  {
     // `anthropic/claude-haiku-4.5` is a catalog alias that OpenRouter can
     // serve from more than one upstream (Anthropic direct, Bedrock, Vertex,
     // or a reseller), chosen dynamically by OpenRouter's own price/uptime
