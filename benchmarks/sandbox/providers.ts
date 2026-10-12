@@ -4,7 +4,7 @@ import { beam } from '@computesdk/beam';
 import { blaxel } from '@computesdk/blaxel';
 import { buddy } from '@computesdk/buddy';
 import { codesandbox } from '@computesdk/codesandbox';
-import { cloudRun } from '@computesdk/cloud-run';
+import { cloudRun } from '@computesdk/gcp/cloud-run';
 // import { collimate } from '@computesdk/collimate';
 import { cloudflare } from '@computesdk/cloudflare';
 import { createosSandbox } from '@computesdk/createos-sandbox';
