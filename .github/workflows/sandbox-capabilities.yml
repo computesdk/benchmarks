@@ -1,4 +1,4 @@
-name: Sandbox Capabilities Matrix
+name: Sandbox CI Capabilities Matrix
 
 # computesdk:secrets=NSC_TOKEN
 # computesdk:secrets-env=declared
@@ -50,7 +50,7 @@ jobs:
       id-token: write
     runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
     # runs-on: self-hosted
-    timeout-minutes: 30
+    timeout-minutes: 120
     env:
       SHOULD_RUN: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.provider == '' || github.event.inputs.provider == matrix.provider }}
     strategy:
@@ -185,7 +185,7 @@ jobs:
           . benchmarks/scripts/load-vault-secrets.sh "$KEYS"
 
           RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          pnpm exec -- tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/capabilities.bench.ts \
+          pnpm exec -- tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/ci-capabilities.bench.ts \
             --provider "$PROVIDER" \
             --iterations "$ITERATIONS" \
             --concurrency "$CONCURRENCY" \
@@ -194,7 +194,7 @@ jobs:
         if: always() && env.SHOULD_RUN == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: results-capabilities-${{ matrix.provider }}
+          name: results-ci-capabilities-${{ matrix.provider }}
           path: results/
           if-no-files-found: ignore
           retention-days: 7
@@ -246,7 +246,7 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           path: artifacts/
-          pattern: results-capabilities-*
+          pattern: results-ci-capabilities-*
       - name: Merge results
         continue-on-error: true
         run: pnpm exec -- tsx benchmarks/src/merge-results.ts --input artifacts
@@ -258,9 +258,9 @@ jobs:
             const fs = require('fs');
             const path = require('path');
 
-            const latestPath = path.join('results', 'sandbox-capabilities', 'latest.json');
+            const latestPath = path.join('results', 'sandbox-ci-capabilities', 'latest.json');
             if (!fs.existsSync(latestPath)) {
-              core.summary.addHeading('Sandbox Capabilities Matrix', 2);
+              core.summary.addHeading('Sandbox CI Capabilities Matrix', 2);
               core.summary.addRaw('No capabilities results were generated.');
               await core.summary.write();
               return;
@@ -271,7 +271,7 @@ jobs:
             const featureNames = results.length > 0 ? Object.keys(results[0].features || {}) : [];
 
             const summary = core.summary;
-            summary.addHeading('Sandbox Capabilities Matrix', 2);
+            summary.addHeading('Sandbox CI Capabilities Matrix', 2);
             summary.addRaw(`<p>Timestamp: ${data.timestamp || 'unknown'}<br>Providers: ${results.length}</p>`);
 
             const header = ['Provider', ...featureNames];
@@ -308,10 +308,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          mkdir -p results/sandbox-capabilities
-          git add results/sandbox-capabilities/
+          mkdir -p results/sandbox-ci-capabilities
+          git add results/sandbox-ci-capabilities/
           git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "chore: update sandbox capabilities results [skip ci]"
+          git commit -m "chore: update sandbox ci capabilities results [skip ci]"
 
           branch="${GITHUB_REF#refs/heads/}"
           for attempt in 1 2 3 4 5; do

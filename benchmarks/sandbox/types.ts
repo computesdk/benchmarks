@@ -68,3 +68,18 @@ export interface StaggeredBenchmarkResult extends BenchmarkResult {
   /** Per-sandbox timing profile showing launch offset and TTI */
   rampProfile: { launchedAt: number; readyAt: number; ttiMs: number }[];
 }
+
+/** Pass/fail record for a single CI capability check in a provider run. */
+export interface CapabilityFeatureResult {
+  passed: boolean;
+  error?: string;
+}
+
+/** Map of check name -> result for one provider iteration. */
+export type ProviderCapabilityMatrix = Record<string, CapabilityFeatureResult>;
+
+/** One provider's row in the CI capabilities results JSON. */
+export interface CapabilityMatrixResult {
+  provider: string;
+  features: ProviderCapabilityMatrix;
+}
