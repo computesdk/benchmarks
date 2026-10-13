@@ -158,6 +158,9 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // getSandboxOptionsWithResources preserves hardTtl from providers.ts.
   sandbox0:     { memory: 16384 },
   sail:         { size: 'l' },
+  // Novita sizes via templates (E2B-style), so dax runs on the node22-8cpu-16gb
+  // template built in the workflow pre-step (same pattern as superserve/e2b).
+  novita:       { templateId: 'node22-8cpu-16gb' },
 };
 
 function getSandboxOptionsWithResources(providerName: string, baseOptions?: Record<string, any>): Record<string, any> {

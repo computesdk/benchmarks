@@ -134,6 +134,9 @@ importers:
       '@computesdk/notte':
         specifier: ^0.3.13
         version: 0.3.13(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      '@computesdk/novita':
+        specifier: ^0.0.8
+        version: 0.0.8
       '@computesdk/opencomputer':
         specifier: ^1.0.10
         version: 1.0.10
@@ -212,6 +215,9 @@ importers:
       gravixlayer:
         specifier: ^0.1.35
         version: 0.1.35(@opentelemetry/api@1.9.1)
+      novita-sandbox:
+        specifier: ^2.1.1
+        version: 2.1.1
       p-limit:
         specifier: ^7.3.3
         version: 7.3.3
@@ -842,6 +848,10 @@ packages:
   '@computesdk/notte@0.3.13':
     resolution: {integrity: sha512-VL5S1YN7MGvSgy8xUn9CjwsfArH6q6fJCE5CwC3FIMiSutQaz6zmvLwEF+zWNmAEDlq/JmNeQNwV8MRgkLBXeA==}
 
+  '@computesdk/novita@0.0.8':
+    resolution: {integrity: sha512-n2fqzjaLYwBbwKsN0NyvPC7p7Dw6XWG7/9bREGg/yE9GxWwJ/YajGX/Bwsr2x4Aw2ImP6JI6K0PvC6jdW4ULfA==}
+    engines: {node: '>=20'}
+
   '@computesdk/opencomputer@1.0.10':
     resolution: {integrity: sha512-+s+bI9Iqx6H+NN4a1FTS5RfvFIyILJMjk9CvcEVNsx9vG0zP3WUmslgbfdQaCyhT7xlw6ONxO3ZnWK3zcKMiKw==}
 
@@ -905,11 +915,22 @@ packages:
       '@bufbuild/protobuf': ^2.7.0
       '@connectrpc/connect': 2.1.2
 
+  '@connectrpc/connect-web@2.0.0-rc.3':
+    resolution: {integrity: sha512-w88P8Lsn5CCsA7MFRl2e6oLY4J/5toiNtJns/YJrlyQaWOy3RO8pDgkz+iIkG98RPMhj2thuBvsd3Cn4DKKCkw==}
+    peerDependencies:
+      '@bufbuild/protobuf': ^2.2.0
+      '@connectrpc/connect': 2.0.0-rc.3
+
   '@connectrpc/connect-web@2.2.0':
     resolution: {integrity: sha512-uuBUcBTYfb/r1o98LzCCZk1H90yx0vmZ5m21dpw/q4EUwsKwkCDGI8H0aEdjcZld+Q2jJ5A5ADvPqfb6lzQ/sg==}
     peerDependencies:
       '@bufbuild/protobuf': ^2.7.0
       '@connectrpc/connect': 2.2.0
+
+  '@connectrpc/connect@2.0.0-rc.3':
+    resolution: {integrity: sha512-ARBt64yEyKbanyRETTjcjJuHr2YXorzQo0etyS5+P6oSeW8xEuzajA9g+zDnMcj1hlX2dQE93foIWQGfpru7gQ==}
+    peerDependencies:
+      '@bufbuild/protobuf': ^2.2.0
 
   '@connectrpc/connect@2.1.2':
     resolution: {integrity: sha512-MXkBijtcX09R10Eb6sFeIetc6w6746eio6xtfuyVOH7oQAacT1X0GzMIQFux6Qy8cq3W/T5qX5Bei8YbFtmRGA==}
@@ -1524,6 +1545,10 @@ packages:
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
     engines: {node: '>=12'}
+
+  '@isaacs/cliui@9.0.0':
+    resolution: {integrity: sha512-AokJm4tuBHillT+FpMtxQ60n8ObyXBatq7jD2/JA9dxbDDokKQm8KMht5ibGzLVU9IJDIKK4TPKgMHEYMn3lMg==}
+    engines: {node: '>=18'}
 
   '@isaacs/fs-minipass@4.0.1':
     resolution: {integrity: sha512-wgm9Ehl2jpeqP3zw/7mo3kRHFp5MEDhqAdwy1fTGkHAwnkGOVsgpvQhL8B5n1qlb01jV3n/bI0ZfZp5lWA1k4w==}
@@ -3726,6 +3751,12 @@ packages:
     deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
+  glob@11.1.0:
+    resolution: {integrity: sha512-vuNwKSaKiqm7g0THUBu2x7ckSs3XJLXE+2ssL7/MfTGPLLcrJQ/4Uq1CjPTtO5cCIiRxqvN6Twy1qOwhL0Xjcw==}
+    engines: {node: 20 || >=22}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+    hasBin: true
+
   glob@13.0.6:
     resolution: {integrity: sha512-Wjlyrolmm8uDpm/ogGyXZXb1Z+Ca2B8NbJwqBVg0axK9GbBeoS7yGV6vjXnYdGm6X53iehEuxxbyiKp8QmN4Vw==}
     engines: {node: 18 || 20 || >=22}
@@ -4103,6 +4134,10 @@ packages:
   jackspeak@3.4.3:
     resolution: {integrity: sha512-OGlZQpz2yfahA/Rd1Y8Cd9SIEsqvXkLVoSw/cgwhnhFMDbsQFeZYoJJ7bIZBS9BcamUW96asq/npPWugM+RQBw==}
 
+  jackspeak@4.2.3:
+    resolution: {integrity: sha512-ykkVRwrYvFm1nb2AJfKKYPr0emF6IiXDYUaFx4Zn9ZuIH7MrzEZ3sD5RlqGXNRpHtvUHJyOnCEFxOlNDtGo7wg==}
+    engines: {node: 20 || >=22}
+
   jiti@2.7.0:
     resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
     hasBin: true
@@ -4477,6 +4512,10 @@ packages:
   notte-sdk@0.0.3:
     resolution: {integrity: sha512-zDibN+s5/6DyXpZ304RQmMScZ91bjpVke67N29P5AjKOk4d3l2vJMM+tN5rL2BxtELiA/tmoh8JW5NhwmOna+w==}
 
+  novita-sandbox@2.1.1:
+    resolution: {integrity: sha512-77cL+1nb/IVvJKrR1ePkcfIoeGQxmmhLnej4yyo2eyq5mLEctYcanciwyBY56ZeSApN2oNcqd19WT2//A6nBMg==}
+    engines: {node: '>=20'}
+
   npm-run-path@4.0.1:
     resolution: {integrity: sha512-S48WzZW777zhNIrn7gxOlISNAqi9ZC/uQFnRdbeIHhZhCA6UqpkOT8T1G7BvfdgP4Er8gF4sUbaS0i7QvIfCWw==}
     engines: {node: '>=8'}
@@ -4521,6 +4560,9 @@ packages:
 
   openapi-fetch@0.13.8:
     resolution: {integrity: sha512-yJ4QKRyNxE44baQ9mY5+r/kAzZ8yXMemtNAOFwOzRXJscdjSxxzWSNlyBAr+o5JjkUw9Lc3W7OIoca0cY3PYnQ==}
+
+  openapi-fetch@0.14.1:
+    resolution: {integrity: sha512-l7RarRHxlEZYjMLd/PR0slfMVse2/vvIAGm75/F7J6MlQ8/b9uUQmUF2kCPrQhJqMXSxmYWObVgeYXbFYzZR+A==}
 
   openapi-fetch@0.17.0:
     resolution: {integrity: sha512-PsbZR1wAPcG91eEthKhN+Zn92FMHxv+/faECIwjXdxfTODGSGegYv0sc1Olz+HYPvKOuoXfp+0pA2XVt2cI0Ig==}
@@ -6698,6 +6740,12 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
+  '@computesdk/novita@0.0.8':
+    dependencies:
+      '@computesdk/provider': 2.1.14
+      computesdk: 4.1.12
+      novita-sandbox: 2.1.1
+
   '@computesdk/opencomputer@1.0.10':
     dependencies:
       '@computesdk/provider': 2.1.11
@@ -6826,10 +6874,19 @@ snapshots:
       '@bufbuild/protobuf': 2.12.1
       '@connectrpc/connect': 2.1.2(@bufbuild/protobuf@2.12.1)
 
+  '@connectrpc/connect-web@2.0.0-rc.3(@bufbuild/protobuf@2.16.0)(@connectrpc/connect@2.0.0-rc.3(@bufbuild/protobuf@2.16.0))':
+    dependencies:
+      '@bufbuild/protobuf': 2.16.0
+      '@connectrpc/connect': 2.0.0-rc.3(@bufbuild/protobuf@2.16.0)
+
   '@connectrpc/connect-web@2.2.0(@bufbuild/protobuf@2.16.0)(@connectrpc/connect@2.2.0(@bufbuild/protobuf@2.16.0))':
     dependencies:
       '@bufbuild/protobuf': 2.16.0
       '@connectrpc/connect': 2.2.0(@bufbuild/protobuf@2.16.0)
+
+  '@connectrpc/connect@2.0.0-rc.3(@bufbuild/protobuf@2.16.0)':
+    dependencies:
+      '@bufbuild/protobuf': 2.16.0
 
   '@connectrpc/connect@2.1.2(@bufbuild/protobuf@2.12.1)':
     dependencies:
@@ -7310,6 +7367,8 @@ snapshots:
       strip-ansi-cjs: strip-ansi@6.0.1
       wrap-ansi: 8.1.0
       wrap-ansi-cjs: wrap-ansi@7.0.0
+
+  '@isaacs/cliui@9.0.0': {}
 
   '@isaacs/fs-minipass@4.0.1':
     dependencies:
@@ -9853,6 +9912,15 @@ snapshots:
       package-json-from-dist: 1.0.1
       path-scurry: 1.11.1
 
+  glob@11.1.0:
+    dependencies:
+      foreground-child: 3.3.1
+      jackspeak: 4.2.3
+      minimatch: 10.2.6
+      minipass: 7.1.3
+      package-json-from-dist: 1.0.1
+      path-scurry: 2.0.2
+
   glob@13.0.6:
     dependencies:
       minimatch: 10.2.6
@@ -10220,6 +10288,10 @@ snapshots:
     optionalDependencies:
       '@pkgjs/parseargs': 0.11.0
 
+  jackspeak@4.2.3:
+    dependencies:
+      '@isaacs/cliui': 9.0.0
+
   jiti@2.7.0: {}
 
   jose@5.10.0: {}
@@ -10575,6 +10647,19 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
+  novita-sandbox@2.1.1:
+    dependencies:
+      '@bufbuild/protobuf': 2.16.0
+      '@connectrpc/connect': 2.0.0-rc.3(@bufbuild/protobuf@2.16.0)
+      '@connectrpc/connect-web': 2.0.0-rc.3(@bufbuild/protobuf@2.16.0)(@connectrpc/connect@2.0.0-rc.3(@bufbuild/protobuf@2.16.0))
+      chalk: 5.6.2
+      compare-versions: 6.1.1
+      dockerfile-ast: 0.7.1
+      glob: 11.1.0
+      openapi-fetch: 0.14.1
+      platform: 1.3.6
+      tar: 7.5.22
+
   npm-run-path@4.0.1:
     dependencies:
       path-key: 3.1.1
@@ -10619,6 +10704,10 @@ snapshots:
       wsl-utils: 0.3.1
 
   openapi-fetch@0.13.8:
+    dependencies:
+      openapi-typescript-helpers: 0.0.15
+
+  openapi-fetch@0.14.1:
     dependencies:
       openapi-typescript-helpers: 0.0.15
 
