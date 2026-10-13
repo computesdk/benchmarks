@@ -10,6 +10,35 @@ import { archil } from '@storagesdk/adapters/archil';
 import { neon } from '@storagesdk/adapters/neon';
 import type { StorageProviderConfig } from './types.js';
 
+export function normalizeGcsPrivateKey(value: string): string {
+  let key = value.trim();
+  if (key.startsWith('"') && key.endsWith('"')) {
+    try {
+      key = JSON.parse(key) as string;
+    } catch {
+      // Fall through and normalize the value as plain text.
+    }
+  }
+  return key
+    .replaceAll('\\\\r\\\\n', '\r\n')
+    .replaceAll('\\n', '\n')
+    .replaceAll('\\r\\n', '\r\n')
+    .replace(/\r\n/g, '\n');
+}
+
+export function isStorageProviderAvailable(provider: StorageProviderConfig): boolean {
+  if (provider.requiredEnvVars.some((name) => !process.env[name])) {
+    return false;
+  }
+  try {
+    provider.createStorage();
+    return true;
+  } catch {
+    console.warn(`Skipping ${provider.name}: storage credentials could not be initialized`);
+    return false;
+  }
+}
+
 /**
  * Storage provider benchmark configurations.
  *
@@ -153,8 +182,7 @@ export const storageProviders: StorageProviderConfig[] = [
         projectId: process.env.GCS_PROJECT_ID!,
         credentials: {
           client_email: process.env.GCS_CLIENT_EMAIL!,
-          // Secrets store the key with literal "\n"; restore real newlines.
-          private_key: process.env.GCS_PRIVATE_KEY!.replace(/\\n/g, '\n'),
+          private_key: normalizeGcsPrivateKey(process.env.GCS_PRIVATE_KEY!),
         },
       }),
     }),
