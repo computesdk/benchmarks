@@ -59,9 +59,6 @@ importers:
       '@computesdk/buddy':
         specifier: ^1.0.9
         version: 1.0.9
-      '@computesdk/cloud-run':
-        specifier: ^0.1.14
-        version: 0.1.14
       '@computesdk/cloudflare':
         specifier: ^2.1.1
         version: 2.1.1
@@ -86,6 +83,9 @@ importers:
       '@computesdk/freestyle':
         specifier: ^0.2.8
         version: 0.2.8(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      '@computesdk/gcp':
+        specifier: ^0.1.1
+        version: 0.1.1
       '@computesdk/givemeanode':
         specifier: ^1.2.4
         version: 1.2.4
@@ -756,10 +756,6 @@ packages:
     resolution: {integrity: sha512-3P7pHdLwxSXeFJMdyIeTcy5WQYhc9nPhOn2MNbup9ZmxZRbpYWN6eJcn28rmAsSeb8oiulKLnrc6uBjxqGdzww==}
     engines: {node: ^20.19.0 || >=22.12.0}
 
-  '@computesdk/cloud-run@0.1.14':
-    resolution: {integrity: sha512-3Zyoix3UPOt++z6hucEEzn9HsOGB4ogl55j/vEqdLRIMUDrefZFKL6+VbSA9o2v0vN8wFKcOdbjJqHjLjVybqg==}
-    hasBin: true
-
   '@computesdk/cloudflare@2.1.1':
     resolution: {integrity: sha512-6hRdwFV0EMkmo5Du4nDFx5ShFiyOWD6ZCA1WsA2jvVdvs6oAEW8qBtASDANhwt1iUPrCOKMGYH1GSMOdSID3wA==}
     hasBin: true
@@ -788,6 +784,10 @@ packages:
 
   '@computesdk/freestyle@0.2.8':
     resolution: {integrity: sha512-UETPaURrW+GDnron9z4oI//e3kaQ2hpRL22oxmd8znKx9F0RvOz3PZQ8+Jx1yC9aFz+cx5K8dh64dX9AgVIWIQ==}
+
+  '@computesdk/gcp@0.1.1':
+    resolution: {integrity: sha512-ggqSQDnmE4vMzJa2QuoF/heBUvnRX/VUAA9C3dqZ9oXiLdpiDadMy7YhYNkeFqW4Rv6n8eWG5wCiXBsMaVTY4A==}
+    hasBin: true
 
   '@computesdk/givemeanode@1.2.4':
     resolution: {integrity: sha512-ZzyU3wrDGLlINS8Ahqu0vGwa0VhPpGVk8fDF62XVixIfgxKgz7Ny8OxR5WxQ5B88lppV0FapS9QHTcREYCsvww==}
@@ -847,6 +847,9 @@ packages:
 
   '@computesdk/provider@2.1.11':
     resolution: {integrity: sha512-jgryilUaZ7TD8W37sXZzoiiiKr20PeykwWBkJxwMWL3m6nS88VWEfnMlUWyYVBwxAlgsMS1oog/fx/EZ9/xusA==}
+
+  '@computesdk/provider@2.1.14':
+    resolution: {integrity: sha512-7uqDqxSZ4tRBS0AwirGkuKzpOPLPWGA+vP/5BeKbukFCepJEJdprRK+JzCtIkeyEhmud+2hob6WPft+Qed+elw==}
 
   '@computesdk/quilt@1.0.9':
     resolution: {integrity: sha512-fRR5rdUrifWUC2kFAkCsvp56rFus+Otc8mGxQRjbNFRJpQotv8YaqtMM/4kse11DRbUY4qWL+/Btget2aXFpQQ==}
@@ -3119,6 +3122,9 @@ packages:
 
   computesdk@4.1.10:
     resolution: {integrity: sha512-I99mW+7BfB24ilVbCpTQ7pglda8sETuRsbedwGHDQx/DRTLLtDGHQVfME17gVPvBUCRttbEe/qjY5ZEHUn/eBA==}
+
+  computesdk@4.1.12:
+    resolution: {integrity: sha512-wEcAKgSBDqC3EAO6rZfLE2PvPp+izIY2itWJLWVi9FI02CfWiTk47fmLp+/2FxSjYctUKGKmY5HAgCYHE+lBew==}
 
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
@@ -6502,11 +6508,6 @@ snapshots:
       '@computesdk/provider': 2.1.11
       computesdk: 4.1.10
 
-  '@computesdk/cloud-run@0.1.14':
-    dependencies:
-      '@computesdk/provider': 2.1.11
-      computesdk: 4.1.10
-
   '@computesdk/cloudflare@2.1.1':
     dependencies:
       '@computesdk/provider': 2.1.11
@@ -6565,6 +6566,11 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+
+  '@computesdk/gcp@0.1.1':
+    dependencies:
+      '@computesdk/provider': 2.1.14
+      computesdk: 4.1.12
 
   '@computesdk/givemeanode@1.2.4':
     dependencies:
@@ -6702,6 +6708,12 @@ snapshots:
     dependencies:
       '@computesdk/cmd': 0.4.1
       computesdk: 4.1.10
+      daemond: 0.1.8
+
+  '@computesdk/provider@2.1.14':
+    dependencies:
+      '@computesdk/cmd': 0.4.1
+      computesdk: 4.1.12
       daemond: 0.1.8
 
   '@computesdk/quilt@1.0.9':
@@ -9091,6 +9103,11 @@ snapshots:
       readable-stream: 4.8.0
 
   computesdk@4.1.10:
+    dependencies:
+      '@computesdk/cmd': 0.4.1
+      daemond: 0.1.8
+
+  computesdk@4.1.12:
     dependencies:
       '@computesdk/cmd': 0.4.1
       daemond: 0.1.8
