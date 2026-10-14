@@ -233,8 +233,9 @@ const protocolByHost = new Map<string, ProbeProtocol>();
  * negotiated — check `socket.alpnProtocol`.
  */
 function connectTls(host: string, timeout: number, onSocket?: (socket: TLSSocket) => void): Promise<TLSSocket> {
+  let socket: TLSSocket | undefined;
   return withTimeout(new Promise<TLSSocket>((resolve, reject) => {
-    const socket = tls.connect({
+    socket = tls.connect({
       host,
       port: 443,
       servername: host,
@@ -242,13 +243,14 @@ function connectTls(host: string, timeout: number, onSocket?: (socket: TLSSocket
     });
     // Synchronous: lets the caller attach 'lookup'/'connect'/'secureConnect'
     // timing listeners before the handshake completes.
-    onSocket?.(socket);
-    socket.once('secureConnect', () => resolve(socket));
-    socket.once('error', (err) => {
-      socket.destroy();
-      reject(err);
-    });
-  }), timeout, `TLS handshake to ${host} timed out`);
+    const s = socket;
+    onSocket?.(s);
+    s.once('secureConnect', () => resolve(s));
+    s.once('error', reject);
+  }), timeout, `TLS handshake to ${host} timed out`).catch((err) => {
+    socket?.destroy();
+    throw err;
+  });
 }
 
 function protocolOf(socket: TLSSocket): ProbeProtocol {
@@ -279,11 +281,22 @@ async function ensureProtocol(host: string, timeout: number): Promise<ProbeProto
  * socket through `createConnection` keeps it on the connection we timed.
  */
 function h2SessionOver(host: string, socket: TLSSocket): http2.ClientHttp2Session {
-  return http2.connect(`https://${host}`, { createConnection: () => socket });
+  return guardSession(http2.connect(`https://${host}`, { createConnection: () => socket }));
 }
 
 function h2Session(host: string): http2.ClientHttp2Session {
-  return http2.connect(`https://${host}`);
+  return guardSession(http2.connect(`https://${host}`));
+}
+
+/**
+ * Session-level errors (GOAWAY with an error code, connection resets) are
+ * emitted on the session, not the stream; without a listener Node throws them
+ * as uncaught and kills the whole run. In-flight requests pick them up via
+ * their own session listener in `sendAndMeasureH2`.
+ */
+function guardSession(session: http2.ClientHttp2Session): http2.ClientHttp2Session {
+  session.on('error', () => {});
+  return session;
 }
 
 /**
@@ -394,11 +407,15 @@ function sendAndMeasureH2(
   session: http2.ClientHttp2Session,
   timeout: number,
 ): Promise<RawProbeOutcome> {
+  let req: http2.ClientHttp2Stream | undefined;
+  let onSessionError: ((err: Error) => void) | undefined;
   return withTimeout(new Promise<RawProbeOutcome>((resolve, reject) => {
     const start = now();
     const contentRe = contentRegexFor(config.wireFormat, config.reasoningCountsAsFirstToken ?? false);
 
-    const req = session.request({
+    onSessionError = reject;
+    session.on('error', onSessionError);
+    const stream = req = session.request({
       ':method': 'POST',
       ':path': config.path,
       'content-type': 'application/json',
@@ -415,12 +432,12 @@ function sendAndMeasureH2(
     let outputTokens: number | undefined;
     let resolvedProvider: string | undefined;
 
-    req.on('response', (headers) => {
+    stream.on('response', (headers) => {
       ttfbMs = now() - start;
       status = Number(headers[':status'] ?? 0);
       receipts = extractReceipts(headers as Record<string, string | undefined>);
     });
-    req.on('data', (chunk: Buffer) => {
+    stream.on('data', (chunk: Buffer) => {
       buf += chunk.toString('utf8');
       if (status >= 400) return;
       if (ttftMs === 0 && contentRe.test(buf)) {
@@ -429,7 +446,7 @@ function sendAndMeasureH2(
       outputTokens = extractOutputTokens(config.wireFormat, buf) ?? outputTokens;
       resolvedProvider = config.extractResolvedProvider?.(buf) ?? resolvedProvider;
     });
-    req.on('end', () => {
+    stream.on('end', () => {
       if (status >= 400) {
         reject(new Error(`HTTP ${status}: ${buf.slice(0, 200)}`));
         return;
@@ -445,11 +462,15 @@ function sendAndMeasureH2(
       }
       resolve({ ttfbMs, ttftMs, totalMs: now() - start, outputTokens, resolvedProvider, protocol: 'h2', receipts });
     });
-    req.on('aborted', () => reject(new Error('HTTP/2 stream aborted by the server')));
-    req.on('error', reject);
-    req.write(body);
-    req.end();
-  }), timeout, 'AI gateway request timed out');
+    stream.on('aborted', () => reject(new Error('HTTP/2 stream aborted by the server')));
+    stream.on('error', reject);
+    stream.on('close', () => reject(new Error(`HTTP/2 stream closed before completion (code ${stream.rstCode})`)));
+    stream.write(body);
+    stream.end();
+  }), timeout, 'AI gateway request timed out').finally(() => {
+    if (onSessionError) session.off('error', onSessionError);
+    if (req && !req.closed) req.close(http2.constants.NGHTTP2_CANCEL);
+  });
 }
 
 function tokensPerSecond(outcome: RawProbeOutcome): number | undefined {
@@ -525,7 +546,7 @@ export async function runColdProbe(
   } catch (err) {
     return { mode: 'cold', ttfbMs: 0, ttftMs: 0, receipts: {}, error: formatError(err) };
   } finally {
-    session?.close();
+    session?.destroy();
     agent?.destroy();
     socket?.destroy();
   }
@@ -569,7 +590,7 @@ export async function runWarmProbe(
           receipts: outcome.receipts,
         };
       } finally {
-        session.close();
+        session.destroy();
       }
     }
 
