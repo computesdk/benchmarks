@@ -29,6 +29,20 @@ if [ -z "${KEYS}" ]; then
   return 1 2>/dev/null || exit 1
 fi
 
+# Platform sandboxes can mount a Namespace workload token at
+# /var/run/nsc/token.json (read-only; `id-token: write` jobs) whose grants stop
+# at the container registry — vault reads need the org token instead. Point nsc
+# at a copy of it when it's in env; the mounted file cannot be overwritten.
+if [ -n "${NSC_TOKEN:-}" ]; then
+  _nsc_org_token_file="$(mktemp)"
+  case "$NSC_TOKEN" in
+    \{*) printf '%s\n' "$NSC_TOKEN" > "$_nsc_org_token_file" ;;
+    *) printf '{"bearer_token":"%s"}\n' "$NSC_TOKEN" > "$_nsc_org_token_file" ;;
+  esac
+  chmod 600 "$_nsc_org_token_file"
+  export NSC_TOKEN_FILE="$_nsc_org_token_file"
+fi
+
 nsc version ensure --at_least 0.0.550 >/dev/null
 
 # Pull env-var names from `name=` labels (or `description` as a fallback) and
