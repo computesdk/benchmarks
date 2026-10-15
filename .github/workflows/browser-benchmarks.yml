@@ -62,7 +62,7 @@ jobs:
   bench:
     name: Bench ${{ matrix.provider }}
     # Browser Use's leg runs next to its API (house EC2, us-east-2); the rest on Namespace.
-    runs-on: ${{ matrix.runner || 'namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal' }}
+    runs-on: ${{ matrix.provider == 'browseruse' && 'computesdk:computesdk:aws-us-east-2' || 'namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal' }}
     # runs-on: self-hosted
     timeout-minutes: 60
     strategy:
@@ -75,10 +75,8 @@ jobs:
           - notte
           - steel
           - tilion
+          - browseruse
           # - anchorbrowser
-        include:
-          - provider: browseruse
-            runner: computesdk:computesdk:aws-us-east-2
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
