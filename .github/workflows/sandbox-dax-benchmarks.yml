@@ -168,7 +168,13 @@ jobs:
       - name: Build Novita template with 8 vCPU / 16 GiB
         if: matrix.provider == 'novita'
         run: |
-          . benchmarks/scripts/load-vault-secrets.sh '^(NOVITA_API_KEY)'
+          # Tolerate a missing vault entry: without NOVITA_API_KEY the
+          # benchmark reports skipped rather than failing the whole job here.
+          . benchmarks/scripts/load-vault-secrets.sh '^(NOVITA_API_KEY)' || true
+          if [ -z "${NOVITA_API_KEY:-}" ]; then
+            echo "NOVITA_API_KEY not in the vault — skipping template build; the benchmark will report skipped."
+            exit 0
+          fi
           npx tsx benchmarks/scripts/build-novita-template.ts
       - name: Find Northflank plan for 8 vCPU / 16 GiB
         if: matrix.provider == 'northflank'

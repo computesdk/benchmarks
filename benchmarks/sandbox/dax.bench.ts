@@ -160,7 +160,9 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   sail:         { size: 'l' },
   // Novita sizes via templates (E2B-style), so dax runs on the node22-8cpu-16gb
   // template built in the workflow pre-step (same pattern as superserve/e2b).
-  novita:       { templateId: 'node22-8cpu-16gb' },
+  // The provider's default sandbox lifetime (300s) is below the 10-min build
+  // deadline, so raise it — same backstop pattern as blaxel.
+  novita:       { templateId: 'node22-8cpu-16gb', timeout: 900_000 },
 };
 
 function getSandboxOptionsWithResources(providerName: string, baseOptions?: Record<string, any>): Record<string, any> {
