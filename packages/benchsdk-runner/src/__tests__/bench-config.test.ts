@@ -125,6 +125,43 @@ describe('defineBenchmarkConfig', () => {
     expect(config.display?.metrics?.[0].key).toBe('throughputMbps');
   });
 
+  it('carries a byStep matrix layout and supportedPct default metric', () => {
+    const config = defineBenchmarkConfig({
+      benchmarkSlug: 's',
+      benchmarkName: 'n',
+      participants,
+      display: {
+        metrics: [{ key: 'checksPassed', label: 'Checks passed' }],
+        byStep: { defaultLayout: 'matrix' },
+        overview: { defaultMetric: 'supportedPct' },
+      },
+    });
+    expect(config.display?.byStep?.defaultLayout).toBe('matrix');
+    expect(config.display?.overview?.defaultMetric).toBe('supportedPct');
+  });
+
+  it('rejects an invalid byStep defaultLayout', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: { byStep: { defaultLayout: 'grid' as any } },
+      }),
+    ).toThrow("display.byStep.defaultLayout must be 'table', 'bars', 'time', or 'matrix'");
+  });
+
+  it('rejects an unexpected byStep key', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: { byStep: { columns: [] } as any },
+      }),
+    ).toThrow("display.byStep contains unexpected key");
+  });
+
   it('rejects a non-string display metric unit', () => {
     expect(() =>
       defineBenchmarkConfig({

@@ -337,6 +337,14 @@ export interface BenchmarkOverviewDisplay {
   defaultLayout?: 'ranking' | 'cards' | 'chart' | 'leaderboard';
 }
 
+/** Display defaults for the run page's per-step section. */
+export interface BenchmarkByStepDisplay {
+  /** Default layout for per-step results. 'matrix' renders a capability
+   * grid for benchmarks whose steps are boolean pass/fail probes, and makes
+   * the platform derive a `supportedPct` metric from step aggregates. */
+  defaultLayout?: 'table' | 'bars' | 'time' | 'matrix';
+}
+
 /**
  * Optional platform display manifest. A `*.bench.ts` file owns not only how the
  * benchmark runs, but how it should be rendered, without a platform code change.
@@ -348,6 +356,8 @@ export interface BenchmarkDisplayConfig {
   steps?: BenchmarkStepDisplay[];
   /** Overview defaults. */
   overview?: BenchmarkOverviewDisplay;
+  /** Per-step results defaults. */
+  byStep?: BenchmarkByStepDisplay;
 }
 
 export interface BenchmarkConfigErrorItem {
@@ -468,7 +478,7 @@ function validateBenchmarkDisplayConfig(display: BenchmarkDisplayConfig): void {
   if (typeof display !== 'object' || display === null || Array.isArray(display)) {
     throw new Error('display must be an object');
   }
-  assertOnlyAllowedKeys(display as unknown as Record<string, unknown>, ['metrics', 'steps', 'overview'], 'display');
+  assertOnlyAllowedKeys(display as unknown as Record<string, unknown>, ['metrics', 'steps', 'overview', 'byStep'], 'display');
   const displayMetricKeys = new Set<string>();
   if (display.metrics !== undefined) {
     if (!Array.isArray(display.metrics)) {
@@ -535,12 +545,24 @@ function validateBenchmarkDisplayConfig(display: BenchmarkDisplayConfig): void {
       const validDefaultMetrics = new Set(displayMetricKeys);
       validDefaultMetrics.add('compositeScore');
       validDefaultMetrics.add('task');
+      // Platform-derived metric: share of probed steps that passed on every
+      // attempt (capability-matrix benchmarks).
+      validDefaultMetrics.add('supportedPct');
       if (display.metrics !== undefined && !validDefaultMetrics.has(metric)) {
         throw new Error(`display.overview.defaultMetric '${metric}' is not declared in display.metrics and is not a known default (compositeScore, task)`);
       }
     }
     if (defaultLayout !== undefined && !['ranking', 'cards', 'chart', 'leaderboard'].includes(defaultLayout)) {
       throw new Error("display.overview.defaultLayout must be 'ranking', 'cards', 'chart', or 'leaderboard'");
+    }
+  }
+  if (display.byStep !== undefined) {
+    if (typeof display.byStep !== 'object' || display.byStep === null || Array.isArray(display.byStep)) {
+      throw new Error('display.byStep must be an object');
+    }
+    assertOnlyAllowedKeys(display.byStep as unknown as Record<string, unknown>, ['defaultLayout'], 'display.byStep');
+    if (display.byStep.defaultLayout !== undefined && !['table', 'bars', 'time', 'matrix'].includes(display.byStep.defaultLayout)) {
+      throw new Error("display.byStep.defaultLayout must be 'table', 'bars', 'time', or 'matrix'");
     }
   }
 }
