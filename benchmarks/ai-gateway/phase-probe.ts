@@ -219,15 +219,6 @@ function extractReceipts(headers: Record<string, string | string[] | undefined>)
 type ProbeProtocol = 'h2' | 'http/1.1';
 
 /**
- * ALPN-negotiated protocol per host, learned on the first probe and reused
- * for the rest of the run. Cold probes get this for free — they already
- * open an explicit TLS connection for DNS/TCP/TLS timing, so `alpnProtocol`
- * is read off that socket. A warm-only run (cold phase dialed to 0) pays
- * one extra throwaway handshake the first time it calls `ensureProtocol`.
- */
-const protocolByHost = new Map<string, ProbeProtocol>();
-
-/**
  * Opens a TLS connection advertising both `h2` and `http/1.1` and resolves
  * once the handshake completes. The returned socket is whatever the server
  * negotiated — check `socket.alpnProtocol`.
@@ -260,32 +251,12 @@ function protocolOf(socket: TLSSocket): ProbeProtocol {
 }
 
 /**
- * Returns the host's negotiated protocol, cached per host. Used by the warm
- * probe so a warm-only run still picks up HTTP/2 where supported; the extra
- * detection handshake is skipped whenever the cold phase already populated
- * the cache.
- */
-async function ensureProtocol(host: string, timeout: number): Promise<ProbeProtocol> {
-  const cached = protocolByHost.get(host);
-  if (cached) return cached;
-  const socket = await connectTls(host, timeout);
-  const protocol = protocolOf(socket);
-  protocolByHost.set(host, protocol);
-  socket.destroy();
-  return protocol;
-}
-
-/**
  * Wraps a pre-connected `TLSSocket` that negotiated `h2` in a client HTTP/2
  * session. `http2.connect` normally opens its own connection; passing the
  * socket through `createConnection` keeps it on the connection we timed.
  */
 function h2SessionOver(host: string, socket: TLSSocket): http2.ClientHttp2Session {
   return guardSession(http2.connect(`https://${host}`, { createConnection: () => socket }));
-}
-
-function h2Session(host: string): http2.ClientHttp2Session {
-  return guardSession(http2.connect(`https://${host}`));
 }
 
 /**
@@ -307,8 +278,8 @@ function guardSession(session: http2.ClientHttp2Session): http2.ClientHttp2Sessi
  * overriding the agent's `createConnection` method instead. Verified live:
  * the override is called and the request runs on the same socket.
  */
-function http1AgentOver(socket: TLSSocket): https.Agent {
-  const agent = new https.Agent({ keepAlive: false });
+function http1AgentOver(socket: TLSSocket, keepAlive = false): https.Agent {
+  const agent = new https.Agent({ keepAlive });
   agent.createConnection = (() => socket) as typeof agent.createConnection;
   return agent;
 }
@@ -490,9 +461,10 @@ function tokensPerSecond(outcome: RawProbeOutcome): number | undefined {
  * are timed from the socket's 'lookup'/'connect'/'secureConnect' events and
  * the negotiated protocol is learned in the same handshake — then dispatches
  * the request as an HTTP/2 stream or a plain `https.request` over that same
- * socket, depending on what the server picked. The negotiated protocol is
- * cached per host so the warm probe (and any later iteration) doesn't pay a
- * second detection handshake.
+ * socket, depending on what the server picked. Handshake and request share
+ * one `timeout` budget — a slow TLS handshake leaves proportionally less
+ * time for the request, matching the single-timeout-per-request semantics
+ * the probe had before.
  */
 export async function runColdProbe(
   config: AIGatewayProviderConfig,
@@ -509,20 +481,22 @@ export async function runColdProbe(
   let socket: TLSSocket | undefined;
   let session: http2.ClientHttp2Session | undefined;
   let agent: https.Agent | undefined;
+  let protocol: ProbeProtocol | undefined;
+  const deadline = requestStart + timeout;
+  const remaining = () => Math.max(deadline - now(), 1);
 
   try {
-    socket = await connectTls(config.host, timeout, (s) => {
+    socket = await connectTls(config.host, remaining(), (s) => {
       s.once('lookup', () => { lookupAt = now(); });
       s.once('connect', () => { connectAt = now(); });
       s.once('secureConnect', () => { secureConnectAt = now(); });
     });
 
-    const protocol = protocolOf(socket);
-    protocolByHost.set(config.host, protocol);
+    protocol = protocolOf(socket);
 
     const outcome = protocol === 'h2'
-      ? await sendAndMeasureH2(config, body, (session = h2SessionOver(config.host, socket)), timeout)
-      : await sendAndMeasure(config, body, (agent = http1AgentOver(socket)), timeout);
+      ? await sendAndMeasureH2(config, body, (session = h2SessionOver(config.host, socket)), remaining())
+      : await sendAndMeasure(config, body, (agent = http1AgentOver(socket)), remaining());
 
     const dnsMs = lookupAt !== undefined ? lookupAt - requestStart : undefined;
     const tcpMs = connectAt !== undefined && lookupAt !== undefined ? connectAt - lookupAt : undefined;
@@ -544,7 +518,7 @@ export async function runColdProbe(
       receipts: outcome.receipts,
     };
   } catch (err) {
-    return { mode: 'cold', ttfbMs: 0, ttftMs: 0, receipts: {}, error: formatError(err) };
+    return { mode: 'cold', ttfbMs: 0, ttftMs: 0, protocol, receipts: {}, error: formatError(err) };
   } finally {
     session?.destroy();
     agent?.destroy();
@@ -569,35 +543,23 @@ export async function runWarmProbe(
 ): Promise<PhaseProbeResult> {
   const body = buildRequestBody(config, prompt, maxTokens);
 
-  try {
-    // HTTP/2 when the host negotiated it (cached from the cold probe, or one
-    // detection handshake on a warm-only run): warmup and measured request
-    // become two streams on the same session — the multiplexed counterpart
-    // of a reused keep-alive socket. HTTP/1.1 hosts keep the original path.
-    if ((await ensureProtocol(config.host, timeout)) === 'h2') {
-      const session = h2Session(config.host);
-      try {
-        await sendAndMeasureH2(config, body, session, timeout); // warmup, discarded
-        const outcome = await sendAndMeasureH2(config, body, session, timeout);
-        return {
-          mode: 'warm',
-          ttfbMs: outcome.ttfbMs,
-          ttftMs: outcome.ttftMs,
-          outputTokens: outcome.outputTokens,
-          outputTokensPerSec: tokensPerSecond(outcome),
-          resolvedProvider: outcome.resolvedProvider,
-          protocol: outcome.protocol,
-          receipts: outcome.receipts,
-        };
-      } finally {
-        session.destroy();
-      }
-    }
+  let socket: TLSSocket | undefined;
+  let session: http2.ClientHttp2Session | undefined;
+  let agent: https.Agent | undefined;
+  let protocol: ProbeProtocol | undefined;
 
-    const agent = new https.Agent({ keepAlive: true, maxSockets: 1 });
-    try {
-      await sendAndMeasure(config, body, agent, timeout); // warmup, discarded
-      const outcome = await sendAndMeasure(config, body, agent, timeout);
+  try {
+    // The warm probe opens its own connection anyway (as the old keep-alive
+    // agent did), so negotiate on that connection directly rather than
+    // trusting a cached ALPN result — a host whose protocol varies across
+    // connections is always measured on what this connection negotiated.
+    socket = await connectTls(config.host, timeout);
+    protocol = protocolOf(socket);
+
+    if (protocol === 'h2') {
+      session = h2SessionOver(config.host, socket);
+      await sendAndMeasureH2(config, body, session, timeout); // warmup, discarded
+      const outcome = await sendAndMeasureH2(config, body, session, timeout);
       return {
         mode: 'warm',
         ttfbMs: outcome.ttfbMs,
@@ -608,10 +570,26 @@ export async function runWarmProbe(
         protocol: outcome.protocol,
         receipts: outcome.receipts,
       };
-    } finally {
-      agent.destroy();
     }
+
+    agent = http1AgentOver(socket, /* keepAlive */ true);
+    await sendAndMeasure(config, body, agent, timeout); // warmup, discarded
+    const outcome = await sendAndMeasure(config, body, agent, timeout);
+    return {
+      mode: 'warm',
+      ttfbMs: outcome.ttfbMs,
+      ttftMs: outcome.ttftMs,
+      outputTokens: outcome.outputTokens,
+      outputTokensPerSec: tokensPerSecond(outcome),
+      resolvedProvider: outcome.resolvedProvider,
+      protocol: outcome.protocol,
+      receipts: outcome.receipts,
+    };
   } catch (err) {
-    return { mode: 'warm', ttfbMs: 0, ttftMs: 0, receipts: {}, error: formatError(err) };
+    return { mode: 'warm', ttfbMs: 0, ttftMs: 0, protocol, receipts: {}, error: formatError(err) };
+  } finally {
+    session?.destroy();
+    agent?.destroy();
+    socket?.destroy();
   }
 }
