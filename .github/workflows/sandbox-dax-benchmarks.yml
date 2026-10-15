@@ -58,7 +58,6 @@ concurrency:
 permissions:
   contents: write
   pull-requests: write
-  id-token: write
 
 env:
   BENCHMARK_SLUG: ${{ github.event.inputs.slug || '' }}

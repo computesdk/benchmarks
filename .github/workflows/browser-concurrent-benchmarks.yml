@@ -125,7 +125,6 @@ jobs:
     runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
     permissions:
       contents: read
-      id-token: write
     needs: setup
     timeout-minutes: 120
     strategy:

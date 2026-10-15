@@ -57,7 +57,6 @@ concurrency:
 
 permissions:
   contents: write
-  id-token: write
 
 env:
   BENCH_TRIGGER_SOURCE: ${{ github.event.inputs.trigger_source || '' }}
