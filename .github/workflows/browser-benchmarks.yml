@@ -69,7 +69,6 @@ jobs:
       matrix:
         provider:
           - browserbase
-          - browseruse
           - hyperbrowser
           - kernel
           - notte
@@ -140,11 +139,81 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  bench-browseruse:
+    name: Bench browseruse
+    # Browser Use's US deployment is in AWS us-east-2, so its leg runs on
+    # ComputeSDK house EC2 in the same region.
+    runs-on: computesdk:computesdk:aws-us-east-2
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      # ComputeSDK runners get no GitHub OIDC token, so nscloud-setup's
+      # `nsc auth exchange-github-token` cannot work there. Pre-seed the
+      # workload token file it checks for when NSC_TOKEN is available;
+      # accepts either the raw bearer token or a full token JSON document.
+      # It also exports NSC_DOCKER_LOGIN/NSC_CONTAINER_REGISTRY so
+      # nscloud-setup skips `nsc docker login`, which this token is not
+      # granted for — the benchmarks only need vault access.
+      - name: Seed Namespace token file
+        run: |
+          if [ -n "${NSC_TOKEN:-}" ] && [ ! -f /var/run/nsc/token.json ]; then
+            mkdir -p /var/run/nsc
+            case "$NSC_TOKEN" in
+              \{*) printf '%s\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+              *) printf '{"bearer_token":"%s"}\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+            esac
+            chmod 600 /var/run/nsc/token.json
+            # The seeded token has no container-registry grant; tell
+            # nscloud-setup to skip `nsc docker login` for later steps.
+            echo "NSC_DOCKER_LOGIN=1" >> "$GITHUB_ENV"
+            echo "NSC_CONTAINER_REGISTRY=nscr.io" >> "$GITHUB_ENV"
+          fi
+      - uses: namespacelabs/nscloud-setup@v0
+      - name: Install dependencies
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            pnpm -r update --ignore-scripts
+          else
+            pnpm install --frozen-lockfile --ignore-scripts
+          fi
+      - name: Build workspace packages
+        # The @benchsdk/* packages are built from source and dist/ is not
+        # committed. Build them in topological order so dependents like
+        # @benchsdk/client can resolve @benchsdk/worker during their own build.
+        run: pnpm -r --filter './packages/**' run build
+      - name: Clear stale results from checkout
+        run: rm -rf results/browser/
+      - name: Run browser benchmark
+        run: |
+          . benchmarks/scripts/load-vault-secrets.sh '^(BROWSERBASE_API_KEY|BROWSERBASE_PROJECT_ID|BROWSER_USE_API_KEY|HYPERBROWSER_API_KEY|KERNEL_API_KEY|NOTTE_API_KEY|STEEL_API_KEY|TILION_API_KEY|TILION_BASE_URL|BENCHMARKS_PLATFORM_API_KEY)'
+
+          # All matrix jobs for this workflow run share a single platform run. The
+          # attempt number is included so re-runs do not rejoin completed runs.
+          RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          npx tsx packages/benchsdk-runner/dist/bin.js run benchmarks/browser/browser.bench.ts \
+            --provider browseruse \
+            --iterations ${{ github.event_name == 'push' && '10' || github.event.inputs.iterations || '100' }} \
+            --run-key "$RUN_KEY" \
+            ${{ (github.event_name == 'push' || github.event.inputs.dry_run == 'true') && '--no-ingest' || '' }}
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-results-browseruse
+          path: results/browser/
+          if-no-files-found: ignore
+          retention-days: 7
+
   collect:
     name: Collect Results
     runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
     # runs-on: self-hosted
-    needs: bench
+    needs: [bench, bench-browseruse]
     if: always()
     steps:
       - uses: actions/checkout@v4
