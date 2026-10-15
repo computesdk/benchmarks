@@ -97,6 +97,7 @@ function probeData(result: PhaseProbeResult): JsonObject {
     ...(result.outputTokens !== undefined ? { outputTokens: result.outputTokens } : {}),
     ...(result.outputTokensPerSec !== undefined ? { outputTokensPerSec: result.outputTokensPerSec } : {}),
     ...(result.resolvedProvider !== undefined ? { resolvedProvider: result.resolvedProvider } : {}),
+    ...(result.protocol !== undefined ? { protocol: result.protocol } : {}),
     ...(result.receipts && Object.keys(result.receipts).length > 0 ? { receipts: result.receipts } : {}),
     ...(result.error ? { errorMessage: result.error } : {}),
   };

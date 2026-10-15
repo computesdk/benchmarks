@@ -1,4 +1,6 @@
 import https from 'https';
+import http2 from 'node:http2';
+import tls from 'node:tls';
 import type { TLSSocket } from 'tls';
 import { withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
@@ -214,16 +216,85 @@ function extractReceipts(headers: Record<string, string | string[] | undefined>)
   return receipts;
 }
 
+type ProbeProtocol = 'h2' | 'http/1.1';
+
+/**
+ * Opens a TLS connection advertising both `h2` and `http/1.1` and resolves
+ * once the handshake completes. The returned socket is whatever the server
+ * negotiated — check `socket.alpnProtocol`.
+ */
+function connectTls(host: string, timeout: number, onSocket?: (socket: TLSSocket) => void): Promise<TLSSocket> {
+  let socket: TLSSocket | undefined;
+  return withTimeout(new Promise<TLSSocket>((resolve, reject) => {
+    socket = tls.connect({
+      host,
+      port: 443,
+      servername: host,
+      ALPNProtocols: ['h2', 'http/1.1'],
+    });
+    // Synchronous: lets the caller attach 'lookup'/'connect'/'secureConnect'
+    // timing listeners before the handshake completes.
+    const s = socket;
+    onSocket?.(s);
+    s.once('secureConnect', () => resolve(s));
+    s.once('error', reject);
+  }), timeout, `TLS handshake to ${host} timed out`).catch((err) => {
+    socket?.destroy();
+    throw err;
+  });
+}
+
+function protocolOf(socket: TLSSocket): ProbeProtocol {
+  // `alpnProtocol` is `false` (not undefined) when the server didn't select
+  // a protocol — both cases mean plain HTTP/1.1.
+  return socket.alpnProtocol === 'h2' ? 'h2' : 'http/1.1';
+}
+
+/**
+ * Wraps a pre-connected `TLSSocket` that negotiated `h2` in a client HTTP/2
+ * session. `http2.connect` normally opens its own connection; passing the
+ * socket through `createConnection` keeps it on the connection we timed.
+ */
+function h2SessionOver(host: string, socket: TLSSocket): http2.ClientHttp2Session {
+  return guardSession(http2.connect(`https://${host}`, { createConnection: () => socket }));
+}
+
+/**
+ * Session-level errors (GOAWAY with an error code, connection resets) are
+ * emitted on the session, not the stream; without a listener Node throws them
+ * as uncaught and kills the whole run. In-flight requests pick them up via
+ * their own session listener in `sendAndMeasureH2`.
+ */
+function guardSession(session: http2.ClientHttp2Session): http2.ClientHttp2Session {
+  session.on('error', () => {});
+  return session;
+}
+
+/**
+ * An `https.Agent` that dispatches its one request over an already-connected
+ * `TLSSocket`. `https.request`'s own `createConnection` option is silently
+ * ignored when `agent` is set — and when `agent: false` Node builds a fresh
+ * agent that also ignores it — so the socket has to be injected by
+ * overriding the agent's `createConnection` method instead. Verified live:
+ * the override is called and the request runs on the same socket.
+ */
+function http1AgentOver(socket: TLSSocket, keepAlive = false): https.Agent {
+  const agent = new https.Agent({ keepAlive });
+  agent.createConnection = (() => socket) as typeof agent.createConnection;
+  return agent;
+}
+
 interface RawProbeOutcome {
   ttfbMs: number;
   ttftMs: number;
   totalMs: number;
   outputTokens?: number;
   resolvedProvider?: string;
+  protocol: ProbeProtocol;
   receipts: Record<string, string>;
 }
 
-/** Sends one request over `agent` and resolves once the SSE stream ends. */
+/** Sends one request over `agent` (HTTP/1.1) and resolves once the SSE stream ends. */
 function sendAndMeasure(
   config: AIGatewayProviderConfig,
   body: string,
@@ -281,7 +352,7 @@ function sendAndMeasure(
           ));
           return;
         }
-        resolve({ ttfbMs, ttftMs, totalMs: now() - start, outputTokens, resolvedProvider, receipts });
+        resolve({ ttfbMs, ttftMs, totalMs: now() - start, outputTokens, resolvedProvider, protocol: 'http/1.1', receipts });
       });
       res.on('error', reject);
     });
@@ -293,6 +364,84 @@ function sendAndMeasure(
     req.write(body);
     req.end();
   }), timeout, 'AI gateway request timed out');
+}
+
+/**
+ * Sends one request as a stream on an HTTP/2 `session` and resolves once the
+ * response stream ends. Mirrors `sendAndMeasure` — the 'response' event fires
+ * when the HEADERS frame arrives (the same point the HTTP/1.1 path calls its
+ * response callback), so `ttfbMs` is defined identically across protocols.
+ */
+function sendAndMeasureH2(
+  config: AIGatewayProviderConfig,
+  body: string,
+  session: http2.ClientHttp2Session,
+  timeout: number,
+): Promise<RawProbeOutcome> {
+  let req: http2.ClientHttp2Stream | undefined;
+  let onSessionError: ((err: Error) => void) | undefined;
+  return withTimeout(new Promise<RawProbeOutcome>((resolve, reject) => {
+    const start = now();
+    const contentRe = contentRegexFor(config.wireFormat, config.reasoningCountsAsFirstToken ?? false);
+
+    onSessionError = reject;
+    session.on('error', onSessionError);
+    const stream = req = session.request({
+      ':method': 'POST',
+      ':path': config.path,
+      'content-type': 'application/json',
+      accept: 'text/event-stream',
+      'content-length': Buffer.byteLength(body),
+      ...config.buildHeaders(),
+    });
+
+    let ttfbMs = 0;
+    let status = 0;
+    let receipts: Record<string, string> = {};
+    let buf = '';
+    let ttftMs = 0;
+    let outputTokens: number | undefined;
+    let resolvedProvider: string | undefined;
+
+    stream.on('response', (headers) => {
+      ttfbMs = now() - start;
+      status = Number(headers[':status'] ?? 0);
+      receipts = extractReceipts(headers as Record<string, string | undefined>);
+    });
+    stream.on('data', (chunk: Buffer) => {
+      buf += chunk.toString('utf8');
+      if (status >= 400) return;
+      if (ttftMs === 0 && contentRe.test(buf)) {
+        ttftMs = now() - start;
+      }
+      outputTokens = extractOutputTokens(config.wireFormat, buf) ?? outputTokens;
+      resolvedProvider = config.extractResolvedProvider?.(buf) ?? resolvedProvider;
+    });
+    stream.on('end', () => {
+      if (status >= 400) {
+        reject(new Error(`HTTP ${status}: ${buf.slice(0, 200)}`));
+        return;
+      }
+      if (ttftMs === 0) {
+        const streamError = extractStreamErrorMessage(buf);
+        reject(new Error(
+          streamError
+            ? `Stream ended with no content token observed: ${streamError}`
+            : 'Stream ended with no content token observed',
+        ));
+        return;
+      }
+      resolve({ ttfbMs, ttftMs, totalMs: now() - start, outputTokens, resolvedProvider, protocol: 'h2', receipts });
+    });
+    stream.on('aborted', () => reject(new Error('HTTP/2 stream aborted by the server')));
+    stream.on('error', reject);
+    stream.on('close', () => reject(new Error(`HTTP/2 stream closed before completion (code ${stream.rstCode})`)));
+    stream.write(body);
+    stream.end();
+  }), timeout, 'AI gateway request timed out').finally(() => {
+    if (onSessionError) session.off('error', onSessionError);
+    if (req && !req.closed) req.close(http2.constants.NGHTTP2_CANCEL);
+  });
 }
 
 function tokensPerSecond(outcome: RawProbeOutcome): number | undefined {
@@ -307,9 +456,15 @@ function tokensPerSecond(outcome: RawProbeOutcome): number | undefined {
 }
 
 /**
- * One request on a fresh, non-pooled connection. Listens on the request's
- * socket for the underlying TLSSocket's 'lookup'/'connect'/'secureConnect'
- * events to time DNS/TCP/TLS directly — no raw-socket hand-rolling needed.
+ * One request on a fresh, non-pooled connection. Opens the TLS connection
+ * directly (advertising both `h2` and `http/1.1` via ALPN) so DNS/TCP/TLS
+ * are timed from the socket's 'lookup'/'connect'/'secureConnect' events and
+ * the negotiated protocol is learned in the same handshake — then dispatches
+ * the request as an HTTP/2 stream or a plain `https.request` over that same
+ * socket, depending on what the server picked. Handshake and request share
+ * one `timeout` budget — a slow TLS handshake leaves proportionally less
+ * time for the request, matching the single-timeout-per-request semantics
+ * the probe had before.
  */
 export async function runColdProbe(
   config: AIGatewayProviderConfig,
@@ -318,19 +473,30 @@ export async function runColdProbe(
   timeout: number,
 ): Promise<PhaseProbeResult> {
   const body = buildRequestBody(config, prompt, maxTokens);
-  const agent = new https.Agent({ keepAlive: false });
 
   let lookupAt: number | undefined;
   let connectAt: number | undefined;
   let secureConnectAt: number | undefined;
   const requestStart = now();
+  let socket: TLSSocket | undefined;
+  let session: http2.ClientHttp2Session | undefined;
+  let agent: https.Agent | undefined;
+  let protocol: ProbeProtocol | undefined;
+  const deadline = requestStart + timeout;
+  const remaining = () => Math.max(deadline - now(), 1);
 
   try {
-    const outcome = await sendAndMeasure(config, body, agent, timeout, (socket) => {
-      socket.once('lookup', () => { lookupAt = now(); });
-      socket.once('connect', () => { connectAt = now(); });
-      socket.once('secureConnect', () => { secureConnectAt = now(); });
+    socket = await connectTls(config.host, remaining(), (s) => {
+      s.once('lookup', () => { lookupAt = now(); });
+      s.once('connect', () => { connectAt = now(); });
+      s.once('secureConnect', () => { secureConnectAt = now(); });
     });
+
+    protocol = protocolOf(socket);
+
+    const outcome = protocol === 'h2'
+      ? await sendAndMeasureH2(config, body, (session = h2SessionOver(config.host, socket)), remaining())
+      : await sendAndMeasure(config, body, (agent = http1AgentOver(socket)), remaining());
 
     const dnsMs = lookupAt !== undefined ? lookupAt - requestStart : undefined;
     const tcpMs = connectAt !== undefined && lookupAt !== undefined ? connectAt - lookupAt : undefined;
@@ -348,18 +514,22 @@ export async function runColdProbe(
       outputTokens: outcome.outputTokens,
       outputTokensPerSec: tokensPerSecond(outcome),
       resolvedProvider: outcome.resolvedProvider,
+      protocol: outcome.protocol,
       receipts: outcome.receipts,
     };
   } catch (err) {
-    return { mode: 'cold', ttfbMs: 0, ttftMs: 0, receipts: {}, error: formatError(err) };
+    return { mode: 'cold', ttfbMs: 0, ttftMs: 0, protocol, receipts: {}, error: formatError(err) };
   } finally {
-    agent.destroy();
+    session?.destroy();
+    agent?.destroy();
+    socket?.destroy();
   }
 }
 
 /**
- * One throwaway request completes on a keep-alive connection, then a second
- * request is measured on that same reused socket — the connection-pool case.
+ * One throwaway request completes on a reused connection, then a second
+ * request is measured on that same connection — a second stream on one
+ * HTTP/2 session where negotiated, or a reused keep-alive socket otherwise.
  * No explicit "drain" step is needed the way a raw-socket implementation
  * would require: Node's http client only fires `res.on('end')` once the full
  * response has been consumed, so the socket is already safe to reuse for the
@@ -372,12 +542,39 @@ export async function runWarmProbe(
   timeout: number,
 ): Promise<PhaseProbeResult> {
   const body = buildRequestBody(config, prompt, maxTokens);
-  const agent = new https.Agent({ keepAlive: true, maxSockets: 1 });
+
+  let socket: TLSSocket | undefined;
+  let session: http2.ClientHttp2Session | undefined;
+  let agent: https.Agent | undefined;
+  let protocol: ProbeProtocol | undefined;
 
   try {
+    // The warm probe opens its own connection anyway (as the old keep-alive
+    // agent did), so negotiate on that connection directly rather than
+    // trusting a cached ALPN result — a host whose protocol varies across
+    // connections is always measured on what this connection negotiated.
+    socket = await connectTls(config.host, timeout);
+    protocol = protocolOf(socket);
+
+    if (protocol === 'h2') {
+      session = h2SessionOver(config.host, socket);
+      await sendAndMeasureH2(config, body, session, timeout); // warmup, discarded
+      const outcome = await sendAndMeasureH2(config, body, session, timeout);
+      return {
+        mode: 'warm',
+        ttfbMs: outcome.ttfbMs,
+        ttftMs: outcome.ttftMs,
+        outputTokens: outcome.outputTokens,
+        outputTokensPerSec: tokensPerSecond(outcome),
+        resolvedProvider: outcome.resolvedProvider,
+        protocol: outcome.protocol,
+        receipts: outcome.receipts,
+      };
+    }
+
+    agent = http1AgentOver(socket, /* keepAlive */ true);
     await sendAndMeasure(config, body, agent, timeout); // warmup, discarded
     const outcome = await sendAndMeasure(config, body, agent, timeout);
-
     return {
       mode: 'warm',
       ttfbMs: outcome.ttfbMs,
@@ -385,11 +582,14 @@ export async function runWarmProbe(
       outputTokens: outcome.outputTokens,
       outputTokensPerSec: tokensPerSecond(outcome),
       resolvedProvider: outcome.resolvedProvider,
+      protocol: outcome.protocol,
       receipts: outcome.receipts,
     };
   } catch (err) {
-    return { mode: 'warm', ttfbMs: 0, ttftMs: 0, receipts: {}, error: formatError(err) };
+    return { mode: 'warm', ttfbMs: 0, ttftMs: 0, protocol, receipts: {}, error: formatError(err) };
   } finally {
-    agent.destroy();
+    session?.destroy();
+    agent?.destroy();
+    socket?.destroy();
   }
 }
