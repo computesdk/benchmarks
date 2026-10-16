@@ -144,10 +144,24 @@ async function timeAction<T>(
   }
 }
 
+const DIAGNOSTICS_TIMEOUT_MS = 3_000;
+
+/** What the page actually is, bounded so a stalled CDP session cannot hang the loop. */
 async function pageDiagnostics(page: Page, status: number | null): Promise<string> {
-  const title = await page.title().catch(() => '?');
-  const bytes = await page.content().then((html) => html.length).catch(() => -1);
-  return `status=${status ?? '?'} url=${page.url()} title=${JSON.stringify(title.slice(0, 120))} htmlChars=${bytes}`;
+  const read = (async () => {
+    const title = await page.title().catch(() => '?');
+    const bytes = await page.content().then((html) => html.length).catch(() => -1);
+    return `status=${status ?? '?'} url=${page.url()} title=${JSON.stringify(title.slice(0, 120))} htmlChars=${bytes}`;
+  })();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<string>((resolve) => {
+    timer = setTimeout(() => resolve(`status=${status ?? '?'} url=${page.url()} diagnostics timed out`), DIAGNOSTICS_TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([read, deadline]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function runActionLoop(page: Page, results: ActionResult[], navigateUrl: string): Promise<void> {
@@ -169,8 +183,11 @@ async function runActionLoop(page: Page, results: ActionResult[], navigateUrl: s
       const r = await timeAction(() => page.waitForSelector(FIRST_HEADING));
       // Record what the browser actually landed on, so a missing heading can be
       // told apart from a block page, a redirect, or an empty document.
+      // The diagnostic read counts toward this action so taskMs stays wall-clock.
+      const diagStart = performance.now();
       const error = r.success ? r.error : `${r.error} [${await pageDiagnostics(page, navStatus)}]`;
-      results.push({ index: baseIdx + 2, type: 'waitForSelector', durationMs: r.durationMs, success: r.success, error });
+      const durationMs = r.durationMs + (r.success ? 0 : performance.now() - diagStart);
+      results.push({ index: baseIdx + 2, type: 'waitForSelector', durationMs, success: r.success, error });
     }
 
     // 3. Screenshot
