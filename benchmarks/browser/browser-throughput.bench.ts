@@ -144,7 +144,14 @@ async function timeAction<T>(
   }
 }
 
+async function pageDiagnostics(page: Page, status: number | null): Promise<string> {
+  const title = await page.title().catch(() => '?');
+  const bytes = await page.content().then((html) => html.length).catch(() => -1);
+  return `status=${status ?? '?'} url=${page.url()} title=${JSON.stringify(title.slice(0, 120))} htmlChars=${bytes}`;
+}
+
 async function runActionLoop(page: Page, results: ActionResult[], navigateUrl: string): Promise<void> {
+  let navStatus: number | null = null;
   for (let loop = 0; loop < LOOPS_PER_SESSION; loop++) {
     const baseIdx = loop * ACTIONS_PER_LOOP;
 
@@ -153,13 +160,17 @@ async function runActionLoop(page: Page, results: ActionResult[], navigateUrl: s
       const r = await timeAction(() =>
         page.goto(navigateUrl, { waitUntil: 'load' }) as Promise<unknown>,
       );
+      navStatus = (r.value as { status?: () => number } | null | undefined)?.status?.() ?? null;
       results.push({ index: baseIdx + 1, type: 'navigate', durationMs: r.durationMs, success: r.success, error: r.error });
     }
 
     // 2. Wait for #firstHeading
     {
       const r = await timeAction(() => page.waitForSelector(FIRST_HEADING));
-      results.push({ index: baseIdx + 2, type: 'waitForSelector', durationMs: r.durationMs, success: r.success, error: r.error });
+      // Record what the browser actually landed on, so a missing heading can be
+      // told apart from a block page, a redirect, or an empty document.
+      const error = r.success ? r.error : `${r.error} [${await pageDiagnostics(page, navStatus)}]`;
+      results.push({ index: baseIdx + 2, type: 'waitForSelector', durationMs: r.durationMs, success: r.success, error });
     }
 
     // 3. Screenshot
