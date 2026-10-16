@@ -1829,7 +1829,7 @@
               "type": "click",
               "durationMs": 10000.84,
               "success": false,
-              "error": "page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator('#mw-content-text a[href*=\"/wiki/\"]') to be visible\n    23 × locator resolved to 10 elements. Proceeding with the first one: <a class=\"mw-file-description\" href=\"https://en.wikipedia.org/wiki/File:Wiki_letter_w.svg\">…</a>\n"
+              "error": "page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator('#mw-content-text a[href*=\"/wiki/\"]') to be visible\n    23 \u00d7 locator resolved to 10 elements. Proceeding with the first one: <a class=\"mw-file-description\" href=\"https://en.wikipedia.org/wiki/File:Wiki_letter_w.svg\">\u2026</a>\n"
             },
             {
               "index": 6,
@@ -16431,7 +16431,7 @@
               "type": "click",
               "durationMs": 10000.85,
               "success": false,
-              "error": "page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator('#mw-content-text a[href*=\"/wiki/\"]') to be visible\n    23 × locator resolved to 10 elements. Proceeding with the first one: <a class=\"mw-file-description\" href=\"https://en.wikipedia.org/wiki/File:Wiki_letter_w.svg\">…</a>\n"
+              "error": "page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator('#mw-content-text a[href*=\"/wiki/\"]') to be visible\n    23 \u00d7 locator resolved to 10 elements. Proceeding with the first one: <a class=\"mw-file-description\" href=\"https://en.wikipedia.org/wiki/File:Wiki_letter_w.svg\">\u2026</a>\n"
             },
             {
               "index": 6,
@@ -23599,7 +23599,7 @@
               "type": "click",
               "durationMs": 10000.22,
               "success": false,
-              "error": "page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator('#mw-content-text a[href*=\"/wiki/\"]') to be visible\n    23 × locator resolved to 10 elements. Proceeding with the first one: <a class=\"mw-file-description\" href=\"https://en.wikipedia.org/wiki/File:Wiki_letter_w.svg\">…</a>\n"
+              "error": "page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator('#mw-content-text a[href*=\"/wiki/\"]') to be visible\n    23 \u00d7 locator resolved to 10 elements. Proceeding with the first one: <a class=\"mw-file-description\" href=\"https://en.wikipedia.org/wiki/File:Wiki_letter_w.svg\">\u2026</a>\n"
             },
             {
               "index": 6,
@@ -28949,6 +28949,102 @@
       },
       "compositeScore": 85.98,
       "successRate": 0.99
+    },
+    {
+      "provider": "browseruse",
+      "mode": "browser-throughput",
+      "iterations": [],
+      "summary": {
+        "createMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "taskMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "totalMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "actionsPerSecond": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "perActionType": {}
+      },
+      "skipped": true,
+      "skipReason": "Timed out \u2014 job exceeded the 60-minute limit after Wikipedia rate-limited its sessions",
+      "compositeScore": 0,
+      "successRate": 0
+    },
+    {
+      "provider": "kernel",
+      "mode": "browser-throughput",
+      "iterations": [],
+      "summary": {
+        "createMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "taskMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "totalMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "actionsPerSecond": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "perActionType": {}
+      },
+      "skipped": true,
+      "skipReason": "Timed out \u2014 job exceeded the 60-minute limit after Wikipedia rate-limited its sessions",
+      "compositeScore": 0,
+      "successRate": 0
+    },
+    {
+      "provider": "notte",
+      "mode": "browser-throughput",
+      "iterations": [],
+      "summary": {
+        "createMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "taskMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "totalMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "actionsPerSecond": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "perActionType": {}
+      },
+      "skipped": true,
+      "skipReason": "Timed out \u2014 job exceeded the 60-minute limit after Wikipedia rate-limited its sessions",
+      "compositeScore": 0,
+      "successRate": 0
     }
   ]
 }

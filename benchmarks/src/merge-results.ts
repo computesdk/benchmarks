@@ -626,6 +626,33 @@ async function mainBrowserThroughput() {
   }
 
   const deduped = Array.from(seen.values()).map(e => e.result);
+
+  // A leg that dies mid-run (job timeout, lost sandbox) uploads no artifact —
+  // mark every roster provider with no result as skipped instead of letting it
+  // vanish from the published file. The roster is the source of truth here:
+  // the workflow's matrix mirrors throughputProviders.
+  const { throughputProviders } = await import('../browser/throughput-providers.js');
+  const emptyStats = { median: 0, p95: 0, p99: 0 };
+  for (const p of throughputProviders) {
+    if (!seen.has(p.name)) {
+      deduped.push({
+        provider: p.name,
+        mode: 'browser-throughput',
+        iterations: [],
+        summary: {
+          createMs: { ...emptyStats },
+          taskMs: { ...emptyStats },
+          totalMs: { ...emptyStats },
+          actionsPerSecond: { ...emptyStats },
+          perActionType: {} as ThroughputBenchmarkResult['summary']['perActionType'],
+        },
+        skipped: true,
+        skipReason: 'No results — bench job failed or timed out',
+      });
+      console.log(`Marked ${p.name} as skipped (no results uploaded)`);
+    }
+  }
+
   console.log(`\nMerging ${deduped.length} provider results for mode: browser-throughput`);
 
   computeThroughputCompositeScores(deduped);
