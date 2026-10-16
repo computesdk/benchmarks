@@ -145,10 +145,10 @@ function handleTelemetryError(handler: ((error: unknown, operation: string) => v
   console.warn(`[benchsdk] telemetry failure (${operation}): ${error instanceof Error ? error.message : String(error)}`);
 }
 
-async function mapPool<T>(items: T[], concurrency: number, fn: (item: T) => Promise<void>): Promise<void> {
+async function mapPool<T>(items: T[], concurrency: number, fn: (item: T) => Promise<void>, shouldStop?: () => boolean): Promise<void> {
   let nextIndex = 0;
   const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
-    while (nextIndex < items.length) {
+    while (nextIndex < items.length && !(shouldStop?.() ?? false)) {
       const item = items[nextIndex];
       nextIndex += 1;
       await fn(item);
@@ -591,7 +591,7 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
       pending.push(record);
       options.onResult?.(record);
       if (pending.length >= batchSize) await flush(false);
-    });
+    }, options.stopRequested);
 
     await flush(true);
     if (flushFailed || pending.length > 0) {

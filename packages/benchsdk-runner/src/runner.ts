@@ -69,6 +69,8 @@ export interface CliArgs {
   iterations?: number;
   concurrency?: number;
   staggerDelayMs?: number;
+  /** Wall-clock budget for task execution in ms (`--deadline-ms`). */
+  deadlineMs?: number;
   groupBy?: GroupBy;
   /** Participant names from `--provider a,b` (repeatable). */
   providers?: string[];
@@ -79,6 +81,32 @@ export interface CliArgs {
 function isEnvNoIngest(): boolean {
   const v = process.env.BENCHSDK_NO_INGEST;
   return v === '1' || v?.toLowerCase() === 'true';
+}
+
+/**
+ * A run-level wall-clock deadline (`deadlineMs`/`--deadline-ms`). Once expired
+ * the schedulers stop launching new tasks; in-flight tasks still finish and
+ * the run still flushes, reports, and exits 0 — a deadline is a planned end,
+ * not a failure.
+ */
+interface RunDeadline {
+  expired(): boolean;
+}
+
+function createDeadline(deadlineMs: number | undefined): RunDeadline | undefined {
+  if (deadlineMs === undefined) return undefined;
+  const expiresAt = Date.now() + deadlineMs;
+  let announced = false;
+  return {
+    expired() {
+      if (Date.now() < expiresAt) return false;
+      if (!announced) {
+        announced = true;
+        console.log(`  Run deadline reached (${deadlineMs}ms) — finishing in-flight tasks; no new tasks will start.`);
+      }
+      return true;
+    },
+  };
 }
 
 function sleep(ms: number): Promise<void> {
@@ -326,6 +354,12 @@ export function parseCliArgs(argv: string[], allowedCustomFlags?: readonly strin
         i = nextIndex;
         break;
       }
+      case '--deadline-ms': {
+        const { value, nextIndex } = readValue(arg, i);
+        args.deadlineMs = intFlag(value, '--deadline-ms');
+        i = nextIndex;
+        break;
+      }
       case '--group-by': {
         const { value, nextIndex } = readValue(arg, i);
         if (value !== 'participant' && value !== 'round') {
@@ -411,6 +445,7 @@ export function mergeConfig<T extends BaseParticipant>(
     phaseIterations,
     concurrency: args.concurrency ?? config.concurrency ?? 1,
     staggerDelayMs: args.staggerDelayMs ?? config.staggerDelayMs ?? 0,
+    deadlineMs: args.deadlineMs ?? config.deadlineMs,
     groupBy: args.groupBy ?? config.groupBy ?? 'participant',
     providers: args.providers ?? config.defaultProviders,
   };
@@ -581,6 +616,7 @@ export function runConfigToJson<T extends BaseParticipant>(
     ...(!config.phases ? { iterations: resolved.iterations } : {}),
     concurrency: resolved.concurrency,
     staggerDelayMs: resolved.staggerDelayMs,
+    ...(resolved.deadlineMs !== undefined ? { deadlineMs: resolved.deadlineMs } : {}),
     groupBy: resolved.groupBy,
     ...(config.dimensions ? { dimensions: config.dimensions } : {}),
     ...(config.scoring ? { scoring: config.scoring } : {}),
@@ -649,7 +685,8 @@ export async function runBenchmark<T extends BaseParticipant>(
   }
   console.log(
     `Knobs: iterations=${totalTasks}, concurrency=${concurrencyLabel}, ` +
-      `staggerDelayMs=${resolved.staggerDelayMs}, groupBy=${resolved.groupBy}\n`,
+      `staggerDelayMs=${resolved.staggerDelayMs}, groupBy=${resolved.groupBy}` +
+      `${resolved.deadlineMs !== undefined ? `, deadlineMs=${resolved.deadlineMs}` : ''}\n`,
   );
 
   // Declaratively materialize the benchmark from the file/shape identity, which
@@ -730,20 +767,28 @@ export async function runBenchmark<T extends BaseParticipant>(
   }
 
   const onResult = defaultOnResult;
+  // The deadline covers task execution only — the setup above (auth, run
+  // creation) and the reporting below always run to completion.
+  const deadline = createDeadline(resolved.deadlineMs);
 
   let participantRecords: ParticipantRecords[];
   if (resolved.groupBy === 'round') {
-    participantRecords = await runGroupedByRound(config, schedule, available, resolved, client, runId, baseUrl, apiKey, token, orgSlug, orgId, onResult, noIngest);
+    participantRecords = await runGroupedByRound(config, schedule, available, resolved, client, runId, baseUrl, apiKey, token, orgSlug, orgId, onResult, noIngest, deadline);
   } else {
-    participantRecords = await runGroupedByParticipant(config, schedule, available, resolved, client, runId, onResult, noIngest);
+    participantRecords = await runGroupedByParticipant(config, schedule, available, resolved, client, runId, onResult, noIngest, deadline);
   }
 
-  console.log(`All done. ${noIngest ? 'No platform run created.' : `View at: ${dashboardUrl}`}`);
+  const stoppedEarly =
+    deadline !== undefined &&
+    deadline.expired() &&
+    participantRecords.some((p) => p.records.length < schedule.length);
+  console.log(`All done${stoppedEarly ? ' (stopped at deadline — partial results)' : ''}. ${noIngest ? 'No platform run created.' : `View at: ${dashboardUrl}`}`);
   const outcome: BenchmarkRunOutcome = {
     runId,
     dashboardUrl,
     participants: participantRecords,
     config: resolved,
+    ...(stoppedEarly ? { stoppedEarly: true } : {}),
   };
   if (!noIngest && client && (config.onScore || config.scoring)) {
     try {
@@ -850,9 +895,11 @@ async function runGroupedByParticipant<T extends BaseParticipant>(
   runId: string,
   onResult: OnResult,
   noIngest: boolean,
+  deadline?: RunDeadline,
 ): Promise<ParticipantRecords[]> {
   const participantRecords: ParticipantRecords[] = [];
   for (const participant of available) {
+    if (deadline?.expired()) break;
     console.log(`${'='.repeat(70)}`);
     console.log(`  Participant: ${participant.name}`);
     console.log('='.repeat(70));
@@ -877,7 +924,7 @@ async function runGroupedByParticipant<T extends BaseParticipant>(
       };
 
       const worker = async () => {
-        while (nextIndex < schedule.length) {
+        while (nextIndex < schedule.length && !deadline?.expired()) {
           const index = nextIndex++;
           await runSlot(index);
         }
@@ -939,6 +986,7 @@ async function runGroupedByParticipant<T extends BaseParticipant>(
         }
       },
       onResult: (record) => onResult(record, { iterations: schedule.length, participant: participant.name }),
+      stopRequested: () => deadline?.expired() ?? false,
     });
 
     if (!result.assignment) {
@@ -975,6 +1023,7 @@ async function runGroupedByRound<T extends BaseParticipant>(
   orgId: string | undefined,
   onResult: OnResult,
   noIngest: boolean = false,
+  deadline?: RunDeadline,
 ): Promise<ParticipantRecords[]> {
   const reporters = new Map<string, BenchmarkReporter | null>();
   const logBuffers = new Map<string, LogBuffer>();
@@ -1041,6 +1090,7 @@ async function runGroupedByRound<T extends BaseParticipant>(
   console.log(`Interleaving ${available.length} participant(s), ${schedule.length} round(s) each.\n`);
 
   for (let i = 0; i < schedule.length; i++) {
+    if (deadline?.expired()) break;
     const slot = schedule[i];
     // Round mode staggers a fixed delay between rounds (vs. participant mode's per-task stagger).
     if (resolved.staggerDelayMs > 0 && i > 0) {

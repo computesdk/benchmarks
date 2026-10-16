@@ -758,6 +758,13 @@ export interface RunWorkerOptions {
    * values are ever captured.
    */
   metricsIntervalMs?: number;
+  /**
+   * Polled before each new task start: once it returns true the worker stops
+   * launching tasks, drains the in-flight ones, flushes and finishes normally
+   * with the records it produced — a graceful stop, not an error. Used by the
+   * runner's run-level `deadlineMs`.
+   */
+  stopRequested?: () => boolean;
   task: TaskFunction;
 }
 

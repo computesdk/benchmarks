@@ -13,6 +13,7 @@
  *   iterations       total tasks to run (default 1)
  *   concurrency      max tasks in flight at once — 1 = sequential, N = burst (default 1)
  *   staggerDelayMs   delay each task's start by taskIndex * staggerDelayMs (default 0)
+ *   deadlineMs       wall-clock budget; on expiry the run drains and finishes, not fails (default none)
  *
  * Common shapes:
  *   sequential  { iterations: N, concurrency: 1 }
@@ -190,6 +191,8 @@ export interface ParticipantRecords {
 /** The orchestration knobs a run actually used, after CLI overrides. */
 export interface ResolvedRunConfig {
   iterations: number;
+  /** Wall-clock budget for task execution in ms, from `deadlineMs`/`--deadline-ms`. */
+  deadlineMs?: number;
   /**
    * Iterations each phase runs, when the benchmark declares `phases` and
    * `--iterations` overrode their configured counts. A phase is one arm of a
@@ -213,6 +216,8 @@ export interface BenchmarkRunOutcome {
   dashboardUrl: string;
   participants: ParticipantRecords[];
   config: ResolvedRunConfig;
+  /** True when the run's `deadlineMs` expired and unstarted tasks were skipped. */
+  stoppedEarly?: boolean;
 }
 
 /**
@@ -252,6 +257,14 @@ export interface BenchmarkConfig<T extends BaseParticipant = BaseParticipant> {
   concurrency?: number;
   /** Delay each task's start by `taskIndex * staggerDelayMs`. Default: 0. */
   staggerDelayMs?: number;
+  /**
+   * Wall-clock budget for task execution in ms (e.g. 60 * 60_000 for an hour),
+   * overridable with `--deadline-ms`. When it expires the run stops launching
+   * new tasks, lets in-flight ones finish, and still flushes, reports, and
+   * exits normally — a deadline is a planned end, not a failure. The outcome's
+   * `stoppedEarly` flags the truncation. Omit for no deadline.
+   */
+  deadlineMs?: number;
   /**
    * Task ordering across participants. Default: 'participant' (run each
    * participant's tasks to completion, then the next). 'round' takes turns:
@@ -692,6 +705,9 @@ export function validateBenchmarkConfig<T extends BaseParticipant = BaseParticip
   }
   if (config.staggerDelayMs !== undefined && (!Number.isFinite(config.staggerDelayMs) || config.staggerDelayMs < 0)) {
     issues.push({ field: 'staggerDelayMs', message: `must be a number >= 0 (got ${config.staggerDelayMs})` });
+  }
+  if (config.deadlineMs !== undefined && (!Number.isFinite(config.deadlineMs) || config.deadlineMs < 1)) {
+    issues.push({ field: 'deadlineMs', message: `must be a number >= 1 (got ${config.deadlineMs})` });
   }
   if (config.groupBy !== undefined && config.groupBy !== 'participant' && config.groupBy !== 'round') {
     issues.push({ field: 'groupBy', message: `must be 'participant' or 'round' (got ${config.groupBy})` });
