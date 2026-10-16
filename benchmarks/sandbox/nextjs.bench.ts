@@ -1,5 +1,5 @@
 /**
- * Repo benchmark: how long a fresh sandbox takes to go from "created" to
+ * Next.js benchmark: how long a fresh sandbox takes to go from "created" to
  * "real work done". One iteration = sandbox create → first command returns
  * (`ttiMs`) → clone + install + build of vercel/next.js (`readyMs` = TTI →
  * build exit). The point is the gap between the two: a provider can report a
@@ -8,14 +8,14 @@
  * Timed boundary: compute.sandbox.create() → `pnpm build` exit inside the
  * sandbox; destroy excluded. Phase timings (prepare / cache_clear / clone /
  * toolchain / install / build) are measured inside the guest by
- * benchmarks/scripts/repo-benchmark.sh (same BENCH_* protocol as dax).
+ * benchmarks/scripts/nextjs-benchmark.sh (same BENCH_* protocol as dax).
  *
  * `groupBy: 'round'` so the task owns its measured `latencyMs` (readyMs) and
  * attaches pre-measured phase steps.
  *
  * Run:
- *   bench run benchmarks/sandbox/repo.bench.ts
- *   bench run benchmarks/sandbox/repo.bench.ts --provider e2b,modal
+ *   bench run benchmarks/sandbox/nextjs.bench.ts
+ *   bench run benchmarks/sandbox/nextjs.bench.ts --provider e2b,modal
  */
 import '../src/env.js';
 import fs from 'node:fs';
@@ -33,10 +33,10 @@ import { getSandboxOptionsWithResources } from './resource-options.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /** The build script uploaded into each sandbox. */
-const BENCH_SCRIPT_PATH = path.resolve(__dirname, '../scripts/repo-benchmark.sh');
+const BENCH_SCRIPT_PATH = path.resolve(__dirname, '../scripts/nextjs-benchmark.sh');
 
 /** Timing + metadata parsed out of the build script's BENCH_* lines. */
-interface RepoTimingResult {
+interface NextjsTimingResult {
   totalMs: number;
   phasesCompleted?: number;
   phasesTotal?: number;
@@ -61,7 +61,7 @@ interface RepoTimingResult {
 }
 
 /** Raw build output kept alongside the timing so failures can be diagnosed from the logs. */
-interface RepoBuildOutput {
+interface NextjsBuildOutput {
   exitCode: number;
   stdout: string;
   stderr: string;
@@ -94,7 +94,7 @@ const WORK_TIMEOUT_MS = 900_000;
 const DESTROY_TIMEOUT_MS = 15_000;
 
 export const config = defineBenchmarkConfig({
-  benchmarkSlug: `sandbox-repo${process.env.DAILY_BENCH_SLUG ? `-${process.env.DAILY_BENCH_SLUG}` : ''}`,
+  benchmarkSlug: `sandbox-nextjs${process.env.DAILY_BENCH_SLUG ? `-${process.env.DAILY_BENCH_SLUG}` : ''}`,
   benchmarkName: `Sandbox Repo${process.env.DAILY_BENCH_NAME ? ` - ${process.env.DAILY_BENCH_NAME}` : ''}`,
   iterations: 1,
   concurrency: 1,
@@ -145,7 +145,7 @@ async function runRepoBuild(
   sandbox: any,
   providerName: string,
   buildTimeout: number,
-): Promise<{ timing: RepoTimingResult; output: RepoBuildOutput }> {
+): Promise<{ timing: NextjsTimingResult; output: NextjsBuildOutput }> {
   // Load the benchmark script from the local filesystem rather than fetching
   // it over HTTP inside the sandbox. This eliminates a curl dependency
   // (several providers don't ship curl in their sandboxes).
@@ -157,10 +157,10 @@ async function runRepoBuild(
   // appearing on its own line inside the script.
   const marker = '__REPO_BENCH_HEREDOC_' + Math.random().toString(36).slice(2) + '__';
   const shellCmd =
-    `cat > /tmp/repo-benchmark.sh <<'${marker}'\n` +
+    `cat > /tmp/nextjs-benchmark.sh <<'${marker}'\n` +
     benchScript +
     `\n${marker}\n` +
-    `BENCH_PROVIDER=${providerName} BENCH_REGION=unknown bash /tmp/repo-benchmark.sh`;
+    `BENCH_PROVIDER=${providerName} BENCH_REGION=unknown bash /tmp/nextjs-benchmark.sh`;
 
   const totalStart = Date.now();
   let result: { exitCode: number; stdout?: string; stderr?: string };
@@ -168,7 +168,7 @@ async function runRepoBuild(
     result = await withTimeout(
       sandbox.runCommand(shellCmd, { timeout: buildTimeout }),
       buildTimeout,
-      `Repo benchmark timed out after ${buildTimeout}ms`,
+      `Next.js benchmark timed out after ${buildTimeout}ms`,
     ) as { exitCode: number; stdout?: string; stderr?: string };
   } catch (err) {
     const elapsedMs = Date.now() - totalStart;
@@ -236,9 +236,9 @@ async function runRepoBuild(
       (benchError ? `: ${benchError}` : '') + (detail ? `: ${detail}` : '');
   }
 
-  const output: RepoBuildOutput = { exitCode, stdout, stderr, ...(failedPhase ? { failedPhase } : {}) };
+  const output: NextjsBuildOutput = { exitCode, stdout, stderr, ...(failedPhase ? { failedPhase } : {}) };
 
-  const timing: RepoTimingResult = {
+  const timing: NextjsTimingResult = {
     totalMs,
     phasesCompleted,
     phasesTotal: phaseKeys.length,
@@ -269,7 +269,7 @@ function indent(text: string): string {
 }
 
 /** Emit each measured workload phase as a pre-measured platform step. */
-function repoPhaseSteps(t: RepoTimingResult): TaskStepRecord[] {
+function nextjsPhaseSteps(t: NextjsTimingResult): TaskStepRecord[] {
   const phases: [string, number | undefined][] = [
     ['prepare', t.prepareMs],
     ['cache_clear', t.cacheClearMs],
@@ -308,8 +308,8 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
   const createMs = performance.now() - createStart;
 
   let ttiMs: number | undefined;
-  let timing: RepoTimingResult;
-  let output: RepoBuildOutput | undefined;
+  let timing: NextjsTimingResult;
+  let output: NextjsBuildOutput | undefined;
   try {
     // TTI = create + first command round-trip. Any exit code counts: the point
     // is that exec answers, not that node exists (the workload installs it if
@@ -368,7 +368,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
     ...(readyMs !== undefined ? { readyMs } : {}),
     ...(output?.failedPhase ? { failedPhase: output.failedPhase } : {}),
   };
-  const steps = repoPhaseSteps(timing);
+  const steps = nextjsPhaseSteps(timing);
 
   if (timing.error) {
     const stdoutTail = output ? tail(output.stdout, OUTPUT_TAIL_LINES) : '';
@@ -394,7 +394,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
         ...(stdoutTail ? ['  --- stdout (tail) ---', indent(stdoutTail)] : []),
       ].join('\n'),
     );
-    throw new TaskError(timing.error, { code: 'repo_failed', data, steps });
+    throw new TaskError(timing.error, { code: 'nextjs_failed', data, steps });
   }
 
   log('Repo build completed', {

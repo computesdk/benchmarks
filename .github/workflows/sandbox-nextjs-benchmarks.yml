@@ -1,4 +1,4 @@
-name: Sandbox Repo Benchmark
+name: Sandbox Next.js Benchmark
 
 # computesdk:secrets=NSC_TOKEN
 # computesdk:secrets-env=declared
@@ -7,11 +7,11 @@ on:
   push:
     branches: [master]
     paths:
-      - 'benchmarks/sandbox/repo.bench.ts'
+      - 'benchmarks/sandbox/nextjs.bench.ts'
       - 'benchmarks/sandbox/providers.ts'
       - 'benchmarks/sandbox/resource-options.ts'
-      - 'benchmarks/scripts/repo-benchmark.sh'
-      - '.github/workflows/sandbox-repo-benchmarks.yml'
+      - 'benchmarks/scripts/nextjs-benchmark.sh'
+      - '.github/workflows/sandbox-nextjs-benchmarks.yml'
   schedule:
     - cron: '45 13 * * 5' # Weekly on Friday at 1:45pm UTC (8:45am CDT, offset from TTI/Dax to avoid provider contention)
   workflow_dispatch:
@@ -51,7 +51,7 @@ on:
         default: ''
 
 concurrency:
-  group: repo-benchmarks
+  group: nextjs-benchmarks
   cancel-in-progress: true
 
 permissions:
@@ -185,7 +185,7 @@ jobs:
         run: |
           . benchmarks/scripts/load-vault-secrets.sh '^(NORTHFLANK_TOKEN|NORTHFLANK_PROJECT_ID)'
           npx tsx benchmarks/scripts/find-northflank-plan.ts
-      - name: Run repo benchmark
+      - name: Run nextjs benchmark
         if: env.SHOULD_RUN == 'true'
         env:
           LIGHTNING_INSTANCE_TYPE: cpu-8 # 8 vCPU / 16 GiB, matching the standardized build profile
@@ -209,7 +209,7 @@ jobs:
           # All matrix jobs for this workflow run share a single platform run. The
           # attempt number is included so re-runs do not rejoin completed runs.
           RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          npx tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/repo.bench.ts \
+          npx tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/nextjs.bench.ts \
             --provider ${{ matrix.provider }} \
             --iterations ${{ github.event.inputs.iterations || '1' }} \
             --run-key "$RUN_KEY" \
@@ -218,7 +218,7 @@ jobs:
         if: always() && env.SHOULD_RUN == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: results-${{ matrix.provider }}-sandbox-repo
+          name: results-${{ matrix.provider }}-sandbox-nextjs
           path: results/
           if-no-files-found: ignore
           retention-days: 7
