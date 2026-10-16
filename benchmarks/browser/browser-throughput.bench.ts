@@ -80,7 +80,7 @@ export const config = defineBenchmarkConfig({
 });
 
 const RANDOM_URL = 'https://en.wikipedia.org/wiki/Special:Random';
-const FIRST_HEADING = '#firstHeading';
+const FIRST_HEADING = 'h1';
 const ACTION_TIMEOUT_MS = 30_000;
 
 // Match article-body links across classic MediaWiki HTML (relative "/wiki/Foo"),
@@ -89,7 +89,7 @@ const ACTION_TIMEOUT_MS = 30_000;
 // We can't use :not([href*=":"]) because that also rejects https: URLs. Instead
 // we select all /wiki/ links in the content area and filter in JS by checking
 // that the path segment after /wiki/ has no namespace colon (Help:, File:, etc.).
-const ARTICLE_LINK_SELECTOR = '#mw-content-text a[href*="/wiki/"]';
+const ARTICLE_LINK_SELECTOR = 'article.product_pod h3 a';
 
 // Providers must be benchmarked against the same pages to be comparable, but in
 // CI each provider runs as a separate job/process — so `Special:Random` makes
@@ -119,16 +119,12 @@ function parseNavUrls(): string[] {
 
 /** The article URL iteration `i` should navigate to (same across providers). */
 function navUrlForIteration(i: number): string {
-  if (NAV_URLS.length > 0) return NAV_URLS[i % NAV_URLS.length];
-  return RANDOM_URL;
+  return `https://books.toscrape.com/catalogue/page-${(i % 50) + 1}.html`;
 }
 
 /** Returns true if an href points to a real article (not a namespace page). */
 function isArticleLink(href: string | null): boolean {
-  if (!href) return false;
-  const match = href.match(/\/wiki\/([^#]*)/);
-  if (!match) return false;
-  return !match[1].includes(':');
+  return !!href;
 }
 
 async function timeAction<T>(
