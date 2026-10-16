@@ -37,8 +37,9 @@ function generateSVG(results: ThroughputBenchmarkResult[], timestamp: string): s
 
   const sorted = sortThroughputByCompositeScore(results).filter(r => !r.skipped);
   const skipped = results.filter(r => r.skipped);
+  const escapeXml = (s: string) => s.replace(/[<>&'"]/g, c => `&#${c.charCodeAt(0)};`);
   const skippedNote = skipped.length > 0
-    ? `Not shown: ${skipped.map(r => formatProviderName(r.provider)).join(', ')} — ${[...new Set(skipped.map(r => r.skipReason ?? 'skipped'))].join('; ')}`
+    ? `Not shown: ${skipped.map(r => escapeXml(formatProviderName(r.provider))).join(', ')} — ${escapeXml([...new Set(skipped.map(r => r.skipReason ?? 'skipped'))].join('; '))}`
     : '';
 
   const rowHeight = 44;

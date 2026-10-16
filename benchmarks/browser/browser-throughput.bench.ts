@@ -188,13 +188,18 @@ async function runActionLoop(page: Page, results: ActionResult[], navigateUrl: s
         page.goto(navigateUrl, { waitUntil: 'load' }) as Promise<unknown>,
       );
       navStatus = (r.value as { status?: () => number } | null | undefined)?.status?.() ?? null;
-      results.push({ index: baseIdx + 1, type: 'navigate', durationMs: r.durationMs, success: r.success, error: r.error });
-
+      const navBlocked = !r.success || (navStatus !== null && navStatus >= 400);
       // An error page (rate limit, block page, dead target) has no article
       // content — letting the loop run burns ~70s of selector timeouts per
-      // page and can push a leg over the job timeout. Record the failure
-      // and skip the rest, same as the click-fail path below.
-      const navBlocked = !r.success || (navStatus !== null && navStatus >= 400);
+      // page and can push a leg over the job timeout. Record the navigate as
+      // failed and skip the rest, same as the click-fail path below.
+      results.push({
+        index: baseIdx + 1,
+        type: 'navigate',
+        durationMs: r.durationMs,
+        success: r.success && !navBlocked,
+        error: navBlocked && r.success ? `HTTP ${navStatus}` : r.error,
+      });
       if (navBlocked) {
         const reason = !r.success ? `navigate failed: ${r.error}` : `navigate returned HTTP ${navStatus}`;
         pushSkippedActions(results, baseIdx, [2, 3, 4, 5, 6, 7, 8, 9, 10], reason);

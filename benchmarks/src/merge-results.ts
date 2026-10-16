@@ -606,11 +606,12 @@ async function mainBrowserThroughput() {
   walk(inputDir!);
 
   if (jsonFiles.length === 0) {
-    console.error(`No latest.json files found in ${inputDir}`);
-    process.exit(1);
+    // Every leg died without uploading — still publish a results file where
+    // each roster provider is marked skipped rather than failing the merge.
+    console.warn(`No latest.json files found in ${inputDir} — marking all providers skipped`);
+  } else {
+    console.log(`Found ${jsonFiles.length} result files`);
   }
-
-  console.log(`Found ${jsonFiles.length} result files`);
 
   const seen = new Map<string, { result: ThroughputBenchmarkResult; fromSingleProvider: boolean }>();
 
@@ -632,7 +633,10 @@ async function mainBrowserThroughput() {
   // vanish from the published file. The roster is the source of truth here:
   // the workflow's matrix mirrors throughputProviders.
   const { throughputProviders } = await import('../browser/throughput-providers.js');
+  const { ACTION_TYPES } = await import('../browser/throughput-types.js');
   const emptyStats = { median: 0, p95: 0, p99: 0 };
+  const emptyPerActionType = () =>
+    Object.fromEntries(ACTION_TYPES.map(t => [t, { ...emptyStats }])) as ThroughputBenchmarkResult['summary']['perActionType'];
   for (const p of throughputProviders) {
     if (!seen.has(p.name)) {
       deduped.push({
@@ -644,7 +648,7 @@ async function mainBrowserThroughput() {
           taskMs: { ...emptyStats },
           totalMs: { ...emptyStats },
           actionsPerSecond: { ...emptyStats },
-          perActionType: {} as ThroughputBenchmarkResult['summary']['perActionType'],
+          perActionType: emptyPerActionType(),
         },
         skipped: true,
         skipReason: 'No results — bench job failed or timed out',
