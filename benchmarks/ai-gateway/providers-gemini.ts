@@ -37,6 +37,15 @@ import { resolveNeonHost } from './neon-host.js';
  */
 export const providers: AIGatewayProviderConfig[] = [
   {
+    name: 'cocoonstack-gateway',
+    requiredEnvVars: ['COCOONSTACK_GATEWAY_API_KEY'],
+    wireFormat: 'openai',
+    model: 'gemini-3.6-flash',
+    host: 'gw-bench.simular.cloud',
+    path: '/v1/chat/completions',
+    buildHeaders: () => ({ Authorization: `Bearer ${process.env.COCOONSTACK_GATEWAY_API_KEY}` }),
+  },
+  {
     // No native Gemini passthrough documented for OpenRouter — its whole
     // platform is built around one normalized, OpenAI-Chat-Completions-
     // shaped endpoint across its entire catalog, not per-provider native
