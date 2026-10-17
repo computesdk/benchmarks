@@ -1,0 +1,224 @@
+name: Sandbox Next.js Benchmark
+
+# computesdk:secrets=NSC_TOKEN
+# computesdk:secrets-env=declared
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'benchmarks/sandbox/nextjs.bench.ts'
+      - 'benchmarks/sandbox/providers.ts'
+      - 'benchmarks/sandbox/resource-options.ts'
+      - 'benchmarks/scripts/nextjs-benchmark.sh'
+      - '.github/workflows/sandbox-nextjs-benchmarks.yml'
+  schedule:
+    - cron: '45 13 * * 5' # Weekly on Friday at 1:45pm UTC (8:45am CDT, offset from TTI/Dax to avoid provider contention)
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: 'Optional platform benchmark slug override'
+        required: false
+        default: ''
+      name:
+        description: 'Optional platform benchmark name override'
+        required: false
+        default: ''
+      iterations:
+        description: 'Iterations per provider'
+        required: false
+        default: '1'
+      provider:
+        description: 'Provider to run (leave empty for all)'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Run without ingesting or committing results'
+        required: false
+        default: false
+        type: boolean
+      trigger_source:
+        description: 'Recorded on platform runs as their trigger (e.g. platform-retrigger); leave empty for a plain manual run'
+        required: false
+        default: ''
+      trigger_requested_by:
+        description: 'Who asked for this run (e.g. the platform org slug); recorded alongside trigger_source'
+        required: false
+        default: ''
+      trigger_request_id:
+        description: 'Platform re-trigger request id; recorded so the platform can link this run back to the request'
+        required: false
+        default: ''
+
+concurrency:
+  group: nextjs-benchmarks
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+env:
+  BENCHMARK_SLUG: ${{ github.event.inputs.slug || '' }}
+  BENCH_TRIGGER_SOURCE: ${{ github.event.inputs.trigger_source || '' }}
+  BENCH_TRIGGER_REQUESTED_BY: ${{ github.event.inputs.trigger_requested_by || '' }}
+  BENCH_TRIGGER_REQUEST_ID: ${{ github.event.inputs.trigger_request_id || '' }}
+  BENCHMARK_NAME: ${{ github.event.inputs.name || '' }}
+
+jobs:
+  bench:
+    name: Bench ${{ matrix.provider }}
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
+    # runs-on: self-hosted
+    timeout-minutes: 60
+    env:
+      # A single-provider dispatch still starts every matrix job; the ones that
+      # don't match skip all their steps, including setup (whose cache-save post
+      # step otherwise fails the job because nothing was installed).
+      SHOULD_RUN: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.provider == '' || github.event.inputs.provider == matrix.provider }}
+    strategy:
+      fail-fast: false
+      matrix:
+        provider:
+          - archil
+          - arker
+          - beam
+          - blaxel
+          - buddy
+          - cloud-run
+          - cloudflare
+          - codesandbox
+          - createos
+          - daytona
+          - declaw
+          - e2b
+          - freestyle
+          - givemeanode
+          - gravixlayer
+          - hopx
+          - isorun
+          # - lightning
+          - modal
+          - microsandbox
+          - miosa
+          - mosaic
+          - namespace
+          - northflank
+          - novita
+          - opencomputer
+          # - railway
+          - run-cloud
+          # - runloop
+          - sail
+          - sandbox0
+          - superserve
+          - tenki
+          - tensorlake
+          - upstash
+          - vercel
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      # ComputeSDK runners get no GitHub OIDC token, so nscloud-setup's
+      # `nsc auth exchange-github-token` cannot work there. Pre-seed the
+      # workload token file it checks for when NSC_TOKEN is available;
+      # accepts either the raw bearer token or a full token JSON document.
+      # It also exports NSC_DOCKER_LOGIN/NSC_CONTAINER_REGISTRY so
+      # nscloud-setup skips `nsc docker login`, which this token is not
+      # granted for — the benchmarks only need vault access.
+      - name: Seed Namespace token file
+        run: |
+          if [ -n "${NSC_TOKEN:-}" ] && [ ! -f /var/run/nsc/token.json ]; then
+            mkdir -p /var/run/nsc
+            case "$NSC_TOKEN" in
+              \{*) printf '%s\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+              *) printf '{"bearer_token":"%s"}\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+            esac
+            chmod 600 /var/run/nsc/token.json
+            # The seeded token has no container-registry grant; tell
+            # nscloud-setup to skip `nsc docker login` for later steps.
+            echo "NSC_DOCKER_LOGIN=1" >> "$GITHUB_ENV"
+            echo "NSC_CONTAINER_REGISTRY=nscr.io" >> "$GITHUB_ENV"
+          fi
+      - uses: namespacelabs/nscloud-setup@v0
+      - name: Install dependencies
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            pnpm -r update --ignore-scripts
+          else
+            pnpm install --frozen-lockfile --ignore-scripts
+          fi
+          pnpm -r --filter './packages/**' run build
+      - name: Build E2B template with 8 vCPU / 16 GiB
+        if: matrix.provider == 'e2b'
+        run: |
+          . benchmarks/scripts/load-vault-secrets.sh '^(E2B_API_KEY)'
+          npx tsx benchmarks/scripts/build-e2b-template.ts
+      - name: Build Superserve template with 8 vCPU / 16 GiB
+        if: matrix.provider == 'superserve'
+        run: |
+          . benchmarks/scripts/load-vault-secrets.sh '^(SUPERSERVE_API_KEY)'
+          npx tsx benchmarks/scripts/build-superserve-template.ts
+      - name: Ensure GravixLayer default egress policy
+        if: matrix.provider == 'gravixlayer'
+        run: |
+          . benchmarks/scripts/load-vault-secrets.sh '^(GRAVIXLAYER_API_KEY)'
+          npx tsx benchmarks/scripts/prepare-gravixlayer.ts
+      - name: Build Novita template with 8 vCPU / 16 GiB
+        if: matrix.provider == 'novita'
+        run: |
+          # Tolerate a missing vault entry: without NOVITA_API_KEY the
+          # benchmark reports skipped rather than failing the whole job here.
+          . benchmarks/scripts/load-vault-secrets.sh '^(NOVITA_API_KEY)' || true
+          if [ -z "${NOVITA_API_KEY:-}" ]; then
+            echo "NOVITA_API_KEY not in the vault — skipping template build; the benchmark will report skipped."
+            exit 0
+          fi
+          npx tsx benchmarks/scripts/build-novita-template.ts
+      - name: Find Northflank plan for 8 vCPU / 16 GiB
+        if: matrix.provider == 'northflank'
+        run: |
+          . benchmarks/scripts/load-vault-secrets.sh '^(NORTHFLANK_TOKEN|NORTHFLANK_PROJECT_ID)'
+          npx tsx benchmarks/scripts/find-northflank-plan.ts
+      - name: Run nextjs benchmark
+        if: env.SHOULD_RUN == 'true'
+        env:
+          LIGHTNING_INSTANCE_TYPE: cpu-8 # 8 vCPU / 16 GiB, matching the standardized build profile
+          ARKER_PLATFORMS: graviton4 # build benches only; elsewhere Arker picks the platform automatically
+        run: |
+          . benchmarks/scripts/load-vault-secrets.sh '^(ARCHIL_API_KEY|ARCHIL_REGION|ARCHIL_DISK_ID|ARKER_API_KEY|BEAM_TOKEN|BEAM_WORKSPACE_ID|BL_API_KEY|BL_WORKSPACE|BUDDY_TOKEN|BUDDY_WORKSPACE|BUDDY_PROJECT|BL_DAX_API_KEY|BL_DAX_WORKSPACE|CLOUD_RUN_SANDBOX_URL|CLOUD_RUN_SANDBOX_SECRET|CLOUDFLARE_SANDBOX_URL|SANDBOX_API_KEY|CSB_API_KEY|CREATEOS_SANDBOX_API_KEY|DAYTONA_API_KEY|DECLAW_API_KEY|E2B_API_KEY|FREESTYLE_API_KEY|GMN_API_HOST|GMN_TOKEN|GRAVIXLAYER_API_KEY|HOPX_API_KEY|ISORUN_API_KEY|LIGHTNING_API_KEY|MIOSA_API_KEY|MODAL_TOKEN_ID|MODAL_TOKEN_SECRET|MSB_API_KEY|MOSAIC_API_URL|MOSAIC_API_TOKEN|NSC_TOKEN|NORTHFLANK_TOKEN|NORTHFLANK_PROJECT_ID|NOVITA_API_KEY|OPENCOMPUTER_API_KEY|OPENCOMPUTER_API_URL|RAILWAY_API_TOKEN|RAILWAY_ENVIRONMENT_ID|RUN_CLOUD_API_KEY|RUNLOOP_API_KEY|SAIL_API_KEY|SANDBOX0_TOKEN|SPRITES_TOKEN|SUPERSERVE_API_KEY|TENKI_API_KEY|TENSORLAKE_API_KEY|UPSTASH_BOX_API_KEY|VERCEL_TOKEN|VERCEL_TEAM_ID|VERCEL_PROJECT_ID|BENCHMARKS_PLATFORM_API_KEY)'
+
+          # OpenComputer is kept in the daily runs but excluded from the weekly run.
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            unset OPENCOMPUTER_API_KEY OPENCOMPUTER_API_URL
+          fi
+
+          # If dedicated DAX Blaxel credentials are provisioned, route them to the
+          # standard names that providers.ts expects, so no provider fork is needed.
+          if [ -n "${BL_DAX_API_KEY:-}" ] && [ -n "${BL_DAX_WORKSPACE:-}" ]; then
+            export BL_API_KEY="$BL_DAX_API_KEY"
+            export BL_WORKSPACE="$BL_DAX_WORKSPACE"
+            unset BL_DAX_API_KEY BL_DAX_WORKSPACE
+          fi
+
+          # All matrix jobs for this workflow run share a single platform run. The
+          # attempt number is included so re-runs do not rejoin completed runs.
+          RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          npx tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/nextjs.bench.ts \
+            --provider ${{ matrix.provider }} \
+            --iterations ${{ github.event.inputs.iterations || '1' }} \
+            --run-key "$RUN_KEY" \
+            ${{ (github.event_name == 'push' || github.event.inputs.dry_run == 'true') && '--no-ingest' || '' }}
+      - name: Upload results
+        if: always() && env.SHOULD_RUN == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: results-${{ matrix.provider }}-sandbox-nextjs
+          path: results/
+          if-no-files-found: ignore
+          retention-days: 7
