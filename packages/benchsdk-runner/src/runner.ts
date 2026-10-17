@@ -16,7 +16,7 @@
  */
 import { execSync } from 'node:child_process';
 import os from 'node:os';
-import { createBenchmarkClient, BenchmarkApiError } from '@benchsdk/api';
+import { createBenchmarkClient, BenchmarkApiError, BenchmarkTaskSkippedError } from '@benchsdk/api';
 import { resolveAuth } from '@benchsdk/cli';
 import type { CliAuth } from '@benchsdk/cli';
 import {
@@ -899,7 +899,13 @@ async function runGroupedByParticipant<T extends BaseParticipant>(
 ): Promise<ParticipantRecords[]> {
   const participantRecords: ParticipantRecords[] = [];
   for (const participant of available) {
-    if (deadline?.expired()) break;
+    if (deadline?.expired()) {
+      // A participant that never started still appears (empty records) so the
+      // run reports it as skipped rather than silently dropping it — and so
+      // `stoppedEarly` sees an incomplete schedule.
+      participantRecords.push({ participant: participant.name, records: [] });
+      continue;
+    }
     console.log(`${'='.repeat(70)}`);
     console.log(`  Participant: ${participant.name}`);
     console.log('='.repeat(70));
@@ -916,6 +922,8 @@ async function runGroupedByParticipant<T extends BaseParticipant>(
           rampStartMs ??= Date.now();
           const waitMs = rampStartMs + scheduleIndex * resolved.staggerDelayMs - Date.now();
           if (waitMs > 0) await sleep(waitMs);
+          // The sleep may have outlasted the budget — don't launch late.
+          if (deadline?.expired()) return;
         }
         const slot = schedule[scheduleIndex];
         const record = await runTaskRecord(slot.task, participant, scheduleIndex, scheduleIndex, slot.phase, logBuffer);
@@ -958,6 +966,12 @@ async function runGroupedByParticipant<T extends BaseParticipant>(
           rampStartMs ??= Date.now();
           const waitMs = rampStartMs + scheduleIndex * resolved.staggerDelayMs - Date.now();
           if (waitMs > 0) await sleep(waitMs);
+          // The stagger sleep may have outlasted the budget: the worker
+          // launched this task before the deadline, so abandon it without a
+          // record rather than report a late result or a fake error.
+          if (deadline?.expired()) {
+            throw new BenchmarkTaskSkippedError('Run deadline passed during stagger wait');
+          }
         }
         const slot = schedule[scheduleIndex];
         // The client owns step timing, `measure` attribution, and worker-log
@@ -1095,8 +1109,13 @@ async function runGroupedByRound<T extends BaseParticipant>(
     // Round mode staggers a fixed delay between rounds (vs. participant mode's per-task stagger).
     if (resolved.staggerDelayMs > 0 && i > 0) {
       await sleep(resolved.staggerDelayMs);
+      // The round sleep may have outlasted the budget.
+      if (deadline?.expired()) break;
     }
     const roundFns = available.map((participant) => async () => {
+      // Queued behind `concurrency`: check again so later participants don't
+      // launch their task after the deadline.
+      if (deadline?.expired()) return;
       const reporter = reporters.get(participant.name) ?? null;
       const logBuffer = logBuffers.get(participant.name)!;
       const record = await runTaskRecord(
