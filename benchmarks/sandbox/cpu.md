@@ -1,19 +1,21 @@
 # Sandbox CPU benchmark
 
 Measures the CPU a sandbox provider actually delivers: SHA-256 hashing
-throughput on one core and on every logical CPU, at a standardized
-8 vCPU / 16 GiB size. The composite score grades each provider's compute so
-buyers can compare CPU across providers — e.g. when selecting a provider in
-the ComputeSDK market.
+throughput on one core and on every logical CPU, run once per market size
+tier (small / medium / large / xlarge). Each provider gets one composite
+score per size, so buyers can compare CPU across providers at exactly the
+tier they'd pick in the ComputeSDK market.
 
 ## How it works
 
-One iteration is create → benchmark → destroy, same skeleton as the TTI and
-dax benchmarks:
+The benchmark declares one `phases` arm per market size — `small`, `medium`,
+`large`, `xlarge` (the same names/resources as `PLATFORM_SIZES` in
+benchmarks-platform), 3 iterations each. Each iteration is create →
+benchmark → destroy, same skeleton as the TTI and dax benchmarks:
 
-- `create` — `compute.sandbox.create()` with the provider's standardized
-  8 vCPU / 16 GiB options from `sizes.ts` (the same map dax uses). Timed but
-  unscored: TTI is a different benchmark.
+- `create` — `compute.sandbox.create()` with the provider's options for that
+  size tier from `PROVIDER_SIZE_OPTIONS` in `sizes.ts` (the xlarge layer is
+  the same map dax uses). Timed but unscored: TTI is a different benchmark.
 - `cpu` — uploads `benchmarks/scripts/cpu-benchmark.sh` into the sandbox via
   heredoc and runs it with bash. The script emits `BENCH_*` protocol lines;
   the task parses them into `record.data` and pre-measured steps.
@@ -49,7 +51,9 @@ Scored metrics (weights across metrics sum to 1.0):
 | `singleCoreMBps` | MB/s | higher | 50 | 3000 | 0.30 / 0.07 / 0.03 |
 
 Composite = weighted scores × success rate, same formula as every sandbox
-benchmark. `multiCoreMBps` is the headline (60%): it's what a real
+benchmark — computed once per size tier via `scoring.groupBy: 'phase'`
+(every record is auto-tagged `data.phase` with its size), plus an overall
+row. `multiCoreMBps` is the headline (60%): it's what a real
 CPU-saturated workload gets. `singleCoreMBps` (40%) keeps a provider from
 hiding weak cores behind a higher core count.
 
@@ -63,9 +67,9 @@ hiding weak cores behind a higher core count.
 - **Fixed work, not fixed time**: 4 GiB single-core, 2 GiB per worker
   all-core. A fast core finishes in ~2 s, a weak one in ~20 s; wall time is
   what we measure, so both are equally valid.
-- **Standardized size, reported reality**: providers get the same 8 vCPU /
-  16 GiB request as dax, but the script reports the `logical_cpus` and CPU
-  model it actually observed. A provider that under-delivers shows up in
+- **Market sizes, reported reality**: each tier requests the market's
+  cpus/memory for that size, but the script reports the `logical_cpus` and
+  CPU model it actually observed. A provider that under-delivers shows up in
   `vcpus`, not silently in the throughput number.
 - **No substitutions**: if the image lacks `sha256sum`/`dd` the run fails as
   `cpu_failed` instead of quietly benchmarking a different tool — comparing
@@ -76,9 +80,13 @@ hiding weak cores behind a higher core count.
 
 ## Provider notes
 
-- Sizing comes from `STANDARD_RESOURCE_OPTIONS` in `sizes.ts`, shared with
-  dax — providers with no entry run at their own defaults (e.g. `nproc` may
-  not be 8 there; the recorded `vcpus` shows it).
+- Sizing comes from `PROVIDER_SIZE_OPTIONS` in `sizes.ts`. Providers that
+  take raw cpu/memory parameters get all four tiers; template- or
+  preset-sized providers only get the tiers they can actually provision —
+  a missing tier fails as `size_not_supported`, so a provider that can't
+  offer `medium` grades 0 there rather than substituting a different size.
+  Providers with no entry at all run their default size at `xlarge`
+  (e.g. `nproc` may not be 8 there; the recorded `vcpus` shows it).
 - cgroup-limited sandboxes score lower — intended: a capped vCPU is a slower
   CPU to the workload running on it.
 - Vercel carries `persistent: false` (in `providers.ts`) so `stop()` doesn't

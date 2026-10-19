@@ -11,10 +11,15 @@
  * create/destroy are timed steps but never enter the composite, so TTI and
  * teardown can't pollute the CPU grade.
  *
- * Every provider runs at the standardized 8 vCPU / 16 GiB profile from
- * sizes.ts so the composite score compares CPU to CPU; the script reports the
- * actual logical_cpus/cpu_model it observed so under- or over-provisioning is
- * visible in results rather than silently averaged in.
+ * The benchmark declares one `phases` arm per market size tier
+ * (small/medium/large/xlarge — see sizes.ts), so every provider is graded per
+ * size at the same shape a buyer picks in the market. Providers that can only
+ * provision some tiers get no grade for the rest — the tier fails as
+ * `size_not_supported` instead of silently substituting a wrong-size box.
+ * `scoring.groupBy: 'phase'` produces one composite per size per provider.
+ * The script reports the actual logical_cpus/cpu_model it observed so
+ * under- or over-provisioning is visible in results rather than silently
+ * averaged in.
  *
  * `groupBy: 'round'` lets the task own its measured latency and attach the
  * pre-measured `cpu_single`/`cpu_multi` phases as platform steps.
@@ -34,7 +39,7 @@ import { formatError } from '../src/util/error.js';
 import { sandboxId } from '../src/util/sandbox-id.js';
 import { providers } from './providers.js';
 import type { ProviderConfig } from './types.js';
-import { getSandboxOptionsWithResources } from './sizes.js';
+import { getSandboxOptionsWithResources, MARKET_SIZE_NAMES, type MarketSize } from './sizes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BENCH_SCRIPT_PATH = path.resolve(__dirname, '../scripts/cpu-benchmark.sh');
@@ -94,11 +99,14 @@ export const config = defineBenchmarkConfig({
   // flags, so cadence variants (-daily/-weekly/-smoke) come from CI env.
   benchmarkSlug: 'sandbox-cpu',
   benchmarkName: 'Sandbox CPU',
-  iterations: 3,
+  // One arm per market size tier: every provider is graded per size.
+  phases: MARKET_SIZE_NAMES.map((name) => ({ name, iterations: 3 })),
   concurrency: 1,
   groupBy: 'round',
   participants: providers,
   scoring: {
+    // One composite per size tier per provider (records carry data.phase).
+    groupBy: 'phase',
     metrics: [
       // Headline: whole-box throughput — what a buyer's workload actually gets.
       // Ceiling/floor are calibrations (MB/s of SHA-256), not SLAs: a modern
@@ -274,8 +282,15 @@ function cpuPhaseSteps(t: CpuTimingResult): TaskStepRecord[] {
 export const task = defineTask<ProviderConfig>(async (ctx) => {
   const p = ctx.participant;
   const { log } = ctx;
+  const size = (ctx.phase ?? 'xlarge') as MarketSize;
   const compute = p.createCompute();
-  const opts = getSandboxOptionsWithResources(p.name, p.sandboxOptions);
+  const opts = getSandboxOptionsWithResources(p.name, p.sandboxOptions, size);
+  if (opts === undefined) {
+    throw new TaskError(`provider has no '${size}' size offering`, {
+      code: 'size_not_supported',
+      data: { size, supported: false },
+    });
+  }
 
   const createStart = Date.now();
   const sandbox = await ctx.step('create', () =>
