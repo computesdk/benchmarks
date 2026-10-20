@@ -163,6 +163,13 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // The provider's default sandbox lifetime (300s) is below the 10-min build
   // deadline, so raise it — same backstop pattern as blaxel.
   novita:       { templateId: 'node22-8cpu-16gb', timeout: 900_000 },
+  // Promigence sizes by snapshot tier — `tier` only applies when create() takes
+  // an image (the built-in `base` snapshot is fixed at `small`, 2 vCPU / 4 GiB),
+  // so dax creates from node:22 at `large` (8 vCPU / 32 GiB, the closest shape
+  // to the standardized 8 vCPU / 16 GiB profile; the adapter sets allowBuild).
+  // `timeout` is the same lifetime backstop as blaxel/novita: the sandbox must
+  // outlive the 10-minute build deadline.
+  promigence:   { image: 'node:22', tier: 'large', timeout: 900_000 },
 };
 
 function getSandboxOptionsWithResources(providerName: string, baseOptions?: Record<string, any>): Record<string, any> {

@@ -26,6 +26,7 @@ import { namespace } from '@computesdk/namespace';
 import { northflank } from '@computesdk/northflank';
 import { novita } from '@computesdk/novita';
 import { opencomputer } from '@computesdk/opencomputer';
+import { promigence } from '@computesdk/promigence';
 // import { quilt } from '@computesdk/quilt';
 import { railway } from '@computesdk/railway';
 import { runCloud } from '@computesdk/run-cloud';
@@ -235,6 +236,11 @@ export const providers: ProviderConfig[] = [
       apiUrl: process.env.OPENCOMPUTER_API_URL!,
     }),
     sandboxOptions: { timeout: 600_000 },
+  },
+  {
+    name: 'promigence',
+    requiredEnvVars: ['PROMIGENCE_API_KEY'],
+    createCompute: () => promigence({ apiKey: process.env.PROMIGENCE_API_KEY! }),
   },
   // {
   //   name: 'quilt',

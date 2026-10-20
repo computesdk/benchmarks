@@ -140,6 +140,9 @@ importers:
       '@computesdk/opencomputer':
         specifier: ^1.0.13
         version: 1.0.13
+      '@computesdk/promigence':
+        specifier: ^1.0.1
+        version: 1.0.1
       '@computesdk/quilt':
         specifier: ^1.0.12
         version: 1.0.12
@@ -854,6 +857,10 @@ packages:
 
   '@computesdk/opencomputer@1.0.13':
     resolution: {integrity: sha512-GuaU0iithEZmAJRyGsmD73nrf5t3lAx9KWDC8tBEsMbum+LgETfHAn26htAmKsqnriN+aEo8bFvGfYzMfPVvhw==}
+
+  '@computesdk/promigence@1.0.1':
+    resolution: {integrity: sha512-NhCqII5M6rCkcjgZ0J9VbB9O6hmNG9KU0p6aYHLTOfEwHSwy6hJtcP49+WS124aCRhHg8ROEjCvwzi8tX5o64A==}
+    engines: {node: '>=20'}
 
   '@computesdk/provider@2.1.14':
     resolution: {integrity: sha512-7uqDqxSZ4tRBS0AwirGkuKzpOPLPWGA+vP/5BeKbukFCepJEJdprRK+JzCtIkeyEhmud+2hob6WPft+Qed+elw==}
@@ -2093,6 +2100,10 @@ packages:
     resolution: {integrity: sha512-mrZOev24EDhnefmnZX7WVVT7v+r9LttPRqf54ONvj6re4XMF7wFTpK2tLJi4XHB7fFp/6xhYbgRel8YV7gQiyA==}
     peerDependencies:
       '@opentelemetry/api': ^1.8
+
+  '@promigence/sdk@0.1.0-beta.9':
+    resolution: {integrity: sha512-6ShyRuFePXf41Qqvd+NllJtvOrRYMKVWSMFo8DMI7Dx/jPLUuiSY5sbp3ovwSNT5AiCoBAKCEIayy/gBWswW2g==}
+    engines: {node: '>=20'}
 
   '@protobufjs/aspromise@1.1.2':
     resolution: {integrity: sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ==}
@@ -6775,6 +6786,12 @@ snapshots:
       '@opencomputer/sdk': 2.3.1
       computesdk: 4.1.12
 
+  '@computesdk/promigence@1.0.1':
+    dependencies:
+      '@computesdk/provider': 2.1.14
+      '@promigence/sdk': 0.1.0-beta.9
+      computesdk: 4.1.12
+
   '@computesdk/provider@2.1.14':
     dependencies:
       '@computesdk/cmd': 0.4.1
@@ -8102,6 +8119,8 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
     optional: true
+
+  '@promigence/sdk@0.1.0-beta.9': {}
 
   '@protobufjs/aspromise@1.1.2': {}
 
