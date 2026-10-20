@@ -73,6 +73,11 @@ jobs:
     runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
     # runs-on: self-hosted
     timeout-minutes: 60
+    env:
+      # A single-provider dispatch still starts every matrix job; the ones that
+      # don't match skip all their steps, including setup (whose cache-save post
+      # step otherwise fails the job because nothing was installed).
+      SHOULD_RUN: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.provider == '' || github.event.inputs.provider == matrix.provider }}
     strategy:
       fail-fast: false
       matrix:
@@ -116,8 +121,11 @@ jobs:
           - vercel
     steps:
       - uses: actions/checkout@v4
+        if: env.SHOULD_RUN == 'true'
       - uses: pnpm/action-setup@v4
+        if: env.SHOULD_RUN == 'true'
       - uses: actions/setup-node@v4
+        if: env.SHOULD_RUN == 'true'
         with:
           node-version: 24
           cache: 'pnpm'
@@ -143,7 +151,9 @@ jobs:
             echo "NSC_CONTAINER_REGISTRY=nscr.io" >> "$GITHUB_ENV"
           fi
       - uses: namespacelabs/nscloud-setup@v0
+        if: env.SHOULD_RUN == 'true'
       - name: Install dependencies
+        if: env.SHOULD_RUN == 'true'
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
             pnpm -r update --ignore-scripts
@@ -152,22 +162,22 @@ jobs:
           fi
           pnpm -r --filter './packages/**' run build
       - name: Build E2B template with 8 vCPU / 16 GiB
-        if: matrix.provider == 'e2b'
+        if: env.SHOULD_RUN == 'true' && matrix.provider == 'e2b'
         run: |
           . benchmarks/scripts/load-vault-secrets.sh '^(E2B_API_KEY)'
           npx tsx benchmarks/scripts/build-e2b-template.ts
       - name: Build Superserve template with 8 vCPU / 16 GiB
-        if: matrix.provider == 'superserve'
+        if: env.SHOULD_RUN == 'true' && matrix.provider == 'superserve'
         run: |
           . benchmarks/scripts/load-vault-secrets.sh '^(SUPERSERVE_API_KEY)'
           npx tsx benchmarks/scripts/build-superserve-template.ts
       - name: Ensure GravixLayer default egress policy
-        if: matrix.provider == 'gravixlayer'
+        if: env.SHOULD_RUN == 'true' && matrix.provider == 'gravixlayer'
         run: |
           . benchmarks/scripts/load-vault-secrets.sh '^(GRAVIXLAYER_API_KEY)'
           npx tsx benchmarks/scripts/prepare-gravixlayer.ts
       - name: Build Novita template with 8 vCPU / 16 GiB
-        if: matrix.provider == 'novita'
+        if: env.SHOULD_RUN == 'true' && matrix.provider == 'novita'
         run: |
           # Tolerate a missing vault entry: without NOVITA_API_KEY the
           # benchmark reports skipped rather than failing the whole job here.
@@ -178,13 +188,15 @@ jobs:
           fi
           npx tsx benchmarks/scripts/build-novita-template.ts
       - name: Find Northflank plan for 8 vCPU / 16 GiB
-        if: matrix.provider == 'northflank'
+        if: env.SHOULD_RUN == 'true' && matrix.provider == 'northflank'
         run: |
           . benchmarks/scripts/load-vault-secrets.sh '^(NORTHFLANK_TOKEN|NORTHFLANK_PROJECT_ID)'
           npx tsx benchmarks/scripts/find-northflank-plan.ts
       - name: Clear stale results from checkout
+        if: env.SHOULD_RUN == 'true'
         run: rm -rf results/
       - name: Run dax benchmark
+        if: env.SHOULD_RUN == 'true'
         env:
           LIGHTNING_INSTANCE_TYPE: cpu-8 # 8 vCPU / 16 GiB, matching the standardized dax profile
           ARKER_PLATFORMS: graviton4 # dax only; elsewhere Arker picks the platform automatically
@@ -213,7 +225,7 @@ jobs:
             --run-key "$RUN_KEY" \
             ${{ (github.event_name == 'push' || github.event.inputs.dry_run == 'true') && '--no-ingest' || '' }}
       - name: Upload results
-        if: always()
+        if: always() && env.SHOULD_RUN == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: results-${{ matrix.provider }}-sandbox-dax
