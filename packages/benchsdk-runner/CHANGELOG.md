@@ -1,5 +1,29 @@
 # @benchsdk/runner
 
+## 0.6.2
+
+### Patch Changes
+
+- a7ee8a7: Add `display.byStep.defaultLayout` to `BenchmarkDisplayConfig` (`'table' | 'bars' | 'time' | 'matrix'`) so capability-matrix benchmarks can declare the matrix layout from the `.bench.ts` file — the platform already renders it (computesdk/benchmarks-platform#694). Also accepts `supportedPct` as an `overview.defaultMetric` sentinel for the platform-derived Supported % metric.
+
+## 0.6.1
+
+### Patch Changes
+
+- Updated dependencies [975b155]
+  - @benchsdk/cli@0.7.1
+
+## 0.6.0
+
+### Minor Changes
+
+- b56c3f4: Move CLI auth onto the OAuth provider. `bench auth login` now runs the RFC 8628 device flow against `/api/auth/device/code` and redeems at `/api/auth/oauth2/token` (`device_code` + `refresh_token` grants). Both `bench` and `compute` log in as the `benchsdk-cli` client with the full first-party scope set, so one login in `~/.benchsdk/credentials.json` covers every first-party CLI. API keys and new-format logins keep working; entries written by the retired HS256/`bcs_` token system are detected and cleared with a prompt to log in again, and `insufficient_scope` API errors surface a re-login hint.
+
+### Patch Changes
+
+- Updated dependencies [b56c3f4]
+  - @benchsdk/cli@0.7.0
+
 ## 0.5.2
 
 ### Patch Changes

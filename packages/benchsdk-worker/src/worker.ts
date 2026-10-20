@@ -21,6 +21,7 @@ import type {
   TaskStepRecord,
   WorkerConcurrencySample,
 } from '@benchsdk/api';
+import { BenchmarkTaskSkippedError } from '@benchsdk/api';
 
 const DEFAULT_BATCH_SIZE = 1000;
 const DEFAULT_HEARTBEAT_INTERVAL_MS = 30_000;
@@ -94,6 +95,10 @@ function getErrorCode(error: unknown): string {
   return 'ERROR';
 }
 
+function isTaskSkippedError(error: unknown): boolean {
+  return error instanceof BenchmarkTaskSkippedError || (error instanceof Error && error.name === 'BenchmarkTaskSkippedError');
+}
+
 function toJsonObject(value: unknown): JsonObject | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
   return value as JsonObject;
@@ -145,10 +150,10 @@ function handleTelemetryError(handler: ((error: unknown, operation: string) => v
   console.warn(`[benchsdk] telemetry failure (${operation}): ${error instanceof Error ? error.message : String(error)}`);
 }
 
-async function mapPool<T>(items: T[], concurrency: number, fn: (item: T) => Promise<void>): Promise<void> {
+async function mapPool<T>(items: T[], concurrency: number, fn: (item: T) => Promise<void>, shouldStop?: () => boolean): Promise<void> {
   let nextIndex = 0;
   const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
-    while (nextIndex < items.length) {
+    while (nextIndex < items.length && !(shouldStop?.() ?? false)) {
       const item = items[nextIndex];
       nextIndex += 1;
       await fn(item);
@@ -566,32 +571,43 @@ export async function runWorker(client: BenchmarkClient, options: RunWorkerOptio
         }
       }
 
+      // BenchmarkTaskSkippedError abandons the task without a record — it
+      // counts as never launched (e.g. deadline passed during a stagger wait).
+      let skipped = false;
       try {
         const data = await options.task({ assignment: claimed, taskIndex, step, measure, log });
         record.data = mergeMeasures(taskMeasures, toJsonObject(data));
       } catch (error) {
-        record.status = 'error';
-        record.errorCode = getErrorCode(error);
-        record.data = mergeMeasures(taskMeasures, { errorMessage: error instanceof Error ? error.message : String(error) });
-      } finally {
-        record.completedAt = new Date().toISOString();
-        record.latencyMs = Date.now() - startedAtMs;
-        // A task with no explicit steps is recorded as a single implicit
-        // 'task' step, so every task contributes at least one step row.
-        if (steps.length === 0) {
-          steps.push(implicitTaskStep(record, taskMeasures));
+        if (isTaskSkippedError(error)) {
+          skipped = true;
+        } else {
+          record.status = 'error';
+          record.errorCode = getErrorCode(error);
+          record.data = mergeMeasures(taskMeasures, { errorMessage: error instanceof Error ? error.message : String(error) });
         }
-        record.steps = steps;
-        doneCount += 1;
+      } finally {
         inFlightCount = Math.max(0, inFlightCount - 1);
-        if (record.status !== 'success') errorCount += 1;
+        if (!skipped) {
+          record.completedAt = new Date().toISOString();
+          record.latencyMs = Date.now() - startedAtMs;
+          // A task with no explicit steps is recorded as a single implicit
+          // 'task' step, so every task contributes at least one step row.
+          if (steps.length === 0) {
+            steps.push(implicitTaskStep(record, taskMeasures));
+          }
+          record.steps = steps;
+          doneCount += 1;
+          if (record.status !== 'success') errorCount += 1;
+        }
       }
 
-      records.push(record);
-      pending.push(record);
-      options.onResult?.(record);
-      if (pending.length >= batchSize) await flush(false);
-    });
+      if (!skipped) {
+        records.push(record);
+        pending.push(record);
+        options.onResult?.(record);
+        if (pending.length >= batchSize) await flush(false);
+      }
+    }, options.stopRequested);
 
     await flush(true);
     if (flushFailed || pending.length > 0) {

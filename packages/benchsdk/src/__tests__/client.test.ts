@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { gzipSync, gunzipSync } from 'node:zlib';
 import { createBenchmarkClient } from '../client';
-import { BenchmarkApiError, BenchmarkReporter, createSystemMetricsCollector } from '../index';
+import { BenchmarkApiError, BenchmarkReporter, BenchmarkTaskSkippedError, createSystemMetricsCollector } from '../index';
 import type { BenchmarkAssignment } from '../index';
 
 let originalApiKey: string | undefined;
@@ -243,6 +243,46 @@ describe('createBenchmarkClient', () => {
     const completeCall = seen.find((entry) => entry.url.includes('/complete'));
     expect(completeCall).toBeDefined();
     expect(completeCall).toMatchObject({ method: 'POST' });
+  });
+
+  it('drops tasks that throw BenchmarkTaskSkippedError instead of recording them', async () => {
+    const seen: Array<{ url: string; body: unknown }> = [];
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const body = init?.body && url.startsWith('https://platform.test/') ? JSON.parse(String(init.body)) : init?.body;
+      seen.push({ url, body });
+
+      if (url.endsWith('/participants/e2b/workers/claim')) {
+        return jsonResponse({ assignment: assignment() });
+      }
+      if (url.endsWith('/events')) {
+        return jsonResponse({ eventBatch: { id: 'batch_1' }, queueMessageId: 'msg_1' }, 202);
+      }
+      if (url.endsWith('/complete')) {
+        return jsonResponse({ worker: { id: 'worker_1' }, attempt: { id: 'attempt_1' } });
+      }
+      throw new Error(`unexpected request: ${url}`);
+    });
+
+    const client = createBenchmarkClient({ baseUrl: 'https://platform.test/api/v1', fetch: fetchMock as typeof fetch });
+    const result = await client.runWorker({
+      benchmarkSlug: 'scale',
+      runId: '00000000-0000-4000-8000-000000000001',
+      participantSlug: 'e2b',
+      task: async ({ taskIndex }) => {
+        if (taskIndex !== 10) throw new BenchmarkTaskSkippedError('deadline passed during stagger wait');
+        return { ok: true };
+      },
+    });
+
+    // Only task 10 produced a record; 11 and 12 were abandoned, not errored.
+    expect(result.records).toHaveLength(1);
+    expect(result.records[0].taskIndex).toBe(10);
+    expect(result.records[0].status).toBe('success');
+    const eventCalls = seen.filter((entry) => entry.url.endsWith('/events'));
+    expect((eventCalls[eventCalls.length - 1].body as any).records).toHaveLength(1);
+    // The worker still completes cleanly — skips are not failures.
+    expect(seen.some((entry) => entry.url.endsWith('/complete'))).toBe(true);
   });
 
   it('uses 1000 task results as the default worker batch size', async () => {

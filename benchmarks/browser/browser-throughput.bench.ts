@@ -144,7 +144,41 @@ async function timeAction<T>(
   }
 }
 
+const DIAGNOSTICS_TIMEOUT_MS = 3_000;
+
+/** What the page actually is, bounded so a stalled CDP session cannot hang the loop. */
+async function pageDiagnostics(page: Page, status: number | null): Promise<string> {
+  const read = (async () => {
+    const title = await page.title().catch(() => '?');
+    const bytes = await page.content().then((html) => html.length).catch(() => -1);
+    return `status=${status ?? '?'} url=${page.url()} title=${JSON.stringify(title.slice(0, 120))} htmlChars=${bytes}`;
+  })();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<string>((resolve) => {
+    timer = setTimeout(() => resolve(`status=${status ?? '?'} url=${page.url()} diagnostics timed out`), DIAGNOSTICS_TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([read, deadline]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Action types by 1-based index — the fixed 10-action loop order. */
+const ACTION_TYPE_BY_INDEX: ActionResult['type'][] = [
+  'navigate', 'waitForSelector', 'screenshot', 'textContent', 'click',
+  'waitForSelector', 'screenshot', 'textContent', 'goBack', 'waitForSelector',
+];
+
+/** Push zero-duration failure entries for the given action indexes. */
+function pushSkippedActions(results: ActionResult[], baseIdx: number, indexes: number[], reason: string): void {
+  for (const idx of indexes) {
+    results.push({ index: baseIdx + idx, type: ACTION_TYPE_BY_INDEX[idx - 1], durationMs: 0, success: false, error: `skipped: ${reason}` });
+  }
+}
+
 async function runActionLoop(page: Page, results: ActionResult[], navigateUrl: string): Promise<void> {
+  let navStatus: number | null = null;
   for (let loop = 0; loop < LOOPS_PER_SESSION; loop++) {
     const baseIdx = loop * ACTIONS_PER_LOOP;
 
@@ -153,13 +187,36 @@ async function runActionLoop(page: Page, results: ActionResult[], navigateUrl: s
       const r = await timeAction(() =>
         page.goto(navigateUrl, { waitUntil: 'load' }) as Promise<unknown>,
       );
-      results.push({ index: baseIdx + 1, type: 'navigate', durationMs: r.durationMs, success: r.success, error: r.error });
+      navStatus = (r.value as { status?: () => number } | null | undefined)?.status?.() ?? null;
+      const navBlocked = !r.success || (navStatus !== null && navStatus >= 400);
+      // An error page (rate limit, block page, dead target) has no article
+      // content — letting the loop run burns ~70s of selector timeouts per
+      // page and can push a leg over the job timeout. Record the navigate as
+      // failed and skip the rest, same as the click-fail path below.
+      results.push({
+        index: baseIdx + 1,
+        type: 'navigate',
+        durationMs: r.durationMs,
+        success: r.success && !navBlocked,
+        error: navBlocked && r.success ? `HTTP ${navStatus}` : r.error,
+      });
+      if (navBlocked) {
+        const reason = !r.success ? `navigate failed: ${r.error}` : `navigate returned HTTP ${navStatus}`;
+        pushSkippedActions(results, baseIdx, [2, 3, 4, 5, 6, 7, 8, 9, 10], reason);
+        continue;
+      }
     }
 
     // 2. Wait for #firstHeading
     {
       const r = await timeAction(() => page.waitForSelector(FIRST_HEADING));
-      results.push({ index: baseIdx + 2, type: 'waitForSelector', durationMs: r.durationMs, success: r.success, error: r.error });
+      // Record what the browser actually landed on, so a missing heading can be
+      // told apart from a block page, a redirect, or an empty document.
+      // The diagnostic read counts toward this action so taskMs stays wall-clock.
+      const diagStart = performance.now();
+      const error = r.success ? r.error : `${r.error} [${await pageDiagnostics(page, navStatus)}]`;
+      const durationMs = r.durationMs + (r.success ? 0 : performance.now() - diagStart);
+      results.push({ index: baseIdx + 2, type: 'waitForSelector', durationMs, success: r.success, error });
     }
 
     // 3. Screenshot
@@ -201,9 +258,7 @@ async function runActionLoop(page: Page, results: ActionResult[], navigateUrl: s
     // Without this, goBack navigates to a blank page and the final
     // waitForSelector times out for 30s, inflating task time.
     if (!clickSucceeded) {
-      for (const idx of [6, 7, 8, 9, 10]) {
-        results.push({ index: baseIdx + idx, type: idx <= 8 ? (idx === 6 || idx === 10 ? 'waitForSelector' : idx === 7 ? 'screenshot' : 'textContent') : 'goBack', durationMs: 0, success: false, error: 'skipped: click failed' });
-      }
+      pushSkippedActions(results, baseIdx, [6, 7, 8, 9, 10], 'click failed');
       continue;
     }
 

@@ -6,7 +6,7 @@ import { requestDeviceCode, pollDeviceToken, AuthError } from './auth.js';
 import { loadCredentials, saveCredentials, clearCredentials, loadConfig } from './config.js';
 import { createApiClient, getMe, listOrganizations, setActiveOrganization } from './client.js';
 import { printData, type OutputOptions } from './output.js';
-import { getPlatformBaseUrl } from './platform.js';
+import { getApiBaseUrl, getAuthBaseUrl, getPlatformBaseUrl } from './platform.js';
 
 let packageVersion: string | undefined;
 
@@ -224,8 +224,15 @@ Subcommands:
 
 async function printErrorAndExit(err: unknown, verbose = false): Promise<never> {
   if (err instanceof BenchmarkApiError) {
+    const insufficientScope =
+      err.message.includes('insufficient_scope') || err.body?.includes('insufficient_scope');
     console.error(`API error: ${err.message}`);
     if (err.body) console.error(err.body);
+    if (insufficientScope) {
+      console.error(
+        'Your login does not cover this call — run `bench auth login` or `compute login` to sign in again.',
+      );
+    }
   } else if (err instanceof AuthError) {
     console.error(err.message);
     if (verbose && err.stack) console.error(err.stack);
@@ -239,26 +246,59 @@ async function printErrorAndExit(err: unknown, verbose = false): Promise<never> 
   process.exit(1);
 }
 
-async function handleAuthLogin(overrides: { baseUrl?: string; verbose?: boolean }): Promise<void> {
-  const baseUrl = getPlatformBaseUrl(overrides.baseUrl);
-  const authBaseUrl = `${baseUrl}/api/auth`;
-  const clientId = 'benchsdk-cli';
+// Every first-party CLI (`compute`, `bench`) logs in as the same OAuth
+// client with the same scope set, so one login in ~/.benchsdk/credentials.json
+// covers all of them. Keep this list in sync with
+// FIRST_PARTY_CLIENT_SCOPES['benchsdk-cli'] in
+// benchmarks-platform lib/oauth/first-party.ts — a scope the client isn't
+// registered for fails the device request with `invalid_scope`.
+export const BENCH_OAUTH_CLIENT_ID = 'benchsdk-cli';
+export const BENCH_OAUTH_SCOPE =
+  'actions:read actions:write benchmarks:read benchmarks:write billing:read ' +
+  'market:read market:write org:read org:admin sandboxes:read sandboxes:write ' +
+  'vault:read vault:write offline_access';
+
+export interface OAuthLoginOptions {
+  baseUrl?: string;
+  verbose?: boolean;
+  /** Defaults to the shared `benchsdk-cli` client every first-party CLI uses. */
+  clientId?: string;
+  /** Defaults to {@link BENCH_OAUTH_SCOPE} (the full first-party set). */
+  scope?: string;
+}
+
+/** Interactive RFC 8628 device login; writes ~/.benchsdk/credentials.json. */
+export async function oauthLogin(options: OAuthLoginOptions = {}): Promise<void> {
+  const clientId = options.clientId ?? BENCH_OAUTH_CLIENT_ID;
+  const scope = options.scope ?? BENCH_OAUTH_SCOPE;
+  const baseUrl = getPlatformBaseUrl(options.baseUrl);
+  // getAuthBaseUrl/getApiBaseUrl tolerate a base URL that already ends in
+  // /api/v1; appending the suffixes by hand would double them.
+  const authBaseUrl = getAuthBaseUrl(options.baseUrl);
+  const resource = getApiBaseUrl(options.baseUrl);
   const { device_code, user_code, verification_uri_complete, verification_uri, expires_in, interval } =
-    await requestDeviceCode(authBaseUrl, clientId);
+    await requestDeviceCode(authBaseUrl, clientId, resource, scope);
 
   console.log(`To sign in, visit:`);
   console.log(verification_uri_complete ?? verification_uri);
   console.log(`User code: ${user_code}`);
 
-  const response = await pollDeviceToken(authBaseUrl, device_code, interval, expires_in, clientId);
+  const response = await pollDeviceToken(
+    authBaseUrl,
+    device_code,
+    interval,
+    expires_in,
+    clientId,
+    resource,
+  );
   const now = Date.now();
   await saveCredentials({
     baseUrl,
     token: response.access_token,
     refreshToken: response.refresh_token,
     tokenExpiresAt: now + response.expires_in * 1000,
-    refreshExpiresAt: now + response.refresh_expires_in * 1000,
     kind: 'oauth',
+    clientId,
   });
 
   console.log('Authenticated.');
@@ -280,11 +320,12 @@ async function handleAuthLogin(overrides: { baseUrl?: string; verbose?: boolean 
         orgSlug: org.slug,
         orgId: org.id,
         kind: 'oauth',
+        clientId,
       });
       console.log(`Set active organization to ${org.slug}`);
     }
   } catch (err) {
-    if (overrides.verbose) {
+    if (options.verbose) {
       console.error('Organization auto-select failed:', err instanceof Error ? err.message : err);
     }
     // organization auto-select is best-effort
@@ -562,7 +603,7 @@ export async function run(argv: string[]): Promise<void> {
       case 'auth': {
         const [sub, ...subRest] = rest;
         if (sub === 'login') {
-          await handleAuthLogin({ baseUrl: overrides.baseUrl, verbose: values.verbose });
+          await oauthLogin({ baseUrl: overrides.baseUrl, verbose: values.verbose });
         } else if (sub === 'logout') {
           await handleAuthLogout();
         } else if (sub === 'status') {

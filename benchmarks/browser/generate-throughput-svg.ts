@@ -36,6 +36,11 @@ function generateSVG(results: ThroughputBenchmarkResult[], timestamp: string): s
   }
 
   const sorted = sortThroughputByCompositeScore(results).filter(r => !r.skipped);
+  const skipped = results.filter(r => r.skipped);
+  const escapeXml = (s: string) => s.replace(/[<>&'"]/g, c => `&#${c.charCodeAt(0)};`);
+  const skippedNote = skipped.length > 0
+    ? `Not shown: ${skipped.map(r => escapeXml(formatProviderName(r.provider))).join(', ')} — ${escapeXml([...new Set(skipped.map(r => r.skipReason ?? 'skipped'))].join('; '))}`
+    : '';
 
   const rowHeight = 44;
   const headerHeight = 110;
@@ -44,7 +49,7 @@ function generateSVG(results: ThroughputBenchmarkResult[], timestamp: string): s
   const width = 1280;
   const tableTop = headerHeight + padding;
   const tableBottom = tableTop + tableHeaderHeight + (sorted.length * rowHeight);
-  const footnoteHeight = 20;
+  const footnoteHeight = 20 + (skippedNote ? 16 : 0);
 
   const height = tableBottom + padding + 30 + footnoteHeight;
 
@@ -189,8 +194,8 @@ function generateSVG(results: ThroughputBenchmarkResult[], timestamp: string): s
   <text class="timestamp" x="${width - padding}" y="${height - 28}" text-anchor="end">Last updated: ${date}</text>
 
   <!-- Footnote -->
-  <text class="timestamp" x="${padding}" y="${height - 14}">Each session runs ${ACTIONS_PER_SESSION} sequential actions (navigate, wait, screenshot, textContent, click, goBack) on Wikipedia. Higher APS is better.</text>
-
+  <text class="timestamp" x="${padding}" y="${skippedNote ? height - 30 : height - 14}">Each session runs ${ACTIONS_PER_SESSION} sequential actions (navigate, wait, screenshot, textContent, click, goBack) on Wikipedia. Higher APS is better.</text>
+${skippedNote ? `  <text class="timestamp" x="${padding}" y="${height - 14}">${skippedNote}</text>\n` : ''}
 </svg>`;
 
   return svg;

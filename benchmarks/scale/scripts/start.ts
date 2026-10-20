@@ -45,6 +45,7 @@ import 'dotenv/config';
 import { execSync } from 'node:child_process';
 import { fetchNamespace, getAndValidateCredentials } from '@computesdk/namespace';
 import { createBenchmarkClient } from '@benchsdk/client';
+import { getProvider } from '../providers.js';
 
 // The platform benchmark these runs report under. One logical burst = one
 // platform run; each VM claims one planned worker for the provider participant.
@@ -196,6 +197,14 @@ function parseArgs(): Args {
     else { console.error(`unknown arg: ${a}\n${usage()}`); process.exit(2); }
   }
   if (!out.provider) { console.error(`--provider is required\n${usage()}`); process.exit(2); }
+  // Fail fast on removed/unknown providers — otherwise every VM launches and
+  // only then does the coordinator's getProvider reject the name.
+  try {
+    getProvider(out.provider);
+  } catch (err) {
+    console.error(errMsg(err));
+    process.exit(2);
+  }
   if (!Number.isFinite(out.total) || (out.total as number) <= 0) {
     console.error(`--total must be a positive integer\n${usage()}`); process.exit(2);
   }

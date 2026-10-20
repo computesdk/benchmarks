@@ -59,7 +59,7 @@ export type {
   BenchmarkSystemMetricsSample,
 } from '@benchsdk/worker';
 
-export { BenchmarkApiError, createBenchmarkClient } from '@benchsdk/api';
+export { BenchmarkApiError, BenchmarkTaskSkippedError, createBenchmarkClient } from '@benchsdk/api';
 export type { BenchmarkClient, BenchmarkClientConfig } from '@benchsdk/api';
 export type {
   BenchmarkArtifactDownload,

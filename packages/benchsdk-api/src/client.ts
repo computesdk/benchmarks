@@ -65,6 +65,18 @@ export class BenchmarkApiError extends Error {
   }
 }
 
+/**
+ * Thrown by a worker task to abandon it without recording a result — e.g. when a
+ * run-level deadline passed while the task was still waiting on a stagger delay.
+ * The worker drops the record entirely: the task counts as never launched.
+ */
+export class BenchmarkTaskSkippedError extends Error {
+  constructor(message = 'Task skipped') {
+    super(message);
+    this.name = 'BenchmarkTaskSkippedError';
+  }
+}
+
 function trimTrailingSlash(value: string): string {
   return value.replace(/\/+$/, '');
 }

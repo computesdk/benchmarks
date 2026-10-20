@@ -116,13 +116,22 @@ describe('auth device flow', () => {
     });
     globalThis.fetch = fetchSpy;
 
-    const result = await requestDeviceCode('http://localhost:3000/api/auth', 'benchsdk-cli');
+    const result = await requestDeviceCode(
+      'http://localhost:3000/api/auth',
+      'benchsdk-cli',
+      'http://localhost:3000/api/v1',
+      'benchmarks:read org:read',
+    );
     expect(result.device_code).toBe('dc');
     expect(result.user_code).toBe('UC-1234');
     expect(fetchSpy).toHaveBeenCalledWith('http://localhost:3000/api/auth/device/code', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ client_id: 'benchsdk-cli' }),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: 'benchsdk-cli',
+        resource: 'http://localhost:3000/api/v1',
+        scope: 'benchmarks:read org:read',
+      }),
     });
   });
 });

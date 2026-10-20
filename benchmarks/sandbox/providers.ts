@@ -4,7 +4,7 @@ import { beam } from '@computesdk/beam';
 import { blaxel } from '@computesdk/blaxel';
 import { buddy } from '@computesdk/buddy';
 import { codesandbox } from '@computesdk/codesandbox';
-import { cloudRun } from '@computesdk/cloud-run';
+import { cloudRun } from '@computesdk/gcp/cloud-run';
 // import { collimate } from '@computesdk/collimate';
 import { cloudflare } from '@computesdk/cloudflare';
 import { createosSandbox } from '@computesdk/createos-sandbox';
@@ -24,11 +24,12 @@ import { miosa } from '@computesdk/miosa';
 import { mosaic } from '@computesdk/mosaic';
 import { namespace } from '@computesdk/namespace';
 import { northflank } from '@computesdk/northflank';
+import { novita } from '@computesdk/novita';
 import { opencomputer } from '@computesdk/opencomputer';
 // import { quilt } from '@computesdk/quilt';
 import { railway } from '@computesdk/railway';
 import { runCloud } from '@computesdk/run-cloud';
-import { runloop } from '@computesdk/runloop';
+// import { runloop } from '@computesdk/runloop';
 import { sandbox0 } from '@computesdk/sandbox0';
 import { sail } from '@computesdk/sail';
 import { sprites } from '@computesdk/sprites';
@@ -195,6 +196,9 @@ export const providers: ProviderConfig[] = [
     createCompute: () => mosaic({
       baseUrl: process.env.MOSAIC_API_URL!,
       apiKey: process.env.MOSAIC_API_TOKEN!,
+      // The burst benchmark starts 100 lifecycles at once; the adapter's
+      // default cap of 32 in-flight requests queues the rest client-side.
+      maxConcurrentRequests: 100,
     }),
     sandboxOptions: { templateId: 'node-20' },
   },
@@ -219,6 +223,11 @@ export const providers: ProviderConfig[] = [
     }),
   },
   {
+    name: 'novita',
+    requiredEnvVars: ['NOVITA_API_KEY'],
+    createCompute: () => novita({ apiKey: process.env.NOVITA_API_KEY! }),
+  },
+  {
     name: 'opencomputer',
     requiredEnvVars: ['OPENCOMPUTER_API_KEY', 'OPENCOMPUTER_API_URL'],
     createCompute: () => opencomputer({
@@ -237,11 +246,11 @@ export const providers: ProviderConfig[] = [
     requiredEnvVars: ['RAILWAY_API_TOKEN', 'RAILWAY_ENVIRONMENT_ID'],
     createCompute: () => railway({ token: process.env.RAILWAY_API_TOKEN!, environmentId: process.env.RAILWAY_ENVIRONMENT_ID! }),
   },
-  {
-    name: 'runloop',
-    requiredEnvVars: ['RUNLOOP_API_KEY'],
-    createCompute: () => runloop({ apiKey: process.env.RUNLOOP_API_KEY! }),
-  },
+  // {
+  //   name: 'runloop',
+  //   requiredEnvVars: ['RUNLOOP_API_KEY'],
+  //   createCompute: () => runloop({ apiKey: process.env.RUNLOOP_API_KEY! }),
+  // },
   {
     name: 'run-cloud',
     requiredEnvVars: ['RUN_CLOUD_API_KEY'],

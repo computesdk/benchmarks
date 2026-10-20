@@ -13,6 +13,7 @@
  *   iterations       total tasks to run (default 1)
  *   concurrency      max tasks in flight at once — 1 = sequential, N = burst (default 1)
  *   staggerDelayMs   delay each task's start by taskIndex * staggerDelayMs (default 0)
+ *   deadlineMs       wall-clock budget; on expiry the run drains and finishes, not fails (default none)
  *
  * Common shapes:
  *   sequential  { iterations: N, concurrency: 1 }
@@ -190,6 +191,8 @@ export interface ParticipantRecords {
 /** The orchestration knobs a run actually used, after CLI overrides. */
 export interface ResolvedRunConfig {
   iterations: number;
+  /** Wall-clock budget for task execution in ms, from `deadlineMs`/`--deadline-ms`. */
+  deadlineMs?: number;
   /**
    * Iterations each phase runs, when the benchmark declares `phases` and
    * `--iterations` overrode their configured counts. A phase is one arm of a
@@ -213,6 +216,8 @@ export interface BenchmarkRunOutcome {
   dashboardUrl: string;
   participants: ParticipantRecords[];
   config: ResolvedRunConfig;
+  /** True when the run's `deadlineMs` expired and unstarted tasks were skipped. */
+  stoppedEarly?: boolean;
 }
 
 /**
@@ -252,6 +257,14 @@ export interface BenchmarkConfig<T extends BaseParticipant = BaseParticipant> {
   concurrency?: number;
   /** Delay each task's start by `taskIndex * staggerDelayMs`. Default: 0. */
   staggerDelayMs?: number;
+  /**
+   * Wall-clock budget for task execution in ms (e.g. 60 * 60_000 for an hour),
+   * overridable with `--deadline-ms`. When it expires the run stops launching
+   * new tasks, lets in-flight ones finish, and still flushes, reports, and
+   * exits normally — a deadline is a planned end, not a failure. The outcome's
+   * `stoppedEarly` flags the truncation. Omit for no deadline.
+   */
+  deadlineMs?: number;
   /**
    * Task ordering across participants. Default: 'participant' (run each
    * participant's tasks to completion, then the next). 'round' takes turns:
@@ -337,6 +350,14 @@ export interface BenchmarkOverviewDisplay {
   defaultLayout?: 'ranking' | 'cards' | 'chart' | 'leaderboard';
 }
 
+/** Display defaults for the run page's per-step section. */
+export interface BenchmarkByStepDisplay {
+  /** Default layout for per-step results. 'matrix' renders a capability
+   * grid for benchmarks whose steps are boolean pass/fail probes, and makes
+   * the platform derive a `supportedPct` metric from step aggregates. */
+  defaultLayout?: 'table' | 'bars' | 'time' | 'matrix';
+}
+
 /**
  * Optional platform display manifest. A `*.bench.ts` file owns not only how the
  * benchmark runs, but how it should be rendered, without a platform code change.
@@ -348,6 +369,8 @@ export interface BenchmarkDisplayConfig {
   steps?: BenchmarkStepDisplay[];
   /** Overview defaults. */
   overview?: BenchmarkOverviewDisplay;
+  /** Per-step results defaults. */
+  byStep?: BenchmarkByStepDisplay;
 }
 
 export interface BenchmarkConfigErrorItem {
@@ -468,7 +491,7 @@ function validateBenchmarkDisplayConfig(display: BenchmarkDisplayConfig): void {
   if (typeof display !== 'object' || display === null || Array.isArray(display)) {
     throw new Error('display must be an object');
   }
-  assertOnlyAllowedKeys(display as unknown as Record<string, unknown>, ['metrics', 'steps', 'overview'], 'display');
+  assertOnlyAllowedKeys(display as unknown as Record<string, unknown>, ['metrics', 'steps', 'overview', 'byStep'], 'display');
   const displayMetricKeys = new Set<string>();
   if (display.metrics !== undefined) {
     if (!Array.isArray(display.metrics)) {
@@ -535,12 +558,24 @@ function validateBenchmarkDisplayConfig(display: BenchmarkDisplayConfig): void {
       const validDefaultMetrics = new Set(displayMetricKeys);
       validDefaultMetrics.add('compositeScore');
       validDefaultMetrics.add('task');
+      // Platform-derived metric: share of probed steps that passed on every
+      // attempt (capability-matrix benchmarks).
+      validDefaultMetrics.add('supportedPct');
       if (display.metrics !== undefined && !validDefaultMetrics.has(metric)) {
         throw new Error(`display.overview.defaultMetric '${metric}' is not declared in display.metrics and is not a known default (compositeScore, task)`);
       }
     }
     if (defaultLayout !== undefined && !['ranking', 'cards', 'chart', 'leaderboard'].includes(defaultLayout)) {
       throw new Error("display.overview.defaultLayout must be 'ranking', 'cards', 'chart', or 'leaderboard'");
+    }
+  }
+  if (display.byStep !== undefined) {
+    if (typeof display.byStep !== 'object' || display.byStep === null || Array.isArray(display.byStep)) {
+      throw new Error('display.byStep must be an object');
+    }
+    assertOnlyAllowedKeys(display.byStep as unknown as Record<string, unknown>, ['defaultLayout'], 'display.byStep');
+    if (display.byStep.defaultLayout !== undefined && !['table', 'bars', 'time', 'matrix'].includes(display.byStep.defaultLayout)) {
+      throw new Error("display.byStep.defaultLayout must be 'table', 'bars', 'time', or 'matrix'");
     }
   }
 }
@@ -670,6 +705,9 @@ export function validateBenchmarkConfig<T extends BaseParticipant = BaseParticip
   }
   if (config.staggerDelayMs !== undefined && (!Number.isFinite(config.staggerDelayMs) || config.staggerDelayMs < 0)) {
     issues.push({ field: 'staggerDelayMs', message: `must be a number >= 0 (got ${config.staggerDelayMs})` });
+  }
+  if (config.deadlineMs !== undefined && (!Number.isFinite(config.deadlineMs) || config.deadlineMs < 1)) {
+    issues.push({ field: 'deadlineMs', message: `must be a number >= 1 (got ${config.deadlineMs})` });
   }
   if (config.groupBy !== undefined && config.groupBy !== 'participant' && config.groupBy !== 'round') {
     issues.push({ field: 'groupBy', message: `must be 'participant' or 'round' (got ${config.groupBy})` });

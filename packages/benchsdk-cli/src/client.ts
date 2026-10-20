@@ -2,6 +2,7 @@ import { createBenchmarkClient, type BenchmarkClient, BenchmarkApiError } from '
 import {
   loadCredentials,
   saveCredentials,
+  clearCredentials,
   loadConfig,
   mergeConfig,
   type Credentials,
@@ -38,16 +39,29 @@ function computeTokenExpiry(expiresInSeconds: number): number {
   return Date.now() + expiresInSeconds * 1000;
 }
 
+function isLegacyCredentials(credentials: Credentials): boolean {
+  if (!credentials.token && !credentials.refreshToken) return false;
+  if (credentials.clientId) return false;
+  return (
+    credentials.refreshToken?.startsWith('bcs_') === true ||
+    (credentials.token !== undefined && credentials.kind === undefined)
+  );
+}
+
 function updateCredentialsWithTokenResponse(
   credentials: Credentials,
-  response: { access_token: string; refresh_token: string; expires_in: number; refresh_expires_in: number },
+  response: { access_token: string; refresh_token?: string; expires_in: number },
 ): Credentials {
   return {
     ...credentials,
     token: response.access_token,
-    refreshToken: response.refresh_token,
+    // The OAuth provider rotates the refresh token on every refresh; when the
+    // response omits one, keep the stored value.
+    refreshToken: response.refresh_token ?? credentials.refreshToken,
     tokenExpiresAt: computeTokenExpiry(response.expires_in),
-    refreshExpiresAt: computeTokenExpiry(response.refresh_expires_in),
+    // OAuth responses don't carry a refresh-token expiry — leave it unset and
+    // let a 400 on the refresh grant be the signal.
+    refreshExpiresAt: undefined,
   };
 }
 
@@ -55,7 +69,10 @@ async function refreshIfNeeded(auth: CliAuth, credentials: Credentials): Promise
   if (!auth.token || auth.apiKey) return credentials;
 
   const now = Date.now();
-  const expiry = auth.tokenExpiresAt ?? 0;
+  // Tokens without a recorded expiry (e.g. BENCHMARKS_PLATFORM_TOKEN) can't
+  // be judged locally — let the API answer 401 if it's dead.
+  if (auth.tokenExpiresAt === undefined) return credentials;
+  const expiry = auth.tokenExpiresAt;
   const refreshExpiry = auth.refreshExpiresAt ?? 0;
 
   // Refresh when the access token expires within 5 minutes or has already expired,
@@ -64,14 +81,20 @@ async function refreshIfNeeded(auth: CliAuth, credentials: Credentials): Promise
     return credentials;
   }
 
-  if (!auth.refreshToken || now >= refreshExpiry) {
+  if (!auth.refreshToken || (refreshExpiry > 0 && now >= refreshExpiry)) {
     throw new AuthError(
       'Your session has expired. Run `bench auth login` or set BENCHMARKS_PLATFORM_API_KEY.',
     );
   }
 
+  // `refreshExpiresAt` unknown (OAuth doesn't report it): still usable.
+
   try {
-    const response = await refreshAccessToken(auth.authBaseUrl, auth.refreshToken);
+    const response = await refreshAccessToken(
+      auth.authBaseUrl,
+      auth.refreshToken,
+      credentials.clientId ?? 'benchsdk-cli',
+    );
     const updated = updateCredentialsWithTokenResponse(credentials, response);
     await saveCredentials(updated);
     return updated;
@@ -135,6 +158,15 @@ export async function resolveAuth(override?: {
     orgSlug = mergedConfig.org;
     orgId = undefined;
   } else {
+    if (isLegacyCredentials(credentials)) {
+      // Pre-OAuth entries (HS256 access tokens / `bcs_` refresh tokens) can't
+      // be redeemed against the new token endpoint — drop them and ask for a
+      // fresh login.
+      await clearCredentials();
+      throw new AuthError(
+        'Your saved login uses the retired CLI token format. Run `bench auth login` (or `compute login`) to sign in again.',
+      );
+    }
     token = credentials.token;
     apiKey = credentials.apiKey;
     refreshToken = credentials.refreshToken;
@@ -163,14 +195,20 @@ export async function resolveAuth(override?: {
     format,
   };
 
-  if (auth.token && auth.refreshToken && !auth.apiKey) {
+  // Check expiry on the stored OAuth token: without a refresh token an
+  // expired access token is just dead — surface the expired-session error
+  // instead of sending it on every call. Skip when the bearer came from
+  // somewhere else (env var) — it isn't in the file and has no expiry data.
+  if (auth.token && !auth.apiKey && auth.token === credentials.token) {
     const updated = await refreshIfNeeded(auth, credentials);
+    // `updated` is the credentials file — an env-supplied token isn't in it,
+    // so fall back to the resolved values when it has nothing to offer.
     auth = {
       ...auth,
-      token: updated.token,
-      refreshToken: updated.refreshToken,
-      tokenExpiresAt: updated.tokenExpiresAt,
-      refreshExpiresAt: updated.refreshExpiresAt,
+      token: updated.token ?? auth.token,
+      refreshToken: updated.refreshToken ?? auth.refreshToken,
+      tokenExpiresAt: updated.tokenExpiresAt ?? auth.tokenExpiresAt,
+      refreshExpiresAt: updated.refreshExpiresAt ?? auth.refreshExpiresAt,
     };
   }
 

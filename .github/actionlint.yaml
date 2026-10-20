@@ -2,3 +2,4 @@ self-hosted-runner:
   labels:
     - namespace-profile-default
     - namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
+    - computesdk:computesdk:aws-us-east-2

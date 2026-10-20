@@ -141,13 +141,17 @@ jobs:
           # All matrix jobs for this workflow run share a single platform run. The
           # attempt number is included so re-runs do not rejoin completed runs.
           RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          # Cap the benchmark process at 60 minutes so the job can still upload
-          # partial results and complete instead of being cancelled by GitHub.
-          timeout 60m npx tsx packages/benchsdk-runner/dist/bin.js run benchmarks/storage/snapshot-fork.bench.ts \
+          # The benchmark gets a 60-minute wall-clock budget via the runner's own
+          # deadline: on expiry it stops launching iterations, drains in-flight
+          # work, and submits partial results, so the job completes instead of
+          # failing on a timeout(1) kill. `timeout 75m` stays as a hard backstop
+          # (under the job's 90-minute cap) for a drain that itself hangs.
+          timeout 75m npx tsx packages/benchsdk-runner/dist/bin.js run benchmarks/storage/snapshot-fork.bench.ts \
             --provider ${{ matrix.provider }} \
             --dataset ${{ github.event.inputs.dataset || 'small' }} \
             --iterations ${{ (github.event_name == 'schedule' && '100') || github.event.inputs.iterations || (github.event_name == 'push' && '1') || '3' }} \
             --run-key "$RUN_KEY" \
+            --deadline-ms 3600000 \
             ${{ (github.event_name == 'push' || github.event.inputs.dry_run == 'true') && '--no-ingest' || '' }}
       - name: Upload results
         if: always()

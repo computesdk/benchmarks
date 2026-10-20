@@ -129,6 +129,14 @@ describe('parseCliArgs', () => {
     expect(() => parseCliArgs(['--stagger-delay-ms', '-1'])).toThrow('--stagger-delay-ms');
   });
 
+  it('parses --deadline-ms and rejects non-positive values', () => {
+    expect(parseCliArgs(['--deadline-ms', '3600000'])).toEqual({ deadlineMs: 3600000 });
+    expect(parseCliArgs(['--deadline-ms=250'])).toEqual({ deadlineMs: 250 });
+    expect(() => parseCliArgs(['--deadline-ms', '0'])).toThrow('--deadline-ms');
+    expect(() => parseCliArgs(['--deadline-ms', '-5'])).toThrow('--deadline-ms');
+    expect(() => parseCliArgs(['--deadline-ms', 'abc'])).toThrow('--deadline-ms');
+  });
+
   it('returns empty object for no args', () => {
     expect(parseCliArgs([])).toEqual({});
   });
@@ -171,6 +179,12 @@ describe('mergeConfig', () => {
       groupBy: 'round',
       providers: ['e2b'],
     });
+  });
+
+  it('resolves deadlineMs from config or --deadline-ms, CLI winning', () => {
+    expect(mergeConfig(config, {}).deadlineMs).toBeUndefined();
+    expect(mergeConfig({ ...config, deadlineMs: 60_000 }, {}).deadlineMs).toBe(60_000);
+    expect(mergeConfig({ ...config, deadlineMs: 60_000 }, { deadlineMs: 30_000 }).deadlineMs).toBe(30_000);
   });
 
   it('falls back to knob defaults of 1/1/0/participant when neither config nor CLI set them', () => {
@@ -518,6 +532,43 @@ describe('runBenchmark', () => {
     expect(calls.createRun[0][1]).toMatchObject({ totalTasks: 5, participants: ['e2b'] });
     expect(calls.runWorker).toHaveLength(1);
     expect(calls.runWorker[0].concurrency).toBe(5);
+  });
+
+  it('forwards a stopRequested predicate to the platform worker when deadlineMs is set', async () => {
+    const config: BenchmarkConfig<typeof participants[number]> = {
+      benchmarkSlug: 's',
+      benchmarkName: 'n',
+      iterations: 1,
+      deadlineMs: 1,
+      participants: [participants[0]],
+    };
+
+    await runBenchmark(
+      config,
+      defineTask(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        return {};
+      }),
+      [],
+    );
+
+    expect(calls.runWorker).toHaveLength(1);
+    expect(calls.runWorker[0].stopRequested).toBeInstanceOf(Function);
+    // The mock ignores the predicate, but by now the 1ms deadline has passed.
+    expect(calls.runWorker[0].stopRequested!()).toBe(true);
+  });
+
+  it('omits stopRequested from the platform worker when no deadline is set', async () => {
+    const config: BenchmarkConfig<typeof participants[number]> = {
+      benchmarkSlug: 's',
+      benchmarkName: 'n',
+      iterations: 1,
+      participants: [participants[0]],
+    };
+
+    await runBenchmark(config, defineTask(async () => ({})), []);
+
+    expect(calls.runWorker[0].stopRequested!()).toBe(false);
   });
 
   it('reports under --slug/--name instead of the config slug and name', async () => {
@@ -1304,6 +1355,112 @@ describe('runBenchmark', () => {
       expect(fakeClient.submitRunSummary).not.toHaveBeenCalled();
       expect(outcome.runId).toBe('no-ingest');
       expect(outcome.participants[0].records).toHaveLength(2);
+    });
+
+    it('deadlineMs stops launching tasks and finishes with partial results, not an error', async () => {
+      const task = vi.fn(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        return { data: { ok: true } };
+      });
+      const config: BenchmarkConfig<typeof participants[number]> = {
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        iterations: 5,
+        concurrency: 1,
+        deadlineMs: 10,
+        participants: [participants[0]],
+      };
+
+      const outcome = await runBenchmark(config, defineTask(task), ['--no-ingest']);
+
+      // The 10ms deadline lets the first ~30ms task finish, then blocks the rest.
+      expect(outcome.participants[0].records).toHaveLength(1);
+      expect(outcome.participants[0].records[0].status).toBe('success');
+      expect(outcome.stoppedEarly).toBe(true);
+    });
+
+    it('deadlineMs via --deadline-ms flag stops round-mode runs too', async () => {
+      const task = vi.fn(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        return { data: { ok: true } };
+      });
+      const config: BenchmarkConfig<typeof participants[number]> = {
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        iterations: 5,
+        groupBy: 'round',
+        participants: [participants[0]],
+      };
+
+      const outcome = await runBenchmark(config, defineTask(task), ['--no-ingest', '--deadline-ms', '10']);
+
+      expect(outcome.participants[0].records).toHaveLength(1);
+      expect(outcome.stoppedEarly).toBe(true);
+    });
+
+    it('staggered tasks do not launch after the deadline', async () => {
+      const task = vi.fn(async () => ({ data: { ok: true } }));
+      const config: BenchmarkConfig<typeof participants[number]> = {
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        iterations: 4,
+        concurrency: 1,
+        staggerDelayMs: 40,
+        deadlineMs: 10,
+        participants: [participants[0]],
+      };
+
+      const outcome = await runBenchmark(config, defineTask(task), ['--no-ingest']);
+
+      // Task 0 launches immediately; task 1 wakes from its 40ms stagger past the deadline.
+      expect(outcome.participants[0].records).toHaveLength(1);
+      expect(outcome.stoppedEarly).toBe(true);
+    });
+
+    it('participants skipped by the deadline are reported with empty records', async () => {
+      const task = vi.fn(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        return { data: { ok: true } };
+      });
+      const config: BenchmarkConfig<typeof participants[number]> = {
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        iterations: 2,
+        concurrency: 1,
+        deadlineMs: 10,
+        participants: [participants[0], participants[1]],
+      };
+
+      const outcome = await runBenchmark(config, defineTask(task), ['--no-ingest']);
+
+      expect(outcome.participants.map((p) => p.participant)).toEqual(['e2b', 'modal']);
+      expect(outcome.participants[0].records).toHaveLength(1);
+      expect(outcome.participants[1].records).toHaveLength(0);
+      expect(outcome.stoppedEarly).toBe(true);
+    });
+
+    it('round-mode participants queued behind concurrency do not launch after the deadline', async () => {
+      const task = vi.fn(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        return { data: { ok: true } };
+      });
+      const config: BenchmarkConfig<typeof participants[number]> = {
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        iterations: 2,
+        concurrency: 1,
+        groupBy: 'round',
+        deadlineMs: 10,
+        participants: [participants[0], participants[1]],
+      };
+
+      const outcome = await runBenchmark(config, defineTask(task), ['--no-ingest']);
+
+      // Round 0: e2b's task occupies the single slot past the deadline, so
+      // modal's round-0 task never launches; round 1 stops entirely.
+      expect(outcome.participants[0].records).toHaveLength(1);
+      expect(outcome.participants[1].records).toHaveLength(0);
+      expect(outcome.stoppedEarly).toBe(true);
     });
 
     it('honors BENCHSDK_NO_INGEST=1 without a CLI flag', async () => {

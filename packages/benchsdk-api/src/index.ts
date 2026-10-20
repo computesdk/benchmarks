@@ -1,4 +1,4 @@
-export { BenchmarkApiError, createBenchmarkClient } from './client';
+export { BenchmarkApiError, BenchmarkTaskSkippedError, createBenchmarkClient } from './client';
 export type {
   BenchmarkArtifactDownload,
   BenchmarkAssignment,

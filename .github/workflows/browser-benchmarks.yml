@@ -61,7 +61,8 @@ env:
 jobs:
   bench:
     name: Bench ${{ matrix.provider }}
-    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
+    # Browser Use's leg runs next to its API (house EC2, us-east-2); the rest on Namespace.
+    runs-on: ${{ matrix.provider == 'browseruse' && 'computesdk:computesdk:aws-us-east-2' || 'namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal' }}
     # runs-on: self-hosted
     timeout-minutes: 60
     strategy:
@@ -69,12 +70,12 @@ jobs:
       matrix:
         provider:
           - browserbase
-          - browseruse
           - hyperbrowser
           - kernel
           - notte
           - steel
           - tilion
+          - browseruse
           # - anchorbrowser
     steps:
       - uses: actions/checkout@v4
@@ -144,7 +145,7 @@ jobs:
     name: Collect Results
     runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
     # runs-on: self-hosted
-    needs: bench
+    needs: [bench]
     if: always()
     steps:
       - uses: actions/checkout@v4
