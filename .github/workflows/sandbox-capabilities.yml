@@ -303,8 +303,10 @@ jobs:
             }
 
             await summary.write();
+      # A single-provider dispatch produces a partial merge — publishing it
+      # would replace the full published results with one provider.
       - name: Commit and push
-        if: github.event.inputs.publish != 'false'
+        if: github.event.inputs.publish != 'false' && (github.event_name != 'workflow_dispatch' || github.event.inputs.provider == '')
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
