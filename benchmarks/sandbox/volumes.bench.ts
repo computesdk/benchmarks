@@ -19,7 +19,6 @@ import '../src/env.js';
 import { defineBenchmarkConfig, defineTask, TaskError } from '@benchsdk/runner';
 import { withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
-import { sandboxId } from '../src/util/sandbox-id.js';
 import { providers } from './providers.js';
 import type { ProviderConfig } from './types.js';
 import { getVolumeAdapter, MOUNT_PATH } from './volumes-adapters.js';
@@ -111,9 +110,13 @@ export const config = defineBenchmarkConfig({
   }),
 });
 
-/** Timed shell wrapper: prints `NS=<elapsed-nanoseconds>` for parsing. */
+/**
+ * Timed shell wrapper: prints `NS=<elapsed-nanoseconds>` for parsing and
+ * propagates the wrapped command's exit code — without `exit $rc` a failed
+ * dd would still print the marker and record throughput for a dead write.
+ */
 function timed(script: string): string {
-  return `start=$(date +%s%N); ${script}; end=$(date +%s%N); echo "NS=$((end-start))"`;
+  return `start=$(date +%s%N); ${script}; rc=$?; end=$(date +%s%N); echo "NS=$((end-start))"; exit $rc`;
 }
 
 function parseNs(stdout: string): number {
@@ -256,9 +259,13 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
             `chmod 600 ${dir}/marker2.txt 2>/dev/null && [ "$(stat -c%a ${dir}/marker2.txt 2>/dev/null || stat -f%Lp ${dir}/marker2.txt)" = "600" ] && echo "chmod=1" || echo "chmod=0"`,
             `command -v flock >/dev/null && flock -n ${dir}/marker2.txt -c true 2>/dev/null && echo "flock=1" || echo "flock=0"`,
           ];
-          const r = await sandbox.runCommand(probes.join('; '));
+          // Content manifest for the byte-verify leg: a size/count check
+          // can't see silent corruption on object-backed volumes.
+          const manifest = `sha256sum ${dir}/seq.bin ${dir}/small/* | sha256sum | cut -d' ' -f1`;
+          const r = await sandbox.runCommand(`${probes.join('; ')}; ${manifest}`);
           const out = r.stdout ?? '';
           const flag = (k: string) => (out.includes(`${k}=1`) ? 1 : 0);
+          data.manifestSha = out.match(/[0-9a-f]{64}/)?.[0] ?? null;
           return {
             append: flag('append'),
             rename: flag('rename'),
@@ -307,6 +314,9 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
         'Destroy timeout',
       ),
     );
+    // Cleared so the finally block doesn't retry destroyed sandboxes.
+    sandbox = undefined;
+    secondSandbox = undefined;
 
     const remounted = await step('reattach', () =>
       withTimeout(
@@ -327,22 +337,30 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
     data.verifyPassed = await step('verify', () =>
       withTimeout(
         (async () => {
+          // marker2.txt only exists when the rename probe succeeded and only
+          // carries the trailing x when append worked — both are optional
+          // capabilities, so persistence verify must not depend on them.
+          // marker files are written with `echo -n` — no trailing newline,
+          // so cat's output would join the sha line. `; echo` forces the
+          // separator; the third line re-checks the small-file count so a
+          // file lost before manifest capture can't hash-verify clean.
           const r = await reattachSandbox.runCommand(
-            `cat ${dir}/marker2.txt && wc -c < ${dir}/seq.bin && ls ${dir}/small | wc -l`,
+            `(cat ${dir}/marker2.txt 2>/dev/null || cat ${dir}/marker.txt; echo); sha256sum ${dir}/seq.bin ${dir}/small/* | sha256sum | cut -d' ' -f1; ls ${dir}/small | wc -l`,
           );
           const lines = (r.stdout ?? '').trim().split('\n');
-          const markerOk = lines[0]?.includes(marker + 'x') ?? false; // append probe mutated it
-          const bytes = Number(lines[1]);
-          const files = Number(lines[2]);
-          const ok =
-            r.exitCode === 0 &&
-            markerOk &&
-            bytes === SEQ_MB * 1048576 &&
-            files === SMALL_FILES;
+          const markerOk = (lines[0] ?? '').startsWith(marker);
+          const shaOk = data.manifestSha != null && lines[1] === data.manifestSha;
+          const countOk = Number(lines[2]) === SMALL_FILES;
+          const ok = r.exitCode === 0 && markerOk && shaOk && countOk;
           if (!ok) {
             log('verify mismatch', {
               level: 'error',
-              meta: { exitCode: r.exitCode, stdout: r.stdout, stderr: r.stderr },
+              meta: {
+                exitCode: r.exitCode,
+                stdout: r.stdout,
+                stderr: r.stderr,
+                expectedSha: data.manifestSha,
+              },
             });
           }
           return ok ? 1 : 0;
@@ -353,13 +371,19 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
     );
     data.verifyMs = Math.round(performance.now() - verifyStart);
   } finally {
-    if (reattachSandbox) {
-      await reattachSandbox.destroy().catch((err: unknown) =>
-        log('reattach sandbox destroy failed', { level: 'warn', meta: { error: formatError(err) } }),
+    // Sandboxes from a failed step still run — leaked boxes keep billing and
+    // hold the volume open, which can block its deletion below.
+    for (const s of [sandbox, secondSandbox, reattachSandbox]) {
+      if (!s) continue;
+      // Bounded like the destroy step — a stalled destroy must not hang
+      // cleanup (and the volume delete that follows).
+      await withTimeout(
+        s.destroy() as Promise<unknown>,
+        participant.destroyTimeoutMs ?? DESTROY_TIMEOUT_MS,
+        'Cleanup destroy timeout',
+      ).catch((err: unknown) =>
+        log('sandbox destroy failed', { level: 'warn', meta: { error: formatError(err) } }),
       );
-    }
-    if (sandbox) {
-      log('sandbox', { level: 'info', meta: { provider: participant.name, sandboxId: sandboxId(sandbox) } });
     }
     if (volume) {
       await step('volume-destroy', () =>
