@@ -443,11 +443,12 @@ async function handleResults(
 type ParticipantResultRow = BenchmarkRunResults['participants'][number] & { runId?: string };
 
 function fmtMs(value: number | null): number | string {
-  return value === null ? '' : Math.round(value);
+  if (value === null) return '';
+  return value < 10 ? Number(value.toFixed(2)) : Math.round(value);
 }
 
 function fmtRate(rate: number): string {
-  return `${Math.round(rate * 100)}%`;
+  return rate === 1 ? '100%' : `${(rate * 100).toFixed(1)}%`;
 }
 
 function participantTableRow(p: ParticipantResultRow): Record<string, unknown> {
@@ -501,12 +502,24 @@ function printResultsTables(
   }
 
   const overview = results as BenchmarkResultsOverview;
+  if (overview.analytics.query === 'unavailable') {
+    console.log(`Results unavailable${overview.analytics.error ? `: ${overview.analytics.error}` : '.'}`);
+    return;
+  }
   const rows = overview.items.flatMap((item) =>
     item.participants.map((p) => participantTableRow({ ...p, runId: item.run.id })),
   );
   if (rows.length === 0) {
     console.log('No results.');
     return;
+  }
+  const emptyRuns = overview.items.filter((item) => item.participants.length === 0);
+  if (emptyRuns.length > 0) {
+    for (const item of emptyRuns) {
+      console.log(
+        `Run ${item.run.id} — ${item.run.status} | no participant results (analytics: ${item.analytics.status})`,
+      );
+    }
   }
   console.table(rows);
 }
