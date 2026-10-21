@@ -260,8 +260,9 @@ describe('scoringConfigToSpec success rule', () => {
     );
 
     expect(results[0].successRate).toBe(0.5);
-    // Only the verified record's timing is aggregated.
-    expect(results[0].metrics[0].median).toBe(100);
+    // The success gate affects the rate/composite, not sampling: both
+    // completed records measured a timing, so the median spans both.
+    expect(results[0].metrics[0].median).toBe(500);
   });
 
   it('counts every successful record when no success rule is declared', () => {

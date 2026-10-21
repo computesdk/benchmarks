@@ -241,7 +241,15 @@ function scoreGroup(
   const metrics: BenchmarkScoreResult['metrics'] = [];
 
   for (const metric of spec.metrics) {
-    const samples = collectSamples(metric, passing);
+    // Sample every completed record, not just records that pass the success
+    // filter: a record that fails requireData (e.g. a post-run byte-verify)
+    // still measured real throughput, and suppressing its samples leaves the
+    // summary's metric columns empty whenever the success gate bites — which
+    // is exactly the case where they matter most. Errored records may carry
+    // partial measurements from a run that died mid-lifecycle, so they stay
+    // excluded; the success filter still gates successRate and composite.
+    const measured = records.filter((r) => r.status === 'success');
+    const samples = collectSamples(metric, measured);
     // A metric with no data points should not contribute to the composite
     // score; otherwise an empty lower-is-better metric would be scored as 100.
     if (samples.length === 0) {
