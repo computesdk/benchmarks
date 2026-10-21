@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 import { printData } from '../output.js';
 
 describe('printData', () => {
-  let logSpy: ReturnType<typeof vi.spyOn>;
-  let tableSpy: ReturnType<typeof vi.spyOn>;
-  let dirSpy: ReturnType<typeof vi.spyOn>;
+  let logSpy: MockInstance<Parameters<typeof console.log>, void>;
+  let tableSpy: MockInstance<Parameters<typeof console.table>, void>;
+  let dirSpy: MockInstance<Parameters<typeof console.dir>, void>;
 
   beforeEach(() => {
     logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});

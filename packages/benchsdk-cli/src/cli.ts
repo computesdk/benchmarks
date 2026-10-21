@@ -2,6 +2,11 @@ import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { BenchmarkApiError } from '@benchsdk/api';
+import type {
+  BenchmarkResultsOverview,
+  BenchmarkRunResults,
+  BenchmarkStepResultSummary,
+} from '@benchsdk/api';
 import { requestDeviceCode, pollDeviceToken, AuthError } from './auth.js';
 import { loadCredentials, saveCredentials, clearCredentials, loadConfig } from './config.js';
 import { createApiClient, getMe, listOrganizations, setActiveOrganization } from './client.js';
@@ -428,7 +433,82 @@ async function handleResults(
   const results = options.run
     ? await api.getRunResults(benchmarkSlug, options.run as string)
     : await api.getBenchmarkResults(benchmarkSlug);
-  printData(results, { ...outputOptions, format: options.format === 'json' ? 'json' : outputOptions.format });
+  if (options.format === 'json' || outputOptions.json || outputOptions.format === 'json') {
+    printData(results, { format: 'json' });
+    return;
+  }
+  printResultsTables(results, options.run !== undefined);
+}
+
+type ParticipantResultRow = BenchmarkRunResults['participants'][number] & { runId?: string };
+
+function fmtMs(value: number | null): number | string {
+  return value === null ? '' : Math.round(value);
+}
+
+function fmtRate(rate: number): string {
+  return `${Math.round(rate * 100)}%`;
+}
+
+function participantTableRow(p: ParticipantResultRow): Record<string, unknown> {
+  return {
+    ...(p.runId ? { run: p.runId } : {}),
+    participant: p.participantSlug,
+    provider: p.provider ?? '',
+    tasks: p.taskCount,
+    ok: p.successCount,
+    err: p.errorCount,
+    'ok%': fmtRate(p.successRate),
+    p50ms: fmtMs(p.latencyMs.p50),
+    avgms: fmtMs(p.latencyMs.avg),
+    p95ms: fmtMs(p.latencyMs.p95),
+  };
+}
+
+function stepTableRow(s: BenchmarkStepResultSummary): Record<string, unknown> {
+  return {
+    participant: s.participantSlug,
+    step: s.stepName,
+    tasks: s.stepCount,
+    ok: s.successCount,
+    err: s.errorCount,
+    'ok%': fmtRate(s.successRate),
+    p50ms: fmtMs(s.latencyMs.p50),
+    avgms: fmtMs(s.latencyMs.avg),
+  };
+}
+
+function printResultsTables(
+  results: BenchmarkRunResults | BenchmarkResultsOverview,
+  isSingleRun: boolean,
+): void {
+  if (isSingleRun) {
+    const runResults = results as BenchmarkRunResults;
+    const { run, overall, participants, steps } = runResults;
+    console.log(
+      `Run ${run.id} — ${run.status} | overall: ${overall.successCount}/${overall.taskCount} ok (${fmtRate(overall.successRate)})`,
+    );
+    if (participants.length === 0) {
+      console.log('No results.');
+    } else {
+      console.table(participants.map(participantTableRow));
+    }
+    if (steps.length > 0) {
+      console.log('Steps:');
+      console.table(steps.map(stepTableRow));
+    }
+    return;
+  }
+
+  const overview = results as BenchmarkResultsOverview;
+  const rows = overview.items.flatMap((item) =>
+    item.participants.map((p) => participantTableRow({ ...p, runId: item.run.id })),
+  );
+  if (rows.length === 0) {
+    console.log('No results.');
+    return;
+  }
+  console.table(rows);
 }
 
 async function handleIterations(
