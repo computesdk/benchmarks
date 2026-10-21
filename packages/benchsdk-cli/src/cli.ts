@@ -444,11 +444,17 @@ type ParticipantResultRow = BenchmarkRunResults['participants'][number] & { runI
 
 function fmtMs(value: number | null): number | string {
   if (value === null) return '';
-  return value < 10 ? Number(value.toFixed(2)) : Math.round(value);
+  if (value < 10) {
+    const rounded = Number(value.toFixed(2));
+    return rounded === 0 && value > 0 ? '<0.01' : rounded;
+  }
+  return Math.round(value);
 }
 
 function fmtRate(rate: number): string {
-  return rate === 1 ? '100%' : `${(rate * 100).toFixed(1)}%`;
+  if (rate === 1) return '100%';
+  const pct = (rate * 100).toFixed(1);
+  return pct === '100.0' ? '99.9%' : `${pct}%`;
 }
 
 function participantTableRow(p: ParticipantResultRow): Record<string, unknown> {
@@ -509,10 +515,6 @@ function printResultsTables(
   const rows = overview.items.flatMap((item) =>
     item.participants.map((p) => participantTableRow({ ...p, runId: item.run.id })),
   );
-  if (rows.length === 0) {
-    console.log('No results.');
-    return;
-  }
   const emptyRuns = overview.items.filter((item) => item.participants.length === 0);
   if (emptyRuns.length > 0) {
     for (const item of emptyRuns) {
@@ -520,6 +522,10 @@ function printResultsTables(
         `Run ${item.run.id} — ${item.run.status} | no participant results (analytics: ${item.analytics.status})`,
       );
     }
+  }
+  if (rows.length === 0) {
+    if (emptyRuns.length === 0) console.log('No results.');
+    return;
   }
   console.table(rows);
 }
