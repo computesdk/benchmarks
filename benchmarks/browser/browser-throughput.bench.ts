@@ -35,6 +35,15 @@ export const config = defineBenchmarkConfig({
   benchmarkName: `Browser Throughput${process.env.DAILY_BENCH_NAME ? ` - ${process.env.DAILY_BENCH_NAME}` : ''}`,
   iterations: 2,
   groupBy: 'round',
+  // Pause between sessions. The browser runs on the provider's network, so
+  // every page load in a run comes from that provider's egress IPs, and the
+  // CI default of 100 sessions back to back is ~300 Wikipedia loads in a few
+  // minutes from one range — enough that Wikipedia starts answering 429 for
+  // the provider, which the loop then records as the provider's failure.
+  // The sleep sits between tasks, outside every timed action, so the metrics
+  // are unaffected; at ~4s per session the run becomes ~1 session per 19s.
+  // Override per invocation with `--stagger-delay-ms`.
+  staggerDelayMs: 15_000,
   participants: throughputProviders,
   display: {
     metrics: [
