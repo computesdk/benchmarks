@@ -6,7 +6,20 @@ import { withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
 import type { AIGatewayProviderConfig, AIGatewayWireFormat, PhaseProbeResult } from './types.js';
 
-const RECEIPT_HEADERS = ['x-vercel-id', 'cf-ray', 'x-request-id', 'request-id', 'anthropic-request-id', 'x-github-request-id'];
+const RECEIPT_HEADERS = [
+  'x-vercel-id',
+  'cf-ray',
+  'x-request-id',
+  'request-id',
+  'anthropic-request-id',
+  'x-github-request-id',
+  // You.com Inference Router's self-reported phase timings (ms) — useful for
+  // separating router overhead (pre/post-processing) from upstream model time.
+  'x-ydc-inference-response-duration-ms',
+  'x-ydc-inference-timing-llm-api-ms',
+  'x-ydc-inference-timing-pre-processing-ms',
+  'x-ydc-inference-timing-post-processing-ms',
+];
 
 /**
  * Returns the regex that detects the first *visible* content token for a

@@ -252,6 +252,28 @@ export const providers: AIGatewayProviderConfig[] = [
       buf.match(/"model"\s*:\s*"([^"/]+)\/[^"]*"/)?.[1],
   },
   {
+    // You.com Inference Router (api.you.com). UNVERIFIED model id — the
+    // router's `model` must be an `id` from the key's own `GET /v1/models`
+    // catalog, and the public docs don't list ids. Confirm with
+    //   curl -s https://api.you.com/v1/models -H "Authorization: Bearer $YOU_API_KEY" | jq -r '.data[].id'
+    // before trusting results. Auth is `Authorization: Bearer <key>`.
+    // Uses the Anthropic-compatible `/v1/messages` route (same no-translation
+    // rationale as Vercel/LLM Gateway/ngrok above). The `anthropic-version`
+    // header is REQUIRED here: per the docs, sending it is what selects the
+    // Anthropic response format — without it the SSE stream shape (and thus
+    // TTFT/token regexes in phase-probe.ts) won't match.
+    name: 'you-com',
+    requiredEnvVars: ['YOU_API_KEY'],
+    wireFormat: 'anthropic',
+    model: 'claude-haiku-4-5',
+    host: 'api.you.com',
+    path: '/v1/messages',
+    buildHeaders: () => ({
+      Authorization: `Bearer ${process.env.YOU_API_KEY || ''}`,
+      'anthropic-version': '2023-06-01',
+    }),
+  },
+  {
     name: 'github-copilot',
     requiredEnvVars: ['GITHUB_COPILOT_API_KEY'],
     wireFormat: 'anthropic',

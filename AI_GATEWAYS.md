@@ -162,6 +162,20 @@ Unlike the OpenAI family's GPT-5-mini situation, there's no non-reasoning Kimi t
 
 Full rationale for each entry lives in `providers-kimi.ts`'s per-provider comments, matching the style already used in `providers.ts`, `providers-openai.ts`, and `providers-gemini.ts`.
 
+## You.com Inference Router
+
+`you-com` participates in all four families plus the model index, authenticated with `YOU_API_KEY` (`Authorization: Bearer <key>`) against `api.you.com`:
+
+| Family | Model id | Route | Wire format |
+|---|---|---|---|
+| Anthropic | `claude-haiku-4-5` | `/v1/messages` (+ `anthropic-version: 2023-06-01`, which selects the Anthropic response format) | `anthropic` |
+| OpenAI | `gpt-5.4-mini` | `/v1/chat/completions` | `openai` |
+| Gemini | `gemini-3.6-flash` | `/v1/chat/completions` | `openai` |
+| Kimi | `kimi-k3` | `/v1/chat/completions` (`temperature` stripped, `reasoningCountsAsFirstToken: true`) | `openai` |
+| Model index | — | `GET /v1/models` | `openai` |
+
+Caveats: the router has no Responses API, so in the OpenAI family it is the only participant on Chat Completions rather than `/v1/responses` — a translation path the others don't take. Model ids must come from the key's own `GET /v1/models` catalog and are **not yet confirmed live**. The router also returns its own phase timings (`x-ydc-inference-timing-pre-processing-ms`, `-llm-api-ms`, `-post-processing-ms`, `x-ydc-inference-response-duration-ms`), which are captured in each iteration's `receipts` for comparing self-reported router overhead against measured client-side overhead.
+
 ## How the runner behaves
 
 ### Round-robin across gateways — and what that does and doesn't mean
