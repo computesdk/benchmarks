@@ -330,13 +330,6 @@ export const providers: AIGatewayProviderConfig[] = [
     reasoningCountsAsFirstToken: true,
   },
   {
-    // You.com Inference Router (api.you.com). UNVERIFIED model id — the
-    // router's `model` must be an `id` from the key's own `GET /v1/models`
-    // catalog, and the public docs don't list ids. Confirm with
-    //   curl -s https://api.you.com/v1/models -H "Authorization: Bearer $YOU_API_KEY" | jq -r '.data[].id'
-    // before trusting results. Auth is `Authorization: Bearer <key>`.
-    // No Responses API on the router (only `/v1/chat/completions` and
-    // `/v1/messages`), so this uses the OpenAI Chat Completions shape.
     name: 'you-com',
     requiredEnvVars: ['YOU_API_KEY'],
     wireFormat: 'openai',
@@ -346,9 +339,6 @@ export const providers: AIGatewayProviderConfig[] = [
     buildHeaders: () => ({
       Authorization: `Bearer ${process.env.YOU_API_KEY || ''}`,
     }),
-    // kimi-k3 rejects any temperature other than 1 (see file header); the
-    // router applies the vendor reference value when omitted. Docs list
-    // `reasoning_content` on the message, which contentRegexFor handles.
     extraBody: {
       temperature: undefined,
     },

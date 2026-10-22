@@ -106,9 +106,6 @@ export const modelIndexProviders: AIGatewayModelIndexProviderConfig[] = [
     }),
   },
   {
-    // You.com Inference Router. OpenAI-format list by default (sending
-    // `anthropic-version` switches to the Anthropic Models format). Entries
-    // carry `max_input_tokens` / `max_tokens`; no pricing is exposed.
     name: 'you-com',
     requiredEnvVars: ['YOU_API_KEY'],
     host: 'api.you.com',

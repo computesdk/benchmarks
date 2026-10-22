@@ -121,7 +121,6 @@
     "bench:ai-gateway-gemini:neon": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-gemini.bench.ts --provider neon",
     "bench:ai-gateway-gemini:ngrok": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-gemini.bench.ts --provider ngrok",
     "bench:ai-gateway-gemini:llmapi": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-gemini.bench.ts --provider llmapi",
-    "bench:ai-gateway-gemini:you-com": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-gemini.bench.ts --provider you-com",
     "generate-ai-gateway-gemini-svg": "tsx benchmarks/ai-gateway/generate-svg.ts --dir ai-gateway-latency/gemini --title \"AI Gateway Benchmarks \u2014 Gemini\" --out ai-gateway-gemini.svg",
     "bench:ai-gateway-kimi": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-kimi.bench.ts",
     "bench:ai-gateway-kimi:github-copilot": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-kimi.bench.ts --provider github-copilot",

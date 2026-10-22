@@ -4,7 +4,7 @@
  * as `ai-gateway.bench.ts` (see that file and `shared-task.ts` for the full
  * fairness rationale) — the differences are `providers-kimi.ts`, which
  * routes gateways to Moonshot's `kimi-k3` instead of Anthropic's Claude
- * Haiku 4.5 (plus its own no-gateway `kimi-direct` control), and
+ * Sonnet 5 (plus its own no-gateway `kimi-direct` control), and
  * `MAX_TOKENS`/`TIMEOUT_MS` below.
  *
  * Both overrides trace to the same root cause — `kimi-k3` runs with

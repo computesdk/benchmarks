@@ -223,24 +223,6 @@ export const providers: AIGatewayProviderConfig[] = [
       buf.match(/"model"\s*:\s*"([^"/]+)\/[^"]*"/)?.[1],
   },
   {
-    // You.com Inference Router (api.you.com). UNVERIFIED model id — the
-    // router's `model` must be an `id` from the key's own `GET /v1/models`
-    // catalog, and the public docs don't list ids. Confirm with
-    //   curl -s https://api.you.com/v1/models -H "Authorization: Bearer $YOU_API_KEY" | jq -r '.data[].id'
-    // before trusting results. Auth is `Authorization: Bearer <key>`.
-    // No Responses API on the router (only `/v1/chat/completions` and
-    // `/v1/messages`), so this uses the OpenAI Chat Completions shape.
-    name: 'you-com',
-    requiredEnvVars: ['YOU_API_KEY'],
-    wireFormat: 'openai',
-    model: 'gemini-3.6-flash',
-    host: 'api.you.com',
-    path: '/v1/chat/completions',
-    buildHeaders: () => ({
-      Authorization: `Bearer ${process.env.YOU_API_KEY || ''}`,
-    }),
-  },
-  {
     // No-gateway baseline/control. Gemini's native `streamGenerateContent`
     // endpoint (not the OpenAI-compatibility shim Google also exposes) —
     // `contents`/`parts` request shape, `usageMetadata.candidatesTokenCount`

@@ -6,20 +6,7 @@ import { withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
 import type { AIGatewayProviderConfig, AIGatewayWireFormat, PhaseProbeResult } from './types.js';
 
-const RECEIPT_HEADERS = [
-  'x-vercel-id',
-  'cf-ray',
-  'x-request-id',
-  'request-id',
-  'anthropic-request-id',
-  'x-github-request-id',
-  // You.com Inference Router's self-reported phase timings (ms) — useful for
-  // separating router overhead (pre/post-processing) from upstream model time.
-  'x-ydc-inference-response-duration-ms',
-  'x-ydc-inference-timing-llm-api-ms',
-  'x-ydc-inference-timing-pre-processing-ms',
-  'x-ydc-inference-timing-post-processing-ms',
-];
+const RECEIPT_HEADERS = ['x-vercel-id', 'cf-ray', 'x-request-id', 'request-id', 'anthropic-request-id', 'x-github-request-id', 'x-ydc-inference-response-duration-ms', 'x-ydc-inference-timing-llm-api-ms', 'x-ydc-inference-timing-pre-processing-ms', 'x-ydc-inference-timing-post-processing-ms'];
 
 /**
  * Returns the regex that detects the first *visible* content token for a
@@ -115,10 +102,8 @@ function buildRequestBody(config: AIGatewayProviderConfig, prompt: string, maxTo
     // account setting outside this repo.
     //
     // `temperature: 0` per the "identical request configuration" fairness
-    // principle in AI_GATEWAYS.md — this branch is shared by the Anthropic
-    // family's Concentrate entry (Claude Haiku) and every OpenAI-family
-    // entry (`gpt-5.4-mini`, per `providers-openai.ts`), and neither has a
-    // reason to deviate from it.
+    // principle in AI_GATEWAYS.md (dropped via `extraBody` where a model
+    // rejects it).
     return JSON.stringify({
       model: config.model,
       input: prompt,
