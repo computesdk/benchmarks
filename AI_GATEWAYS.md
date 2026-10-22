@@ -166,7 +166,7 @@ Full rationale for each entry lives in `providers-kimi.ts`'s per-provider commen
 
 ## You.com Inference Router
 
-`you-com` uses `YOU_API_KEY` (`Authorization: Bearer <key>`) against `api.you.com`. Not in the Gemini family (no Gemini model in its catalog).
+`you-dot-com` uses `YOU_API_KEY` (`Authorization: Bearer <key>`) against `api.you.com`. Not in the Gemini family (no Gemini model in its catalog).
 
 | Family | Model id | Route | Wire format |
 |---|---|---|---|

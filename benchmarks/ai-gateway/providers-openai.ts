@@ -242,7 +242,7 @@ const roster: AIGatewayProviderConfig[] = [
   },
   {
     // No Responses API on the router, so this uses Chat Completions.
-    name: 'you-com',
+    name: 'you-dot-com',
     requiredEnvVars: ['YOU_API_KEY'],
     wireFormat: 'openai',
     model: 'gpt-5.6-luna',

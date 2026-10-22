@@ -54,7 +54,7 @@ on:
           - neon
           - ngrok
           - llmapi
-          - you-com
+          - you-dot-com
           - anthropic-direct
           - openai-direct
           - gemini-direct
@@ -271,7 +271,7 @@ jobs:
               'neon': 'Neon AI Gateway',
               'ngrok': 'ngrok AI Gateway',
               'llmapi': 'LLM API',
-              'you-com': 'You.com Inference Router',
+              'you-dot-com': 'You.com Inference Router',
             };
 
             if (fs.existsSync(latestPath)) {

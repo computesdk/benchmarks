@@ -330,7 +330,7 @@ export const providers: AIGatewayProviderConfig[] = [
     reasoningCountsAsFirstToken: true,
   },
   {
-    name: 'you-com',
+    name: 'you-dot-com',
     requiredEnvVars: ['YOU_API_KEY'],
     wireFormat: 'openai',
     model: 'kimi-k3',

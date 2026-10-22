@@ -106,7 +106,7 @@ export const modelIndexProviders: AIGatewayModelIndexProviderConfig[] = [
     }),
   },
   {
-    name: 'you-com',
+    name: 'you-dot-com',
     requiredEnvVars: ['YOU_API_KEY'],
     host: 'api.you.com',
     modelsPath: '/v1/models',

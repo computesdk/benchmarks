@@ -253,7 +253,7 @@ const roster: AIGatewayProviderConfig[] = [
   },
   {
     // `anthropic-version` selects the router's Anthropic response format.
-    name: 'you-com',
+    name: 'you-dot-com',
     requiredEnvVars: ['YOU_API_KEY'],
     wireFormat: 'anthropic',
     model: 'claude-sonnet-5',
