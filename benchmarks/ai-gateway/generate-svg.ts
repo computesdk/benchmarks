@@ -30,6 +30,7 @@ function formatProviderName(s: string): string {
   if (s === 'neon') return 'Neon AI Gateway';
   if (s === 'ngrok') return 'ngrok AI Gateway';
   if (s === 'llmapi') return 'LLM API';
+  if (s === 'you-dot-com') return 'You.com Inference Router';
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 

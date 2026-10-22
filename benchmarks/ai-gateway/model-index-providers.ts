@@ -106,6 +106,16 @@ export const modelIndexProviders: AIGatewayModelIndexProviderConfig[] = [
     }),
   },
   {
+    name: 'you-dot-com',
+    requiredEnvVars: ['YOU_API_KEY'],
+    host: 'api.you.com',
+    modelsPath: '/v1/models',
+    modelListFormat: 'openai',
+    buildHeaders: () => ({
+      Authorization: `Bearer ${process.env.YOU_API_KEY || ''}`,
+    }),
+  },
+  {
     name: 'neon',
     requiredEnvVars: ['NEON_AI_GATEWAY_BASE_URL', 'NEON_AI_GATEWAY_TOKEN'],
     host: resolveNeonHost().host,

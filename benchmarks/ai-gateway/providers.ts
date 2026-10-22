@@ -6,11 +6,11 @@ import { resolveNeonHost } from './neon-host.js';
  * AI gateway benchmark configurations.
  *
  * Every gateway is hit directly (no gateway proxies through another) with the
- * same model — Claude Haiku 4.5 — so the comparison is apples-to-apples.
+ * same model — Claude Sonnet 5 — so the comparison is apples-to-apples.
  * `anthropic-direct` is the no-gateway control, used to measure how much
  * latency each gateway adds on top of the underlying provider.
  */
-export const providers: AIGatewayProviderConfig[] = [
+const roster: AIGatewayProviderConfig[] = [
   {
     // `anthropic/claude-haiku-4.5` is a catalog alias that OpenRouter can
     // serve from more than one upstream (Anthropic direct, Bedrock, Vertex,
@@ -27,7 +27,7 @@ export const providers: AIGatewayProviderConfig[] = [
     name: 'openrouter',
     requiredEnvVars: ['OPENROUTER_API_KEY'],
     wireFormat: 'openai',
-    model: 'anthropic/claude-haiku-4.5',
+    model: 'anthropic/claude-sonnet-5',
     host: 'openrouter.ai',
     path: '/api/v1/chat/completions',
     buildHeaders: () => ({
@@ -60,7 +60,7 @@ export const providers: AIGatewayProviderConfig[] = [
     name: 'vercel-ai-gateway',
     requiredEnvVars: ['VERCEL_AI_GATEWAY_API_KEY'],
     wireFormat: 'anthropic',
-    model: 'anthropic/claude-haiku-4.5',
+    model: 'anthropic/claude-sonnet-5',
     host: 'ai-gateway.vercel.sh',
     path: '/v1/messages',
     buildHeaders: () => ({
@@ -82,7 +82,7 @@ export const providers: AIGatewayProviderConfig[] = [
       'ANTHROPIC_API_KEY',
     ],
     wireFormat: 'anthropic',
-    model: 'claude-haiku-4-5-20251001',
+    model: 'claude-sonnet-5',
     host: 'gateway.ai.cloudflare.com',
     path: `/v1/${process.env.CLOUDFLARE_AI_GATEWAY_ACCOUNT_ID}/${process.env.CLOUDFLARE_AI_GATEWAY_GATEWAY_ID}/anthropic/v1/messages`,
     buildHeaders: () => ({
@@ -99,7 +99,7 @@ export const providers: AIGatewayProviderConfig[] = [
     name: 'blazerail',
     requiredEnvVars: ['BLAZERAIL_API_KEY'],
     wireFormat: 'openai',
-    model: 'anthropic/claude-haiku-4.5',
+    model: 'anthropic/claude-sonnet-5',
     host: 'api.blazerail.com',
     path: '/v1/chat/completions',
     buildHeaders: () => ({
@@ -123,7 +123,7 @@ export const providers: AIGatewayProviderConfig[] = [
     name: 'llmgateway',
     requiredEnvVars: ['LLM_GATEWAY_API_KEY'],
     wireFormat: 'anthropic',
-    model: 'anthropic/claude-haiku-4-5',
+    model: 'anthropic/claude-sonnet-5',
     host: 'api.llmgateway.io',
     path: '/v1/messages',
     buildHeaders: () => ({
@@ -146,7 +146,7 @@ export const providers: AIGatewayProviderConfig[] = [
     name: 'pydantic-ai-gateway',
     requiredEnvVars: ['PYDANTIC_AI_GATEWAY_API_KEY'],
     wireFormat: 'anthropic',
-    model: 'claude-haiku-4-5-20251001',
+    model: 'claude-sonnet-5',
     host: 'gateway-us.pydantic.dev',
     path: '/proxy/anthropic/v1/messages',
     buildHeaders: () => ({
@@ -175,7 +175,7 @@ export const providers: AIGatewayProviderConfig[] = [
     name: 'concentrate-ai-gateway',
     requiredEnvVars: ['CONCENTRATE_AI_GATEWAY_API_KEY'],
     wireFormat: 'responses',
-    model: 'anthropic/claude-haiku-4-5-20251001',
+    model: 'anthropic/claude-sonnet-5',
     host: 'api.concentrate.ai',
     path: '/v1/responses/',
     buildHeaders: () => ({
@@ -186,11 +186,11 @@ export const providers: AIGatewayProviderConfig[] = [
     // Ramp Router exposes an OpenAI Responses-compatible API; the `model`
     // field must be a bare `id` from the account's `GET /v1/models` catalog,
     // not the upstream provider's public model name. For this key the
-    // Anthropic Haiku 4.5 entry is `claude-haiku-4-5`.
+    // Anthropic Sonnet 5 entry is `claude-sonnet-5`.
     name: 'ramp',
     requiredEnvVars: ['RAMP_ROUTER_API_KEY'],
     wireFormat: 'responses',
-    model: 'claude-haiku-4-5',
+    model: 'claude-sonnet-5',
     host: 'router-api.ramp.com',
     path: '/v1/responses',
     buildHeaders: () => ({
@@ -201,7 +201,7 @@ export const providers: AIGatewayProviderConfig[] = [
     name: 'neon',
     requiredEnvVars: ['NEON_AI_GATEWAY_BASE_URL', 'NEON_AI_GATEWAY_TOKEN'],
     wireFormat: 'anthropic',
-    model: 'claude-haiku-4-5',
+    model: 'claude-sonnet-5',
     host: resolveNeonHost().host,
     path: `${resolveNeonHost().basePath}/anthropic/v1/messages`,
     buildHeaders: () => ({
@@ -216,7 +216,7 @@ export const providers: AIGatewayProviderConfig[] = [
     name: 'ngrok',
     requiredEnvVars: ['NGROK_AI_GATEWAY_API_KEY'],
     wireFormat: 'anthropic',
-    model: 'claude-haiku-4-5',
+    model: 'claude-sonnet-5',
     host: 'gateway.ngrok.ai',
     path: '/v1/messages',
     buildHeaders: () => ({
@@ -238,7 +238,7 @@ export const providers: AIGatewayProviderConfig[] = [
     name: 'llmapi',
     requiredEnvVars: ['LLMAPI_API_KEY'],
     wireFormat: 'anthropic',
-    model: 'anthropic/claude-haiku-4-5-20251001',
+    model: 'anthropic/claude-sonnet-5',
     host: 'api.llmapi.ai',
     path: '/v1/messages',
     buildHeaders: () => ({
@@ -252,10 +252,23 @@ export const providers: AIGatewayProviderConfig[] = [
       buf.match(/"model"\s*:\s*"([^"/]+)\/[^"]*"/)?.[1],
   },
   {
+    // `anthropic-version` selects the router's Anthropic response format.
+    name: 'you-dot-com',
+    requiredEnvVars: ['YOU_API_KEY'],
+    wireFormat: 'anthropic',
+    model: 'claude-sonnet-5',
+    host: 'api.you.com',
+    path: '/v1/messages',
+    buildHeaders: () => ({
+      Authorization: `Bearer ${process.env.YOU_API_KEY || ''}`,
+      'anthropic-version': '2023-06-01',
+    }),
+  },
+  {
     name: 'github-copilot',
     requiredEnvVars: ['GITHUB_COPILOT_API_KEY'],
     wireFormat: 'anthropic',
-    model: 'claude-haiku-4.5',
+    model: 'claude-sonnet-5',
     host: 'api.githubcopilot.com',
     path: '/v1/messages',
     buildHeaders: () => ({
@@ -270,7 +283,7 @@ export const providers: AIGatewayProviderConfig[] = [
     name: 'anthropic-direct',
     requiredEnvVars: ['ANTHROPIC_API_KEY'],
     wireFormat: 'anthropic',
-    model: 'claude-haiku-4-5-20251001',
+    model: 'claude-sonnet-5',
     host: 'api.anthropic.com',
     path: '/v1/messages',
     buildHeaders: () => ({
@@ -279,3 +292,8 @@ export const providers: AIGatewayProviderConfig[] = [
     }),
   },
 ];
+
+export const providers: AIGatewayProviderConfig[] = roster.map((p) => ({
+  ...p,
+  extraBody: { ...p.extraBody, temperature: undefined },
+}));

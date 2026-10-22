@@ -6,12 +6,12 @@ import { resolveNeonHost } from './neon-host.js';
  * AI gateway benchmark configurations — OpenAI family.
  *
  * Same fairness methodology as `providers.ts` (the Anthropic family): every
- * gateway is hit directly with the same model — `gpt-5.4-mini` — so the
+ * gateway is hit directly with the same model — `gpt-5.6-luna` — so the
  * comparison is apples-to-apples, and `openai-direct` is the no-gateway
  * control. What differs is the target provider: every request here routes to
  * OpenAI instead of Anthropic, so this measures each gateway's overhead when
  * proxying to a *different* upstream than the original benchmark exercises.
- * Request configuration (`temperature: 0`, `max_tokens: 200`, no `reasoning`
+ * Request configuration (no `temperature`, `max_tokens: 200`, no `reasoning`
  * field) is identical to the Anthropic family's — see `phase-probe.ts`.
  *
  * Every route below was checked directly against that gateway's own
@@ -29,7 +29,7 @@ import { resolveNeonHost } from './neon-host.js';
  * as "confirmed against a real response," which is what the Anthropic
  * family's entries in `providers.ts` were held to.
  */
-export const providers: AIGatewayProviderConfig[] = [
+const roster: AIGatewayProviderConfig[] = [
   {
     // Confirmed: OpenRouter's Responses API passthrough exists at
     // `/api/v1/responses` (openrouter.ai/docs/api_reference/responses/overview),
@@ -45,7 +45,7 @@ export const providers: AIGatewayProviderConfig[] = [
     name: 'openrouter',
     requiredEnvVars: ['OPENROUTER_API_KEY'],
     wireFormat: 'responses',
-    model: 'openai/gpt-5.4-mini',
+    model: 'openai/gpt-5.6-luna',
     host: 'openrouter.ai',
     path: '/api/v1/responses',
     buildHeaders: () => ({
@@ -66,7 +66,7 @@ export const providers: AIGatewayProviderConfig[] = [
     name: 'vercel-ai-gateway',
     requiredEnvVars: ['VERCEL_AI_GATEWAY_API_KEY'],
     wireFormat: 'responses',
-    model: 'openai/gpt-5.4-mini',
+    model: 'openai/gpt-5.6-luna',
     host: 'ai-gateway.vercel.sh',
     path: '/v1/responses',
     buildHeaders: () => ({
@@ -95,7 +95,7 @@ export const providers: AIGatewayProviderConfig[] = [
       'OPENAI_API_KEY',
     ],
     wireFormat: 'responses',
-    model: 'gpt-5.4-mini',
+    model: 'gpt-5.6-luna',
     host: 'gateway.ai.cloudflare.com',
     path: `/v1/${process.env.CLOUDFLARE_AI_GATEWAY_ACCOUNT_ID}/${process.env.CLOUDFLARE_AI_GATEWAY_GATEWAY_ID}/openai/responses`,
     buildHeaders: () => ({
@@ -115,7 +115,7 @@ export const providers: AIGatewayProviderConfig[] = [
     name: 'llmgateway',
     requiredEnvVars: ['LLM_GATEWAY_API_KEY'],
     wireFormat: 'responses',
-    model: 'openai/gpt-5.4-mini',
+    model: 'openai/gpt-5.6-luna',
     host: 'api.llmgateway.io',
     path: '/v1/responses',
     buildHeaders: () => ({
@@ -134,7 +134,7 @@ export const providers: AIGatewayProviderConfig[] = [
     name: 'concentrate-ai-gateway',
     requiredEnvVars: ['CONCENTRATE_AI_GATEWAY_API_KEY'],
     wireFormat: 'responses',
-    model: 'openai/gpt-5.4-mini',
+    model: 'openai/gpt-5.6-luna',
     host: 'api.concentrate.ai',
     path: '/v1/responses/',
     buildHeaders: () => ({
@@ -169,7 +169,7 @@ export const providers: AIGatewayProviderConfig[] = [
     name: 'pydantic-ai-gateway',
     requiredEnvVars: ['PYDANTIC_AI_GATEWAY_API_KEY'],
     wireFormat: 'responses',
-    model: 'gpt-5.4-mini',
+    model: 'gpt-5.6-luna',
     host: 'gateway-us.pydantic.dev',
     path: '/proxy/openai-responses/responses',
     buildHeaders: () => ({
@@ -183,7 +183,7 @@ export const providers: AIGatewayProviderConfig[] = [
     // Ramp's `model` field takes a bare `id` from GET /v1/models, not the
     // `provider:provider-model` form used for the `models` fallback array
     // (see router.ramp.com/docs/guides/choose-a-model).
-    model: 'gpt-5.4-mini',
+    model: 'gpt-5.6-luna',
     host: 'router-api.ramp.com',
     path: '/v1/responses',
     buildHeaders: () => ({
@@ -194,7 +194,7 @@ export const providers: AIGatewayProviderConfig[] = [
     name: 'neon',
     requiredEnvVars: ['NEON_AI_GATEWAY_BASE_URL', 'NEON_AI_GATEWAY_TOKEN'],
     wireFormat: 'responses',
-    model: 'gpt-5-4-mini',
+    model: 'gpt-5-6-luna',
     host: resolveNeonHost().host,
     path: `${resolveNeonHost().basePath}/openai/v1/responses`,
     buildHeaders: () => ({
@@ -208,7 +208,7 @@ export const providers: AIGatewayProviderConfig[] = [
     name: 'ngrok',
     requiredEnvVars: ['NGROK_AI_GATEWAY_API_KEY'],
     wireFormat: 'responses',
-    model: 'gpt-5.4-mini',
+    model: 'gpt-5.6-luna',
     host: 'gateway.ngrok.ai',
     path: '/v1/responses',
     buildHeaders: () => ({
@@ -228,7 +228,7 @@ export const providers: AIGatewayProviderConfig[] = [
     name: 'llmapi',
     requiredEnvVars: ['LLMAPI_API_KEY'],
     wireFormat: 'responses',
-    model: 'openai/gpt-5.4-mini',
+    model: 'openai/gpt-5.6-luna',
     host: 'api.llmapi.ai',
     path: '/v1/responses',
     buildHeaders: () => ({
@@ -241,10 +241,22 @@ export const providers: AIGatewayProviderConfig[] = [
       buf.match(/"model"\s*:\s*"([^"/]+)\/[^"]*"/)?.[1],
   },
   {
+    // No Responses API on the router, so this uses Chat Completions.
+    name: 'you-dot-com',
+    requiredEnvVars: ['YOU_API_KEY'],
+    wireFormat: 'openai',
+    model: 'gpt-5.6-luna',
+    host: 'api.you.com',
+    path: '/v1/chat/completions',
+    buildHeaders: () => ({
+      Authorization: `Bearer ${process.env.YOU_API_KEY || ''}`,
+    }),
+  },
+  {
     name: 'github-copilot',
     requiredEnvVars: ['GITHUB_COPILOT_API_KEY'],
     wireFormat: 'responses',
-    model: 'gpt-5.4-mini',
+    model: 'gpt-5.6-luna',
     host: 'api.githubcopilot.com',
     path: '/responses',
     buildHeaders: () => ({
@@ -260,7 +272,7 @@ export const providers: AIGatewayProviderConfig[] = [
     name: 'openai-direct',
     requiredEnvVars: ['OPENAI_API_KEY'],
     wireFormat: 'responses',
-    model: 'gpt-5.4-mini',
+    model: 'gpt-5.6-luna',
     host: 'api.openai.com',
     path: '/v1/responses',
     buildHeaders: () => ({
@@ -268,3 +280,8 @@ export const providers: AIGatewayProviderConfig[] = [
     }),
   },
 ];
+
+export const providers: AIGatewayProviderConfig[] = roster.map((p) => ({
+  ...p,
+  extraBody: { ...p.extraBody, temperature: undefined },
+}));

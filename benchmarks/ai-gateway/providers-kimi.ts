@@ -330,6 +330,21 @@ export const providers: AIGatewayProviderConfig[] = [
     reasoningCountsAsFirstToken: true,
   },
   {
+    name: 'you-dot-com',
+    requiredEnvVars: ['YOU_API_KEY'],
+    wireFormat: 'openai',
+    model: 'kimi-k3',
+    host: 'api.you.com',
+    path: '/v1/chat/completions',
+    buildHeaders: () => ({
+      Authorization: `Bearer ${process.env.YOU_API_KEY || ''}`,
+    }),
+    extraBody: {
+      temperature: undefined,
+    },
+    reasoningCountsAsFirstToken: true,
+  },
+  {
     name: 'github-copilot',
     requiredEnvVars: ['GITHUB_COPILOT_API_KEY'],
     wireFormat: 'openai',
