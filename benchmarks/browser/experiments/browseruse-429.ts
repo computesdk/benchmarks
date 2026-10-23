@@ -41,6 +41,7 @@ const SPACING_MS = Number(process.env.EXPERIMENT_SPACING_MS ?? 15_000);
 const RATE_PAUSE_MS = Number(process.env.EXPERIMENT_RATE_PAUSE_MS ?? 60_000);
 const OUT_DIR = process.env.EXPERIMENT_OUT ?? path.resolve('results/experiments/browseruse-429');
 const RUNNER = process.env.EXPERIMENT_RUNNER ?? 'unknown';
+const UA_PRESET = process.env.EXPERIMENT_UA_PRESET ?? 'bot';
 const UA_OVERRIDE = process.env.EXPERIMENT_UA ?? '';
 const NAV_TIMEOUT_MS = 30_000;
 const VIEWPORT = { width: 1920, height: 1080 };
@@ -52,6 +53,9 @@ const CHROME_UA =
   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 const BOT_UA =
   'ComputeSDKBenchmarkBot/1.0 (https://github.com/computesdk/benchmarks; garrison@computesdk.com) playwright-core/1.64';
+
+/** UA used by the headers mode: explicit EXPERIMENT_UA, else preset 'bot' | 'chrome'. */
+const HEADERS_UA = UA_OVERRIDE || (UA_PRESET === 'chrome' ? CHROME_UA : BOT_UA);
 
 const HEADER_KEYS = [
   'server', 'x-cache', 'x-cache-status', 'x-client-ip', 'retry-after', 'x-request-id',
@@ -211,7 +215,7 @@ function sessionOptions(): Record<string, unknown> {
 
 async function applyHeaderOverride(page: Page): Promise<void> {
   if (MODE !== 'headers') return;
-  const ua = UA_OVERRIDE || BOT_UA;
+  const ua = HEADERS_UA;
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('Network.setUserAgentOverride', {
     userAgent: ua,
@@ -246,7 +250,7 @@ async function runBrowserUseSession(i: number): Promise<void> {
     await readEgress(page, rec);
     await readFingerprint(page, rec);
 
-    const client = MODE === 'headers' ? `browseruse+ua:${(UA_OVERRIDE || BOT_UA).split(' ')[0]}` : `browseruse:${MODE}`;
+    const client = MODE === 'headers' ? `browseruse+ua:${HEADERS_UA.split(' ')[0]}` : `browseruse:${MODE}`;
     if (MODE === 'rate') {
       await navigate(page, rec, 'nav-1', urlFor(i * 3), client);
       log(`s${i} pausing ${RATE_PAUSE_MS}ms inside the same session`);
@@ -395,7 +399,7 @@ function writeOutputs(summary: unknown) {
   const jsonPath = path.join(OUT_DIR, `${LABEL}.json`);
   fs.writeFileSync(jsonPath, JSON.stringify({
     experiment: 'browseruse-429', label: LABEL, mode: MODE, runner: RUNNER, startedAt: STARTED_AT,
-    finishedAt: new Date().toISOString(), config: { sessions: SESSIONS, spacingMs: SPACING_MS, ratePauseMs: RATE_PAUSE_MS, uaOverride: MODE === 'headers' ? (UA_OVERRIDE || BOT_UA) : null, sessionOptions: MODE === 'control' ? null : sessionOptions(), urls: navUrls },
+    finishedAt: new Date().toISOString(), config: { sessions: SESSIONS, spacingMs: SPACING_MS, ratePauseMs: RATE_PAUSE_MS, uaOverride: MODE === 'headers' ? HEADERS_UA : null, sessionOptions: MODE === 'control' ? null : sessionOptions(), urls: navUrls },
     summary, sessions, navs: allNavs,
   }, null, 2));
   const csvPath = path.join(OUT_DIR, `${LABEL}-navs.csv`);

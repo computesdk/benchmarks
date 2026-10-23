@@ -73,9 +73,10 @@ jobs:
   experiment:
     name: ${{ matrix.leg }}
     needs: setup
-    # Browser Use legs run on the house EC2 in us-east-2 (same runner the
-    # bench's browseruse leg uses); control legs run on both egresses.
-    runs-on: ${{ matrix.runner == 'house' && 'computesdk:computesdk:aws-us-east-2' || 'namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal' }}
+    # Browser Use legs (and the house control) run on the house EC2 in
+    # us-east-2 — the runner the bench's browseruse leg uses. Matrix values
+    # must stay colon-free for the platform to expand legs itself.
+    runs-on: computesdk:computesdk:aws-us-east-2
     timeout-minutes: 50
     strategy:
       fail-fast: false
@@ -83,27 +84,22 @@ jobs:
         include:
           - leg: baseline
             mode: baseline
-            runner: house
+            ua: none
           - leg: rate
             mode: rate
-            runner: house
+            ua: none
           - leg: headers-bot
             mode: headers
-            runner: house
-            ua: 'ComputeSDKBenchmarkBot/1.0 (https://github.com/computesdk/benchmarks; garrison@computesdk.com) playwright-core/1.64'
+            ua: bot
           - leg: headers-chrome
             mode: headers
-            runner: house
-            ua: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+            ua: chrome
           - leg: proxy-us
             mode: proxy-us
-            runner: house
+            ua: none
           - leg: control-house
             mode: control
-            runner: house
-          - leg: control-namespace
-            mode: control
-            runner: namespace
+            ua: none
     steps:
       - name: Skip legs not selected
         id: gate
@@ -155,8 +151,8 @@ jobs:
           THROUGHPUT_URLS: ${{ needs.setup.outputs.urls }}
           EXPERIMENT_MODE: ${{ matrix.mode }}
           EXPERIMENT_LABEL: ${{ matrix.leg }}
-          EXPERIMENT_RUNNER: ${{ matrix.runner }}
-          EXPERIMENT_UA: ${{ matrix.ua || '' }}
+          EXPERIMENT_RUNNER: house-ec2-us-east-2
+          EXPERIMENT_UA_PRESET: ${{ matrix.ua }}
           EXPERIMENT_SPACING_MS: ${{ github.event.inputs.spacing_ms || '15000' }}
           EXPERIMENT_SESSIONS: ${{ matrix.mode == 'rate' && (github.event.inputs.rate_sessions || '6') || (github.event.inputs.sessions || '30') }}
           EXPERIMENT_OUT: results/experiments/browseruse-429
@@ -170,6 +166,44 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: browseruse-429-${{ matrix.leg }}
+          path: results/experiments/browseruse-429/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  control-namespace:
+    name: control-namespace
+    needs: setup
+    # Second, different egress to compare against the house EC2: no Browser Use.
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
+    timeout-minutes: 50
+    if: contains(format(',{0},', github.event.inputs.legs || 'baseline,rate,headers-bot,headers-chrome,proxy-us,control-house,control-namespace'), ',control-namespace,')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Install a local Chromium for the runner control
+        continue-on-error: true
+        run: npx playwright@1.64.1 install --with-deps chromium
+      - name: Run control leg
+        env:
+          THROUGHPUT_URLS: ${{ needs.setup.outputs.urls }}
+          EXPERIMENT_MODE: control
+          EXPERIMENT_LABEL: control-namespace
+          EXPERIMENT_RUNNER: namespace
+          EXPERIMENT_SPACING_MS: ${{ github.event.inputs.spacing_ms || '15000' }}
+          EXPERIMENT_SESSIONS: ${{ github.event.inputs.sessions || '30' }}
+          EXPERIMENT_OUT: results/experiments/browseruse-429
+        run: npx tsx benchmarks/browser/experiments/browseruse-429.ts
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browseruse-429-control-namespace
           path: results/experiments/browseruse-429/
           if-no-files-found: ignore
           retention-days: 14
