@@ -114,6 +114,16 @@ jobs:
             mode: headers
             ua: none
             tweak: cdp-noop
+          - leg: wire-noop
+            mode: headers
+            ua: none
+            tweak: cdp-noop
+            wire: 1
+          - leg: wire-al
+            mode: headers
+            ua: none
+            tweak: al
+            wire: 1
           - leg: proxy-us
             mode: proxy-us
             ua: none
@@ -176,6 +186,7 @@ jobs:
           EXPERIMENT_RUNNER: house-ec2-us-east-2
           EXPERIMENT_UA_PRESET: ${{ matrix.ua }}
           EXPERIMENT_TWEAK: ${{ matrix.tweak }}
+          EXPERIMENT_WIRE: ${{ matrix.wire || '0' }}
           EXPERIMENT_SPACING_MS: ${{ github.event.inputs.spacing_ms || '15000' }}
           EXPERIMENT_SESSIONS: ${{ matrix.mode == 'rate' && (github.event.inputs.rate_sessions || '6') || (github.event.inputs.sessions || '30') }}
           EXPERIMENT_OUT: results/experiments/browseruse-429

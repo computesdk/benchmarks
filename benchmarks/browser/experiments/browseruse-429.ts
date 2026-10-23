@@ -51,6 +51,8 @@ const UA_PRESET = process.env.EXPERIMENT_UA_PRESET ?? 'bot';
  *   cdp-noop  attach a CDP session and send Network.enable only — no header change
  */
 const TWEAK = process.env.EXPERIMENT_TWEAK ?? 'ua+al';
+/** headers mode: also record the ordered wire headers of Wikipedia document requests via CDP. */
+const WIRE = process.env.EXPERIMENT_WIRE === '1';
 const UA_OVERRIDE = process.env.EXPERIMENT_UA ?? '';
 const NAV_TIMEOUT_MS = 30_000;
 const VIEWPORT = { width: 1920, height: 1080 };
@@ -89,6 +91,8 @@ interface NavRecord {
   requestHeaders?: Record<string, string>;
   title?: string;
   bodySnippet?: string;
+  /** Ordered request headers as sent (CDP Network.requestWillBeSentExtraInfo), headers mode + EXPERIMENT_WIRE=1 only. */
+  wireHeaders?: Array<[string, string]>;
 }
 
 interface SessionRecord {
@@ -199,6 +203,8 @@ async function navigate(page: Page, rec: SessionRecord, phase: string, url: stri
       nav.ok = nav.status < 400;
       nav.headers = pickHeaders(await resp.allHeaders());
       nav.requestHeaders = await resp.request().allHeaders();
+      const wire = wireCapture.get(url) ?? wireCapture.get(resp.url());
+      if (wire) nav.wireHeaders = wire;
       nav.title = (await page.title().catch(() => '')).slice(0, 120);
       if (!nav.ok) {
         const html = await resp.text().catch(() => page.content().catch(() => ''));
@@ -222,8 +228,25 @@ function sessionOptions(): Record<string, unknown> {
   return { ...BENCH_SESSION_OPTIONS };
 }
 
+/** Wire headers captured per session, keyed by request URL. */
+const wireCapture = new Map<string, Array<[string, string]>>();
+
 async function applyHeaderOverride(page: Page): Promise<void> {
   if (MODE !== 'headers') return;
+  if (WIRE) {
+    const cdp = await page.context().newCDPSession(page);
+    const urls = new Map<string, string>();
+    cdp.on('Network.requestWillBeSent', (e: any) => {
+      if (e.type === 'Document') urls.set(e.requestId, e.request.url);
+    });
+    cdp.on('Network.requestWillBeSentExtraInfo', (e: any) => {
+      const url = urls.get(e.requestId);
+      if (url && url.includes('wikipedia.org')) {
+        wireCapture.set(url, Object.entries(e.headers as Record<string, string>).map(([k, v]) => [k, k === 'cookie' ? `<${v.length} chars>` : v]));
+      }
+    });
+    await cdp.send('Network.enable');
+  }
   if (TWEAK === 'ua+al' || TWEAK === 'ua' || TWEAK === 'cdp-noop') {
     const cdp = await page.context().newCDPSession(page);
     if (TWEAK === 'cdp-noop') {
