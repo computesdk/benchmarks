@@ -1,0 +1,175 @@
+name: Browser Use 429 Experiment (DO NOT MERGE)
+
+# EXPERIMENT ONLY. workflow_dispatch-only, never ingests to the platform, never
+# commits results. Exists so a branch can run Browser Use sessions against the
+# same Wikipedia URL list the browser-throughput benchmark uses and record why
+# they get HTTP 429. Results are uploaded as artifacts (metrics only).
+
+# computesdk:secrets=NSC_TOKEN
+# computesdk:secrets-env=declared
+
+on:
+  workflow_dispatch:
+    inputs:
+      sessions:
+        description: 'Sessions per leg (rate leg uses rate_sessions)'
+        required: false
+        default: '30'
+      rate_sessions:
+        description: 'Sessions for the rate leg (3 navigates each, 60s pause inside the session)'
+        required: false
+        default: '6'
+      spacing_ms:
+        description: 'Pause between sessions, ms (bench uses 15000)'
+        required: false
+        default: '15000'
+      legs:
+        description: 'Comma list of legs to run'
+        required: false
+        default: 'baseline,rate,headers-bot,headers-chrome,proxy-us,control-house,control-namespace'
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    name: Resolve target pages
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
+    outputs:
+      urls: ${{ steps.pick.outputs.urls }}
+    steps:
+      - name: Resolve one shared random article per session
+        id: pick
+        run: |
+          # Same resolution as browser-throughput-benchmarks.yml: follow
+          # Special:Random once per session, retry until the article has a
+          # body link. The rate leg needs 3 URLs per session.
+          count=$(( ${{ github.event.inputs.sessions || '30' }} * 3 ))
+          urls=()
+          for i in $(seq 1 "$count"); do
+            for attempt in 1 2 3 4 5; do
+              url=$(curl -sL -A 'ComputeSDK-Benchmark' -o /dev/null -w '%{url_effective}' \
+                'https://en.wikipedia.org/wiki/Special:Random')
+              if [ -z "$url" ] || [[ "$url" == *"Special:Random"* ]]; then
+                url='https://en.wikipedia.org/wiki/Special:Random'
+                break
+              fi
+              html=$(curl -sL -A 'ComputeSDK-Benchmark' "$url")
+              if echo "$html" | grep -qP 'href="(//en\.wikipedia\.org)?/wiki/[^"]*" *' \
+                 && echo "$html" | grep -oP 'href="[^"]*"' \
+                    | grep -qP '/wiki/[^:]*$'; then
+                break
+              fi
+            done
+            urls+=("$url")
+          done
+          {
+            echo "urls<<URLS_EOF"
+            printf '%s\n' "${urls[@]}"
+            echo "URLS_EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "Resolved ${#urls[@]} article URLs"
+
+  experiment:
+    name: ${{ matrix.leg }}
+    needs: setup
+    # Browser Use legs run on the house EC2 in us-east-2 (same runner the
+    # bench's browseruse leg uses); control legs run on both egresses.
+    runs-on: ${{ matrix.runner == 'house' && 'computesdk:computesdk:aws-us-east-2' || 'namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal' }}
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - leg: baseline
+            mode: baseline
+            runner: house
+          - leg: rate
+            mode: rate
+            runner: house
+          - leg: headers-bot
+            mode: headers
+            runner: house
+            ua: 'ComputeSDKBenchmarkBot/1.0 (https://github.com/computesdk/benchmarks; garrison@computesdk.com) playwright-core/1.64'
+          - leg: headers-chrome
+            mode: headers
+            runner: house
+            ua: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+          - leg: proxy-us
+            mode: proxy-us
+            runner: house
+          - leg: control-house
+            mode: control
+            runner: house
+          - leg: control-namespace
+            mode: control
+            runner: namespace
+    steps:
+      - name: Skip legs not selected
+        id: gate
+        run: |
+          legs=",${{ github.event.inputs.legs || 'baseline,rate,headers-bot,headers-chrome,proxy-us,control-house,control-namespace' }},"
+          if [[ "$legs" == *",${{ matrix.leg }},"* ]]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "leg ${{ matrix.leg }} not in '$legs' — skipping"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.run == 'true'
+      - uses: pnpm/action-setup@v4
+        if: steps.gate.outputs.run == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.run == 'true'
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      # ComputeSDK runners get no GitHub OIDC token, so nscloud-setup's
+      # `nsc auth exchange-github-token` cannot work there. Pre-seed the
+      # workload token file it checks for when NSC_TOKEN is available.
+      - name: Seed Namespace token file
+        if: steps.gate.outputs.run == 'true' && matrix.mode != 'control'
+        run: |
+          if [ -n "${NSC_TOKEN:-}" ] && [ ! -f /var/run/nsc/token.json ]; then
+            mkdir -p /var/run/nsc
+            case "$NSC_TOKEN" in
+              \{*) printf '%s\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+              *) printf '{"bearer_token":"%s"}\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+            esac
+            chmod 600 /var/run/nsc/token.json
+            echo "NSC_DOCKER_LOGIN=1" >> "$GITHUB_ENV"
+            echo "NSC_CONTAINER_REGISTRY=nscr.io" >> "$GITHUB_ENV"
+          fi
+      - uses: namespacelabs/nscloud-setup@v0
+        if: steps.gate.outputs.run == 'true' && matrix.mode != 'control'
+      - name: Install dependencies
+        if: steps.gate.outputs.run == 'true'
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Install a local Chromium for the runner control
+        if: steps.gate.outputs.run == 'true' && matrix.mode == 'control'
+        continue-on-error: true
+        run: npx playwright@1.64.1 install --with-deps chromium
+      - name: Run experiment leg
+        if: steps.gate.outputs.run == 'true'
+        env:
+          THROUGHPUT_URLS: ${{ needs.setup.outputs.urls }}
+          EXPERIMENT_MODE: ${{ matrix.mode }}
+          EXPERIMENT_LABEL: ${{ matrix.leg }}
+          EXPERIMENT_RUNNER: ${{ matrix.runner }}
+          EXPERIMENT_UA: ${{ matrix.ua || '' }}
+          EXPERIMENT_SPACING_MS: ${{ github.event.inputs.spacing_ms || '15000' }}
+          EXPERIMENT_SESSIONS: ${{ matrix.mode == 'rate' && (github.event.inputs.rate_sessions || '6') || (github.event.inputs.sessions || '30') }}
+          EXPERIMENT_OUT: results/experiments/browseruse-429
+        run: |
+          if [ "${{ matrix.mode }}" != "control" ]; then
+            . benchmarks/scripts/load-vault-secrets.sh '^(BROWSER_USE_API_KEY)'
+          fi
+          npx tsx benchmarks/browser/experiments/browseruse-429.ts
+      - name: Upload results
+        if: always() && steps.gate.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: browseruse-429-${{ matrix.leg }}
+          path: results/experiments/browseruse-429/
+          if-no-files-found: ignore
+          retention-days: 14
