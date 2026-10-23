@@ -356,6 +356,14 @@ export interface BenchmarkByStepDisplay {
    * grid for benchmarks whose steps are boolean pass/fail probes, and makes
    * the platform derive a `supportedPct` metric from step aggregates. */
   defaultLayout?: 'table' | 'bars' | 'time' | 'matrix';
+  /** Step keys the By Step section's Steps dropdown starts with unchecked —
+   * for steps that don't change the comparison (e.g. create/destroy noise).
+   * Only a default: viewers can toggle them back on. */
+  hiddenSteps?: string[];
+  /** Custom metric keys the By Step section's Metrics dropdown starts with
+   * unchecked. Each checked metric renders a breakdown row under each
+   * participant row, its value in the column of the step that reported it. */
+  hiddenMetrics?: string[];
 }
 
 /**
@@ -573,9 +581,19 @@ function validateBenchmarkDisplayConfig(display: BenchmarkDisplayConfig): void {
     if (typeof display.byStep !== 'object' || display.byStep === null || Array.isArray(display.byStep)) {
       throw new Error('display.byStep must be an object');
     }
-    assertOnlyAllowedKeys(display.byStep as unknown as Record<string, unknown>, ['defaultLayout'], 'display.byStep');
+    assertOnlyAllowedKeys(display.byStep as unknown as Record<string, unknown>, ['defaultLayout', 'hiddenSteps', 'hiddenMetrics'], 'display.byStep');
     if (display.byStep.defaultLayout !== undefined && !['table', 'bars', 'time', 'matrix'].includes(display.byStep.defaultLayout)) {
       throw new Error("display.byStep.defaultLayout must be 'table', 'bars', 'time', or 'matrix'");
+    }
+    for (const field of ['hiddenSteps', 'hiddenMetrics'] as const) {
+      const list = display.byStep[field];
+      if (list === undefined) continue;
+      if (!Array.isArray(list)) {
+        throw new Error(`display.byStep.${field} must be an array`);
+      }
+      for (let i = 0; i < list.length; i++) {
+        assertNonEmptyString(list[i], `display.byStep.${field}[${i}]`);
+      }
     }
   }
 }

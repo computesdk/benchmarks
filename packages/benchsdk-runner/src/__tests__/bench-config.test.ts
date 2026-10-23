@@ -162,6 +162,39 @@ describe('defineBenchmarkConfig', () => {
     ).toThrow("display.byStep contains unexpected key");
   });
 
+  it('carries byStep hidden step and metric defaults', () => {
+    const config = defineBenchmarkConfig({
+      benchmarkSlug: 's',
+      benchmarkName: 'n',
+      participants,
+      display: { byStep: { hiddenSteps: ['create', 'destroy'], hiddenMetrics: ['cpuStealPercent'] } },
+    });
+    expect(config.display?.byStep?.hiddenSteps).toEqual(['create', 'destroy']);
+    expect(config.display?.byStep?.hiddenMetrics).toEqual(['cpuStealPercent']);
+  });
+
+  it('rejects a non-array byStep hidden list', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: { byStep: { hiddenSteps: 'create' as any } },
+      }),
+    ).toThrow('display.byStep.hiddenSteps must be an array');
+  });
+
+  it('rejects a non-string entry in a byStep hidden list', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        display: { byStep: { hiddenMetrics: ['x', 1 as any] } },
+      }),
+    ).toThrow('display.byStep.hiddenMetrics[1]');
+  });
+
   it('rejects a non-string display metric unit', () => {
     expect(() =>
       defineBenchmarkConfig({
