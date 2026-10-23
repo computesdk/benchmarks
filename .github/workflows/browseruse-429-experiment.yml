@@ -26,7 +26,7 @@ on:
       legs:
         description: 'Comma list of legs to run'
         required: false
-        default: 'baseline,rate,headers-bot,headers-chrome,proxy-us,control-house,control-namespace'
+        default: 'baseline,rate,headers-bot,headers-chrome,hdr-ua-only,hdr-al-only,hdr-xhdr-only,hdr-cdp-noop,proxy-us,control-house,control-namespace'
 
 permissions:
   contents: read
@@ -85,26 +85,48 @@ jobs:
           - leg: baseline
             mode: baseline
             ua: none
+            tweak: none
           - leg: rate
             mode: rate
             ua: none
+            tweak: none
           - leg: headers-bot
             mode: headers
             ua: bot
+            tweak: ua+al
           - leg: headers-chrome
             mode: headers
             ua: chrome
+            tweak: ua+al
+          - leg: hdr-ua-only
+            mode: headers
+            ua: bot
+            tweak: ua
+          - leg: hdr-al-only
+            mode: headers
+            ua: none
+            tweak: al
+          - leg: hdr-xhdr-only
+            mode: headers
+            ua: none
+            tweak: xhdr
+          - leg: hdr-cdp-noop
+            mode: headers
+            ua: none
+            tweak: cdp-noop
           - leg: proxy-us
             mode: proxy-us
             ua: none
+            tweak: none
           - leg: control-house
             mode: control
             ua: none
+            tweak: none
     steps:
       - name: Skip legs not selected
         id: gate
         run: |
-          legs=",${{ github.event.inputs.legs || 'baseline,rate,headers-bot,headers-chrome,proxy-us,control-house,control-namespace' }},"
+          legs=",${{ github.event.inputs.legs || 'baseline,rate,headers-bot,headers-chrome,hdr-ua-only,hdr-al-only,hdr-xhdr-only,hdr-cdp-noop,proxy-us,control-house,control-namespace' }},"
           if [[ "$legs" == *",${{ matrix.leg }},"* ]]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
@@ -153,6 +175,7 @@ jobs:
           EXPERIMENT_LABEL: ${{ matrix.leg }}
           EXPERIMENT_RUNNER: house-ec2-us-east-2
           EXPERIMENT_UA_PRESET: ${{ matrix.ua }}
+          EXPERIMENT_TWEAK: ${{ matrix.tweak }}
           EXPERIMENT_SPACING_MS: ${{ github.event.inputs.spacing_ms || '15000' }}
           EXPERIMENT_SESSIONS: ${{ matrix.mode == 'rate' && (github.event.inputs.rate_sessions || '6') || (github.event.inputs.sessions || '30') }}
           EXPERIMENT_OUT: results/experiments/browseruse-429
@@ -176,7 +199,7 @@ jobs:
     # Second, different egress to compare against the house EC2: no Browser Use.
     runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
     timeout-minutes: 50
-    if: contains(format(',{0},', github.event.inputs.legs || 'baseline,rate,headers-bot,headers-chrome,proxy-us,control-house,control-namespace'), ',control-namespace,')
+    if: contains(format(',{0},', github.event.inputs.legs || 'baseline,rate,headers-bot,headers-chrome,hdr-ua-only,hdr-al-only,hdr-xhdr-only,hdr-cdp-noop,proxy-us,control-house,control-namespace'), ',control-namespace,')
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
