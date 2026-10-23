@@ -146,9 +146,12 @@ export const providers: ProviderConfig[] = [
       sshIdentityPem: process.env.EC2_FIRECRAB_SSH_KEY!,
       microNetwork: process.env.EC2_FIRECRAB_MICRO_NETWORK!,
       template: process.env.EC2_FIRECRAB_TEMPLATE,
-      cpus: 2,
-      memoryMib: 4096,
-      diskGb: 16,
+      // Smallest viable guest for the burst TTI probe (just `node -v`):
+      // 128MiB is firecrab's floor but the act image idles ~119MiB, so
+      // 256MiB is the honest minimum. ~200 of these fit on one c8i.8xlarge.
+      cpus: 1,
+      memoryMib: 256,
+      diskGb: 1,
       egressPolicy: 'internet',
     }),
     destroyTimeoutMs: 90_000,
