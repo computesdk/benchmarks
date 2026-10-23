@@ -133,17 +133,16 @@ export const providers: ProviderConfig[] = [
     sandboxOptions: { templateId: 'base-8cpu-16gb', timeout: 600_000 },
   },
   {
-    // Self-hosted firecrab host on EC2 — no API key; reach the loopback
-    // listener via an SSH/SSM tunnel (EC2_FIRECRAB_API_URL) and exec
-    // through a jumphost (EC2_FIRECRAB_SSH_PROXY_COMMAND, e.g.
-    // 'ssh -W %h:%p ubuntu@<host-ip>'). destroy is ~30s graceful ACPI.
+    // Self-hosted firecrab host on EC2 — one SSH target + key. The adapter
+    // self-opens the API tunnel and derives the exec jumphost from it.
+    // destroy is ~30s graceful ACPI, hence the longer timeout.
     name: 'ec2-firecrab',
-    requiredEnvVars: ['EC2_FIRECRAB_MICRO_NETWORK_ID', 'EC2_FIRECRAB_SSH_PROXY_COMMAND'],
+    requiredEnvVars: ['EC2_FIRECRAB_SSH_TARGET', 'EC2_FIRECRAB_SSH_KEY', 'EC2_FIRECRAB_MICRO_NETWORK'],
     createCompute: () => ec2Firecrab({
-      apiUrl: process.env.EC2_FIRECRAB_API_URL,
-      microNetworkId: process.env.EC2_FIRECRAB_MICRO_NETWORK_ID!,
+      sshTarget: process.env.EC2_FIRECRAB_SSH_TARGET!,
+      sshIdentityPem: process.env.EC2_FIRECRAB_SSH_KEY!,
+      microNetwork: process.env.EC2_FIRECRAB_MICRO_NETWORK!,
       template: process.env.EC2_FIRECRAB_TEMPLATE,
-      sshProxyCommand: process.env.EC2_FIRECRAB_SSH_PROXY_COMMAND!,
       cpus: 2,
       memoryMib: 4096,
       diskGb: 16,
