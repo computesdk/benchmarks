@@ -155,6 +155,9 @@ export const providers: ProviderConfig[] = [
       cpus: 1,
       memoryMib: 256,
       diskGb: 2,
+      // Adapter's internal create→running deadline (default 120s) — same
+      // headroom as `timeout` below or the boot wait caps first.
+      bootTimeoutMs: 600_000,
       egressPolicy: 'internet',
     }),
     // Burst create latency is the metric under test — 40 concurrent
