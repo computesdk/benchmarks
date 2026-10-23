@@ -86,6 +86,9 @@ importers:
       '@computesdk/e2b':
         specifier: ^1.7.67
         version: 1.7.67
+      '@computesdk/ec2-firecrab':
+        specifier: ^1.0.0
+        version: 1.0.1
       '@computesdk/freestyle':
         specifier: ^0.2.16
         version: 0.2.16(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -805,6 +808,9 @@ packages:
 
   '@computesdk/e2b@1.7.67':
     resolution: {integrity: sha512-aT8rUj0I0EorBoVvaPL6+ZH+KoReC5OCP4pyWhIdsbL629OH8QwT4a1veIG1enH7x0kLCWDRb6hRbPIKXZE+RQ==}
+
+  '@computesdk/ec2-firecrab@1.0.1':
+    resolution: {integrity: sha512-kml/oAJww0K1FX2I20PQ7Bpbj9ISxx2O+Y65tXXP5vT8arX4CkQ3N/1bKUIIy0W3UDPltTxwFCjZ3CbFQ3Ijvg==}
 
   '@computesdk/freestyle@0.2.16':
     resolution: {integrity: sha512-DNzRhOiZBb6rbNCgV2QTl4GB9nyfILCezmEkSwGYIqetBgitt5NNk0yiWsSq9TtBYZXnYPsfqvr9MfPzDHgJmQ==}
@@ -6704,6 +6710,11 @@ snapshots:
       '@computesdk/provider': 2.1.19
       computesdk: 4.1.13
       e2b: 2.59.0
+
+  '@computesdk/ec2-firecrab@1.0.1':
+    dependencies:
+      '@computesdk/provider': 2.1.19
+      computesdk: 4.1.13
 
   '@computesdk/freestyle@0.2.16(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
     dependencies:
