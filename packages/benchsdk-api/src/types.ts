@@ -28,6 +28,19 @@ export interface BenchmarkResource {
   organizationSlug?: string | null;
 }
 
+/**
+ * Where a benchmark's `.bench.ts` lives, as attributed by the platform's
+ * source registry. Returned on benchmark GETs so `bench fork` can seed a
+ * tracked fork without hardcoding the upstream repo.
+ */
+export interface BenchmarkSourceDescriptor {
+  githubOwner: string;
+  repo: string;
+  /** Repo-relative path of the `.bench.ts` file. */
+  path: string;
+  ref: string;
+}
+
 export type BenchmarkRunStatus = 'planned' | 'in_progress' | 'completed' | 'failed';
 export type BenchmarkWorkerStatus = 'pending' | 'running' | 'completed' | 'failed';
 
@@ -176,6 +189,12 @@ export interface CreateRunInput {
   workerCount?: number;
   participants?: string[];
   config?: JsonObject;
+  /**
+   * The Actions run that produced this benchmark run. The runner passes
+   * `COMPUTESDK_RUN_ID` (injected into every Actions job env), linking the
+   * benchmark run back to its workflow logs — same-org only.
+   */
+  ciRunId?: string;
 }
 
 export interface UpdateRunInput {
@@ -868,6 +887,11 @@ export interface BenchmarkClient {
   upsertBenchmark(slug: string, input: UpsertBenchmarkInput): Promise<BenchmarkResource>;
   updateBenchmark(slug: string, input: UpdateBenchmarkInput): Promise<BenchmarkResource>;
   getBenchmark(slug: string): Promise<BenchmarkResource>;
+  /** GET /benchmarks/~/{sourceOrg}/{slug} — an entitled foreign benchmark plus its platform-attributed source descriptor. */
+  getForeignBenchmark(
+    sourceOrg: string,
+    slug: string,
+  ): Promise<{ benchmark: BenchmarkResource; source: BenchmarkSourceDescriptor | null }>;
   listBenchmarks(options?: { limit?: number; offset?: number }): Promise<BenchmarkResource[]>;
   createRun(benchmarkSlug: string, input: CreateRunInput): Promise<{
     run: BenchmarkRun;
