@@ -280,8 +280,9 @@ These back the `bench` data commands (`bench runs`, `bench results`, `bench arti
 | `GET …/participants/{p}/workers` · `GET …/workers/{workerId}` | Worker rows with progress and concurrency samples. |
 | `GET …/runs/{runId}/artifacts` · `GET …/workers/{workerId}/artifacts` | Artifact listings. |
 | `GET …/workers/{workerId}/artifacts/{artifactId}` | Artifact metadata + presigned `downloadUrl`; the body is then fetched from that URL (auto-gunzipped when the content type is gzip). |
-| `GET /benchmarks/{slug}/results?limit&offset` | Cross-run overview with analytics readiness per run. |
-| `GET …/runs/{runId}/results` | Aggregate result: overall + per-participant + per-step latency summaries and success rates. |
+| `GET /benchmarks/{slug}/results?limit&offset&participant&steps&since&until&timeZone` | Cross-run overview with analytics readiness per run; `participant`/`steps` are comma lists, `since`/`until` accept YYYY-MM-DD (zoned by `timeZone`, default UTC) or an ISO timestamp. |
+| `GET …/runs` — `GET /benchmarks/{slug}/runs?limit&offset&participant&since&until&timeZone` | Run listing with the same date/participant filters (no `steps`); unfiltered lists stay unbounded, filtered ones default to `limit=100`. |
+| `GET …/runs/{runId}/results?participant` | Aggregate result: overall + per-participant + per-step latency summaries and success rates; `participant` narrows every aggregate to those slugs. |
 | `GET …/runs/{runId}/results/tasks?bucketSize&failureLimit` | Task-index buckets (p50/p95/max per bucket) plus the failure points — the scatter/bucket view. |
 | `GET …/runs/{runId}/results/timeline?bucketMs` | Event-rate buckets + heartbeat-derived concurrency points over time. |
 | `GET …/runs/{runId}/results/imports` | Event-batch ingestion status (queued/persisted/failed per batch). |

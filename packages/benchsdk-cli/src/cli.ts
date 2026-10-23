@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { BenchmarkApiError } from '@benchsdk/api';
 import type {
   BenchmarkResultsOverview,
+  BenchmarkResultsOverviewRun,
   BenchmarkRunFilterInput,
   BenchmarkRunResults,
   BenchmarkStepResultSummary,
@@ -417,7 +418,7 @@ async function handleBenchmarksList(
   printData(benchmarks, outputOptions);
 }
 
-interface ResultFilterOptions {
+export interface ResultFilterOptions {
   participant?: string;
   steps?: string;
   since?: string;
@@ -434,7 +435,7 @@ const RELATIVE_BOUND = /^(\d+)([hdw])$/;
 // bounds). `--day` is sugar for since=<day>&until=<day>; a date-only until
 // already includes the whole day server-side. `--tz` defaults to the local
 // machine zone so `bench results --day` reads naturally.
-function resolveResultFilter(
+export function resolveResultFilter(
   options: ResultFilterOptions,
   { allowSteps }: { allowSteps: boolean },
 ): { filter: BenchmarkRunFilterInput & { steps?: string[] | 'all' }; flagsSent: boolean } {
@@ -482,21 +483,23 @@ function resolveResultFilter(
     filter.steps = steps;
   }
 
+  // `--tz` and `--source-org` are not result filters: tz only interprets
+  // date bounds and sourceOrg routes to `~/org/slug`, which predates the
+  // filter feature — counting them would false-positive the "platform too
+  // old" check on an old platform where sourceOrg works fine.
   const flagsSent =
     participants !== undefined ||
     options.since !== undefined ||
     options.until !== undefined ||
     options.day !== undefined ||
-    options.steps !== undefined ||
-    options.tz !== undefined ||
-    options['source-org'] !== undefined;
+    options.steps !== undefined;
   return { filter, flagsSent };
 }
 
 // A filter flag was sent but the response carries no `filter` echo → the
 // platform predates the filter feature and silently ignored it. Fail loudly
 // instead of printing unfiltered results under a filtered-looking command.
-function assertFilterEcho(filter: unknown): void {
+export function assertFilterEcho(filter: unknown): void {
   if (filter === undefined || filter === null) {
     throw new Error(
       'The API did not return a `filter` echo — this platform does not support result filters yet',
@@ -523,13 +526,19 @@ async function handleRunsList(
   const result = await api.listRuns(benchmarkSlug, {
     limit: options.limit,
     offset: options.offset,
+    // sourceOrg isn't a result filter (see resolveResultFilter) — send it
+    // even when it's the only flag, on any platform version.
+    ...(filter.sourceOrg ? { sourceOrg: filter.sourceOrg } : {}),
     ...(flagsSent ? filter : {}),
   });
-  if (flagsSent) assertFilterEcho(result.filter);
+  if (flagsSent) assertFilterEcho(result.appliedFilter);
   if (outputOptions.json || outputOptions.format === 'json') {
-    printData(result, outputOptions);
+    printData(
+      { items: [...result], filter: result.appliedFilter ?? null, upgrade: result.upgrade ?? null },
+      outputOptions,
+    );
   } else {
-    printData(result.items, outputOptions);
+    printData(result, outputOptions);
   }
 }
 
@@ -552,16 +561,33 @@ async function handleResults(
 ): Promise<void> {
   const { api } = await createApiClient(overrides);
   const { filter, flagsSent } = resolveResultFilter(options, { allowSteps: true });
-  if (options.run && flagsSent) {
-    throw new Error('Result filters do not apply to a single --run');
+  if (options.run) {
+    // A single run has no date range or step-overview dimension to narrow —
+    // only `participant` applies (date/step flags still hard-error rather
+    // than silently doing nothing).
+    const unsupported: string[] = [];
+    if (options.since !== undefined || options.until !== undefined || options.day !== undefined) {
+      unsupported.push('--since/--until/--day');
+    }
+    if (options.steps !== undefined) unsupported.push('--steps');
+    if (options['source-org'] !== undefined) unsupported.push('--source-org');
+    if (unsupported.length > 0) {
+      throw new Error(`${unsupported.join(' and ')} do not apply to a single --run`);
+    }
   }
   const results = options.run
-    ? await api.getRunResults(benchmarkSlug, options.run as string)
+    ? await api.getRunResults(benchmarkSlug, options.run as string, {
+        participants: filter.participants,
+      })
     : await api.getBenchmarkResults(benchmarkSlug, {
         limit: options.limit,
         offset: options.offset,
+        ...(filter.sourceOrg ? { sourceOrg: filter.sourceOrg } : {}),
         ...(flagsSent ? filter : {}),
       });
+  if (options.run && filter.participants) {
+    assertFilterEcho((results as BenchmarkRunResults).filter);
+  }
   if (!options.run && flagsSent) {
     assertFilterEcho((results as BenchmarkResultsOverview).filter);
   }
@@ -572,7 +598,7 @@ async function handleResults(
   printResultsTables(results, options.run !== undefined);
 }
 
-type ParticipantResultRow = BenchmarkRunResults['participants'][number] & { runId?: string };
+type ParticipantResultRow = BenchmarkRunResults['participants'][number] & { runDay?: string };
 
 function fmtMs(value: number | null): number | string {
   if (value === null) return '';
@@ -591,7 +617,7 @@ function fmtRate(rate: number): string {
 
 function participantTableRow(p: ParticipantResultRow): Record<string, unknown> {
   return {
-    ...(p.runId ? { run: p.runId } : {}),
+    ...(p.runDay ? { run: p.runDay } : {}),
     participant: p.participantSlug,
     provider: p.provider ?? '',
     tasks: p.taskCount,
@@ -644,14 +670,16 @@ function printResultsTables(
     console.log(`Results unavailable${overview.analytics.error ? `: ${overview.analytics.error}` : '.'}`);
     return;
   }
+  const runDay = (item: BenchmarkResultsOverviewRun): string =>
+    item.run.createdAt?.slice(0, 10) ?? item.run.id.slice(0, 8);
   const rows = overview.items.flatMap((item) =>
-    item.participants.map((p) => participantTableRow({ ...p, runId: item.run.id })),
+    item.participants.map((p) => participantTableRow({ ...p, runDay: runDay(item) })),
   );
   const emptyRuns = overview.items.filter((item) => item.participants.length === 0);
   if (emptyRuns.length > 0) {
     for (const item of emptyRuns) {
       console.log(
-        `Run ${item.run.id} — ${item.run.status} | no participant results (analytics: ${item.analytics.status})`,
+        `Run ${runDay(item)} — ${item.run.status} | no participant results (analytics: ${item.analytics.status})`,
       );
     }
   }
@@ -662,7 +690,7 @@ function printResultsTables(
   }
   // One row per run × participant × step when --steps was sent.
   const stepRows = overview.items.flatMap((item) =>
-    (item.steps ?? []).map((s) => ({ run: item.run.id, ...stepTableRow(s) })),
+    (item.steps ?? []).map((s) => ({ run: runDay(item), ...stepTableRow(s) })),
   );
   if (stepRows.length > 0) {
     console.log('Steps:');

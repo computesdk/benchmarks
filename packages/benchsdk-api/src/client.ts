@@ -33,6 +33,8 @@ import type {
   JsonObject,
   BenchmarkRunList,
   BenchmarkRunListItem,
+  BenchmarkRunListResult,
+  BenchmarkRunResultsInput,
   ListAllRunsOptions,
   ListRunsOptions,
   SendTaskResultsInput,
@@ -336,10 +338,22 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
 
     async listRuns(benchmarkSlug, options: ListRunsOptions = {}) {
       const { sourceOrg, limit, offset, ...filter } = options;
-      return request<BenchmarkRunList>(
+      const data = await request<BenchmarkRunList>(
         'GET',
         `${benchmarkPath(benchmarkSlug, sourceOrg)}/runs${queryString({ limit, offset, ...filterParams(filter) })}`,
       );
+      // The wire shape is { items, filter, upgrade } but callers iterate the
+      // result as an array — attach the envelope fields non-enumerably so
+      // both `for (const run of result)` and `result.items` keep working.
+      // `.items` stays undefined on a legacy `{ runs: [] }` wire shape
+      // (pinned by the public-api contract test).
+      const items = (data.items ?? []) as BenchmarkRunListResult;
+      Object.defineProperties(items, {
+        items: { value: data.items, enumerable: false },
+        appliedFilter: { value: data.filter, enumerable: false },
+        upgrade: { value: data.upgrade, enumerable: false },
+      });
+      return items;
     },
 
     // GET /api/v1/benchmarks/runs — every run the caller can read across all
@@ -567,10 +581,10 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
       );
     },
 
-    async getRunResults(benchmarkSlug, runId) {
+    async getRunResults(benchmarkSlug, runId, input: BenchmarkRunResultsInput = {}) {
       return request<BenchmarkRunResults>(
         'GET',
-        `/benchmarks/${encodePath(benchmarkSlug)}/runs/${encodePath(runId)}/results`,
+        `/benchmarks/${encodePath(benchmarkSlug)}/runs/${encodePath(runId)}/results${queryString({ participant: input.participants?.join(',') })}`,
       );
     },
 

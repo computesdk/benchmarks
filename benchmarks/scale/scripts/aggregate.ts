@@ -43,6 +43,8 @@ import * as fs from 'node:fs';
 import { createBenchmarkClient, BenchmarkApiError } from '@benchsdk/client';
 import type {
   BenchmarkResultLatencySummary,
+  BenchmarkRunListItem,
+  BenchmarkRunListResult,
   BenchmarkRunResults,
   BenchmarkRunTaskResults,
   BenchmarkRunTimeline,
@@ -117,7 +119,10 @@ async function safe<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
 // ─── resolve run ────────────────────────────────────────────────────────────
 let runId = args.runId;
 if (!runId) {
-  const runs = (await safe(() => client.listRuns(args.slug), { items: [] })).items;
+  const runs = await safe<BenchmarkRunListResult>(
+    () => client.listRuns(args.slug),
+    Object.assign([] as BenchmarkRunListItem[], { items: [] as BenchmarkRunListItem[] }),
+  );
   if (runs.length === 0) { console.error(`no runs found for benchmark "${args.slug}"`); process.exit(2); }
   const sorted = [...runs].sort((a, b) => (a.createdAt ?? '').localeCompare(b.createdAt ?? ''));
   runId = sorted[sorted.length - 1].id;
