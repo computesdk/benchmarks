@@ -155,6 +155,10 @@ export const providers: ProviderConfig[] = [
       diskGb: 2,
       egressPolicy: 'internet',
     }),
+    // Burst create latency is the metric under test — 40 concurrent
+    // preparingDisk ops on a small host push TTI well past the 120s
+    // default (observed ~107s on the successes), so don't truncate it.
+    timeout: 600_000,
     destroyTimeoutMs: 90_000,
     // Dispatch-only: the host pool is spun up per manual run, so scheduled
     // matrices derived from this list (benchmarks-daily) must skip it.
