@@ -133,13 +133,16 @@ export const providers: ProviderConfig[] = [
     sandboxOptions: { templateId: 'base-8cpu-16gb', timeout: 600_000 },
   },
   {
-    // Self-hosted firecrab host on EC2 — one SSH target + key. The adapter
-    // self-opens the API tunnel and derives the exec jumphost from it.
+    // Self-hosted firecrab host(s) on EC2 — comma-separated SSH targets + key
+    // (one entry for a single host; a pool comes from host/pool-up.sh). The
+    // adapter self-opens per-host API tunnels, derives the exec jumphosts,
+    // and round-robins creates across hosts.
     // destroy is ~30s graceful ACPI, hence the longer timeout.
     name: 'ec2-firecrab',
-    requiredEnvVars: ['EC2_FIRECRAB_SSH_TARGET', 'EC2_FIRECRAB_SSH_KEY', 'EC2_FIRECRAB_MICRO_NETWORK'],
+    requiredEnvVars: ['EC2_FIRECRAB_SSH_TARGETS', 'EC2_FIRECRAB_SSH_KEY', 'EC2_FIRECRAB_MICRO_NETWORK'],
     createCompute: () => ec2Firecrab({
-      sshTarget: process.env.EC2_FIRECRAB_SSH_TARGET!,
+      sshTargets: process.env.EC2_FIRECRAB_SSH_TARGETS!.split(',').map((s) => s.trim()).filter(Boolean),
+      sshTarget: process.env.EC2_FIRECRAB_SSH_TARGET,
       sshIdentityPem: process.env.EC2_FIRECRAB_SSH_KEY!,
       microNetwork: process.env.EC2_FIRECRAB_MICRO_NETWORK!,
       template: process.env.EC2_FIRECRAB_TEMPLATE,
