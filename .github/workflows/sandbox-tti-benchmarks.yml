@@ -76,7 +76,10 @@ jobs:
       # A single-provider dispatch still starts every matrix job; the ones that
       # don't match skip all their steps, including setup (whose cache-save post
       # step otherwise fails the job because nothing was installed).
-      SHOULD_RUN: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.provider == '' || github.event.inputs.provider == matrix.provider }}
+      # ec2-firecrab is dispatch-only and only when named: its host pool is
+      # spun up per manual run, so it never runs on push/schedule, and a
+      # blank-provider "all" dispatch skips it too.
+      SHOULD_RUN: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.provider == matrix.provider) || (matrix.provider != 'ec2-firecrab' && (github.event_name != 'workflow_dispatch' || github.event.inputs.provider == '')) }}
     strategy:
       fail-fast: false
       matrix:
@@ -94,7 +97,7 @@ jobs:
           - daytona
           - declaw
           - e2b
-          # - ec2-firecrab  # pending @computesdk/ec2-firecrab publish + host/vault
+          - ec2-firecrab  # manual dispatch only (gated in SHOULD_RUN)
           - freestyle
           - givemeanode
           - gravixlayer
@@ -170,7 +173,7 @@ jobs:
       - name: Run benchmark
         if: env.SHOULD_RUN == 'true'
         run: |
-          . benchmarks/scripts/load-vault-secrets.sh '^(ARCHIL_API_KEY|ARCHIL_REGION|ARCHIL_DISK_ID|ARKER_API_KEY|BEAM_TOKEN|BEAM_WORKSPACE_ID|BL_API_KEY|BL_WORKSPACE|BUDDY_TOKEN|BUDDY_WORKSPACE|BUDDY_PROJECT|CLOUD_RUN_SANDBOX_URL|CLOUD_RUN_SANDBOX_SECRET|CLOUDFLARE_SANDBOX_URL|SANDBOX_API_KEY|CSB_API_KEY|CREATEOS_SANDBOX_API_KEY|DAYTONA_API_KEY|DECLAW_API_KEY|E2B_API_KEY|FREESTYLE_API_KEY|GMN_API_HOST|GMN_TOKEN|GRAVIXLAYER_API_KEY|HOPX_API_KEY|ISORUN_API_KEY|LIGHTNING_API_KEY|MIOSA_API_KEY|MODAL_TOKEN_ID|MODAL_TOKEN_SECRET|MSB_API_KEY|MOSAIC_API_URL|MOSAIC_API_TOKEN|NSC_TOKEN|NORTHFLANK_TOKEN|NORTHFLANK_PROJECT_ID|NOVITA_API_KEY|OPENCOMPUTER_API_KEY|OPENCOMPUTER_API_URL|PROMIGENCE_API_KEY|RAILWAY_API_TOKEN|RAILWAY_ENVIRONMENT_ID|RUN_CLOUD_API_KEY|RUNLOOP_API_KEY|SAIL_API_KEY|SANDBOX0_TOKEN|SPRITES_TOKEN|SUPERSERVE_API_KEY|TENKI_API_KEY|TENSORLAKE_API_KEY|UPSTASH_BOX_API_KEY|VERCEL_TOKEN|VERCEL_TEAM_ID|VERCEL_PROJECT_ID|BENCHMARKS_PLATFORM_API_KEY)'
+          . benchmarks/scripts/load-vault-secrets.sh '^(ARCHIL_API_KEY|ARCHIL_REGION|ARCHIL_DISK_ID|ARKER_API_KEY|BEAM_TOKEN|BEAM_WORKSPACE_ID|BL_API_KEY|BL_WORKSPACE|BUDDY_TOKEN|BUDDY_WORKSPACE|BUDDY_PROJECT|CLOUD_RUN_SANDBOX_URL|CLOUD_RUN_SANDBOX_SECRET|CLOUDFLARE_SANDBOX_URL|SANDBOX_API_KEY|CSB_API_KEY|CREATEOS_SANDBOX_API_KEY|DAYTONA_API_KEY|DECLAW_API_KEY|E2B_API_KEY|FREESTYLE_API_KEY|GMN_API_HOST|GMN_TOKEN|GRAVIXLAYER_API_KEY|HOPX_API_KEY|ISORUN_API_KEY|LIGHTNING_API_KEY|MIOSA_API_KEY|MODAL_TOKEN_ID|MODAL_TOKEN_SECRET|MSB_API_KEY|MOSAIC_API_URL|MOSAIC_API_TOKEN|EC2_FIRECRAB_[A-Z_]+|NSC_TOKEN|NORTHFLANK_TOKEN|NORTHFLANK_PROJECT_ID|NOVITA_API_KEY|OPENCOMPUTER_API_KEY|OPENCOMPUTER_API_URL|PROMIGENCE_API_KEY|RAILWAY_API_TOKEN|RAILWAY_ENVIRONMENT_ID|RUN_CLOUD_API_KEY|RUNLOOP_API_KEY|SAIL_API_KEY|SANDBOX0_TOKEN|SPRITES_TOKEN|SUPERSERVE_API_KEY|TENKI_API_KEY|TENSORLAKE_API_KEY|UPSTASH_BOX_API_KEY|VERCEL_TOKEN|VERCEL_TEAM_ID|VERCEL_PROJECT_ID|BENCHMARKS_PLATFORM_API_KEY)'
 
           # OpenComputer is kept in the daily runs but excluded from the weekly run.
           if [ "${{ github.event_name }}" = "schedule" ]; then
