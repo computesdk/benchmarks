@@ -20,6 +20,25 @@ docker run --rm --network host --entrypoint sh quay.io/minio/mc -c \
   "mc alias set local http://127.0.0.1:9000 minioadmin minioadmin && mc mb -p local/bench"
 ```
 
+Substitutes when images or ports aren't available:
+
+- **Postgres port taken** (a host postgres already on 5432): use it —
+  `DATABASE_URL=postgresql://ci:ci@127.0.0.1:5432/ci` (the CI creds; the `ci`
+  database works when `CREATE DATABASE` is denied).
+- **MinIO image won't pull** (`pull access denied` / quay 401): `s3rver` is a
+  drop-in — `npx -y s3rver -p 9000 -a 0.0.0.0 --directory ~/s3data`, then
+  `AWS_ACCESS_KEY_ID=S3RVER AWS_SECRET_ACCESS_KEY=S3RVER aws --endpoint-url
+  http://127.0.0.1:9000 s3 mb s3://bench` and set `TIGRIS_ACCESS_KEY_ID`/
+  `TIGRIS_SECRET_ACCESS_KEY=S3RVER` in `.env.local`.
+- **`npm run db:migrate` says `DATABASE_URL ... is not set`**: it doesn't read
+  `.env.local` — run with `set -a; . ./.env.local; set +a; npm run db:migrate`.
+- **Minting `/mcp` access tokens** for MCP E2E: insert a `jwks` row (EdDSA
+  keypair, both JWKs stored), an `oauth_client` row, and an `oauth_consent`
+  row (clientId + userId + referenceId=orgId, non-null `scopes`), then sign an
+  `at+jwt` (kid = the jwks row id) with claims `sub`=user, `client_id`, `org`,
+  `scope`, iss=`$BETTER_AUTH_URL/api/auth`, aud=`$BETTER_AUTH_URL/mcp` — see
+  `lib/oauth/tokens.ts` `verifyAccessToken` for the exact shape.
+
 - Use ClickHouse **>= 25.x**: 24.8 fails `ch:migrate` with
   `TTL expression result column should have DateTime or Date type, but has DateTime64(3,'UTC')`.
 - The importer passes `clickhouse_settings: { date_time_input_format: 'best_effort' }`
