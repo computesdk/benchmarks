@@ -148,10 +148,11 @@ export const providers: ProviderConfig[] = [
       template: process.env.EC2_FIRECRAB_TEMPLATE,
       // Smallest viable guest for the burst TTI probe (just `node -v`):
       // 128MiB is firecrab's floor but the act image idles ~119MiB, so
-      // 256MiB is the honest minimum. ~200 of these fit on one c8i.8xlarge.
+      // 256MiB is the honest minimum; diskGb floor is 2 (API enforces).
+      // ~200 of these fit on one c8i.8xlarge.
       cpus: 1,
       memoryMib: 256,
-      diskGb: 1,
+      diskGb: 2,
       egressPolicy: 'internet',
     }),
     destroyTimeoutMs: 90_000,
