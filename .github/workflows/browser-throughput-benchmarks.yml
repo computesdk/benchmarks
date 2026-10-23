@@ -113,7 +113,8 @@ jobs:
 
   bench:
     name: Bench ${{ matrix.provider }}
-    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
+    # Browser Use's leg runs next to its API (house EC2, us-east-2); the rest on Namespace.
+    runs-on: ${{ matrix.provider == 'browseruse' && 'computesdk:computesdk:aws-us-east-2' || 'namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal' }}
     # runs-on: self-hosted
     needs: setup
     timeout-minutes: 60
