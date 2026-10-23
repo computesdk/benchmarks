@@ -11,6 +11,7 @@ import { createosSandbox } from '@computesdk/createos-sandbox';
 import { daytona } from '@computesdk/daytona';
 import { declaw } from '@computesdk/declaw';
 import { e2b } from '@computesdk/e2b';
+import { ec2Firecrab } from '@computesdk/ec2-firecrab';
 import { freestyle } from '@computesdk/freestyle';
 import { givemeanode } from '@computesdk/givemeanode';
 import { gravixlayer } from '@computesdk/gravixlayer';
@@ -130,6 +131,25 @@ export const providers: ProviderConfig[] = [
     requiredEnvVars: ['E2B_API_KEY'],
     createCompute: () => e2b({ apiKey: process.env.E2B_API_KEY! }),
     sandboxOptions: { templateId: 'base-8cpu-16gb', timeout: 600_000 },
+  },
+  {
+    // Self-hosted firecrab host on EC2 — no API key; reach the loopback
+    // listener via an SSH/SSM tunnel (EC2_FIRECRAB_API_URL) and exec
+    // through a jumphost (EC2_FIRECRAB_SSH_PROXY_COMMAND, e.g.
+    // 'ssh -W %h:%p ubuntu@<host-ip>'). destroy is ~30s graceful ACPI.
+    name: 'ec2-firecrab',
+    requiredEnvVars: ['EC2_FIRECRAB_MICRO_NETWORK_ID', 'EC2_FIRECRAB_SSH_PROXY_COMMAND'],
+    createCompute: () => ec2Firecrab({
+      apiUrl: process.env.EC2_FIRECRAB_API_URL,
+      microNetworkId: process.env.EC2_FIRECRAB_MICRO_NETWORK_ID!,
+      template: process.env.EC2_FIRECRAB_TEMPLATE,
+      sshProxyCommand: process.env.EC2_FIRECRAB_SSH_PROXY_COMMAND!,
+      cpus: 2,
+      memoryMib: 4096,
+      diskGb: 16,
+      egressPolicy: 'internet',
+    }),
+    destroyTimeoutMs: 90_000,
   },
   {
     name: 'freestyle',
