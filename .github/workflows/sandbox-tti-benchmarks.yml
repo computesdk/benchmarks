@@ -364,8 +364,10 @@ jobs:
                 body,
               });
             }
+      # A single-provider dispatch produces a partial merge — publishing it
+      # would replace the full published results and chart with one provider.
       - name: Commit and push
-        if: github.event_name != 'push' && github.event.inputs.dry_run != 'true'
+        if: github.event_name != 'push' && github.event.inputs.dry_run != 'true' && (github.event_name != 'workflow_dispatch' || github.event.inputs.provider == '')
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
