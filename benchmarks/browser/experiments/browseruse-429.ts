@@ -53,6 +53,8 @@ const UA_PRESET = process.env.EXPERIMENT_UA_PRESET ?? 'bot';
 const TWEAK = process.env.EXPERIMENT_TWEAK ?? 'ua+al';
 /** headers mode: also record the ordered wire headers of Wikipedia document requests via CDP. */
 const WIRE = process.env.EXPERIMENT_WIRE === '1';
+/** Browser Use modes: also fetch https://tls.peet.ws/api/all from inside the session (TLS JA3/JA4 + HTTP/2 fingerprint + ordered headers as the server saw them). */
+const PROBE = process.env.EXPERIMENT_PROBE === '1';
 const UA_OVERRIDE = process.env.EXPERIMENT_UA ?? '';
 const NAV_TIMEOUT_MS = 30_000;
 const VIEWPORT = { width: 1920, height: 1080 };
@@ -107,6 +109,8 @@ interface SessionRecord {
   languages?: string[];
   uaBrands?: unknown;
   error?: string;
+  /** tls.peet.ws view of the session's egress: TLS/HTTP2 fingerprints and the header list the server received. */
+  probe?: Record<string, unknown>;
   navs: NavRecord[];
 }
 
@@ -169,6 +173,26 @@ async function readEgress(page: Page, rec: SessionRecord): Promise<void> {
     } catch (err) {
       rec.egressIpError = `${probe}: ${err instanceof Error ? err.message.split('\n')[0] : String(err)}`;
     }
+  }
+}
+
+async function readProbe(page: Page, rec: SessionRecord): Promise<void> {
+  if (!PROBE) return;
+  try {
+    await page.goto('https://tls.peet.ws/api/all', { waitUntil: 'load', timeout: 20_000 });
+    const text = (await page.textContent('body'))?.trim() ?? '';
+    const j = JSON.parse(text);
+    const headersFrame = (j.http2?.sent_frames ?? []).find((f: any) => f.frame_type === 'HEADERS');
+    rec.probe = {
+      ip: j.ip, httpVersion: j.http_version, userAgent: j.user_agent,
+      ja3: j.tls?.ja3, ja3Hash: j.tls?.ja3_hash, ja4: j.tls?.ja4, peetprintHash: j.tls?.peetprint_hash,
+      tlsVersion: j.tls?.tls_version_negotiated,
+      akamaiH2: j.http2?.akamai_fingerprint, akamaiH2Hash: j.http2?.akamai_fingerprint_hash,
+      h2Settings: (j.http2?.sent_frames ?? []).filter((f: any) => f.frame_type !== 'HEADERS'),
+      headerOrder: headersFrame?.headers ?? j.http1?.headers ?? null,
+    };
+  } catch (err) {
+    rec.probe = { error: err instanceof Error ? err.message.split('\n')[0] : String(err) };
   }
 }
 
@@ -291,6 +315,7 @@ async function runBrowserUseSession(i: number): Promise<void> {
     await applyHeaderOverride(page);
     await readEgress(page, rec);
     await readFingerprint(page, rec);
+    await readProbe(page, rec);
 
     const client = MODE === 'headers' ? `browseruse+${TWEAK}:${HEADERS_UA.split(' ')[0]}` : `browseruse:${MODE}`;
     if (MODE === 'rate') {
@@ -433,6 +458,7 @@ function summarize(ipInfo: Record<string, unknown>) {
     distinctEgressIps: Object.keys(byIp).filter((k) => k !== 'unknown').length,
     byClient, ipTable, sample429Headers, sample200Headers, sampleReqHeaders, sample429Body: sampleBody,
     userAgents: [...new Set(sessions.map((s) => s.userAgent).filter(Boolean))],
+    probes: PROBE ? sessions.map((s) => ({ session: s.session, status429: s.navs.some((n) => n.status === 429), ...(s.probe ?? {}) })) : undefined,
   };
 }
 

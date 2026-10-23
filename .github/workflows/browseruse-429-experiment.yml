@@ -124,6 +124,21 @@ jobs:
             ua: none
             tweak: al
             wire: 1
+          - leg: fp-noop
+            mode: headers
+            ua: none
+            tweak: cdp-noop
+            probe: 1
+          - leg: fp-al
+            mode: headers
+            ua: none
+            tweak: al
+            probe: 1
+          - leg: fp-baseline
+            mode: baseline
+            ua: none
+            tweak: none
+            probe: 1
           - leg: proxy-us
             mode: proxy-us
             ua: none
@@ -187,6 +202,7 @@ jobs:
           EXPERIMENT_UA_PRESET: ${{ matrix.ua }}
           EXPERIMENT_TWEAK: ${{ matrix.tweak }}
           EXPERIMENT_WIRE: ${{ matrix.wire || '0' }}
+          EXPERIMENT_PROBE: ${{ matrix.probe || '0' }}
           EXPERIMENT_SPACING_MS: ${{ github.event.inputs.spacing_ms || '15000' }}
           EXPERIMENT_SESSIONS: ${{ matrix.mode == 'rate' && (github.event.inputs.rate_sessions || '6') || (github.event.inputs.sessions || '30') }}
           EXPERIMENT_OUT: results/experiments/browseruse-429
