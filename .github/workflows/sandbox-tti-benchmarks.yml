@@ -185,8 +185,15 @@ jobs:
           for v in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_REGION AWS_DEFAULT_REGION FIRECRAB_AMI_ID FIRECRAB_KEY_NAME FIRECRAB_SG_ID FIRECRAB_SUBNET_ID FIRECRAB_INSTANCE_TYPE FIRECRAB_SSH_USER FIRECRAB_REPO_TOKEN; do
             if [ -n "${!v:-}" ]; then echo "$v=${!v}" >> "$GITHUB_ENV"; fi
           done
-          # PEM the pool's SSH readiness probe uses against fresh hosts.
-          printf '%s\n' "$EC2_FIRECRAB_SSH_KEY" > /tmp/firecrab-host.pem
+          # The vault stores the host PEM base64-encoded — nsc vault export
+          # cannot emit multi-line values through the envdef eval — so decode
+          # it before writing the key file the pool readiness probe uses.
+          FC_KEY="$(printf '%s' "${EC2_FIRECRAB_SSH_KEY:-}" | base64 -d 2>/dev/null || true)"
+          case "$FC_KEY" in
+            -----BEGIN*) ;;
+            *) echo "::error::EC2_FIRECRAB_SSH_KEY must be the host PEM base64-encoded: cat key.pem | base64 | tr -d '\n'" >&2; exit 1 ;;
+          esac
+          printf '%s\n' "$FC_KEY" > /tmp/firecrab-host.pem
           chmod 600 /tmp/firecrab-host.pem
           echo "SSH_KEY_PATH=/tmp/firecrab-host.pem" >> "$GITHUB_ENV"
           command -v aws >/dev/null || {
@@ -223,6 +230,13 @@ jobs:
           # provider package runs in-process.
           if [ "${{ matrix.provider }}" = "ec2-firecrab" ]; then
             . benchmarks/scripts/load-vault-secrets.sh '^(EC2_FIRECRAB_[A-Z_]+)'
+            # Same base64 decode — the adapter expects the PEM itself.
+            FC_KEY="$(printf '%s' "${EC2_FIRECRAB_SSH_KEY:-}" | base64 -d 2>/dev/null || true)"
+            case "$FC_KEY" in
+              -----BEGIN*) EC2_FIRECRAB_SSH_KEY="$FC_KEY" ;;
+              *) echo "::error::EC2_FIRECRAB_SSH_KEY must be the host PEM base64-encoded: cat key.pem | base64 | tr -d '\n'" >&2; exit 1 ;;
+            esac
+            export EC2_FIRECRAB_SSH_KEY
           fi
 
           # A freshly launched pool overrides the vault's standing target list.
