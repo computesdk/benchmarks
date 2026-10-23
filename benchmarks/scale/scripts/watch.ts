@@ -112,7 +112,7 @@ async function resolveRunIds(): Promise<string[]> {
   const ids = [...args.runIds];
   if (args.recent !== null) {
     try {
-      const runs = await client.listRuns(args.slug);
+      const runs = (await client.listRuns(args.slug)).items;
       // listRuns has no limit param; take the most recent N by createdAt if
       // present, else by list order (assumed newest-last → take the tail).
       const sorted = [...runs].sort((a, b) => (a.createdAt ?? '').localeCompare(b.createdAt ?? ''));

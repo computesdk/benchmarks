@@ -117,7 +117,7 @@ async function safe<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
 // ─── resolve run ────────────────────────────────────────────────────────────
 let runId = args.runId;
 if (!runId) {
-  const runs = await safe(() => client.listRuns(args.slug), []);
+  const runs = (await safe(() => client.listRuns(args.slug), { items: [] })).items;
   if (runs.length === 0) { console.error(`no runs found for benchmark "${args.slug}"`); process.exit(2); }
   const sorted = [...runs].sort((a, b) => (a.createdAt ?? '').localeCompare(b.createdAt ?? ''));
   runId = sorted[sorted.length - 1].id;

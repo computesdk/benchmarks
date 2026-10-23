@@ -511,14 +511,19 @@ describe('client method URL paths and response unwrapping', () => {
     expect(result).toMatchObject({ run: { id: 'run_1' }, participants: [{ slug: 'e2b' }] });
   });
 
-  it('VAL-SDK-016: listRuns GET /benchmarks/{slug}/runs → data.items with NO runs fallback', async () => {
+  it('VAL-SDK-016: listRuns GET /benchmarks/{slug}/runs → { items, filter? }', async () => {
     const { calls, result } = await capture((c) => c.listRuns('scale'));
     expect(`${calls[0].method} ${calls[0].url}`).toBe(`GET ${BASE}/benchmarks/scale/runs`);
-    expect(result).toHaveLength(1);
+    expect(result.items).toHaveLength(1);
 
     // Asymmetry: unlike listBenchmarks/listParticipants, there is no `runs` fallback.
     const legacy = recordingClient(() => jsonResponse({ runs: [runResource()] }));
-    await expect(createBenchmarkClient({ baseUrl: BASE, apiKey: 'k', fetch: legacy.fetchMock }).listRuns('scale')).resolves.toBeUndefined();
+    const legacyResult = await createBenchmarkClient({
+      baseUrl: BASE,
+      apiKey: 'k',
+      fetch: legacy.fetchMock,
+    }).listRuns('scale');
+    expect(legacyResult.items).toBeUndefined();
   });
 
   it('VAL-SDK-017: getRun GET /benchmarks/{slug}/runs/{runId}', async () => {

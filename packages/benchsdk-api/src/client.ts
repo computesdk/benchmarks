@@ -31,8 +31,10 @@ import type {
   ClaimWorkerInput,
   CreateRunInput,
   JsonObject,
+  BenchmarkRunList,
   BenchmarkRunListItem,
   ListAllRunsOptions,
+  ListRunsOptions,
   SendTaskResultsInput,
   PlanWorkersInput,
   TaskResultRecord,
@@ -83,6 +85,33 @@ function trimTrailingSlash(value: string): string {
 
 function encodePath(value: string): string {
   return encodeURIComponent(value);
+}
+
+/**
+ * `/benchmarks/{slug}` — or `/benchmarks/~/{sourceOrg}/{slug}` when the
+ * caller names the owning org to disambiguate a shared slug.
+ */
+function benchmarkPath(slug: string, sourceOrg?: string): string {
+  return sourceOrg
+    ? `/benchmarks/~/${encodePath(sourceOrg)}/${encodePath(slug)}`
+    : `/benchmarks/${encodePath(slug)}`;
+}
+
+/** Serialize a BenchmarkRunFilterInput (+results-only `steps`) into query fields. */
+function filterParams(input: {
+  participants?: string[];
+  steps?: string[] | 'all';
+  since?: string;
+  until?: string;
+  timeZone?: string;
+}): Record<string, string | undefined> {
+  return {
+    participant: input.participants?.length ? input.participants.join(',') : undefined,
+    steps: input.steps === 'all' ? 'all' : input.steps?.length ? input.steps.join(',') : undefined,
+    since: input.since,
+    until: input.until,
+    timeZone: input.timeZone,
+  };
 }
 
 function queryString(input: Record<string, number | string | undefined>): string {
@@ -305,12 +334,12 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
       );
     },
 
-    async listRuns(benchmarkSlug, options: { limit?: number; offset?: number } = {}) {
-      const data = await request<{ items: BenchmarkRunListItem[] }>(
+    async listRuns(benchmarkSlug, options: ListRunsOptions = {}) {
+      const { sourceOrg, limit, offset, ...filter } = options;
+      return request<BenchmarkRunList>(
         'GET',
-        `/benchmarks/${encodePath(benchmarkSlug)}/runs${queryString(options)}`,
+        `${benchmarkPath(benchmarkSlug, sourceOrg)}/runs${queryString({ limit, offset, ...filterParams(filter) })}`,
       );
-      return data.items;
     },
 
     // GET /api/v1/benchmarks/runs — every run the caller can read across all
@@ -531,9 +560,10 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
     },
 
     async getBenchmarkResults(benchmarkSlug, input: BenchmarkResultsOverviewInput = {}) {
+      const { sourceOrg, limit, offset, ...filter } = input;
       return request<BenchmarkResultsOverview>(
         'GET',
-        `/benchmarks/${encodePath(benchmarkSlug)}/results${queryString({ limit: input.limit, offset: input.offset })}`,
+        `${benchmarkPath(benchmarkSlug, sourceOrg)}/results${queryString({ limit, offset, ...filterParams(filter) })}`,
       );
     },
 

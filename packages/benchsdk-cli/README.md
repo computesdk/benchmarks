@@ -67,9 +67,9 @@ When installed with `@benchsdk/runner`, these are available through the `bench` 
 - `bench org list`
 - `bench org use <slug>`
 - `bench benchmarks list [--limit N] [--offset N]`
-- `bench runs list <slug> [--limit N] [--offset N]`
+- `bench runs list <slug> [--limit N] [--offset N] [--participant <list>] [--since <when>] [--until <when>] [--day YYYY-MM-DD] [--tz <zone>] [--source-org <slug>]`
 - `bench runs show <slug> <runId>`
-- `bench results <slug> [--run <id>] [--format json|table]`
+- `bench results <slug> [--run <id>] [--format json|table] [--participant <list>] [--steps <list>|all] [--since <when>] [--until <when>] [--day YYYY-MM-DD] [--tz <zone>] [--source-org <slug>] [--limit N] [--offset N]`
 - `bench artifacts list <slug> <runId> [--worker <id>]`
 - `bench export <slug> [--run <id>] [--out <dir>]`
 

@@ -75,6 +75,17 @@ export interface ListAllRunsOptions {
   benchmarkSlug?: string;
 }
 
+export interface ListRunsOptions extends BenchmarkRunFilterInput {
+  limit?: number;
+  offset?: number;
+}
+
+export interface BenchmarkRunList {
+  items: BenchmarkRunListItem[];
+  filter?: BenchmarkResultsFilterEcho | null;
+  upgrade?: BenchmarkUpgradePayload | null;
+}
+
 export interface BenchmarkParticipant {
   id: string;
   benchmarkId: string;
@@ -377,9 +388,44 @@ export interface BenchmarkStepResultSummary {
   latencyMs: BenchmarkResultLatencySummary;
 }
 
-export interface BenchmarkResultsOverviewInput {
+/**
+ * Shared result/run filter. `since`/`until` take an ISO 8601 timestamp or a
+ * bare YYYY-MM-DD (zoned by `timeZone`, default UTC); a date-only `until`
+ * includes that whole day. `sourceOrg` routes the request through
+ * `/benchmarks/~/{sourceOrg}/{slug}` to disambiguate a shared slug.
+ */
+export interface BenchmarkRunFilterInput {
+  participants?: string[];
+  since?: string;
+  until?: string;
+  timeZone?: string;
+  sourceOrg?: string;
+}
+
+export interface BenchmarkResultsOverviewInput extends BenchmarkRunFilterInput {
   limit?: number;
   offset?: number;
+  /** Step names to include per-run step overviews for, or 'all'. */
+  steps?: string[] | 'all';
+}
+
+/** The filter the server actually applied, echoed back on /results and /runs. */
+export interface BenchmarkResultsFilterEcho {
+  participants?: string[];
+  steps?: string[] | 'all';
+  since?: string;
+  until?: string;
+  timeZone: string;
+}
+
+export interface BenchmarkUpgradePayload {
+  offer: 'daily-benchmarks';
+  category: string;
+  categoryName: string;
+  cadence: 'weekly';
+  message: string;
+  learnMoreUrl: string;
+  billingUrl?: string | null;
 }
 
 export type BenchmarkAnalyticsReadiness = 'ready' | 'complete' | 'partial' | 'pending' | 'unavailable' | 'failed' | 'importing';
@@ -405,10 +451,17 @@ export interface BenchmarkResultsOverviewAnalytics {
   error?: string;
 }
 
+export interface BenchmarkRunStepOverview extends BenchmarkStepResultSummary {
+  runId: string;
+  firstStartedAt: string | null;
+  lastCompletedAt: string | null;
+}
+
 export interface BenchmarkResultsOverviewRun {
   run: BenchmarkRun;
   analytics: BenchmarkRunAnalyticsSummary;
   participants: Array<BenchmarkParticipantResultSummary & { runId: string }>;
+  steps?: BenchmarkRunStepOverview[];
 }
 
 export interface BenchmarkResultsOverview {
@@ -416,6 +469,8 @@ export interface BenchmarkResultsOverview {
   generatedAt: string;
   analytics: BenchmarkResultsOverviewAnalytics;
   items: BenchmarkResultsOverviewRun[];
+  filter?: BenchmarkResultsFilterEcho | null;
+  upgrade?: BenchmarkUpgradePayload | null;
 }
 
 export interface BenchmarkRunResults {
@@ -820,7 +875,7 @@ export interface BenchmarkClient {
     /** The slug of the org the run was attributed to, resolved server-side from the caller's API key. */
     organizationSlug: string;
   }>;
-  listRuns(benchmarkSlug: string, options?: { limit?: number; offset?: number }): Promise<BenchmarkRunListItem[]>;
+  listRuns(benchmarkSlug: string, options?: ListRunsOptions): Promise<BenchmarkRunList>;
   listAllRuns(options?: ListAllRunsOptions): Promise<BenchmarkRunListItem[]>;
   getRun(benchmarkSlug: string, runId: string): Promise<BenchmarkRun>;
   updateRun(benchmarkSlug: string, runId: string, input: UpdateRunInput): Promise<BenchmarkRun>;

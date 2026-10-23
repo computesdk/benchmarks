@@ -102,6 +102,8 @@ bench benchmarks list --json
 
 ```bash
 bench runs list my-benchmark
+bench runs list my-benchmark --participant e2b --since 7d
+bench runs list my-benchmark --day 2026-10-22 --tz America/Los_Angeles
 bench runs show my-benchmark <runId>
 ```
 
@@ -111,7 +113,26 @@ bench runs show my-benchmark <runId>
 bench results my-benchmark
 bench results my-benchmark --run <runId>
 bench results my-benchmark --format json
+bench results my-benchmark --participant e2b --steps create --since 7d
+bench results my-benchmark --steps all --day 2026-10-22
 ```
+
+### Investigating one provider
+
+"How did `<participant>`'s `<step>` do over the last N days?" — the answer is three commands:
+
+```bash
+# Runs the provider took part in, newest first:
+bench runs list my-benchmark --participant e2b --since 7d
+
+# Per-run results for just that provider's step (table: one row per run × participant × step):
+bench results my-benchmark --participant e2b --steps create --since 7d
+
+# The actual worker logs for a suspicious run:
+bench logs my-benchmark <runId> --participant e2b
+```
+
+Filter flags: `--participant <list>` (comma-separated), `--steps <list>` or `--steps all` (results only), `--since` / `--until` (YYYY-MM-DD, an ISO timestamp, or a relative `24h` / `7d` / `2w`), `--day YYYY-MM-DD` (sugar for since+until on that day — cannot be combined with `--since`/`--until`), `--tz <IANA zone>` for date-only bounds (defaults to the machine's zone), `--source-org <slug>` when a slug is ambiguous across orgs. The response echoes the filter the server applied; a platform without the feature fails loudly instead of returning unfiltered results. `--json` prints the raw response including the `filter` echo.
 
 ### Artifacts
 

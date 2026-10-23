@@ -43,9 +43,9 @@ describeIntegration('benchmark orchestrator integration', () => {
       await expect(client.updateRun(slug, run.id, {
         config: { source: '@computesdk/bench', updated: true },
       })).resolves.toMatchObject({ id: run.id });
-      await expect(client.listRuns(slug)).resolves.toEqual(expect.arrayContaining([
-        expect.objectContaining({ id: run.id }),
-      ]));
+      await expect(client.listRuns(slug)).resolves.toMatchObject({
+        items: expect.arrayContaining([expect.objectContaining({ id: run.id })]),
+      });
 
       await expect(client.listParticipants(slug, run.id)).resolves.toEqual(expect.arrayContaining([
         expect.objectContaining({ slug: participantSlug }),

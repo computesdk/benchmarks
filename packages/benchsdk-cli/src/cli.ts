@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { BenchmarkApiError } from '@benchsdk/api';
 import type {
   BenchmarkResultsOverview,
+  BenchmarkRunFilterInput,
   BenchmarkRunResults,
   BenchmarkStepResultSummary,
 } from '@benchsdk/api';
@@ -55,11 +56,18 @@ Commands:
   benchmarks list [--limit N] [--offset N]
                                      List benchmarks
   runs list [benchmark-slug] [--limit N] [--offset N]
+             [--participant <list>] [--since <when>] [--until <when>]
+             [--day YYYY-MM-DD] [--tz <zone>] [--source-org <slug>]
                                      List benchmark runs (omit slug to list runs
                                      across every benchmark you can read)
   runs show <benchmark-slug> <runId> Show a single run
   results <benchmark-slug> [--run <id>] [--format json|table]
-                                     Show benchmark or run results
+             [--participant <list>] [--steps <list>|all]
+             [--since <when>] [--until <when>] [--day YYYY-MM-DD]
+             [--tz <zone>] [--source-org <slug>] [--limit N] [--offset N]
+                                     Show benchmark or run results. --since/--until
+                                     take YYYY-MM-DD, an ISO timestamp, or a
+                                     relative 24h/7d/2w
   iterations <benchmark-slug> --run <id> [--participant <slug>] [--steps <list>] [--format json|table]
                                      Show per-iteration step latencies
   artifacts list <benchmark-slug> <runId> [--worker <id>]
@@ -149,6 +157,11 @@ const subcommandOptionSchema = {
   worker: { type: 'string' as const },
   'max-lines': { type: 'number' as const },
   out: { type: 'string' as const },
+  since: { type: 'string' as const },
+  until: { type: 'string' as const },
+  day: { type: 'string' as const },
+  tz: { type: 'string' as const },
+  'source-org': { type: 'string' as const },
 };
 
 export function parseSubcommandOptions(args: string[]): { options: Record<string, string | number>; positionals: string[] } {
@@ -211,9 +224,14 @@ Subcommands:
       return `Usage: bench benchmarks list [--limit N] [--offset N]`;
     case 'runs':
       return `Usage: bench runs list [benchmark-slug] [--limit N] [--offset N]
+                    [--participant <list>] [--since <when>] [--until <when>]
+                    [--day YYYY-MM-DD] [--tz <zone>] [--source-org <slug>]
        bench runs show <benchmark-slug> <runId>`;
     case 'results':
-      return `Usage: bench results <benchmark-slug> [--run <id>] [--format json|table]`;
+      return `Usage: bench results <benchmark-slug> [--run <id>] [--format json|table]
+                    [--participant <list>] [--steps <list>|all]
+                    [--since <when>] [--until <when>] [--day YYYY-MM-DD]
+                    [--tz <zone>] [--source-org <slug>] [--limit N] [--offset N]`;
     case 'iterations':
       return `Usage: bench iterations <benchmark-slug> --run <id> [--participant <slug>] [--steps <list>] [--format json|table]`;
     case 'artifacts':
@@ -399,17 +417,113 @@ async function handleBenchmarksList(
   printData(benchmarks, outputOptions);
 }
 
+interface ResultFilterOptions {
+  participant?: string;
+  steps?: string;
+  since?: string;
+  until?: string;
+  day?: string;
+  tz?: string;
+  'source-org'?: string;
+}
+
+const RELATIVE_BOUND = /^(\d+)([hdw])$/;
+
+// `--since/--until` accept YYYY-MM-DD, a full ISO timestamp, or a relative
+// `24h`/`7d`/`2w` resolved to an instant here (the server only knows absolute
+// bounds). `--day` is sugar for since=<day>&until=<day>; a date-only until
+// already includes the whole day server-side. `--tz` defaults to the local
+// machine zone so `bench results --day` reads naturally.
+function resolveResultFilter(
+  options: ResultFilterOptions,
+  { allowSteps }: { allowSteps: boolean },
+): { filter: BenchmarkRunFilterInput & { steps?: string[] | 'all' }; flagsSent: boolean } {
+  if (options.day && (options.since || options.until)) {
+    throw new Error('--day cannot be combined with --since/--until');
+  }
+  if (!allowSteps && options.steps !== undefined) {
+    throw new Error('--steps only applies to `bench results`');
+  }
+
+  const resolveBound = (raw: string): string => {
+    const rel = RELATIVE_BOUND.exec(raw.trim());
+    if (!rel) return raw;
+    const n = Number(rel[1]);
+    const ms = rel[2] === 'h' ? n * 3_600_000 : rel[2] === 'd' ? n * 86_400_000 : n * 604_800_000;
+    return new Date(Date.now() - ms).toISOString();
+  };
+
+  const filter: BenchmarkRunFilterInput & { steps?: string[] | 'all' } = {};
+  const participants = options.participant
+    ? options.participant.split(',').map((s) => s.trim()).filter(Boolean)
+    : undefined;
+  if (participants?.length) filter.participants = participants;
+  if (options.since) filter.since = resolveBound(options.since);
+  if (options.until) filter.until = resolveBound(options.until);
+  if (options.day) {
+    filter.since = options.day;
+    filter.until = options.day;
+  }
+  filter.timeZone =
+    options.tz ?? Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'UTC';
+  if (options['source-org']) filter.sourceOrg = options['source-org'];
+
+  if (allowSteps && options.steps !== undefined) {
+    filter.steps =
+      options.steps.trim() === 'all'
+        ? 'all'
+        : options.steps.split(',').map((s) => s.trim()).filter(Boolean);
+  }
+
+  const flagsSent =
+    participants !== undefined ||
+    options.since !== undefined ||
+    options.until !== undefined ||
+    options.day !== undefined ||
+    options.steps !== undefined ||
+    options.tz !== undefined ||
+    options['source-org'] !== undefined;
+  return { filter, flagsSent };
+}
+
+// A filter flag was sent but the response carries no `filter` echo → the
+// platform predates the filter feature and silently ignored it. Fail loudly
+// instead of printing unfiltered results under a filtered-looking command.
+function assertFilterEcho(filter: unknown): void {
+  if (filter === undefined || filter === null) {
+    throw new Error(
+      'The API did not return a `filter` echo — this platform does not support result filters yet',
+    );
+  }
+}
+
 async function handleRunsList(
   benchmarkSlug: string | undefined,
-  options: { limit?: number; offset?: number },
+  options: { limit?: number; offset?: number } & ResultFilterOptions,
   overrides: { baseUrl?: string; apiKey?: string; org?: string },
   outputOptions: OutputOptions = {},
 ): Promise<void> {
   const { api } = await createApiClient(overrides);
-  const runs = benchmarkSlug
-    ? await api.listRuns(benchmarkSlug, options)
-    : await api.listAllRuns(options);
-  printData(runs, outputOptions);
+  const { filter, flagsSent } = resolveResultFilter(options, { allowSteps: false });
+  if (!benchmarkSlug) {
+    if (flagsSent) {
+      throw new Error('Result filters require a benchmark slug: bench runs list <benchmark-slug>');
+    }
+    const runs = await api.listAllRuns(options);
+    printData(runs, outputOptions);
+    return;
+  }
+  const result = await api.listRuns(benchmarkSlug, {
+    limit: options.limit,
+    offset: options.offset,
+    ...(flagsSent ? filter : {}),
+  });
+  if (flagsSent) assertFilterEcho(result.filter);
+  if (outputOptions.json || outputOptions.format === 'json') {
+    printData(result, outputOptions);
+  } else {
+    printData(result.items, outputOptions);
+  }
 }
 
 async function handleRunsShow(
@@ -425,14 +539,25 @@ async function handleRunsShow(
 
 async function handleResults(
   benchmarkSlug: string,
-  options: { run?: string; format?: string },
+  options: { run?: string; format?: string; limit?: number; offset?: number } & ResultFilterOptions,
   overrides: { baseUrl?: string; apiKey?: string; org?: string },
   outputOptions: OutputOptions = {},
 ): Promise<void> {
   const { api } = await createApiClient(overrides);
+  const { filter, flagsSent } = resolveResultFilter(options, { allowSteps: true });
+  if (options.run && flagsSent) {
+    throw new Error('Result filters do not apply to a single --run');
+  }
   const results = options.run
     ? await api.getRunResults(benchmarkSlug, options.run as string)
-    : await api.getBenchmarkResults(benchmarkSlug);
+    : await api.getBenchmarkResults(benchmarkSlug, {
+        limit: options.limit,
+        offset: options.offset,
+        ...(flagsSent ? filter : {}),
+      });
+  if (!options.run && flagsSent) {
+    assertFilterEcho((results as BenchmarkResultsOverview).filter);
+  }
   if (options.format === 'json' || outputOptions.json || outputOptions.format === 'json') {
     printData(results, { format: 'json' });
     return;
@@ -525,9 +650,17 @@ function printResultsTables(
   }
   if (rows.length === 0) {
     if (emptyRuns.length === 0) console.log('No results.');
-    return;
+  } else {
+    console.table(rows);
   }
-  console.table(rows);
+  // One row per run × participant × step when --steps was sent.
+  const stepRows = overview.items.flatMap((item) =>
+    (item.steps ?? []).map((s) => ({ run: item.run.id, ...stepTableRow(s) })),
+  );
+  if (stepRows.length > 0) {
+    console.log('Steps:');
+    console.table(stepRows);
+  }
 }
 
 async function handleIterations(
