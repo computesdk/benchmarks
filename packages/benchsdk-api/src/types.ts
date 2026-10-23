@@ -86,6 +86,19 @@ export interface BenchmarkRunList {
   upgrade?: BenchmarkUpgradePayload | null;
 }
 
+/**
+ * What `client.listRuns` resolves to: the run array itself (pre-0.8.0
+ * callers iterate it directly), with the envelope fields attached as
+ * non-enumerable properties — `.items` mirrors the array for 0.8.0
+ * callers, and `appliedFilter`/`upgrade` carry the rest of the response
+ * without changing what `JSON.stringify` sees.
+ */
+export type BenchmarkRunListResult = BenchmarkRunListItem[] & {
+  items: BenchmarkRunListItem[];
+  appliedFilter?: BenchmarkResultsFilterEcho | null;
+  upgrade?: BenchmarkUpgradePayload | null;
+};
+
 export interface BenchmarkParticipant {
   id: string;
   benchmarkId: string;
@@ -480,6 +493,13 @@ export interface BenchmarkRunResults {
   overall: BenchmarkResultSummary;
   participants: BenchmarkParticipantResultSummary[];
   steps: BenchmarkStepResultSummary[];
+  /** Echoed when `participant` was sent — absent on platforms that predate it. */
+  filter?: { participants?: string[] };
+}
+
+export interface BenchmarkRunResultsInput {
+  /** Narrow every aggregate to these participant slugs (sent as `?participant=`). */
+  participants?: string[];
 }
 
 export interface BenchmarkRunTaskResultsInput {
@@ -875,7 +895,7 @@ export interface BenchmarkClient {
     /** The slug of the org the run was attributed to, resolved server-side from the caller's API key. */
     organizationSlug: string;
   }>;
-  listRuns(benchmarkSlug: string, options?: ListRunsOptions): Promise<BenchmarkRunList>;
+  listRuns(benchmarkSlug: string, options?: ListRunsOptions): Promise<BenchmarkRunListResult>;
   listAllRuns(options?: ListAllRunsOptions): Promise<BenchmarkRunListItem[]>;
   getRun(benchmarkSlug: string, runId: string): Promise<BenchmarkRun>;
   updateRun(benchmarkSlug: string, runId: string, input: UpdateRunInput): Promise<BenchmarkRun>;
@@ -976,7 +996,11 @@ export interface BenchmarkClient {
     artifactId: string,
   ): Promise<string>;
   getBenchmarkResults(benchmarkSlug: string, input?: BenchmarkResultsOverviewInput): Promise<BenchmarkResultsOverview>;
-  getRunResults(benchmarkSlug: string, runId: string): Promise<BenchmarkRunResults>;
+  getRunResults(
+    benchmarkSlug: string,
+    runId: string,
+    input?: BenchmarkRunResultsInput,
+  ): Promise<BenchmarkRunResults>;
   getRunTaskResults(
     benchmarkSlug: string,
     runId: string,
