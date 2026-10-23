@@ -189,8 +189,9 @@ jobs:
           # cannot emit multi-line values through the envdef eval — so decode
           # it before writing the key file the pool readiness probe uses.
           FC_KEY="$(printf '%s' "${EC2_FIRECRAB_SSH_KEY:-}" | base64 -d 2>/dev/null || true)"
+          echo "::add-mask::$FC_KEY"
           case "$FC_KEY" in
-            -----BEGIN*) ;;
+            *-----BEGIN*-----END*PRIVATE*KEY-----*) ;;
             *) echo "::error::EC2_FIRECRAB_SSH_KEY must be the host PEM base64-encoded: cat key.pem | base64 | tr -d '\n'" >&2; exit 1 ;;
           esac
           printf '%s\n' "$FC_KEY" > /tmp/firecrab-host.pem
@@ -232,8 +233,9 @@ jobs:
             . benchmarks/scripts/load-vault-secrets.sh '^(EC2_FIRECRAB_[A-Z_]+)'
             # Same base64 decode — the adapter expects the PEM itself.
             FC_KEY="$(printf '%s' "${EC2_FIRECRAB_SSH_KEY:-}" | base64 -d 2>/dev/null || true)"
+            echo "::add-mask::$FC_KEY"
             case "$FC_KEY" in
-              -----BEGIN*) EC2_FIRECRAB_SSH_KEY="$FC_KEY" ;;
+              *-----BEGIN*-----END*PRIVATE*KEY-----*) EC2_FIRECRAB_SSH_KEY="$FC_KEY" ;;
               *) echo "::error::EC2_FIRECRAB_SSH_KEY must be the host PEM base64-encoded: cat key.pem | base64 | tr -d '\n'" >&2; exit 1 ;;
             esac
             export EC2_FIRECRAB_SSH_KEY
