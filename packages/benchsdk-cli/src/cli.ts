@@ -457,6 +457,9 @@ function resolveResultFilter(
   const participants = options.participant
     ? options.participant.split(',').map((s) => s.trim()).filter(Boolean)
     : undefined;
+  if (options.participant !== undefined && !participants?.length) {
+    throw new Error('--participant must name at least one participant slug');
+  }
   if (participants?.length) filter.participants = participants;
   if (options.since) filter.since = resolveBound(options.since);
   if (options.until) filter.until = resolveBound(options.until);
@@ -469,10 +472,14 @@ function resolveResultFilter(
   if (options['source-org']) filter.sourceOrg = options['source-org'];
 
   if (allowSteps && options.steps !== undefined) {
-    filter.steps =
+    const steps =
       options.steps.trim() === 'all'
         ? 'all'
         : options.steps.split(',').map((s) => s.trim()).filter(Boolean);
+    if (steps !== 'all' && steps.length === 0) {
+      throw new Error('--steps must name at least one step name (or "all")');
+    }
+    filter.steps = steps;
   }
 
   const flagsSent =
