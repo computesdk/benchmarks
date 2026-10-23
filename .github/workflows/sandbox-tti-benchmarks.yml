@@ -38,7 +38,7 @@ on:
         default: false
         type: boolean
       host_count:
-        description: 'ec2-firecrab only: launch N fresh hosts via pool-up.sh for this run (0 = use the vault\'s standing EC2_FIRECRAB_SSH_TARGETS)'
+        description: 'ec2-firecrab only: launch N fresh hosts via pool-up.sh for this run (0 = use the standing EC2_FIRECRAB_SSH_TARGETS from vault)'
         required: false
         default: '0'
       trigger_source:
