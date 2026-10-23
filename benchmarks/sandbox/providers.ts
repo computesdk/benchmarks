@@ -156,6 +156,9 @@ export const providers: ProviderConfig[] = [
       egressPolicy: 'internet',
     }),
     destroyTimeoutMs: 90_000,
+    // Dispatch-only: the host pool is spun up per manual run, so scheduled
+    // matrices derived from this list (benchmarks-daily) must skip it.
+    manualOnly: true,
   },
   {
     name: 'freestyle',

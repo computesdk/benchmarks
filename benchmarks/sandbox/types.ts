@@ -13,6 +13,9 @@ export interface ProviderConfig {
   sandboxOptions?: Record<string, any>;
   /** Timeout for sandbox.destroy() in ms (default: 15000) */
   destroyTimeoutMs?: number;
+  /** Dispatch-only provider: excluded when other repos (e.g. benchmarks-daily)
+   * derive their scheduled matrices from this list. */
+  manualOnly?: boolean;
 }
 
 export interface TimingResult {
