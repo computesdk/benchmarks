@@ -145,7 +145,9 @@ export const providers: ProviderConfig[] = [
       sshTarget: process.env.EC2_FIRECRAB_SSH_TARGET,
       sshIdentityPem: process.env.EC2_FIRECRAB_SSH_KEY!,
       microNetwork: process.env.EC2_FIRECRAB_MICRO_NETWORK!,
-      template: process.env.EC2_FIRECRAB_TEMPLATE,
+      // Slim node rootfs (~150MB) instead of the ~2GB act image — disk
+      // materialization dominates TTI; ~6s create vs ~20s+ bare.
+      template: process.env.EC2_FIRECRAB_TEMPLATE ?? 'node-22-alpine',
       // Smallest viable guest for the burst TTI probe (just `node -v`):
       // 128MiB is firecrab's floor but the act image idles ~119MiB, so
       // 256MiB is the honest minimum; diskGb floor is 2 (API enforces).
