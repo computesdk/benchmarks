@@ -37,6 +37,10 @@ on:
         required: false
         default: false
         type: boolean
+      host_count:
+        description: 'ec2-firecrab only: launch N fresh hosts via pool-up.sh for this run (0 = use the vault\'s standing EC2_FIRECRAB_SSH_TARGETS)'
+        required: false
+        default: '0'
       trigger_source:
         description: 'Recorded on platform runs as their trigger (e.g. platform-retrigger); leave empty for a plain manual run'
         required: false
@@ -80,6 +84,8 @@ jobs:
       # spun up per manual run, so it never runs on push/schedule, and a
       # blank-provider "all" dispatch skips it too.
       SHOULD_RUN: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.provider == matrix.provider) || (matrix.provider != 'ec2-firecrab' && (github.event_name != 'workflow_dispatch' || github.event.inputs.provider == '')) }}
+      # Launch a fresh host pool for this run when dispatch asks for one.
+      FIRECRAB_POOL: ${{ github.event_name == 'workflow_dispatch' && matrix.provider == 'ec2-firecrab' && github.event.inputs.host_count != '0' }}
     strategy:
       fail-fast: false
       matrix:
@@ -167,18 +173,60 @@ jobs:
             pnpm install --frozen-lockfile --ignore-scripts
           fi
           pnpm -r --filter './packages/**' run build
+      # --- ec2-firecrab ephemeral host pool ---------------------------------
+      # When a manual dispatch sets host_count > 0, this job launches that many
+      # fresh firecrab hosts from the baked AMI, points the bench at them, and
+      # terminates them under `if: always()`. Launch config + AWS creds come
+      # from the vault; the host scripts come from computesdk/ec2-firecrab.
+      - name: Load firecrab pool credentials
+        if: env.FIRECRAB_POOL == 'true'
+        run: |
+          . benchmarks/scripts/load-vault-secrets.sh '^(AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN|AWS_REGION|AWS_DEFAULT_REGION|FIRECRAB_AMI_ID|FIRECRAB_KEY_NAME|FIRECRAB_SG_ID|FIRECRAB_SUBNET_ID|FIRECRAB_INSTANCE_TYPE|FIRECRAB_SSH_USER|EC2_FIRECRAB_SSH_KEY|FIRECRAB_REPO_TOKEN)'
+          for v in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_REGION AWS_DEFAULT_REGION FIRECRAB_AMI_ID FIRECRAB_KEY_NAME FIRECRAB_SG_ID FIRECRAB_SUBNET_ID FIRECRAB_INSTANCE_TYPE FIRECRAB_SSH_USER FIRECRAB_REPO_TOKEN; do
+            if [ -n "${!v:-}" ]; then echo "$v=${!v}" >> "$GITHUB_ENV"; fi
+          done
+          # PEM the pool's SSH readiness probe uses against fresh hosts.
+          printf '%s\n' "$EC2_FIRECRAB_SSH_KEY" > /tmp/firecrab-host.pem
+          chmod 600 /tmp/firecrab-host.pem
+          echo "SSH_KEY_PATH=/tmp/firecrab-host.pem" >> "$GITHUB_ENV"
+          command -v aws >/dev/null || {
+            curl -fsSL https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscli.zip
+            unzip -qo /tmp/awscli.zip -d /tmp && sudo /tmp/aws/install --update
+          }
+      - uses: actions/checkout@v4
+        if: env.FIRECRAB_POOL == 'true'
+        with:
+          repository: computesdk/ec2-firecrab
+          path: ec2-firecrab
+          token: ${{ env.FIRECRAB_REPO_TOKEN }}
+      - name: Launch firecrab host pool
+        if: env.FIRECRAB_POOL == 'true'
+        run: |
+          LINE=$(./ec2-firecrab/host/pool-up.sh "${{ github.event.inputs.host_count }}" | tail -1)
+          echo "$LINE"
+          echo "POOL_SSH_TARGETS=${LINE#EC2_FIRECRAB_SSH_TARGETS=}" >> "$GITHUB_ENV"
       - name: Clear stale results from checkout
         if: env.SHOULD_RUN == 'true'
         run: rm -rf results/
       - name: Run benchmark
         if: env.SHOULD_RUN == 'true'
         run: |
-          . benchmarks/scripts/load-vault-secrets.sh '^(ARCHIL_API_KEY|ARCHIL_REGION|ARCHIL_DISK_ID|ARKER_API_KEY|BEAM_TOKEN|BEAM_WORKSPACE_ID|BL_API_KEY|BL_WORKSPACE|BUDDY_TOKEN|BUDDY_WORKSPACE|BUDDY_PROJECT|CLOUD_RUN_SANDBOX_URL|CLOUD_RUN_SANDBOX_SECRET|CLOUDFLARE_SANDBOX_URL|SANDBOX_API_KEY|CSB_API_KEY|CREATEOS_SANDBOX_API_KEY|DAYTONA_API_KEY|DECLAW_API_KEY|E2B_API_KEY|FREESTYLE_API_KEY|GMN_API_HOST|GMN_TOKEN|GRAVIXLAYER_API_KEY|HOPX_API_KEY|ISORUN_API_KEY|LIGHTNING_API_KEY|MIOSA_API_KEY|MODAL_TOKEN_ID|MODAL_TOKEN_SECRET|MSB_API_KEY|MOSAIC_API_URL|MOSAIC_API_TOKEN|EC2_FIRECRAB_[A-Z_]+|NSC_TOKEN|NORTHFLANK_TOKEN|NORTHFLANK_PROJECT_ID|NOVITA_API_KEY|OPENCOMPUTER_API_KEY|OPENCOMPUTER_API_URL|PROMIGENCE_API_KEY|RAILWAY_API_TOKEN|RAILWAY_ENVIRONMENT_ID|RUN_CLOUD_API_KEY|RUNLOOP_API_KEY|SAIL_API_KEY|SANDBOX0_TOKEN|SPRITES_TOKEN|SUPERSERVE_API_KEY|TENKI_API_KEY|TENSORLAKE_API_KEY|UPSTASH_BOX_API_KEY|VERCEL_TOKEN|VERCEL_TEAM_ID|VERCEL_PROJECT_ID|BENCHMARKS_PLATFORM_API_KEY)'
+          . benchmarks/scripts/load-vault-secrets.sh '^(ARCHIL_API_KEY|ARCHIL_REGION|ARCHIL_DISK_ID|ARKER_API_KEY|BEAM_TOKEN|BEAM_WORKSPACE_ID|BL_API_KEY|BL_WORKSPACE|BUDDY_TOKEN|BUDDY_WORKSPACE|BUDDY_PROJECT|CLOUD_RUN_SANDBOX_URL|CLOUD_RUN_SANDBOX_SECRET|CLOUDFLARE_SANDBOX_URL|SANDBOX_API_KEY|CSB_API_KEY|CREATEOS_SANDBOX_API_KEY|DAYTONA_API_KEY|DECLAW_API_KEY|E2B_API_KEY|FREESTYLE_API_KEY|GMN_API_HOST|GMN_TOKEN|GRAVIXLAYER_API_KEY|HOPX_API_KEY|ISORUN_API_KEY|LIGHTNING_API_KEY|MIOSA_API_KEY|MODAL_TOKEN_ID|MODAL_TOKEN_SECRET|MSB_API_KEY|MOSAIC_API_URL|MOSAIC_API_TOKEN|NSC_TOKEN|NORTHFLANK_TOKEN|NORTHFLANK_PROJECT_ID|NOVITA_API_KEY|OPENCOMPUTER_API_KEY|OPENCOMPUTER_API_URL|PROMIGENCE_API_KEY|RAILWAY_API_TOKEN|RAILWAY_ENVIRONMENT_ID|RUN_CLOUD_API_KEY|RUNLOOP_API_KEY|SAIL_API_KEY|SANDBOX0_TOKEN|SPRITES_TOKEN|SUPERSERVE_API_KEY|TENKI_API_KEY|TENSORLAKE_API_KEY|UPSTASH_BOX_API_KEY|VERCEL_TOKEN|VERCEL_TEAM_ID|VERCEL_PROJECT_ID|BENCHMARKS_PLATFORM_API_KEY)'
 
           # OpenComputer is kept in the daily runs but excluded from the weekly run.
           if [ "${{ github.event_name }}" = "schedule" ]; then
             unset OPENCOMPUTER_API_KEY OPENCOMPUTER_API_URL
           fi
+
+          # EC2_FIRECRAB_* is loaded per-leg, not in the shared regex: the SSH
+          # private key must not reach other providers' env, where every
+          # provider package runs in-process.
+          if [ "${{ matrix.provider }}" = "ec2-firecrab" ]; then
+            . benchmarks/scripts/load-vault-secrets.sh '^(EC2_FIRECRAB_[A-Z_]+)'
+          fi
+
+          # A freshly launched pool overrides the vault's standing target list.
+          export EC2_FIRECRAB_SSH_TARGETS="${POOL_SSH_TARGETS:-${EC2_FIRECRAB_SSH_TARGETS:-}}"
 
           # Burst shape only; every provider passes the same --run-key, so they
           # get-or-create one shared run and rank against each other (each
@@ -193,6 +241,14 @@ jobs:
             --run-key "$RUN_KEY" \
             --concurrency ${{ github.event.inputs.concurrency || (github.event_name == 'push' && '10') || '100' }} \
             ${{ (github.event_name == 'push' || github.event.inputs.dry_run == 'true') && '--no-ingest' || '' }}
+      - name: Terminate firecrab host pool
+        if: always() && env.FIRECRAB_POOL == 'true'
+        run: |
+          if [ -f ec2-firecrab/host/.firecrab-pool.env ]; then
+            ./ec2-firecrab/host/pool-down.sh
+          else
+            echo "no pool state — nothing to terminate"
+          fi
       - name: Upload results
         if: always() && env.SHOULD_RUN == 'true'
         uses: actions/upload-artifact@v4
