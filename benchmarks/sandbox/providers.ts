@@ -9,7 +9,7 @@ import { cloudRun } from '@computesdk/gcp/cloud-run';
 import { cloudflare } from '@computesdk/cloudflare';
 import { createosSandbox } from '@computesdk/createos-sandbox';
 import { daytona } from '@computesdk/daytona';
-import { declaw } from '@computesdk/declaw';
+// import { declaw } from '@computesdk/declaw';
 import { e2b } from '@computesdk/e2b';
 import { ec2Firecrab } from '@computesdk/ec2-firecrab';
 import { freestyle } from '@computesdk/freestyle';
@@ -121,11 +121,11 @@ export const providers: ProviderConfig[] = [
     createCompute: () => daytona({ apiKey: process.env.DAYTONA_API_KEY! }),
     sandboxOptions: { autoStopInterval: 15, autoDeleteInterval: 0, snapshotId: 'daytona-8cpu-16gb' },
   },
-  {
-    name: 'declaw',
-    requiredEnvVars: ['DECLAW_API_KEY'],
-    createCompute: () => declaw({ apiKey: process.env.DECLAW_API_KEY! }),
-  },
+  // {
+  //   name: 'declaw',
+  //   requiredEnvVars: ['DECLAW_API_KEY'],
+  //   createCompute: () => declaw({ apiKey: process.env.DECLAW_API_KEY! }),
+  // },
   {
     name: 'e2b',
     requiredEnvVars: ['E2B_API_KEY'],
