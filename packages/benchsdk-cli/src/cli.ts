@@ -826,9 +826,20 @@ async function handleFork(
     slug,
     source: { ...source, ...(ref ? { ref } : {}) },
   };
-  const benchmark = await api.upsertBenchmark(newSlug, {
-    config: { upstream },
-  });
+
+  // A slug that already exists keeps its own config — upstream merges in,
+  // so re-forking onto an established benchmark doesn't drop scoring or
+  // display settings.
+  let existing: { config?: Record<string, unknown> } | null = null;
+  try {
+    existing = await api.getBenchmark(newSlug);
+  } catch {
+    existing = null;
+  }
+  const config = { ...(existing?.config ?? {}), upstream };
+  const benchmark = existing
+    ? await api.updateBenchmark(newSlug, { config })
+    : await api.upsertBenchmark(newSlug, { config });
 
   printData(benchmark, outputOptions);
   console.log(
@@ -839,7 +850,9 @@ async function handleFork(
   console.log(
     `\nRun it: checkout the bench file in your own Actions — ` +
       `git clone https://github.com/${source.githubOwner}/${source.repo} && ` +
-      `bench run ${source.path} --benchmark ${newSlug} --provider <your-provider>`,
+      `cd ${source.repo}` +
+      (ref ? ` && git checkout ${ref}` : '') +
+      ` && bench run ${source.path} --benchmark ${newSlug} --provider <your-provider>`,
   );
 }
 
