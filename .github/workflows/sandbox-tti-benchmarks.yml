@@ -179,12 +179,23 @@ jobs:
       # terminates them under `if: always()`. Launch config + AWS creds come
       # from the vault; the host scripts come from computesdk/ec2-firecrab.
       - name: Load firecrab pool credentials
-        if: env.FIRECRAB_POOL == 'true'
+        if: env.SHOULD_RUN == 'true' && env.FIRECRAB_POOL == 'true'
         run: |
           . benchmarks/scripts/load-vault-secrets.sh '^(AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN|AWS_REGION|AWS_DEFAULT_REGION|FIRECRAB_AMI_ID|FIRECRAB_KEY_NAME|FIRECRAB_SG_ID|FIRECRAB_SUBNET_ID|FIRECRAB_INSTANCE_TYPE|FIRECRAB_SSH_USER|EC2_FIRECRAB_SSH_KEY|FIRECRAB_REPO_TOKEN)'
           for v in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_REGION AWS_DEFAULT_REGION FIRECRAB_AMI_ID FIRECRAB_KEY_NAME FIRECRAB_SG_ID FIRECRAB_SUBNET_ID FIRECRAB_INSTANCE_TYPE FIRECRAB_SSH_USER FIRECRAB_REPO_TOKEN; do
             if [ -n "${!v:-}" ]; then echo "$v=${!v}" >> "$GITHUB_ENV"; fi
           done
+          # Fail fast with the exact vault keys a pool run still needs —
+          # otherwise the next steps die on opaque errors (actions/checkout
+          # "token not supplied", aws cli failures).
+          MISSING=""
+          for v in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY FIRECRAB_AMI_ID FIRECRAB_KEY_NAME FIRECRAB_SG_ID FIRECRAB_SUBNET_ID FIRECRAB_REPO_TOKEN; do
+            [ -z "${!v:-}" ] && MISSING="$MISSING $v"
+          done
+          if [ -n "$MISSING" ]; then
+            echo "::error::host_count > 0 needs these vault secrets:$MISSING (AWS_REGION also recommended)" >&2
+            exit 1
+          fi
           # The vault stores the host PEM base64-encoded — nsc vault export
           # cannot emit multi-line values through the envdef eval — so decode
           # it before writing the key file the pool readiness probe uses.
@@ -202,13 +213,13 @@ jobs:
             unzip -qo /tmp/awscli.zip -d /tmp && sudo /tmp/aws/install --update
           }
       - uses: actions/checkout@v4
-        if: env.FIRECRAB_POOL == 'true'
+        if: env.SHOULD_RUN == 'true' && env.FIRECRAB_POOL == 'true'
         with:
           repository: computesdk/ec2-firecrab
           path: ec2-firecrab
           token: ${{ env.FIRECRAB_REPO_TOKEN }}
       - name: Launch firecrab host pool
-        if: env.FIRECRAB_POOL == 'true'
+        if: env.SHOULD_RUN == 'true' && env.FIRECRAB_POOL == 'true'
         run: |
           LINE=$(./ec2-firecrab/host/pool-up.sh "${{ github.event.inputs.host_count }}" | tail -1)
           echo "$LINE"
