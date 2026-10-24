@@ -477,7 +477,11 @@ export function resolveResultFilter(
   }
   filter.timeZone =
     options.tz ?? Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'UTC';
-  if (options['source-org']) filter.sourceOrg = options['source-org'];
+  if (options['source-org'] !== undefined) {
+    const sourceOrg = options['source-org'].trim();
+    if (!sourceOrg) throw new Error('--source-org must name an organization slug');
+    filter.sourceOrg = sourceOrg;
+  }
 
   if (allowSteps && options.steps !== undefined) {
     const steps =
@@ -628,7 +632,9 @@ export function runDay(
     // en-CA renders YYYY-MM-DD.
     return new Date(created).toLocaleDateString('en-CA', { timeZone });
   } catch {
-    return (run.createdAt as string).slice(0, 10);
+    // Unrecognised zone — label by the true UTC date, not the timestamp's
+    // own offset date.
+    return new Date(created).toISOString().slice(0, 10);
   }
 }
 

@@ -248,3 +248,23 @@ describe('handleRunsList flag guards', () => {
     ).rejects.toThrow('Result filters require a benchmark slug');
   });
 });
+
+describe('review edge cases', () => {
+  it('rejects an empty --source-org value instead of silently ignoring it', () => {
+    expect(() =>
+      resolveResultFilter({ 'source-org': '' }, { allowSteps: false }),
+    ).toThrow('--source-org must name an organization slug');
+  });
+
+  it('rejects slugless --source-org= before listing all runs', async () => {
+    await expect(
+      handleRunsList(undefined, { 'source-org': '' }, {}, {}),
+    ).rejects.toThrow('--source-org must name an organization slug');
+  });
+
+  it('runDay falls back to the true UTC date on an invalid zone + offset timestamp', () => {
+    // 2026-10-20T00:30+02:00 is 2026-10-19T22:30Z — the label must be the
+    // UTC day, not the timestamp's own offset date.
+    expect(runDay({ id: 'x', createdAt: '2026-10-20T00:30:00+02:00' }, 'Not/AZone')).toBe('2026-10-19');
+  });
+});
