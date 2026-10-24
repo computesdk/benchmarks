@@ -25,7 +25,7 @@ on:
       arms:
         description: 'Comma list of arms, run interleaved per round'
         required: false
-        default: 'tilion,bb-default,bb-raw,bb-sdk-reused,bb-rawws,tilion-rawws'
+        default: 'tilion,bb-default,bb-raw,bb-raw-keepalive,bb-sdk-reused,bb-rawws,tilion-rawws'
       runners:
         description: 'Comma list of runner legs: namespace,house'
         required: false
@@ -110,7 +110,7 @@ jobs:
           THROUGHPUT_URLS: ${{ needs.setup.outputs.urls }}
           EXPERIMENT_LEG: namespace
           EXPERIMENT_RUNNER: namespace
-          EXPERIMENT_ARMS: ${{ github.event.inputs.arms || 'tilion,bb-default,bb-raw,bb-sdk-reused,bb-rawws,tilion-rawws' }}
+          EXPERIMENT_ARMS: ${{ github.event.inputs.arms || 'tilion,bb-default,bb-raw,bb-raw-keepalive,bb-sdk-reused,bb-rawws,tilion-rawws' }}
           EXPERIMENT_SESSIONS: ${{ github.event.inputs.sessions || '30' }}
           EXPERIMENT_SPACING_MS: ${{ github.event.inputs.spacing_ms || '15000' }}
           EXPERIMENT_OUT: results/experiments/browserbase-speed
@@ -160,7 +160,7 @@ jobs:
           THROUGHPUT_URLS: ${{ needs.setup.outputs.urls }}
           EXPERIMENT_LEG: house-ec2-us-east-2
           EXPERIMENT_RUNNER: house-ec2-us-east-2
-          EXPERIMENT_ARMS: ${{ github.event.inputs.arms || 'tilion,bb-default,bb-raw,bb-sdk-reused,bb-rawws,tilion-rawws' }}
+          EXPERIMENT_ARMS: ${{ github.event.inputs.arms || 'tilion,bb-default,bb-raw,bb-raw-keepalive,bb-sdk-reused,bb-rawws,tilion-rawws' }}
           EXPERIMENT_SESSIONS: ${{ github.event.inputs.sessions || '30' }}
           EXPERIMENT_SPACING_MS: ${{ github.event.inputs.spacing_ms || '15000' }}
           EXPERIMENT_OUT: results/experiments/browserbase-speed

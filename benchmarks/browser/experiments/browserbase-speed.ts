@@ -45,7 +45,6 @@ const ACTION_TIMEOUT_MS = 30_000;
 const VIEWPORT = { width: 1920, height: 1080 };
 const FIRST_HEADING = '#firstHeading';
 const ARTICLE_LINK_SELECTOR = '#mw-content-text a[href*="/wiki/"]';
-const BB_API = 'https://api.browserbase.com';
 
 // ─── Arms ────────────────────────────────────────────────────────────────────
 
@@ -55,7 +54,7 @@ interface Arm {
   name: string;
   provider: 'browserbase' | 'tilion';
   /** how the create call is issued */
-  via: 'adapter' | 'sdk-reused' | 'raw-fetch';
+  via: 'adapter' | 'sdk-reused' | 'raw-fetch' | 'raw-keepalive';
   /** adapter-shaped options (CreateBrowserSessionOptions) for via=adapter */
   options?: Record<string, unknown>;
   /** Browserbase REST body for via=sdk-reused / raw-fetch (projectId added at runtime) */
@@ -89,7 +88,8 @@ const ARM_DEFS: Arm[] = [
   { name: 'tilion-rawws', provider: 'tilion', via: 'adapter', options: BENCH_TILION_OPTIONS, release: 'close+release', connect: 'rawws-then-playwright', note: 'Tilion + raw WebSocket open/Browser.getVersion before connectOverCDP' },
   { name: 'bb-default', provider: 'browserbase', via: 'adapter', options: BENCH_BB_OPTIONS, release: 'close+release', connect: 'playwright', note: 'bench-identical: @computesdk/browserbase adapter, new SDK client per call' },
   { name: 'bb-sdk-reused', provider: 'browserbase', via: 'sdk-reused', body: BENCH_BB_BODY, release: 'close+release', connect: 'playwright', note: 'same body through one long-lived @browserbasehq/sdk client' },
-  { name: 'bb-raw', provider: 'browserbase', via: 'raw-fetch', body: BENCH_BB_BODY, release: 'close+release', connect: 'playwright', note: 'same body via plain fetch, no SDK' },
+  { name: 'bb-raw', provider: 'browserbase', via: 'raw-fetch', body: BENCH_BB_BODY, release: 'close+release', connect: 'playwright', note: 'same body via node https.request on a fresh TCP+TLS connection, no SDK; phases recorded' },
+  { name: 'bb-raw-keepalive', provider: 'browserbase', via: 'raw-keepalive', body: BENCH_BB_BODY, release: 'close+release', connect: 'playwright', note: 'same request on a keep-alive agent (connection reused across sessions) — isolates server time' },
   { name: 'bb-rawws', provider: 'browserbase', via: 'adapter', options: BENCH_BB_OPTIONS, release: 'close+release', connect: 'rawws-then-playwright', note: 'raw WebSocket open/Browser.getVersion before connectOverCDP' },
   // Release path (D)
   { name: 'bb-rel-close-only', provider: 'browserbase', via: 'sdk-reused', body: BENCH_BB_BODY, release: 'close-only', connect: 'playwright', note: 'browser.close() only, then poll sessions.retrieve until not RUNNING' },
@@ -133,7 +133,7 @@ interface SessionRec {
   secondNav?: { durationMs: number; status?: number; timing?: NavTiming; headers?: Record<string, string>; error?: string };
   inPageFetch?: { ttfbMs: number; totalMs: number; status?: number; xCache?: string; error?: string };
   egressIp?: string; userAgent?: string; chromeVersion?: string;
-  release?: { mode: ReleaseMode; closeMs?: number; restMs?: number; pollMs?: number; finalStatus?: string; polls?: number };
+  release?: { mode: ReleaseMode; closeMs?: number; restMs?: number; restPhases?: Record<string, number>; pollMs?: number; finalStatus?: string; polls?: number };
   error?: string;
 }
 interface Probe { host: string; label: string; ts: string; dnsMs: number; tcpMs: number; tlsMs: number; httpMs: number; status?: number; ip?: string; alpn?: string; error?: string }
@@ -209,16 +209,16 @@ async function probeHost(host: string, label: string, httpPath = '/'): Promise<P
   return p;
 }
 
-async function runProbes(bbConnectHost?: string, tilionApiHost?: string, tilionConnectHost?: string) {
-  const targets: Array<[string, string]> = [['api.browserbase.com', 'browserbase-api']];
-  if (bbConnectHost && bbConnectHost !== 'redacted-host') targets.push([bbConnectHost, 'browserbase-connect']);
-  if (tilionApiHost) targets.push([tilionApiHost, 'tilion-api']);
-  if (tilionConnectHost && tilionConnectHost !== tilionApiHost) targets.push([tilionConnectHost, 'tilion-connect']);
-  targets.push(['en.wikipedia.org', 'wikipedia-from-runner']);
-  for (const [host, label] of targets) {
+/** Real hostnames to probe, keyed by label. Non-public names are probed but written as 'redacted-host' with no IP. */
+const probeTargets = new Map<string, string>([['browserbase-api', 'api.browserbase.com'], ['wikipedia-from-runner', 'en.wikipedia.org']]);
+function rememberProbeHost(label: string, url: string | undefined) {
+  try { if (url) probeTargets.set(label, new URL(url).hostname); } catch { /* ignore */ }
+}
+async function runProbes() {
+  for (const [label, host] of probeTargets) {
     for (let k = 0; k < 3; k++) {
       const p = await probeHost(host, label);
-      p.host = /(^|\.)(browserbase\.com|tilion\.dev|wikipedia\.org)$/.test(host) ? host : 'redacted-host';
+      if (!/(^|\.)(browserbase\.com|tilion\.dev|wikipedia\.org)$/.test(host)) { p.host = 'redacted-host'; delete p.ip; }
       probes.push(p);
     }
   }
@@ -229,7 +229,6 @@ async function runProbes(bbConnectHost?: string, tilionApiHost?: string, tilionC
 const bbApiKey = process.env.BROWSERBASE_API_KEY ?? '';
 const bbProjectId = process.env.BROWSERBASE_PROJECT_ID ?? '';
 const tilionBaseUrl = (process.env.TILION_BASE_URL || 'https://api.tilion.dev').replace(/\/+$/, '');
-const tilionApiHost = safeHost(tilionBaseUrl);
 let sdkClient: Browserbase | undefined;
 let sdkInitMs: number | undefined;
 function sdk(): Browserbase {
@@ -258,16 +257,43 @@ async function createSession(arm: Arm, rec: SessionRec): Promise<Created> {
     const { data, response } = await sdk().sessions.create(body as any).withResponse();
     return { sessionId: data.id, connectUrl: data.connectUrl, http: { status: response.status, ...pickRespMeta(response.headers), sessionStatus: data.status, sessionRegion: (data as any).region } };
   }
-  // raw fetch: same wire request the SDK makes, no SDK
-  const phases: Record<string, number> = {};
-  let t = now();
-  const res = await fetch(`${BB_API}/v1/sessions`, { method: 'POST', headers: { 'X-BB-API-Key': bbApiKey, 'content-type': 'application/json' }, body: JSON.stringify(body) });
-  phases.headersMs = r1(now() - t); t = now();
-  const text = await res.text();
-  phases.bodyMs = r1(now() - t);
-  if (!res.ok) throw new Error(`browserbase create ${res.status}: ${scrub(text).slice(0, 120)}`);
-  const data = JSON.parse(text);
-  return { sessionId: data.id, connectUrl: data.connectUrl, http: { status: res.status, ...pickRespMeta(res.headers), sessionStatus: data.status, sessionRegion: data.region, phases } };
+  // raw request: same wire request the SDK makes, no SDK, with socket phases.
+  const r = await rawBbRequest('POST', '/v1/sessions', body, arm.via === 'raw-keepalive');
+  if (r.status >= 300) throw new Error(`browserbase create ${r.status}: ${scrub(r.text).slice(0, 120)}`);
+  const data = JSON.parse(r.text);
+  return { sessionId: data.id, connectUrl: data.connectUrl, http: { status: r.status, ...pickRespMeta(r.headers), sessionStatus: data.status, sessionRegion: data.region, phases: r.phases } };
+}
+
+const keepAliveAgent = new https.Agent({ keepAlive: true, maxSockets: 1 });
+const freshAgent = new https.Agent({ keepAlive: false });
+/** One HTTPS request to api.browserbase.com with per-phase timings (dns/tcp/tls only when a new socket is opened). */
+function rawBbRequest(method: string, pathName: string, body: unknown, keepAlive: boolean): Promise<{ status: number; headers: { get(k: string): string | null; has(k: string): boolean }; text: string; phases: Record<string, number> }> {
+  return new Promise((resolve, reject) => {
+    const t0 = now(); const phases: Record<string, number> = {}; let reused = true;
+    const payload = JSON.stringify(body);
+    const req = https.request({ host: 'api.browserbase.com', path: pathName, method, agent: keepAlive ? keepAliveAgent : freshAgent,
+      headers: { 'X-BB-API-Key': bbApiKey, 'content-type': 'application/json', 'content-length': Buffer.byteLength(payload), accept: 'application/json' } }, (res) => {
+      phases.ttfbMs = r1(now() - t0);
+      const chunks: Buffer[] = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => {
+        phases.totalMs = r1(now() - t0); phases.reusedSocket = reused ? 1 : 0;
+        const h = res.headers;
+        resolve({ status: res.statusCode ?? 0, headers: { get: (k) => { const v = h[k.toLowerCase()]; return Array.isArray(v) ? v.join(',') : v ?? null; }, has: (k) => h[k.toLowerCase()] !== undefined }, text: Buffer.concat(chunks).toString('utf8'), phases });
+      });
+    });
+    req.on('socket', (sock) => {
+      if (sock.connecting) {
+        reused = false;
+        sock.once('lookup', () => { phases.dnsMs = r1(now() - t0); });
+        sock.once('connect', () => { phases.tcpMs = r1(now() - t0); });
+        sock.once('secureConnect', () => { phases.tlsMs = r1(now() - t0); });
+      }
+    });
+    req.setTimeout(60_000, () => req.destroy(new Error('timeout')));
+    req.on('error', reject);
+    req.end(payload);
+  });
 }
 
 function pickRespMeta(h: { get(k: string): string | null; has(k: string): boolean }) {
@@ -288,9 +314,9 @@ async function releaseSession(arm: Arm, sessionId: string, browser: Browser | un
     if (arm.via === 'adapter') await adapterFor(arm).session.destroy(sessionId);
     else if (arm.via === 'sdk-reused') await sdk().sessions.update(sessionId, { status: 'REQUEST_RELEASE', projectId: bbProjectId });
     else {
-      const r = await fetch(`${BB_API}/v1/sessions/${encodeURIComponent(sessionId)}`, { method: 'POST', headers: { 'X-BB-API-Key': bbApiKey, 'content-type': 'application/json' }, body: JSON.stringify({ status: 'REQUEST_RELEASE', projectId: bbProjectId }) });
-      await r.text();
-      if (!r.ok) throw new Error(`browserbase release ${r.status}`);
+      const r = await rawBbRequest('POST', `/v1/sessions/${encodeURIComponent(sessionId)}`, { status: 'REQUEST_RELEASE', projectId: bbProjectId }, arm.via === 'raw-keepalive');
+      info.restPhases = r.phases;
+      if (r.status >= 300) throw new Error(`browserbase release ${r.status}`);
     }
     info.restMs = r1(now() - t);
   };
@@ -343,19 +369,23 @@ async function navMeta(resp: Response | null | undefined) {
   for (const k of NAV_HEADER_KEYS) if (all[k] !== undefined) headers[k] = all[k];
   return { status: resp.status(), headers };
 }
+// A string expression, not a function: tsx/esbuild wraps nested arrows in a
+// __name() helper that does not exist inside the page, so function-valued
+// evaluate() args with inner closures throw there.
+const NAV_TIMING_EXPR = `(() => {
+  const e = performance.getEntriesByType('navigation')[0];
+  if (!e) return undefined;
+  const r = (n) => Math.round(n * 10) / 10;
+  return {
+    redirect: r(e.redirectEnd - e.redirectStart), dns: r(e.domainLookupEnd - e.domainLookupStart),
+    connect: r(e.connectEnd - e.connectStart), tls: r(e.secureConnectionStart ? e.connectEnd - e.secureConnectionStart : 0),
+    ttfb: r(e.responseStart - e.requestStart), response: r(e.responseEnd - e.responseStart),
+    domInteractive: r(e.domInteractive), domContentLoaded: r(e.domContentLoadedEventEnd), loadEvent: r(e.loadEventEnd), duration: r(e.duration),
+    transferSize: e.transferSize, protocol: e.nextHopProtocol, type: e.type,
+  };
+})()`;
 async function readNavTiming(page: Page): Promise<NavTiming | undefined> {
-  return page.evaluate(() => {
-    const e = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
-    if (!e) return undefined;
-    const r = (n: number) => Math.round(n * 10) / 10;
-    return {
-      redirect: r(e.redirectEnd - e.redirectStart), dns: r(e.domainLookupEnd - e.domainLookupStart),
-      connect: r(e.connectEnd - e.connectStart), tls: r(e.secureConnectionStart ? e.connectEnd - e.secureConnectionStart : 0),
-      ttfb: r(e.responseStart - e.requestStart), response: r(e.responseEnd - e.responseStart),
-      domInteractive: r(e.domInteractive), domContentLoaded: r(e.domContentLoadedEventEnd), loadEvent: r(e.loadEventEnd), duration: r(e.duration),
-      transferSize: e.transferSize, protocol: e.nextHopProtocol, type: e.type,
-    };
-  }).catch(() => undefined);
+  return page.evaluate(NAV_TIMING_EXPR).catch(() => undefined) as Promise<NavTiming | undefined>;
 }
 
 async function runActionLoop(page: Page, rec: SessionRec, url: string) {
@@ -405,13 +435,13 @@ async function postLoop(page: Page, rec: SessionRec, secondUrl: string) {
   } catch { /* ignore */ }
   // in-page fetch to the same article: pure TTFB from the browser's egress (no render)
   try {
-    rec.inPageFetch = await page.evaluate(async (u) => {
+    rec.inPageFetch = await page.evaluate(`(async () => {
       const t0 = performance.now();
-      const r = await fetch(u, { cache: 'no-store', credentials: 'omit' });
+      const r = await fetch(${JSON.stringify(rec.url)}, { cache: 'no-store', credentials: 'omit' });
       const ttfb = performance.now() - t0;
       await r.text();
-      return { ttfbMs: Math.round(ttfb * 10) / 10, totalMs: Math.round((performance.now() - t0) * 10) / 10, status: r.status, xCache: r.headers.get('x-cache') ?? undefined };
-    }, rec.url);
+      return { ttfbMs: Math.round(ttfb * 10) / 10, totalMs: Math.round((performance.now() - t0) * 10) / 10, status: r.status, xCache: r.headers.get('x-cache') || undefined };
+    })()`) as SessionRec['inPageFetch'];
   } catch (e) { rec.inPageFetch = { ttfbMs: -1, totalMs: -1, error: errMsg(e) }; }
   // second navigate to a different article: is the first goto paying a cold-profile cost?
   const t = now();
@@ -445,8 +475,6 @@ async function rawWsProbe(connectUrl: string): Promise<{ info: NonNullable<Sessi
 
 // ─── One session ─────────────────────────────────────────────────────────────
 
-let bbConnectHost: string | undefined; let tilionConnectHost: string | undefined;
-
 async function runSession(arm: Arm, round: number, orderInRound = 0): Promise<void> {
   const url = urlFor(round);
   const rec: SessionRec = { arm: arm.name, round, orderInRound, ts: new Date().toISOString(), url, actions: [] };
@@ -459,7 +487,7 @@ async function runSession(arm: Arm, round: number, orderInRound = 0): Promise<vo
     rec.createMs = r1(now() - t0);
     rec.createHttp = created.http;
     rec.connectHost = safeHost(created.connectUrl);
-    if (arm.provider === 'browserbase') bbConnectHost = rec.connectHost; else tilionConnectHost = rec.connectHost;
+    rememberProbeHost(arm.provider === 'browserbase' ? 'browserbase-connect' : 'tilion-connect', created.connectUrl);
 
     let probeWs: WebSocket | undefined;
     if (arm.connect === 'rawws-then-playwright') { const r = await rawWsProbe(created.connectUrl); rec.rawWs = r.info; probeWs = r.ws; }
@@ -521,7 +549,8 @@ function summarize() {
       inPageFetchTtfbMs: stats(ok.map((s) => s.inPageFetch?.ttfbMs ?? NaN)),
       rawWs: { openMs: stats(ok.map((s) => s.rawWs?.openMs ?? NaN)), getVersionMs: stats(ok.map((s) => s.rawWs?.getVersionMs ?? NaN)) },
       release: { closeMs: stats(ok.map((s) => s.release?.closeMs ?? NaN)), restMs: stats(ok.map((s) => s.release?.restMs ?? NaN)), pollMs: stats(ok.map((s) => s.release?.pollMs ?? NaN)), finalStatus: count(ok.map((s) => s.release?.finalStatus)) },
-      createRawPhases: { headersMs: stats(ok.map((s) => s.createHttp?.phases?.headersMs ?? NaN)), bodyMs: stats(ok.map((s) => s.createHttp?.phases?.bodyMs ?? NaN)) },
+      createRawPhases: { dnsMs: stats(ok.map((s) => s.createHttp?.phases?.dnsMs ?? NaN)), tcpMs: stats(ok.map((s) => s.createHttp?.phases?.tcpMs ?? NaN)), tlsMs: stats(ok.map((s) => s.createHttp?.phases?.tlsMs ?? NaN)), ttfbMs: stats(ok.map((s) => s.createHttp?.phases?.ttfbMs ?? NaN)), totalMs: stats(ok.map((s) => s.createHttp?.phases?.totalMs ?? NaN)), reused: count(ok.map((s) => s.createHttp?.phases ? String(s.createHttp.phases.reusedSocket) : undefined)) },
+      releaseRawPhases: { tcpMs: stats(ok.map((s) => s.release?.restPhases?.tcpMs ?? NaN)), tlsMs: stats(ok.map((s) => s.release?.restPhases?.tlsMs ?? NaN)), ttfbMs: stats(ok.map((s) => s.release?.restPhases?.ttfbMs ?? NaN)), reused: count(ok.map((s) => s.release?.restPhases ? String(s.release.restPhases.reusedSocket) : undefined)) },
       xCachePop: count(ok.map((s) => s.navPop)),
       xCacheHit: count(ok.map((s) => s.navHeaders?.['x-cache-status'])),
       egressIps: count(ok.map((s) => s.egressIp)), chromeVersions: count(ok.map((s) => s.chromeVersion)), connectHosts: count(ok.map((s) => s.connectHost)), sessionRegions: count(ok.map((s) => s.createHttp?.sessionRegion)),
@@ -555,7 +584,8 @@ async function main() {
   const runner = { label: RUNNER, ...(await ipInfo(runnerIp)) };
   log(`runner ${RUNNER}`, runner);
 
-  await runProbes(undefined, tilionApiHost === 'redacted-host' ? undefined : tilionApiHost);
+  rememberProbeHost('tilion-api', tilionBaseUrl);
+  await runProbes();
   const arms = ARMS.map((a) => ARM_BY_NAME.get(a)!);
   for (let round = 0; round < SESSIONS; round++) {
     // Every arm in a round loads the same article, so whoever goes first pays
@@ -566,9 +596,9 @@ async function main() {
       const last = round === SESSIONS - 1 && k === arms.length - 1;
       if (!last) await sleep(SPACING_MS);
     }
-    if ((round + 1) % PROBE_EVERY === 0) await runProbes(bbConnectHost, tilionApiHost === 'redacted-host' ? undefined : tilionApiHost, tilionConnectHost);
+    if ((round + 1) % PROBE_EVERY === 0) await runProbes();
   }
-  await runProbes(bbConnectHost, tilionApiHost === 'redacted-host' ? undefined : tilionApiHost, tilionConnectHost);
+  await runProbes();
 
   const ips = [...new Set(sessions.map((s) => s.egressIp).filter((x): x is string => !!x))];
   const egress: Record<string, unknown> = {};
