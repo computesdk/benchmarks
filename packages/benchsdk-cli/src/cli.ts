@@ -4,7 +4,6 @@ import { fileURLToPath } from 'node:url';
 import { BenchmarkApiError } from '@benchsdk/api';
 import type {
   BenchmarkResultsOverview,
-  BenchmarkResultsOverviewRun,
   BenchmarkRunFilterInput,
   BenchmarkRunResults,
   BenchmarkStepResultSummary,
@@ -515,18 +514,27 @@ export function assertFilterEcho(filter: unknown): void {
   }
 }
 
-async function handleRunsList(
+export async function handleRunsList(
   benchmarkSlug: string | undefined,
   options: { limit?: number; offset?: number } & ResultFilterOptions,
   overrides: { baseUrl?: string; apiKey?: string; org?: string },
   outputOptions: OutputOptions = {},
 ): Promise<void> {
-  const { api } = await createApiClient(overrides);
   const { filter, flagsSent } = resolveResultFilter(options, { allowSteps: false });
+  // Validate flag combinations before auth/API setup — a rejected command
+  // should not need credentials.
   if (!benchmarkSlug) {
     if (flagsSent) {
       throw new Error('Result filters require a benchmark slug: bench runs list <benchmark-slug>');
     }
+    if (filter.sourceOrg) {
+      // `~/org/slug` needs a slug — listAllRuns has no org dimension, so a
+      // bare --source-org would otherwise be silently ignored.
+      throw new Error('--source-org requires a benchmark slug: bench runs list <benchmark-slug>');
+    }
+  }
+  const { api } = await createApiClient(overrides);
+  if (!benchmarkSlug) {
     const runs = await api.listAllRuns(options);
     printData(runs, outputOptions);
     return;
@@ -603,7 +611,25 @@ async function handleResults(
     printData(results, { format: 'json' });
     return;
   }
-  printResultsTables(results, options.run !== undefined);
+  printResultsTables(results, options.run !== undefined, filter.timeZone);
+}
+
+// Day label for a run row. The filter's zone matters: a run created at
+// 02:00Z is still yesterday in America/New_York, and the label should match
+// the day the user filtered on. Falls back to a short id when createdAt is
+// absent, and to the UTC date when the zone is unrecognised.
+export function runDay(
+  run: { id: string; createdAt?: string },
+  timeZone?: string,
+): string {
+  const created = run.createdAt ? Date.parse(run.createdAt) : NaN;
+  if (Number.isNaN(created)) return run.id.slice(0, 8);
+  try {
+    // en-CA renders YYYY-MM-DD.
+    return new Date(created).toLocaleDateString('en-CA', { timeZone });
+  } catch {
+    return (run.createdAt as string).slice(0, 10);
+  }
 }
 
 type ParticipantResultRow = BenchmarkRunResults['participants'][number] & { runDay?: string };
@@ -654,6 +680,7 @@ function stepTableRow(s: BenchmarkStepResultSummary): Record<string, unknown> {
 function printResultsTables(
   results: BenchmarkRunResults | BenchmarkResultsOverview,
   isSingleRun: boolean,
+  timeZone?: string,
 ): void {
   if (isSingleRun) {
     const runResults = results as BenchmarkRunResults;
@@ -678,16 +705,14 @@ function printResultsTables(
     console.log(`Results unavailable${overview.analytics.error ? `: ${overview.analytics.error}` : '.'}`);
     return;
   }
-  const runDay = (item: BenchmarkResultsOverviewRun): string =>
-    item.run.createdAt?.slice(0, 10) ?? item.run.id.slice(0, 8);
   const rows = overview.items.flatMap((item) =>
-    item.participants.map((p) => participantTableRow({ ...p, runDay: runDay(item) })),
+    item.participants.map((p) => participantTableRow({ ...p, runDay: runDay(item.run, timeZone) })),
   );
   const emptyRuns = overview.items.filter((item) => item.participants.length === 0);
   if (emptyRuns.length > 0) {
     for (const item of emptyRuns) {
       console.log(
-        `Run ${runDay(item)} — ${item.run.status} | no participant results (analytics: ${item.analytics.status})`,
+        `Run ${runDay(item.run, timeZone)} — ${item.run.status} | no participant results (analytics: ${item.analytics.status})`,
       );
     }
   }
@@ -698,7 +723,7 @@ function printResultsTables(
   }
   // One row per run × participant × step when --steps was sent.
   const stepRows = overview.items.flatMap((item) =>
-    (item.steps ?? []).map((s) => ({ run: runDay(item), ...stepTableRow(s) })),
+    (item.steps ?? []).map((s) => ({ run: runDay(item.run, timeZone), ...stepTableRow(s) })),
   );
   if (stepRows.length > 0) {
     console.log('Steps:');

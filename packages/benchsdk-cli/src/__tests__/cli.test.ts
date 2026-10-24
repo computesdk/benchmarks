@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { parseGlobalArgs, parseSubcommandOptions, resolveResultFilter, assertFilterEcho } from '../cli.js';
+import { parseGlobalArgs, parseSubcommandOptions, resolveResultFilter, assertFilterEcho, runDay, handleRunsList } from '../cli.js';
 import { getPlatformBaseUrl, getApiBaseUrl, getAuthBaseUrl } from '../platform.js';
 
 describe('parseGlobalArgs', () => {
@@ -220,5 +220,31 @@ describe('assertFilterEcho', () => {
   it('accepts any defined echo', () => {
     expect(() => assertFilterEcho({ timeZone: 'UTC' })).not.toThrow();
     expect(() => assertFilterEcho({})).not.toThrow();
+  });
+});
+
+describe('runDay', () => {
+  it('labels a run by its day in the filter timezone', () => {
+    expect(runDay({ id: 'x', createdAt: '2026-10-20T02:00:00Z' }, 'America/New_York')).toBe('2026-10-19');
+    expect(runDay({ id: 'x', createdAt: '2026-10-20T02:00:00Z' }, 'UTC')).toBe('2026-10-20');
+  });
+
+  it('falls back to a short id when createdAt is absent, and UTC date on a bad zone', () => {
+    expect(runDay({ id: 'abcdefghijklmnop' })).toBe('abcdefgh');
+    expect(runDay({ id: 'x', createdAt: '2026-10-20T02:00:00Z' }, 'Not/AZone')).toBe('2026-10-20');
+  });
+});
+
+describe('handleRunsList flag guards', () => {
+  it('rejects --source-org without a benchmark slug', async () => {
+    await expect(
+      handleRunsList(undefined, { 'source-org': 'curator' }, {}, {}),
+    ).rejects.toThrow('--source-org requires a benchmark slug');
+  });
+
+  it('still rejects result filters without a benchmark slug', async () => {
+    await expect(
+      handleRunsList(undefined, { participant: 'e2b' }, {}, {}),
+    ).rejects.toThrow('Result filters require a benchmark slug');
   });
 });
