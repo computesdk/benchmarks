@@ -133,6 +133,8 @@ interface SessionRec {
   secondNav?: { durationMs: number; status?: number; timing?: NavTiming; headers?: Record<string, string>; error?: string };
   inPageFetch?: { ttfbMs: number; totalMs: number; status?: number; xCache?: string; error?: string };
   egressIp?: string; userAgent?: string; chromeVersion?: string;
+  browserEnv?: { hardwareConcurrency?: number; deviceMemory?: number; cpuLoopMs?: number; cpuLoopMs2?: number };
+  resources?: { count: number; bytes: number; lastResponseEnd: number; hosts: Record<string, { n: number; ms: number }>; slowest: Array<{ host: string; ms: number; type: string }> };
   release?: { mode: ReleaseMode; closeMs?: number; restMs?: number; restPhases?: Record<string, number>; pollMs?: number; finalStatus?: string; polls?: number };
   error?: string;
 }
@@ -430,8 +432,31 @@ async function runActionLoop(page: Page, rec: SessionRec, url: string) {
 
 async function postLoop(page: Page, rec: SessionRec, secondUrl: string) {
   try {
-    const fp = await page.evaluate(() => navigator.userAgent);
+    const fp = await page.evaluate('navigator.userAgent') as string;
     rec.userAgent = fp; rec.chromeVersion = fp.match(/Chrome\/([\d.]+)/)?.[1];
+  } catch { /* ignore */ }
+  // How busy was the page load? Resource Timing for the current document (the
+  // article the loop went back to), plus a fixed CPU loop to tell a slow box
+  // from a slow network. All string-evaluated (see NAV_TIMING_EXPR).
+  try {
+    rec.resources = await page.evaluate(`(() => {
+      const rs = performance.getEntriesByType('resource');
+      const hosts = {}; let bytes = 0; let last = 0;
+      for (const r of rs) {
+        let h = 'other'; try { h = new URL(r.name).hostname; } catch {}
+        const d = r.responseEnd - r.startTime;
+        hosts[h] = hosts[h] || { n: 0, ms: 0 }; hosts[h].n++; hosts[h].ms = Math.max(hosts[h].ms, Math.round(d));
+        bytes += r.transferSize || 0; last = Math.max(last, r.responseEnd);
+      }
+      const slowest = rs.map((r) => { let h = 'other'; try { h = new URL(r.name).hostname; } catch {} return { host: h, ms: Math.round(r.responseEnd - r.startTime), type: r.initiatorType }; }).sort((a, b) => b.ms - a.ms).slice(0, 5);
+      return { count: rs.length, bytes, lastResponseEnd: Math.round(last), hosts, slowest };
+    })()`) as SessionRec['resources'];
+  } catch { /* ignore */ }
+  try {
+    rec.browserEnv = await page.evaluate(`(() => {
+      const loop = () => { const t = performance.now(); let x = 0; for (let i = 0; i < 3e6; i++) x = (x + i * 7) % 1000003; return Math.round((performance.now() - t) * 10) / 10 + (x > 1e9 ? 1 : 0); };
+      return { hardwareConcurrency: navigator.hardwareConcurrency, deviceMemory: navigator.deviceMemory, cpuLoopMs: loop(), cpuLoopMs2: loop() };
+    })()`) as SessionRec['browserEnv'];
   } catch { /* ignore */ }
   // in-page fetch to the same article: pure TTFB from the browser's egress (no render)
   try {
@@ -480,7 +505,7 @@ async function runSession(arm: Arm, round: number, orderInRound = 0): Promise<vo
   const rec: SessionRec = { arm: arm.name, round, orderInRound, ts: new Date().toISOString(), url, actions: [] };
   sessions.push(rec);
   const totalStart = now();
-  let browser: Browser | undefined; let created: Created | undefined;
+  let browser: Browser | undefined; let created: Created | undefined; let probeWs: WebSocket | undefined;
   try {
     const t0 = now();
     created = await withTimeout(createSession(arm, rec), 120_000, 'Session creation timed out');
@@ -489,7 +514,6 @@ async function runSession(arm: Arm, round: number, orderInRound = 0): Promise<vo
     rec.connectHost = safeHost(created.connectUrl);
     rememberProbeHost(arm.provider === 'browserbase' ? 'browserbase-connect' : 'tilion-connect', created.connectUrl);
 
-    let probeWs: WebSocket | undefined;
     if (arm.connect === 'rawws-then-playwright') { const r = await rawWsProbe(created.connectUrl); rec.rawWs = r.info; probeWs = r.ws; }
 
     const t1 = now();
@@ -498,7 +522,6 @@ async function runSession(arm: Arm, round: number, orderInRound = 0): Promise<vo
     if (!context) throw new Error('No default browser context found');
     const page = context.pages()[0] ?? (await context.newPage());
     rec.connectMs = r1(now() - t1);
-    probeWs?.close();
 
     await runActionLoop(page, rec, url);
     rec.taskMs = r1(rec.actions.reduce((s, a) => s + a.durationMs, 0));
@@ -511,6 +534,10 @@ async function runSession(arm: Arm, round: number, orderInRound = 0): Promise<vo
   } catch (e) {
     rec.error = errMsg(e);
   } finally {
+    // Observed: closing the probe socket while Playwright was attached ended the
+    // Browserbase session ("Target page, context or browser has been closed"),
+    // so it stays open until the bench loop is done.
+    probeWs?.close();
     if (created) {
       try { rec.releaseMs = await withTimeout(releaseSession(arm, created.sessionId, browser, rec), 30_000, 'release timed out'); }
       catch (e) { rec.release = { ...(rec.release ?? { mode: arm.release }) }; rec.error = (rec.error ? rec.error + '; ' : '') + `release: ${errMsg(e)}`; }
@@ -553,6 +580,8 @@ function summarize() {
       releaseRawPhases: { tcpMs: stats(ok.map((s) => s.release?.restPhases?.tcpMs ?? NaN)), tlsMs: stats(ok.map((s) => s.release?.restPhases?.tlsMs ?? NaN)), ttfbMs: stats(ok.map((s) => s.release?.restPhases?.ttfbMs ?? NaN)), reused: count(ok.map((s) => s.release?.restPhases ? String(s.release.restPhases.reusedSocket) : undefined)) },
       xCachePop: count(ok.map((s) => s.navPop)),
       xCacheHit: count(ok.map((s) => s.navHeaders?.['x-cache-status'])),
+      browserEnv: { hardwareConcurrency: count(ok.map((s) => String(s.browserEnv?.hardwareConcurrency))), deviceMemory: count(ok.map((s) => String(s.browserEnv?.deviceMemory))), cpuLoopMs: stats(ok.map((s) => s.browserEnv?.cpuLoopMs2 ?? NaN)) },
+      resources: { count: stats(ok.map((s) => s.resources?.count ?? NaN)), bytes: stats(ok.map((s) => s.resources?.bytes ?? NaN)), lastResponseEnd: stats(ok.map((s) => s.resources?.lastResponseEnd ?? NaN)) },
       egressIps: count(ok.map((s) => s.egressIp)), chromeVersions: count(ok.map((s) => s.chromeVersion)), connectHosts: count(ok.map((s) => s.connectHost)), sessionRegions: count(ok.map((s) => s.createHttp?.sessionRegion)),
     };
   }
