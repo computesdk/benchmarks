@@ -1,5 +1,16 @@
 # @benchsdk/runner
 
+## 0.6.6
+
+### Patch Changes
+
+- ca1fbda: Add `bench fork` (tracked private fork of a catalog benchmark via `config.upstream`), pass `ciRunId` from `COMPUTESDK_RUN_ID` on run creation, and expose `getForeignBenchmark` with the platform source descriptor.
+- Updated dependencies [ca1fbda]
+- Updated dependencies [3369cee]
+  - @benchsdk/api@0.9.0
+  - @benchsdk/cli@0.9.0
+  - @benchsdk/worker@0.3.5
+
 ## 0.6.5
 
 ### Patch Changes

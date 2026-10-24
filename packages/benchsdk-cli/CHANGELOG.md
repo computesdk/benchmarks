@@ -1,5 +1,21 @@
 # @benchsdk/cli
 
+## 0.9.0
+
+### Minor Changes
+
+- 3369cee: - `client.listRuns` returns an array again (pre-0.8.0 shape); the response envelope is available as non-enumerable `items`, `appliedFilter` and `upgrade` properties.
+  - `client.getRunResults` accepts `{ participants }` and sends `?participant=`; `bench results --run <id> --participant <slug>` narrows a single run to one provider.
+  - `--tz` and `--source-org` alone no longer count as result filters, so they stop triggering the "platform does not support result filters" error against older platforms.
+  - The `bench results` table labels each row with the run's day instead of its UUID.
+
+### Patch Changes
+
+- ca1fbda: Add `bench fork` (tracked private fork of a catalog benchmark via `config.upstream`), pass `ciRunId` from `COMPUTESDK_RUN_ID` on run creation, and expose `getForeignBenchmark` with the platform source descriptor.
+- Updated dependencies [ca1fbda]
+- Updated dependencies [3369cee]
+  - @benchsdk/api@0.9.0
+
 ## 0.8.0
 
 ### Minor Changes
