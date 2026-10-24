@@ -134,6 +134,12 @@ interface SessionRec {
   inPageFetch?: { ttfbMs: number; totalMs: number; status?: number; xCache?: string; error?: string };
   egressIp?: string; userAgent?: string; chromeVersion?: string;
   browserEnv?: { hardwareConcurrency?: number; deviceMemory?: number; cpuLoopMs?: number; cpuLoopMs2?: number };
+  /** Same fixed loop in 1/2/4 Web Workers at once: wall ms per config (4w ≈ 2× 2w ⇒ two effective cores). */
+  workerScaling?: { w1: number; w2: number; w4: number; error?: string };
+  /** Per-host medians of Resource Timing phases for the first article (ms) + reused-connection count. */
+  resourcePhases?: Record<string, { n: number; reused: number; stall: number; connect: number; request: number; ttfb: number; download: number }>;
+  /** Main-thread long tasks between navigationStart and loadEvent, scripts loaded, non-Wikimedia scripts, globals Tilion lacks. */
+  mainThread?: { longTaskMs: number; longTasks: number; longTaskMsToLoad: number; scriptCount: number; scriptBytes: number; foreignScripts: number; foreignScriptHosts: string[]; extraGlobals: string[]; globalsCount: number; cdpProduct?: string; error?: string };
   resources?: { count: number; bytes: number; lastResponseEnd: number; hosts: Record<string, { n: number; ms: number }>; slowest: Array<{ host: string; ms: number; type: string }> };
   release?: { mode: ReleaseMode; closeMs?: number; restMs?: number; restPhases?: Record<string, number>; pollMs?: number; finalStatus?: string; polls?: number };
   error?: string;
@@ -141,6 +147,8 @@ interface SessionRec {
 interface Probe { host: string; label: string; ts: string; dnsMs: number; tcpMs: number; tlsMs: number; httpMs: number; status?: number; ip?: string; alpn?: string; error?: string }
 
 const sessions: SessionRec[] = [];
+/** window globals seen in the first Tilion session (names only); later sessions report the names they have that this list lacks. */
+let REFERENCE_GLOBALS: string[] = [];
 const probes: Probe[] = [];
 const STARTED_AT = new Date().toISOString();
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -453,6 +461,68 @@ async function postLoop(page: Page, rec: SessionRec, secondUrl: string) {
     })()`) as SessionRec['resources'];
   } catch { /* ignore */ }
   try {
+    rec.resourcePhases = await page.evaluate(`(() => {
+      const by = {};
+      for (const r of performance.getEntriesByType('resource')) {
+        let h = 'other'; try { h = new URL(r.name).hostname; } catch {}
+        const b = by[h] || (by[h] = { n: 0, reused: 0, stall: [], connect: [], request: [], ttfb: [], download: [] });
+        b.n++;
+        if (!r.connectStart || r.connectStart === r.fetchStart) b.reused++;
+        b.stall.push(r.fetchStart - r.startTime); b.connect.push(r.connectEnd - r.connectStart);
+        b.request.push(r.requestStart ? r.requestStart - (r.connectEnd || r.fetchStart) : 0);
+        b.ttfb.push(r.requestStart ? r.responseStart - r.requestStart : 0); b.download.push(r.responseEnd - r.responseStart);
+      }
+      const med = (xs) => { const s = xs.slice().sort((a, b) => a - b); return s.length ? Math.round(s[Math.floor(s.length / 2)] * 10) / 10 : 0; };
+      const out = {};
+      for (const [h, b] of Object.entries(by)) out[h] = { n: b.n, reused: b.reused, stall: med(b.stall), connect: med(b.connect), request: med(b.request), ttfb: med(b.ttfb), download: med(b.download) };
+      return out;
+    })()`) as SessionRec['resourcePhases'];
+  } catch { /* ignore */ }
+  try {
+    // Long tasks are only observable via a buffered observer; the first
+    // article's long tasks are still in the buffer because the loop's goBack
+    // restored it (bfcache) or re-navigated the same document.
+    rec.mainThread = await page.evaluate(`new Promise((resolve) => {
+      const nav = performance.getEntriesByType('navigation')[0];
+      const loadEnd = nav ? nav.loadEventEnd : Infinity;
+      let longTaskMs = 0, longTasks = 0, longTaskMsToLoad = 0;
+      const done = () => {
+        const scripts = performance.getEntriesByType('resource').filter((r) => r.initiatorType === 'script');
+        const wm = (h) => /(^|\\.)(wikipedia|wikimedia|wikidata|mediawiki)\\.org$/.test(h);
+        const host = (u) => { try { return new URL(u).hostname; } catch { return 'other'; } };
+        const foreign = Array.from(document.scripts).map((s) => s.src).filter((u) => u && !wm(host(u)));
+        const ref = new Set(${JSON.stringify(REFERENCE_GLOBALS)});
+        const globals = Object.getOwnPropertyNames(window);
+        resolve({ longTaskMs: Math.round(longTaskMs), longTasks, longTaskMsToLoad: Math.round(longTaskMsToLoad), scriptCount: scripts.length,
+          scriptBytes: scripts.reduce((a, r) => a + (r.transferSize || 0), 0), foreignScripts: foreign.length, foreignScriptHosts: [...new Set(foreign.map(host))].slice(0, 10),
+          extraGlobals: ref.size ? globals.filter((g) => !ref.has(g)).slice(0, 40) : [], globalsCount: globals.length });
+      };
+      try {
+        const po = new PerformanceObserver((list) => {
+          for (const e of list.getEntries()) { longTaskMs += e.duration; longTasks++; if (e.startTime + e.duration <= loadEnd) longTaskMsToLoad += e.duration; }
+        });
+        po.observe({ type: 'longtask', buffered: true });
+        setTimeout(() => { po.disconnect(); done(); }, 300);
+      } catch (e) { done(); }
+    })`) as SessionRec['mainThread'];
+    if (rec.mainThread && rec.rawWs?.product) rec.mainThread.cdpProduct = rec.rawWs.product;
+    if (!REFERENCE_GLOBALS.length && rec.arm.startsWith('tilion')) {
+      REFERENCE_GLOBALS = (await page.evaluate('Object.getOwnPropertyNames(window)') as string[]).filter((g) => /^[A-Za-z_$][\w$]*$/.test(g));
+    }
+  } catch (e) { rec.mainThread = { longTaskMs: -1, longTasks: -1, longTaskMsToLoad: -1, scriptCount: -1, scriptBytes: -1, foreignScripts: -1, foreignScriptHosts: [], extraGlobals: [], globalsCount: -1, error: errMsg(e) }; }
+  try {
+    rec.workerScaling = await page.evaluate(`new Promise((resolve) => {
+      const src = 'onmessage = () => { const t = performance.now(); let x = 0; for (let i = 0; i < 2e7; i++) x = (x + i * 7) % 1000003; postMessage(performance.now() - t + (x > 1e9 ? 1 : 0)); };';
+      const url = URL.createObjectURL(new Blob([src], { type: 'application/javascript' }));
+      const run = (n) => new Promise((res) => {
+        const ws = Array.from({ length: n }, () => new Worker(url)); let left = n; const t = performance.now();
+        ws.forEach((w) => { w.onmessage = () => { if (--left === 0) { ws.forEach((x) => x.terminate()); res(Math.round((performance.now() - t) * 10) / 10); } }; w.postMessage(1); });
+      });
+      run(1).then((w1) => run(2).then((w2) => run(4).then((w4) => resolve({ w1, w2, w4 }))));
+      setTimeout(() => resolve({ w1: -1, w2: -1, w4: -1, error: 'timeout' }), 20000);
+    })`) as SessionRec['workerScaling'];
+  } catch (e) { rec.workerScaling = { w1: -1, w2: -1, w4: -1, error: errMsg(e) }; }
+  try {
     rec.browserEnv = await page.evaluate(`(() => {
       const loop = () => { const t = performance.now(); let x = 0; for (let i = 0; i < 3e6; i++) x = (x + i * 7) % 1000003; return Math.round((performance.now() - t) * 10) / 10 + (x > 1e9 ? 1 : 0); };
       return { hardwareConcurrency: navigator.hardwareConcurrency, deviceMemory: navigator.deviceMemory, cpuLoopMs: loop(), cpuLoopMs2: loop() };
@@ -580,6 +650,9 @@ function summarize() {
       releaseRawPhases: { tcpMs: stats(ok.map((s) => s.release?.restPhases?.tcpMs ?? NaN)), tlsMs: stats(ok.map((s) => s.release?.restPhases?.tlsMs ?? NaN)), ttfbMs: stats(ok.map((s) => s.release?.restPhases?.ttfbMs ?? NaN)), reused: count(ok.map((s) => s.release?.restPhases ? String(s.release.restPhases.reusedSocket) : undefined)) },
       xCachePop: count(ok.map((s) => s.navPop)),
       xCacheHit: count(ok.map((s) => s.navHeaders?.['x-cache-status'])),
+      workerScaling: { w1: stats(ok.map((s) => s.workerScaling?.w1 ?? NaN)), w2: stats(ok.map((s) => s.workerScaling?.w2 ?? NaN)), w4: stats(ok.map((s) => s.workerScaling?.w4 ?? NaN)) },
+      mainThread: { longTaskMsToLoad: stats(ok.map((s) => s.mainThread?.longTaskMsToLoad ?? NaN)), longTaskMs: stats(ok.map((s) => s.mainThread?.longTaskMs ?? NaN)), scriptCount: stats(ok.map((s) => s.mainThread?.scriptCount ?? NaN)), scriptBytes: stats(ok.map((s) => s.mainThread?.scriptBytes ?? NaN)), foreignScripts: stats(ok.map((s) => s.mainThread?.foreignScripts ?? NaN)), foreignScriptHosts: count(ok.flatMap((s) => s.mainThread?.foreignScriptHosts ?? [])), extraGlobals: count(ok.flatMap((s) => s.mainThread?.extraGlobals ?? [])) },
+      resourcePhases: (() => { const agg: Record<string, Record<string, number[]>> = {}; for (const s of ok) for (const [h, v] of Object.entries(s.resourcePhases ?? {})) { const a = (agg[h] ??= {}); for (const [k, x] of Object.entries(v)) (a[k] ??= []).push(x as number); } const out: Record<string, Record<string, number | undefined>> = {}; for (const [h, a] of Object.entries(agg)) out[h] = Object.fromEntries(Object.entries(a).map(([k, xs]) => [k, median(xs)])); return out; })(),
       browserEnv: { hardwareConcurrency: count(ok.map((s) => String(s.browserEnv?.hardwareConcurrency))), deviceMemory: count(ok.map((s) => String(s.browserEnv?.deviceMemory))), cpuLoopMs: stats(ok.map((s) => s.browserEnv?.cpuLoopMs2 ?? NaN)) },
       resources: { count: stats(ok.map((s) => s.resources?.count ?? NaN)), bytes: stats(ok.map((s) => s.resources?.bytes ?? NaN)), lastResponseEnd: stats(ok.map((s) => s.resources?.lastResponseEnd ?? NaN)) },
       egressIps: count(ok.map((s) => s.egressIp)), chromeVersions: count(ok.map((s) => s.chromeVersion)), connectHosts: count(ok.map((s) => s.connectHost)), sessionRegions: count(ok.map((s) => s.createHttp?.sessionRegion)),
