@@ -129,7 +129,7 @@ interface SessionRec {
   createHttp?: { status?: number; serverTiming?: string; cfRay?: boolean; via?: string; server?: string; sessionStatus?: string; sessionRegion?: string; phases?: Record<string, number> };
   connectHost?: string;
   rawWs?: { openMs: number; getVersionMs: number; product?: string; error?: string };
-  navTiming?: NavTiming; navHeaders?: Record<string, string>; navStatus?: number;
+  navTiming?: NavTiming; navHeaders?: Record<string, string>; navStatus?: number; navCache?: 'hit' | 'miss' | 'unknown'; navPop?: string; orderInRound?: number;
   secondNav?: { durationMs: number; status?: number; timing?: NavTiming; headers?: Record<string, string>; error?: string };
   inPageFetch?: { ttfbMs: number; totalMs: number; status?: number; xCache?: string; error?: string };
   egressIp?: string; userAgent?: string; chromeVersion?: string;
@@ -329,6 +329,12 @@ async function timeAction<T>(fn: () => Promise<T>) {
 }
 const isArticleLink = (href: string | null) => { const m = href?.match(/\/wiki\/([^#]*)/); return !!m && !m[1].includes(':'); };
 
+/** Wikimedia's x-cache lists every cache layer ("cp1104 miss, cp1106 hit/3"); any hit anywhere means the edge served it. */
+function cacheState(h?: Record<string, string>): 'hit' | 'miss' | 'unknown' {
+  const xc = h?.['x-cache-status'] ?? h?.['x-cache'];
+  if (!xc) return 'unknown';
+  return /hit/i.test(xc) ? 'hit' : /miss|pass/i.test(xc) ? 'miss' : 'unknown';
+}
 const NAV_HEADER_KEYS = ['server', 'x-cache', 'x-cache-status', 'x-client-ip', 'age', 'x-varnish', 'content-encoding', 'cache-control', 'date', 'server-timing', 'retry-after'];
 async function navMeta(resp: Response | null | undefined) {
   if (!resp) return {};
@@ -366,6 +372,8 @@ async function runActionLoop(page: Page, rec: SessionRec, url: string) {
   const meta = await navMeta(nav.value ?? null);
   rec.navStatus = meta.status; rec.navHeaders = meta.headers;
   rec.egressIp = meta.headers?.['x-client-ip'];
+  rec.navCache = cacheState(meta.headers);
+  rec.navPop = meta.headers?.['x-cache']?.match(/cp\d+/g)?.pop();
   rec.navTiming = await readNavTiming(page);
   if (blocked) { skip(2, 'navigate blocked'); return; }
 
@@ -414,32 +422,34 @@ async function postLoop(page: Page, rec: SessionRec, secondUrl: string) {
   } catch (e) { rec.secondNav = { durationMs: r1(now() - t), error: errMsg(e) }; }
 }
 
-async function rawWsProbe(connectUrl: string): Promise<SessionRec['rawWs']> {
+async function rawWsProbe(connectUrl: string): Promise<{ info: NonNullable<SessionRec['rawWs']>; ws?: WebSocket }> {
+  // The socket is handed back open: Browserbase ends a non-keepAlive session
+  // as soon as its last CDP client disconnects (observed: connectOverCDP after
+  // closing the probe socket → "410 Gone - session not running").
   const t0 = now();
+  let ws: WebSocket | undefined;
   try {
-    const ws = new WebSocket(connectUrl);
-    await new Promise<void>((res, rej) => { ws.onopen = () => res(); ws.onerror = () => rej(new Error('ws error')); setTimeout(() => rej(new Error('ws open timeout')), 15_000); });
+    ws = new WebSocket(connectUrl);
+    const sock = ws;
+    await new Promise<void>((res, rej) => { sock.onopen = () => res(); sock.onerror = () => rej(new Error('ws error')); setTimeout(() => rej(new Error('ws open timeout')), 15_000); });
     const openMs = r1(now() - t0);
     const t1 = now();
     const product = await new Promise<string | undefined>((res, rej) => {
-      ws.onmessage = (ev) => { try { const m = JSON.parse(String(ev.data)); if (m.id === 1) res(m.result?.product); } catch { /* ignore */ } };
-      ws.send(JSON.stringify({ id: 1, method: 'Browser.getVersion' }));
+      sock.onmessage = (ev) => { try { const m = JSON.parse(String(ev.data)); if (m.id === 1) res(m.result?.product); } catch { /* ignore */ } };
+      sock.send(JSON.stringify({ id: 1, method: 'Browser.getVersion' }));
       setTimeout(() => rej(new Error('getVersion timeout')), 15_000);
     });
-    const getVersionMs = r1(now() - t1);
-    ws.close();
-    await sleep(100);
-    return { openMs, getVersionMs, product };
-  } catch (e) { return { openMs: r1(now() - t0), getVersionMs: -1, error: errMsg(e) }; }
+    return { info: { openMs, getVersionMs: r1(now() - t1), product }, ws };
+  } catch (e) { return { info: { openMs: r1(now() - t0), getVersionMs: -1, error: errMsg(e) }, ws }; }
 }
 
 // ─── One session ─────────────────────────────────────────────────────────────
 
 let bbConnectHost: string | undefined; let tilionConnectHost: string | undefined;
 
-async function runSession(arm: Arm, round: number): Promise<void> {
+async function runSession(arm: Arm, round: number, orderInRound = 0): Promise<void> {
   const url = urlFor(round);
-  const rec: SessionRec = { arm: arm.name, round, ts: new Date().toISOString(), url, actions: [] };
+  const rec: SessionRec = { arm: arm.name, round, orderInRound, ts: new Date().toISOString(), url, actions: [] };
   sessions.push(rec);
   const totalStart = now();
   let browser: Browser | undefined; let created: Created | undefined;
@@ -451,7 +461,8 @@ async function runSession(arm: Arm, round: number): Promise<void> {
     rec.connectHost = safeHost(created.connectUrl);
     if (arm.provider === 'browserbase') bbConnectHost = rec.connectHost; else tilionConnectHost = rec.connectHost;
 
-    if (arm.connect === 'rawws-then-playwright') rec.rawWs = await rawWsProbe(created.connectUrl);
+    let probeWs: WebSocket | undefined;
+    if (arm.connect === 'rawws-then-playwright') { const r = await rawWsProbe(created.connectUrl); rec.rawWs = r.info; probeWs = r.ws; }
 
     const t1 = now();
     browser = await withTimeout(chromium.connectOverCDP(created.connectUrl), 30_000, 'CDP connection timed out');
@@ -459,6 +470,7 @@ async function runSession(arm: Arm, round: number): Promise<void> {
     if (!context) throw new Error('No default browser context found');
     const page = context.pages()[0] ?? (await context.newPage());
     rec.connectMs = r1(now() - t1);
+    probeWs?.close();
 
     await runActionLoop(page, rec, url);
     rec.taskMs = r1(rec.actions.reduce((s, a) => s + a.durationMs, 0));
@@ -479,7 +491,7 @@ async function runSession(arm: Arm, round: number): Promise<void> {
     }
   }
   rec.totalMs = r1(now() - totalStart);
-  log(`r${round} ${arm.name.padEnd(24)} create=${rec.createMs} connect=${rec.connectMs} nav=${rec.actions[0]?.durationMs} click=${rec.actions[4]?.durationMs} task=${rec.taskMs} release=${rec.releaseMs} total=${rec.totalMs} ip=${rec.egressIp ?? '?'} xcache=${rec.navHeaders?.['x-cache']?.split(' ').pop() ?? '?'}${rec.error ? ' ERROR ' + rec.error : ''}`);
+  log(`r${round} ${arm.name.padEnd(24)} create=${rec.createMs} connect=${rec.connectMs} nav=${rec.actions[0]?.durationMs} click=${rec.actions[4]?.durationMs} task=${rec.taskMs} release=${rec.releaseMs} total=${rec.totalMs} ip=${rec.egressIp ?? '?'} cache=${rec.navCache ?? '?'}@${rec.navPop ?? '?'}${rec.error ? ' ERROR ' + rec.error : ''}`);
 }
 
 // ─── Summary ─────────────────────────────────────────────────────────────────
@@ -500,6 +512,9 @@ function summarize() {
       note: ARM_BY_NAME.get(arm)?.note, sessions: all.length, fullSuccess: ok.length, errors: all.filter((s) => s.error).map((s) => s.error).slice(0, 5),
       createMs: stats(ok.map((s) => s.createMs!)), connectMs: stats(ok.map((s) => s.connectMs!)), releaseMs: stats(ok.map((s) => s.releaseMs!)),
       taskMs: stats(ok.map((s) => s.taskMs!)), totalMs: stats(ok.map((s) => s.totalMs!)), actionsPerSecond: stats(ok.map((s) => s.actionsPerSecond!)), screenshotMs: stats(ok.map((s) => s.screenshotMs!)),
+      navigateByCache: { hit: stats(ok.filter((s) => s.navCache === 'hit').map((s) => s.actions[0]?.durationMs ?? NaN)), miss: stats(ok.filter((s) => s.navCache === 'miss').map((s) => s.actions[0]?.durationMs ?? NaN)) },
+      ttfbByCache: { hit: stats(ok.filter((s) => s.navCache === 'hit').map((s) => s.navTiming?.ttfb ?? NaN)), miss: stats(ok.filter((s) => s.navCache === 'miss').map((s) => s.navTiming?.ttfb ?? NaN)) },
+      navCache: count(ok.map((s) => s.navCache)),
       actions: { navigate: stats(act('navigate')), waitForSelector2: stats(act('waitForSelector', 2)), screenshot: stats(act('screenshot')), textContent: stats(act('textContent')), click: stats(act('click')), waitForSelector6: stats(act('waitForSelector', 6)), goBack: stats(act('goBack')), waitForSelector10: stats(act('waitForSelector', 10)) },
       navTiming: { dns: stats(nt('dns')), connect: stats(nt('connect')), tls: stats(nt('tls')), ttfb: stats(nt('ttfb')), response: stats(nt('response')), domContentLoaded: stats(nt('domContentLoaded')), loadEvent: stats(nt('loadEvent')), protocol: count(ok.map((s) => s.navTiming?.protocol)) },
       secondNavMs: stats(ok.map((s) => s.secondNav?.durationMs ?? NaN)), secondNavTtfb: stats(ok.map((s) => s.secondNav?.timing?.ttfb ?? NaN)),
@@ -507,7 +522,7 @@ function summarize() {
       rawWs: { openMs: stats(ok.map((s) => s.rawWs?.openMs ?? NaN)), getVersionMs: stats(ok.map((s) => s.rawWs?.getVersionMs ?? NaN)) },
       release: { closeMs: stats(ok.map((s) => s.release?.closeMs ?? NaN)), restMs: stats(ok.map((s) => s.release?.restMs ?? NaN)), pollMs: stats(ok.map((s) => s.release?.pollMs ?? NaN)), finalStatus: count(ok.map((s) => s.release?.finalStatus)) },
       createRawPhases: { headersMs: stats(ok.map((s) => s.createHttp?.phases?.headersMs ?? NaN)), bodyMs: stats(ok.map((s) => s.createHttp?.phases?.bodyMs ?? NaN)) },
-      xCachePop: count(ok.map((s) => s.navHeaders?.['x-cache']?.match(/cp\d+/g)?.pop())),
+      xCachePop: count(ok.map((s) => s.navPop)),
       xCacheHit: count(ok.map((s) => s.navHeaders?.['x-cache-status'])),
       egressIps: count(ok.map((s) => s.egressIp)), chromeVersions: count(ok.map((s) => s.chromeVersion)), connectHosts: count(ok.map((s) => s.connectHost)), sessionRegions: count(ok.map((s) => s.createHttp?.sessionRegion)),
     };
@@ -543,8 +558,11 @@ async function main() {
   await runProbes(undefined, tilionApiHost === 'redacted-host' ? undefined : tilionApiHost);
   const arms = ARMS.map((a) => ARM_BY_NAME.get(a)!);
   for (let round = 0; round < SESSIONS; round++) {
+    // Every arm in a round loads the same article, so whoever goes first pays
+    // Wikipedia's cache miss. Rotate the order so that cost lands on every arm
+    // equally and can be split out by x-cache afterwards.
     for (let k = 0; k < arms.length; k++) {
-      await runSession(arms[k], round);
+      await runSession(arms[(k + round) % arms.length], round, k);
       const last = round === SESSIONS - 1 && k === arms.length - 1;
       if (!last) await sleep(SPACING_MS);
     }
