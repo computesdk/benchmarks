@@ -1,0 +1,177 @@
+name: Browserbase Speed Experiment (DO NOT MERGE)
+
+# EXPERIMENT ONLY. workflow_dispatch-only, never ingests to the platform, never
+# commits results. Replays the browser-throughput bench's session against
+# Browserbase and Tilion in interleaved arms (default config, raw REST, public
+# create knobs, release modes) and records per-step ms, in-page Navigation
+# Timing, Wikipedia cache headers, egress IP/ASN and control-plane RTT.
+# Artifacts carry metrics only. Runner legs run one after another so no
+# provider ever sees more than one session at a time.
+
+# computesdk:secrets=NSC_TOKEN
+# computesdk:secrets-env=declared
+
+on:
+  workflow_dispatch:
+    inputs:
+      sessions:
+        description: 'Rounds (sessions per arm)'
+        required: false
+        default: '30'
+      spacing_ms:
+        description: 'Pause between sessions, ms (bench uses 15000)'
+        required: false
+        default: '15000'
+      arms:
+        description: 'Comma list of arms, run interleaved per round'
+        required: false
+        default: 'tilion,bb-default,bb-raw,bb-sdk-reused,bb-rawws,tilion-rawws'
+      runners:
+        description: 'Comma list of runner legs: namespace,house'
+        required: false
+        default: 'namespace,house'
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    name: Resolve target pages
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
+    outputs:
+      urls: ${{ steps.pick.outputs.urls }}
+    steps:
+      - name: Resolve one shared random article per round
+        id: pick
+        run: |
+          # Same resolution as browser-throughput-benchmarks.yml. Two URLs per
+          # round: round i navigates urls[i] in the bench loop and urls[i+N]
+          # for the untimed second navigate.
+          count=$(( ${{ github.event.inputs.sessions || '30' }} * 2 ))
+          urls=()
+          for i in $(seq 1 "$count"); do
+            for attempt in 1 2 3 4 5; do
+              url=$(curl -sL -A 'ComputeSDK-Benchmark' -o /dev/null -w '%{url_effective}' \
+                'https://en.wikipedia.org/wiki/Special:Random')
+              if [ -z "$url" ] || [[ "$url" == *"Special:Random"* ]]; then
+                url='https://en.wikipedia.org/wiki/Special:Random'
+                break
+              fi
+              html=$(curl -sL -A 'ComputeSDK-Benchmark' "$url")
+              if echo "$html" | grep -qP 'href="(//en\.wikipedia\.org)?/wiki/[^"]*" *' \
+                 && echo "$html" | grep -oP 'href="[^"]*"' \
+                    | grep -qP '/wiki/[^:]*$'; then
+                break
+              fi
+            done
+            urls+=("$url")
+          done
+          {
+            echo "urls<<URLS_EOF"
+            printf '%s\n' "${urls[@]}"
+            echo "URLS_EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "Resolved ${#urls[@]} article URLs"
+
+  namespace:
+    name: namespace leg
+    needs: setup
+    if: contains(format(',{0},', github.event.inputs.runners || 'namespace,house'), ',namespace,')
+    # The runner the bench uses for its browserbase/tilion legs.
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
+    timeout-minutes: 170
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      # ComputeSDK runners get no GitHub OIDC token, so nscloud-setup's
+      # `nsc auth exchange-github-token` cannot work there. Pre-seed the
+      # workload token file it checks for when NSC_TOKEN is available.
+      - name: Seed Namespace token file
+        run: |
+          if [ -n "${NSC_TOKEN:-}" ] && [ ! -f /var/run/nsc/token.json ]; then
+            mkdir -p /var/run/nsc
+            case "$NSC_TOKEN" in
+              \{*) printf '%s\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+              *) printf '{"bearer_token":"%s"}\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+            esac
+            chmod 600 /var/run/nsc/token.json
+            echo "NSC_DOCKER_LOGIN=1" >> "$GITHUB_ENV"
+            echo "NSC_CONTAINER_REGISTRY=nscr.io" >> "$GITHUB_ENV"
+          fi
+      - uses: namespacelabs/nscloud-setup@v0
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Run experiment leg
+        env:
+          THROUGHPUT_URLS: ${{ needs.setup.outputs.urls }}
+          EXPERIMENT_LEG: namespace
+          EXPERIMENT_RUNNER: namespace
+          EXPERIMENT_ARMS: ${{ github.event.inputs.arms || 'tilion,bb-default,bb-raw,bb-sdk-reused,bb-rawws,tilion-rawws' }}
+          EXPERIMENT_SESSIONS: ${{ github.event.inputs.sessions || '30' }}
+          EXPERIMENT_SPACING_MS: ${{ github.event.inputs.spacing_ms || '15000' }}
+          EXPERIMENT_OUT: results/experiments/browserbase-speed
+        run: |
+          . benchmarks/scripts/load-vault-secrets.sh '^(BROWSERBASE_API_KEY|BROWSERBASE_PROJECT_ID|TILION_API_KEY|TILION_BASE_URL)$'
+          npx tsx benchmarks/browser/experiments/browserbase-speed.ts
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browserbase-speed-namespace
+          path: results/experiments/browserbase-speed/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  house:
+    name: house EC2 us-east-2 leg
+    needs: [setup, namespace]
+    # Runs after the namespace leg so the providers see one session at a time.
+    if: always() && needs.setup.result == 'success' && contains(format(',{0},', github.event.inputs.runners || 'namespace,house'), ',house,')
+    runs-on: computesdk:computesdk:aws-us-east-2
+    timeout-minutes: 170
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      - name: Seed Namespace token file
+        run: |
+          if [ -n "${NSC_TOKEN:-}" ] && [ ! -f /var/run/nsc/token.json ]; then
+            mkdir -p /var/run/nsc
+            case "$NSC_TOKEN" in
+              \{*) printf '%s\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+              *) printf '{"bearer_token":"%s"}\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+            esac
+            chmod 600 /var/run/nsc/token.json
+            echo "NSC_DOCKER_LOGIN=1" >> "$GITHUB_ENV"
+            echo "NSC_CONTAINER_REGISTRY=nscr.io" >> "$GITHUB_ENV"
+          fi
+      - uses: namespacelabs/nscloud-setup@v0
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Run experiment leg
+        env:
+          THROUGHPUT_URLS: ${{ needs.setup.outputs.urls }}
+          EXPERIMENT_LEG: house-ec2-us-east-2
+          EXPERIMENT_RUNNER: house-ec2-us-east-2
+          EXPERIMENT_ARMS: ${{ github.event.inputs.arms || 'tilion,bb-default,bb-raw,bb-sdk-reused,bb-rawws,tilion-rawws' }}
+          EXPERIMENT_SESSIONS: ${{ github.event.inputs.sessions || '30' }}
+          EXPERIMENT_SPACING_MS: ${{ github.event.inputs.spacing_ms || '15000' }}
+          EXPERIMENT_OUT: results/experiments/browserbase-speed
+        run: |
+          . benchmarks/scripts/load-vault-secrets.sh '^(BROWSERBASE_API_KEY|BROWSERBASE_PROJECT_ID|TILION_API_KEY|TILION_BASE_URL)$'
+          npx tsx benchmarks/browser/experiments/browserbase-speed.ts
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browserbase-speed-house-ec2-us-east-2
+          path: results/experiments/browserbase-speed/
+          if-no-files-found: ignore
+          retention-days: 14
