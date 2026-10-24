@@ -115,7 +115,7 @@ jobs:
           EXPERIMENT_SPACING_MS: ${{ github.event.inputs.spacing_ms || '15000' }}
           EXPERIMENT_OUT: results/experiments/browserbase-speed
         run: |
-          . benchmarks/scripts/load-vault-secrets.sh '^(BROWSERBASE_API_KEY|BROWSERBASE_PROJECT_ID|TILION_API_KEY|TILION_BASE_URL)$'
+          . benchmarks/scripts/load-vault-secrets.sh '^(BROWSERBASE_API_KEY|BROWSERBASE_PROJECT_ID|TILION_API_KEY|TILION_BASE_URL)'
           npx tsx benchmarks/browser/experiments/browserbase-speed.ts
       - name: Upload results
         if: always()
@@ -165,7 +165,7 @@ jobs:
           EXPERIMENT_SPACING_MS: ${{ github.event.inputs.spacing_ms || '15000' }}
           EXPERIMENT_OUT: results/experiments/browserbase-speed
         run: |
-          . benchmarks/scripts/load-vault-secrets.sh '^(BROWSERBASE_API_KEY|BROWSERBASE_PROJECT_ID|TILION_API_KEY|TILION_BASE_URL)$'
+          . benchmarks/scripts/load-vault-secrets.sh '^(BROWSERBASE_API_KEY|BROWSERBASE_PROJECT_ID|TILION_API_KEY|TILION_BASE_URL)'
           npx tsx benchmarks/browser/experiments/browserbase-speed.ts
       - name: Upload results
         if: always()
