@@ -77,6 +77,10 @@ Commands:
                                      the dashboard log view)
   export <benchmark-slug> [--run <id>] [--out <dir>]
                                      Export benchmark or run results to JSON
+  fork <benchmark-slug> [--as <new-slug>] [--source-org <slug>] [--ref <sha>]
+                                     Fork a catalog benchmark into your org —
+                                     a private benchmark that tracks the
+                                     upstream bench file
 
 Options:
   --base-url <url>                   Platform root URL (default: https://platform.computesdk.com)
@@ -162,6 +166,8 @@ const subcommandOptionSchema = {
   day: { type: 'string' as const },
   tz: { type: 'string' as const },
   'source-org': { type: 'string' as const },
+  as: { type: 'string' as const },
+  ref: { type: 'string' as const },
 };
 
 export function parseSubcommandOptions(args: string[]): { options: Record<string, string | number>; positionals: string[] } {
@@ -240,6 +246,8 @@ Subcommands:
       return `Usage: bench logs <benchmark-slug> <runId> [--participant <slug>] [--worker <id>] [--max-lines N]`;
     case 'export':
       return `Usage: bench export <benchmark-slug> [--run <id>] [--out <dir>]`;
+    case 'fork':
+      return `Usage: bench fork <benchmark-slug> [--as <new-slug>] [--source-org <slug>] [--ref <sha>]`;
     default:
       return USAGE;
   }
@@ -791,6 +799,63 @@ async function handleExport(
   }
 }
 
+// `bench fork dax` → a private benchmark in your org whose config.upstream
+// points back at the catalog source. The fork is a normal org benchmark —
+// it's yours, invisible to others, and tracks the upstream bench file
+// unless --ref pins it.
+async function handleFork(
+  slug: string,
+  options: Record<string, string | number>,
+  overrides: { baseUrl?: string; apiKey?: string; org?: string },
+  outputOptions: OutputOptions,
+): Promise<void> {
+  const { api } = await createApiClient(overrides);
+  const sourceOrg = (options['source-org'] as string | undefined) ?? 'computesdk';
+  const newSlug = (options.as as string | undefined) ?? slug;
+  const ref = options.ref as string | undefined;
+
+  const { source } = await api.getForeignBenchmark(sourceOrg, slug);
+  if (!source) {
+    throw new Error(
+      `The platform can't attribute a source file to "${slug}" — only benchmarks with a platform-attributed source can be forked.`,
+    );
+  }
+
+  const upstream = {
+    org: sourceOrg,
+    slug,
+    source: { ...source, ...(ref ? { ref } : {}) },
+  };
+
+  // A slug that already exists keeps its own config — upstream merges in,
+  // so re-forking onto an established benchmark doesn't drop scoring or
+  // display settings.
+  let existing: { config?: Record<string, unknown> } | null = null;
+  try {
+    existing = await api.getBenchmark(newSlug);
+  } catch {
+    existing = null;
+  }
+  const config = { ...(existing?.config ?? {}), upstream };
+  const benchmark = existing
+    ? await api.updateBenchmark(newSlug, { config })
+    : await api.upsertBenchmark(newSlug, { config });
+
+  printData(benchmark, outputOptions);
+  console.log(
+    `Forked ${sourceOrg}/${slug} → ${newSlug}` +
+      (ref ? ` (pinned to ${ref})` : ` (tracking ${source.githubOwner}/${source.repo}@${source.ref})`),
+  );
+  console.log(`Source: ${source.githubOwner}/${source.repo} ${source.path}`);
+  console.log(
+    `\nRun it: checkout the bench file in your own Actions — ` +
+      `git clone https://github.com/${source.githubOwner}/${source.repo} && ` +
+      `cd ${source.repo}` +
+      (ref ? ` && git checkout ${ref}` : '') +
+      ` && bench run ${source.path} --benchmark ${newSlug} --provider <your-provider>`,
+  );
+}
+
 function toOutputOptions(values: GlobalOptions): OutputOptions {
   return {
     json: !!values.json,
@@ -927,6 +992,13 @@ export async function run(argv: string[]): Promise<void> {
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench export <benchmark-slug>');
         await handleExport(slug, options, overrides);
+        break;
+      }
+      case 'fork': {
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest);
+        const [slug] = subPositionals;
+        if (!slug) throw new Error('Benchmark slug required: bench fork <benchmark-slug>');
+        await handleFork(slug, options, overrides, outputOptions);
         break;
       }
       default:

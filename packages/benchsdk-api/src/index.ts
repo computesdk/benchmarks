@@ -18,6 +18,7 @@ export type {
   BenchmarkWorkerLog,
   BenchmarkWorkerLogLine,
   BenchmarkResource,
+  BenchmarkSourceDescriptor,
   BenchmarkResultLatencySummary,
   BenchmarkResultsFilterEcho,
   BenchmarkResultsOverview,

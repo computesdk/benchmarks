@@ -30,6 +30,7 @@ import type {
   CreateWorkerArtifactResponse,
   ClaimWorkerInput,
   CreateRunInput,
+  BenchmarkSourceDescriptor,
   JsonObject,
   BenchmarkRunList,
   BenchmarkRunListItem,
@@ -311,6 +312,13 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
     async getBenchmark(slug) {
       const data = await request<{ benchmark: BenchmarkResource }>('GET', `/benchmarks/${encodePath(slug)}`);
       return data.benchmark;
+    },
+
+    async getForeignBenchmark(sourceOrg, slug) {
+      return request<{ benchmark: BenchmarkResource; source: BenchmarkSourceDescriptor | null }>(
+        'GET',
+        benchmarkPath(slug, sourceOrg),
+      );
     },
 
     async updateBenchmark(slug, input: UpdateBenchmarkInput) {

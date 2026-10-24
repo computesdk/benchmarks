@@ -744,6 +744,7 @@ export async function runBenchmark<T extends BaseParticipant>(
       const { run, organizationSlug } = await client!.createRun(config.benchmarkSlug, {
         runKey: args.runKey,
         config: runConfig,
+        ciRunId: process.env.COMPUTESDK_RUN_ID || undefined,
       });
       runId = run.id;
       dashboardUrl = dashboardUrlFor(baseUrl, organizationSlug, config.benchmarkSlug, run.id);
@@ -758,6 +759,7 @@ export async function runBenchmark<T extends BaseParticipant>(
         workerCount: 1,
         participants: available.map((p) => p.name),
         config: runConfig,
+        ciRunId: process.env.COMPUTESDK_RUN_ID || undefined,
       });
       runId = run.id;
       dashboardUrl = dashboardUrlFor(baseUrl, organizationSlug, config.benchmarkSlug, run.id);
