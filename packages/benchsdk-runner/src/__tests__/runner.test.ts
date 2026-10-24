@@ -535,27 +535,37 @@ describe('runBenchmark', () => {
   });
 
   it('forwards a stopRequested predicate to the platform worker when deadlineMs is set', async () => {
-    const config: BenchmarkConfig<typeof participants[number]> = {
-      benchmarkSlug: 's',
-      benchmarkName: 'n',
-      iterations: 1,
-      deadlineMs: 1,
-      participants: [participants[0]],
-    };
+    // Fake timers keep the 1ms deadline from expiring before the worker is
+    // dispatched — with real timers the run can abort at the participant gate
+    // on a slow machine, and runWorker is never called.
+    vi.useFakeTimers();
+    try {
+      const config: BenchmarkConfig<typeof participants[number]> = {
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        iterations: 1,
+        deadlineMs: 1,
+        participants: [participants[0]],
+      };
 
-    await runBenchmark(
-      config,
-      defineTask(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 10));
-        return {};
-      }),
-      [],
-    );
+      const done = runBenchmark(
+        config,
+        defineTask(async () => {
+          await new Promise((resolve) => setTimeout(resolve, 10));
+          return {};
+        }),
+        [],
+      );
+      await vi.advanceTimersByTimeAsync(50);
+      await done;
 
-    expect(calls.runWorker).toHaveLength(1);
-    expect(calls.runWorker[0].stopRequested).toBeInstanceOf(Function);
-    // The mock ignores the predicate, but by now the 1ms deadline has passed.
-    expect(calls.runWorker[0].stopRequested!()).toBe(true);
+      expect(calls.runWorker).toHaveLength(1);
+      expect(calls.runWorker[0].stopRequested).toBeInstanceOf(Function);
+      // The mock ignores the predicate, but by now the 1ms deadline has passed.
+      expect(calls.runWorker[0].stopRequested!()).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('omits stopRequested from the platform worker when no deadline is set', async () => {
