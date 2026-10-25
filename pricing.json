@@ -679,6 +679,64 @@
       "free_credits": 200,
       "isolation": "docker_oci",
       "notes": "Failed benchmark run. Raised $24M Series A Feb 2026. Docker/OCI containers by default (not microVMs). Optional Kata Containers for stronger isolation. Sub-90ms cold starts from warm pool. Auto-stop at 15min idle."
+    },
+    {
+      "id": "agent37",
+      "benchmark": {
+        "score": null,
+        "success_rate": null,
+        "status": "pending",
+        "cold_start_ms": null
+      },
+      "pricing": {
+        "model": "per_minute",
+        "cpu": {
+          "rate": 3.044e-07,
+          "unit": "vCPU-sec",
+          "confidence": "exact",
+          "notes": "$0.80 per vCPU per 730-hour month ($0.0011/vCPU-hour), metered by the minute while the sandbox runs."
+        },
+        "memory": {
+          "rate": 2.664e-07,
+          "unit": "GiB-sec",
+          "bundled_with_cpu": false,
+          "confidence": "exact",
+          "notes": "$0.70 per GB of RAM per 730-hour month ($0.00096/GB-hour), metered by the minute while the sandbox runs."
+        },
+        "storage": {
+          "rate": 3.425e-08,
+          "unit": "GiB-sec",
+          "free_gib": 0,
+          "archive_rate": null,
+          "confidence": "exact",
+          "notes": "$0.09 per GB of disk per month. Stopped and sleeping sandboxes pay disk only."
+        },
+        "egress": {
+          "rate": 0,
+          "free_gb_per_month": null,
+          "confidence": "exact",
+          "notes": "Egress is not billed."
+        },
+        "normalized": {
+          "cpu_per_vcpu_hr": 0.001096,
+          "memory_per_gib_hr": 0.000959,
+          "total_1vcpu_2gb_hr": 0.003014,
+          "confidence": "exact",
+          "notes": "($0.80 + 2 x $0.70) / 730 hours. Smallest shape is 2 vCPU / 4 GB. Performance instances, whose cores are held for them, are 4x on compute."
+        }
+      },
+      "plans": [
+        {
+          "name": "pay_as_you_go",
+          "base_fee_per_month": 0,
+          "credits": 5,
+          "one_time_credit": true,
+          "requires_cc": true
+        }
+      ],
+      "free_credits": 5,
+      "isolation": "sandbox_or_vm",
+      "notes": "Prepaid balance, no plan fee. Rates published at https://www.agent37.com/pricing."
     }
   ]
 }
