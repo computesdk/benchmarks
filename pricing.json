@@ -721,8 +721,9 @@
           "cpu_per_vcpu_hr": 0.001096,
           "memory_per_gib_hr": 0.000959,
           "total_1vcpu_2gb_hr": 0.003014,
+          "effective_cost_1vcpu_2gb_hr": 0.006027,
           "confidence": "exact",
-          "notes": "($0.80 + 2 x $0.70) / 730 hours. Smallest shape is 2 vCPU / 4 GB. Performance instances, whose cores are held for them, are 4x on compute."
+          "notes": "($0.80 + 2 x $0.70) / 730 hours for 1 vCPU + 2 GB. The smallest shape is 2 vCPU / 4 GB, so the effective cost is that shape: (2 x $0.80 + 4 x $0.70) / 730 = $0.006027/hour. Performance instances, whose cores are held for them, are 4x on compute."
         }
       },
       "plans": [
