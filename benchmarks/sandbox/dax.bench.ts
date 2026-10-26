@@ -71,6 +71,15 @@ export const config = defineBenchmarkConfig({
   iterations: 3,
   concurrency: 1,
   groupBy: 'round',
+  // Without a scoring spec the worker submits a summary with zero result
+  // rows, so the merged run summary is always empty (summary.results[] is
+  // what benchmarks-platform leaderboards and the composite bench read).
+  // totalMs ceiling: 5 min — the run completes phases 7/7 well under it.
+  scoring: {
+    metrics: [
+      { key: 'totalMs', unit: 'ms', ceiling: 300_000, weights: { median: 0.6, p95: 0.25, p99: 0.15 } },
+    ],
+  },
   defaultProviders: ['e2b', 'modal', 'tensorlake'],
   participants: providers,
   display: {
