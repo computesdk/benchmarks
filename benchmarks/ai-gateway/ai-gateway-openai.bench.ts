@@ -1,7 +1,7 @@
 
 /**
  * AI Gateway benchmark — OpenAI family. Same methodology, task, CLI flags,
- * and request configuration (`max_tokens: 200`, `temperature: 0`) as
+ * and request configuration (`max_tokens: 200`, no `temperature`) as
  * `ai-gateway.bench.ts` (see that file and `shared-task.ts` for the full
  * fairness rationale) — the only difference is `providers-openai.ts`, which
  * routes every gateway to OpenAI's `gpt-5.6-luna` instead of Anthropic's

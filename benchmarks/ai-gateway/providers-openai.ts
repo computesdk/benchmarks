@@ -107,7 +107,7 @@ const roster: AIGatewayProviderConfig[] = [
     // Confirmed via LLM Gateway's own Codex CLI integration guide
     // (llmgateway.io/guides/codex-cli), which states outright: "Codex CLI
     // uses the OpenAI Responses API (`/v1/responses`)" against a base URL of
-    // `https://api.llmgateway.io/v1`. `openai/gpt-5.4-mini` follows LLM
+    // `https://api.llmgateway.io/v1`. `openai/gpt-5.6-luna` follows LLM
     // Gateway's confirmed provider-pinning syntax (docs.llmgateway.io —
     // provider-prefix routing), demonstrated there for Chat Completions; NOT
     // independently re-confirmed for the Responses endpoint specifically,
@@ -123,8 +123,8 @@ const roster: AIGatewayProviderConfig[] = [
     }),
   },
   {
-    // `openai/gpt-5.4-mini` follows Concentrate's confirmed provider-prefix
-    // syntax (concentrate.ai/models — "openai/gpt-5.4" shown as the
+    // `openai/gpt-5.6-luna` follows Concentrate's confirmed provider-prefix
+    // syntax (concentrate.ai/models — "openai/gpt-5.6" shown as the
     // provider-pinned form). Uses the same `/v1/responses/` endpoint as the
     // Anthropic entry; for OpenAI this is even less of a translation layer
     // than it is for Anthropic, since Concentrate's `/v1/responses/`
@@ -157,10 +157,10 @@ const roster: AIGatewayProviderConfig[] = [
     // that path appears in Pydantic's docs but only as an unconfirmed
     // Vercel-AI-SDK integration point with no documented full path.)
     //
-    // Model id is unprefixed (`gpt-5.4-mini`, not `openai/gpt-5.4-mini`):
+    // Model id is unprefixed (`gpt-5.6-luna`, not `openai/gpt-5.6-luna`):
     // Pydantic's proxy doesn't use the provider-prefix routing that LLM
     // Gateway and Concentrate do — same as the Anthropic entry's
-    // unprefixed `claude-haiku-4-5-20251001` in providers.ts.
+    // unprefixed `claude-sonnet-5` in providers.ts.
     //
     // Auth: `Authorization: Bearer <gateway key>` — confirmed live against
     // the Anthropic route (see providers.ts). Not a provider-specific
@@ -220,7 +220,7 @@ const roster: AIGatewayProviderConfig[] = [
     // `/v1/responses` on `api.llmapi.ai`, with the same model id and auth
     // (`Authorization: Bearer`) as its OpenAI-compatible chat-completions surface.
     // Provider pinning uses the `provider/model` prefix documented at
-    // https://docs.llmapi.ai/features/routing (`openai/gpt-5.4-mini`);
+    // https://docs.llmapi.ai/features/routing (`openai/gpt-5.6-luna`);
     // `X-No-Fallback: true` disables the automatic low-uptime fallback so the
     // request stays on OpenAI. `extractResolvedProvider` reads the upstream
     // provider from the response if LLM API exposes it (`provider`,

@@ -12,7 +12,7 @@ import { resolveNeonHost } from './neon-host.js';
  */
 const roster: AIGatewayProviderConfig[] = [
   {
-    // `anthropic/claude-haiku-4.5` is a catalog alias that OpenRouter can
+    // `anthropic/claude-sonnet-5` is a catalog alias that OpenRouter can
     // serve from more than one upstream (Anthropic direct, Bedrock, Vertex,
     // or a reseller), chosen dynamically by OpenRouter's own price/uptime
     // routing unless pinned. `provider.order: ['anthropic']` sets Anthropic
@@ -41,7 +41,7 @@ const roster: AIGatewayProviderConfig[] = [
   {
     // Same ambiguity as OpenRouter above: Vercel AI Gateway "dynamically
     // chooses providers based on recent uptime and latency" by default for
-    // a catalog alias like `anthropic/claude-haiku-4.5`, which it can also
+    // a catalog alias like `anthropic/claude-sonnet-5`, which it can also
     // serve via Bedrock/Vertex/its own "claudeaws" credential. `providerOptions
     // .gateway.order: ['anthropic']` sets Anthropic as first choice while
     // still allowing fallback to those other providers if Anthropic itself
@@ -93,7 +93,7 @@ const roster: AIGatewayProviderConfig[] = [
   },
   {
     // BlazeRail: OpenAI-compatible /v1/chat/completions; the gateway translates
-    // Anthropic-'s native SSE to OpenAI chunks internally. anthropic/claude-haiku-4.5
+    // Anthropic-'s native SSE to OpenAI chunks internally. anthropic/claude-sonnet-5
     // is BlazeRail-s public id; it is served by Anthropic direct and DeepInfra,
     // routed by measured health/price - the product behavior being benchmarked.
     name: 'blazerail',
@@ -170,8 +170,8 @@ const roster: AIGatewayProviderConfig[] = [
     // syntax (same idea as llmgateway's pinning above) to route to Anthropic
     // itself rather than Azure or Bedrock, which Concentrate's own "model
     // fortress" catalog also lists as routing options for this model
-    // (anthropic/claude-haiku-4-5, azure/claude-haiku-4-5,
-    // bedrock/claude-haiku-4-5).
+    // (anthropic/claude-sonnet-5, azure/claude-sonnet-5,
+    // bedrock/claude-sonnet-5).
     name: 'concentrate-ai-gateway',
     requiredEnvVars: ['CONCENTRATE_AI_GATEWAY_API_KEY'],
     wireFormat: 'responses',
@@ -228,7 +228,7 @@ const roster: AIGatewayProviderConfig[] = [
     // LLM API exposes an Anthropic-native `/v1/messages` passthrough on
     // `api.llmapi.ai` in addition to its OpenAI-compatible surface. Provider
     // pinning uses the `provider/model` prefix documented at
-    // https://docs.llmapi.ai/features/routing (`anthropic/claude-haiku-4-5-20251001`);
+    // https://docs.llmapi.ai/features/routing (`anthropic/claude-sonnet-5`);
     // `X-No-Fallback: true` disables the automatic low-uptime fallback so the
     // request stays on Anthropic. Auth is the single account-wide
     // `Authorization: Bearer` key shown in the LLM API docs.

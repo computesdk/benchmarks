@@ -142,7 +142,7 @@ function extractPricing(model: AnyModel): AIGatewayModelPricing | undefined {
 }
 
 function extractContextLength(model: AnyModel): number | undefined {
-  const candidates = [model.context_length, model.context_window, model.contextLength, model.max_context];
+  const candidates = [model.context_length, model.context_window, model.contextLength, model.max_context, model.max_input_tokens];
   for (const v of candidates) {
     if (typeof v === 'number' && Number.isFinite(v) && v > 0) return v;
   }
