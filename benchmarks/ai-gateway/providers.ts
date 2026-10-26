@@ -6,13 +6,13 @@ import { resolveNeonHost } from './neon-host.js';
  * AI gateway benchmark configurations.
  *
  * Every gateway is hit directly (no gateway proxies through another) with the
- * same model — Claude Sonnet 5 — so the comparison is apples-to-apples.
+ * same model — Claude Haiku 4.5 — so the comparison is apples-to-apples.
  * `anthropic-direct` is the no-gateway control, used to measure how much
  * latency each gateway adds on top of the underlying provider.
  */
-const roster: AIGatewayProviderConfig[] = [
+export const providers: AIGatewayProviderConfig[] = [
   {
-    // `anthropic/claude-sonnet-5` is a catalog alias that OpenRouter can
+    // `anthropic/claude-haiku-4.5` is a catalog alias that OpenRouter can
     // serve from more than one upstream (Anthropic direct, Bedrock, Vertex,
     // or a reseller), chosen dynamically by OpenRouter's own price/uptime
     // routing unless pinned. `provider.order: ['anthropic']` sets Anthropic
@@ -27,7 +27,7 @@ const roster: AIGatewayProviderConfig[] = [
     name: 'openrouter',
     requiredEnvVars: ['OPENROUTER_API_KEY'],
     wireFormat: 'openai',
-    model: 'anthropic/claude-sonnet-5',
+    model: 'anthropic/claude-haiku-4.5',
     host: 'openrouter.ai',
     path: '/api/v1/chat/completions',
     buildHeaders: () => ({
@@ -41,7 +41,7 @@ const roster: AIGatewayProviderConfig[] = [
   {
     // Same ambiguity as OpenRouter above: Vercel AI Gateway "dynamically
     // chooses providers based on recent uptime and latency" by default for
-    // a catalog alias like `anthropic/claude-sonnet-5`, which it can also
+    // a catalog alias like `anthropic/claude-haiku-4.5`, which it can also
     // serve via Bedrock/Vertex/its own "claudeaws" credential. `providerOptions
     // .gateway.order: ['anthropic']` sets Anthropic as first choice while
     // still allowing fallback to those other providers if Anthropic itself
@@ -60,7 +60,7 @@ const roster: AIGatewayProviderConfig[] = [
     name: 'vercel-ai-gateway',
     requiredEnvVars: ['VERCEL_AI_GATEWAY_API_KEY'],
     wireFormat: 'anthropic',
-    model: 'anthropic/claude-sonnet-5',
+    model: 'anthropic/claude-haiku-4.5',
     host: 'ai-gateway.vercel.sh',
     path: '/v1/messages',
     buildHeaders: () => ({
@@ -82,7 +82,7 @@ const roster: AIGatewayProviderConfig[] = [
       'ANTHROPIC_API_KEY',
     ],
     wireFormat: 'anthropic',
-    model: 'claude-sonnet-5',
+    model: 'claude-haiku-4-5-20251001',
     host: 'gateway.ai.cloudflare.com',
     path: `/v1/${process.env.CLOUDFLARE_AI_GATEWAY_ACCOUNT_ID}/${process.env.CLOUDFLARE_AI_GATEWAY_GATEWAY_ID}/anthropic/v1/messages`,
     buildHeaders: () => ({
@@ -93,13 +93,13 @@ const roster: AIGatewayProviderConfig[] = [
   },
   {
     // BlazeRail: OpenAI-compatible /v1/chat/completions; the gateway translates
-    // Anthropic-'s native SSE to OpenAI chunks internally. anthropic/claude-sonnet-5
+    // Anthropic-'s native SSE to OpenAI chunks internally. anthropic/claude-haiku-4.5
     // is BlazeRail-s public id; it is served by Anthropic direct and DeepInfra,
     // routed by measured health/price - the product behavior being benchmarked.
     name: 'blazerail',
     requiredEnvVars: ['BLAZERAIL_API_KEY'],
     wireFormat: 'openai',
-    model: 'anthropic/claude-sonnet-5',
+    model: 'anthropic/claude-haiku-4.5',
     host: 'api.blazerail.com',
     path: '/v1/chat/completions',
     buildHeaders: () => ({
@@ -123,7 +123,7 @@ const roster: AIGatewayProviderConfig[] = [
     name: 'llmgateway',
     requiredEnvVars: ['LLM_GATEWAY_API_KEY'],
     wireFormat: 'anthropic',
-    model: 'anthropic/claude-sonnet-5',
+    model: 'anthropic/claude-haiku-4-5',
     host: 'api.llmgateway.io',
     path: '/v1/messages',
     buildHeaders: () => ({
@@ -146,7 +146,7 @@ const roster: AIGatewayProviderConfig[] = [
     name: 'pydantic-ai-gateway',
     requiredEnvVars: ['PYDANTIC_AI_GATEWAY_API_KEY'],
     wireFormat: 'anthropic',
-    model: 'claude-sonnet-5',
+    model: 'claude-haiku-4-5-20251001',
     host: 'gateway-us.pydantic.dev',
     path: '/proxy/anthropic/v1/messages',
     buildHeaders: () => ({
@@ -170,12 +170,12 @@ const roster: AIGatewayProviderConfig[] = [
     // syntax (same idea as llmgateway's pinning above) to route to Anthropic
     // itself rather than Azure or Bedrock, which Concentrate's own "model
     // fortress" catalog also lists as routing options for this model
-    // (anthropic/claude-sonnet-5, azure/claude-sonnet-5,
-    // bedrock/claude-sonnet-5).
+    // (anthropic/claude-haiku-4-5, azure/claude-haiku-4-5,
+    // bedrock/claude-haiku-4-5).
     name: 'concentrate-ai-gateway',
     requiredEnvVars: ['CONCENTRATE_AI_GATEWAY_API_KEY'],
     wireFormat: 'responses',
-    model: 'anthropic/claude-sonnet-5',
+    model: 'anthropic/claude-haiku-4-5-20251001',
     host: 'api.concentrate.ai',
     path: '/v1/responses/',
     buildHeaders: () => ({
@@ -186,11 +186,11 @@ const roster: AIGatewayProviderConfig[] = [
     // Ramp Router exposes an OpenAI Responses-compatible API; the `model`
     // field must be a bare `id` from the account's `GET /v1/models` catalog,
     // not the upstream provider's public model name. For this key the
-    // Anthropic Sonnet 5 entry is `claude-sonnet-5`.
+    // Anthropic Haiku 4.5 entry is `claude-haiku-4-5`.
     name: 'ramp',
     requiredEnvVars: ['RAMP_ROUTER_API_KEY'],
     wireFormat: 'responses',
-    model: 'claude-sonnet-5',
+    model: 'claude-haiku-4-5',
     host: 'router-api.ramp.com',
     path: '/v1/responses',
     buildHeaders: () => ({
@@ -201,7 +201,7 @@ const roster: AIGatewayProviderConfig[] = [
     name: 'neon',
     requiredEnvVars: ['NEON_AI_GATEWAY_BASE_URL', 'NEON_AI_GATEWAY_TOKEN'],
     wireFormat: 'anthropic',
-    model: 'claude-sonnet-5',
+    model: 'claude-haiku-4-5',
     host: resolveNeonHost().host,
     path: `${resolveNeonHost().basePath}/anthropic/v1/messages`,
     buildHeaders: () => ({
@@ -216,7 +216,7 @@ const roster: AIGatewayProviderConfig[] = [
     name: 'ngrok',
     requiredEnvVars: ['NGROK_AI_GATEWAY_API_KEY'],
     wireFormat: 'anthropic',
-    model: 'claude-sonnet-5',
+    model: 'claude-haiku-4-5',
     host: 'gateway.ngrok.ai',
     path: '/v1/messages',
     buildHeaders: () => ({
@@ -228,7 +228,7 @@ const roster: AIGatewayProviderConfig[] = [
     // LLM API exposes an Anthropic-native `/v1/messages` passthrough on
     // `api.llmapi.ai` in addition to its OpenAI-compatible surface. Provider
     // pinning uses the `provider/model` prefix documented at
-    // https://docs.llmapi.ai/features/routing (`anthropic/claude-sonnet-5`);
+    // https://docs.llmapi.ai/features/routing (`anthropic/claude-haiku-4-5-20251001`);
     // `X-No-Fallback: true` disables the automatic low-uptime fallback so the
     // request stays on Anthropic. Auth is the single account-wide
     // `Authorization: Bearer` key shown in the LLM API docs.
@@ -238,7 +238,7 @@ const roster: AIGatewayProviderConfig[] = [
     name: 'llmapi',
     requiredEnvVars: ['LLMAPI_API_KEY'],
     wireFormat: 'anthropic',
-    model: 'anthropic/claude-sonnet-5',
+    model: 'anthropic/claude-haiku-4-5-20251001',
     host: 'api.llmapi.ai',
     path: '/v1/messages',
     buildHeaders: () => ({
@@ -252,23 +252,10 @@ const roster: AIGatewayProviderConfig[] = [
       buf.match(/"model"\s*:\s*"([^"/]+)\/[^"]*"/)?.[1],
   },
   {
-    // `anthropic-version` selects the router's Anthropic response format.
-    name: 'you-dot-com',
-    requiredEnvVars: ['YOU_API_KEY'],
-    wireFormat: 'anthropic',
-    model: 'claude-sonnet-5',
-    host: 'api.you.com',
-    path: '/v1/messages',
-    buildHeaders: () => ({
-      Authorization: `Bearer ${process.env.YOU_API_KEY || ''}`,
-      'anthropic-version': '2023-06-01',
-    }),
-  },
-  {
     name: 'github-copilot',
     requiredEnvVars: ['GITHUB_COPILOT_API_KEY'],
     wireFormat: 'anthropic',
-    model: 'claude-sonnet-5',
+    model: 'claude-haiku-4.5',
     host: 'api.githubcopilot.com',
     path: '/v1/messages',
     buildHeaders: () => ({
@@ -283,7 +270,7 @@ const roster: AIGatewayProviderConfig[] = [
     name: 'anthropic-direct',
     requiredEnvVars: ['ANTHROPIC_API_KEY'],
     wireFormat: 'anthropic',
-    model: 'claude-sonnet-5',
+    model: 'claude-haiku-4-5-20251001',
     host: 'api.anthropic.com',
     path: '/v1/messages',
     buildHeaders: () => ({
@@ -292,8 +279,3 @@ const roster: AIGatewayProviderConfig[] = [
     }),
   },
 ];
-
-export const providers: AIGatewayProviderConfig[] = roster.map((p) => ({
-  ...p,
-  extraBody: { ...p.extraBody, temperature: undefined },
-}));

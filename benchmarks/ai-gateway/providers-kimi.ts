@@ -186,7 +186,7 @@ export const providers: AIGatewayProviderConfig[] = [
     // Confirmed on Concentrate's own model catalog (concentrate.ai/models,
     // filtered to the moonshot provider) that both `kimi-k3` and
     // `kimi-k2-7-code` are listed — but the exact provider-prefixed pin
-    // string wasn't shown there the way "openai/gpt-5.6" was demonstrated
+    // string wasn't shown there the way "openai/gpt-5.4" was demonstrated
     // elsewhere on the same site. `moonshot/kimi-k3` follows this gateway's
     // established creator-prefix convention (`anthropic/`, `openai/`,
     // `azure/`, `bedrock/`) and litellm's own canonical Moonshot slug (this

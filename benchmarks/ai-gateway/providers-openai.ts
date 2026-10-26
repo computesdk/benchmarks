@@ -6,12 +6,12 @@ import { resolveNeonHost } from './neon-host.js';
  * AI gateway benchmark configurations — OpenAI family.
  *
  * Same fairness methodology as `providers.ts` (the Anthropic family): every
- * gateway is hit directly with the same model — `gpt-5.6-luna` — so the
+ * gateway is hit directly with the same model — `gpt-5.4-mini` — so the
  * comparison is apples-to-apples, and `openai-direct` is the no-gateway
  * control. What differs is the target provider: every request here routes to
  * OpenAI instead of Anthropic, so this measures each gateway's overhead when
  * proxying to a *different* upstream than the original benchmark exercises.
- * Request configuration (no `temperature`, `max_tokens: 200`, no `reasoning`
+ * Request configuration (`temperature: 0`, `max_tokens: 200`, no `reasoning`
  * field) is identical to the Anthropic family's — see `phase-probe.ts`.
  *
  * Every route below was checked directly against that gateway's own
@@ -29,7 +29,7 @@ import { resolveNeonHost } from './neon-host.js';
  * as "confirmed against a real response," which is what the Anthropic
  * family's entries in `providers.ts` were held to.
  */
-const roster: AIGatewayProviderConfig[] = [
+export const providers: AIGatewayProviderConfig[] = [
   {
     // Confirmed: OpenRouter's Responses API passthrough exists at
     // `/api/v1/responses` (openrouter.ai/docs/api_reference/responses/overview),
@@ -45,7 +45,7 @@ const roster: AIGatewayProviderConfig[] = [
     name: 'openrouter',
     requiredEnvVars: ['OPENROUTER_API_KEY'],
     wireFormat: 'responses',
-    model: 'openai/gpt-5.6-luna',
+    model: 'openai/gpt-5.4-mini',
     host: 'openrouter.ai',
     path: '/api/v1/responses',
     buildHeaders: () => ({
@@ -66,7 +66,7 @@ const roster: AIGatewayProviderConfig[] = [
     name: 'vercel-ai-gateway',
     requiredEnvVars: ['VERCEL_AI_GATEWAY_API_KEY'],
     wireFormat: 'responses',
-    model: 'openai/gpt-5.6-luna',
+    model: 'openai/gpt-5.4-mini',
     host: 'ai-gateway.vercel.sh',
     path: '/v1/responses',
     buildHeaders: () => ({
@@ -95,7 +95,7 @@ const roster: AIGatewayProviderConfig[] = [
       'OPENAI_API_KEY',
     ],
     wireFormat: 'responses',
-    model: 'gpt-5.6-luna',
+    model: 'gpt-5.4-mini',
     host: 'gateway.ai.cloudflare.com',
     path: `/v1/${process.env.CLOUDFLARE_AI_GATEWAY_ACCOUNT_ID}/${process.env.CLOUDFLARE_AI_GATEWAY_GATEWAY_ID}/openai/responses`,
     buildHeaders: () => ({
@@ -107,7 +107,7 @@ const roster: AIGatewayProviderConfig[] = [
     // Confirmed via LLM Gateway's own Codex CLI integration guide
     // (llmgateway.io/guides/codex-cli), which states outright: "Codex CLI
     // uses the OpenAI Responses API (`/v1/responses`)" against a base URL of
-    // `https://api.llmgateway.io/v1`. `openai/gpt-5.6-luna` follows LLM
+    // `https://api.llmgateway.io/v1`. `openai/gpt-5.4-mini` follows LLM
     // Gateway's confirmed provider-pinning syntax (docs.llmgateway.io —
     // provider-prefix routing), demonstrated there for Chat Completions; NOT
     // independently re-confirmed for the Responses endpoint specifically,
@@ -115,7 +115,7 @@ const roster: AIGatewayProviderConfig[] = [
     name: 'llmgateway',
     requiredEnvVars: ['LLM_GATEWAY_API_KEY'],
     wireFormat: 'responses',
-    model: 'openai/gpt-5.6-luna',
+    model: 'openai/gpt-5.4-mini',
     host: 'api.llmgateway.io',
     path: '/v1/responses',
     buildHeaders: () => ({
@@ -123,8 +123,8 @@ const roster: AIGatewayProviderConfig[] = [
     }),
   },
   {
-    // `openai/gpt-5.6-luna` follows Concentrate's confirmed provider-prefix
-    // syntax (concentrate.ai/models — "openai/gpt-5.6" shown as the
+    // `openai/gpt-5.4-mini` follows Concentrate's confirmed provider-prefix
+    // syntax (concentrate.ai/models — "openai/gpt-5.4" shown as the
     // provider-pinned form). Uses the same `/v1/responses/` endpoint as the
     // Anthropic entry; for OpenAI this is even less of a translation layer
     // than it is for Anthropic, since Concentrate's `/v1/responses/`
@@ -134,7 +134,7 @@ const roster: AIGatewayProviderConfig[] = [
     name: 'concentrate-ai-gateway',
     requiredEnvVars: ['CONCENTRATE_AI_GATEWAY_API_KEY'],
     wireFormat: 'responses',
-    model: 'openai/gpt-5.6-luna',
+    model: 'openai/gpt-5.4-mini',
     host: 'api.concentrate.ai',
     path: '/v1/responses/',
     buildHeaders: () => ({
@@ -157,10 +157,10 @@ const roster: AIGatewayProviderConfig[] = [
     // that path appears in Pydantic's docs but only as an unconfirmed
     // Vercel-AI-SDK integration point with no documented full path.)
     //
-    // Model id is unprefixed (`gpt-5.6-luna`, not `openai/gpt-5.6-luna`):
+    // Model id is unprefixed (`gpt-5.4-mini`, not `openai/gpt-5.4-mini`):
     // Pydantic's proxy doesn't use the provider-prefix routing that LLM
     // Gateway and Concentrate do — same as the Anthropic entry's
-    // unprefixed `claude-sonnet-5` in providers.ts.
+    // unprefixed `claude-haiku-4-5-20251001` in providers.ts.
     //
     // Auth: `Authorization: Bearer <gateway key>` — confirmed live against
     // the Anthropic route (see providers.ts). Not a provider-specific
@@ -169,7 +169,7 @@ const roster: AIGatewayProviderConfig[] = [
     name: 'pydantic-ai-gateway',
     requiredEnvVars: ['PYDANTIC_AI_GATEWAY_API_KEY'],
     wireFormat: 'responses',
-    model: 'gpt-5.6-luna',
+    model: 'gpt-5.4-mini',
     host: 'gateway-us.pydantic.dev',
     path: '/proxy/openai-responses/responses',
     buildHeaders: () => ({
@@ -183,7 +183,7 @@ const roster: AIGatewayProviderConfig[] = [
     // Ramp's `model` field takes a bare `id` from GET /v1/models, not the
     // `provider:provider-model` form used for the `models` fallback array
     // (see router.ramp.com/docs/guides/choose-a-model).
-    model: 'gpt-5.6-luna',
+    model: 'gpt-5.4-mini',
     host: 'router-api.ramp.com',
     path: '/v1/responses',
     buildHeaders: () => ({
@@ -194,7 +194,7 @@ const roster: AIGatewayProviderConfig[] = [
     name: 'neon',
     requiredEnvVars: ['NEON_AI_GATEWAY_BASE_URL', 'NEON_AI_GATEWAY_TOKEN'],
     wireFormat: 'responses',
-    model: 'gpt-5-6-luna',
+    model: 'gpt-5-4-mini',
     host: resolveNeonHost().host,
     path: `${resolveNeonHost().basePath}/openai/v1/responses`,
     buildHeaders: () => ({
@@ -208,7 +208,7 @@ const roster: AIGatewayProviderConfig[] = [
     name: 'ngrok',
     requiredEnvVars: ['NGROK_AI_GATEWAY_API_KEY'],
     wireFormat: 'responses',
-    model: 'gpt-5.6-luna',
+    model: 'gpt-5.4-mini',
     host: 'gateway.ngrok.ai',
     path: '/v1/responses',
     buildHeaders: () => ({
@@ -220,7 +220,7 @@ const roster: AIGatewayProviderConfig[] = [
     // `/v1/responses` on `api.llmapi.ai`, with the same model id and auth
     // (`Authorization: Bearer`) as its OpenAI-compatible chat-completions surface.
     // Provider pinning uses the `provider/model` prefix documented at
-    // https://docs.llmapi.ai/features/routing (`openai/gpt-5.6-luna`);
+    // https://docs.llmapi.ai/features/routing (`openai/gpt-5.4-mini`);
     // `X-No-Fallback: true` disables the automatic low-uptime fallback so the
     // request stays on OpenAI. `extractResolvedProvider` reads the upstream
     // provider from the response if LLM API exposes it (`provider`,
@@ -228,7 +228,7 @@ const roster: AIGatewayProviderConfig[] = [
     name: 'llmapi',
     requiredEnvVars: ['LLMAPI_API_KEY'],
     wireFormat: 'responses',
-    model: 'openai/gpt-5.6-luna',
+    model: 'openai/gpt-5.4-mini',
     host: 'api.llmapi.ai',
     path: '/v1/responses',
     buildHeaders: () => ({
@@ -241,22 +241,10 @@ const roster: AIGatewayProviderConfig[] = [
       buf.match(/"model"\s*:\s*"([^"/]+)\/[^"]*"/)?.[1],
   },
   {
-    // No Responses API on the router, so this uses Chat Completions.
-    name: 'you-dot-com',
-    requiredEnvVars: ['YOU_API_KEY'],
-    wireFormat: 'openai',
-    model: 'gpt-5.6-luna',
-    host: 'api.you.com',
-    path: '/v1/chat/completions',
-    buildHeaders: () => ({
-      Authorization: `Bearer ${process.env.YOU_API_KEY || ''}`,
-    }),
-  },
-  {
     name: 'github-copilot',
     requiredEnvVars: ['GITHUB_COPILOT_API_KEY'],
     wireFormat: 'responses',
-    model: 'gpt-5.6-luna',
+    model: 'gpt-5.4-mini',
     host: 'api.githubcopilot.com',
     path: '/responses',
     buildHeaders: () => ({
@@ -272,7 +260,7 @@ const roster: AIGatewayProviderConfig[] = [
     name: 'openai-direct',
     requiredEnvVars: ['OPENAI_API_KEY'],
     wireFormat: 'responses',
-    model: 'gpt-5.6-luna',
+    model: 'gpt-5.4-mini',
     host: 'api.openai.com',
     path: '/v1/responses',
     buildHeaders: () => ({
@@ -280,8 +268,3 @@ const roster: AIGatewayProviderConfig[] = [
     }),
   },
 ];
-
-export const providers: AIGatewayProviderConfig[] = roster.map((p) => ({
-  ...p,
-  extraBody: { ...p.extraBody, temperature: undefined },
-}));

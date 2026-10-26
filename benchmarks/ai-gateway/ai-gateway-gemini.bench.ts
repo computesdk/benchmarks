@@ -4,7 +4,7 @@
  * and request configuration as `ai-gateway.bench.ts` (see that file and
  * `shared-task.ts` for the full fairness rationale) — the only difference is
  * `providers-gemini.ts`, which routes gateways to Google's `gemini-3.6-flash`
- * instead of Anthropic's Claude Sonnet 5, plus its own no-gateway
+ * instead of Anthropic's Claude Haiku 4.5, plus its own no-gateway
  * `gemini-direct` control.
  *
  * Run:
