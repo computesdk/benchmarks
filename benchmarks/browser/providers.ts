@@ -21,7 +21,7 @@ export const browserProviders: BrowserProviderConfig[] = [
       projectId: process.env.BROWSERBASE_PROJECT_ID!,
     }),
     sessionCreateOptions: {
-      region: 'us-east-1',
+      region: 'us-west-2',
       stealth: false,
       recording: false,
       enableNativeSelectPolyfill: false,
