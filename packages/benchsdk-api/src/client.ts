@@ -29,6 +29,8 @@ import type {
   CreateWorkerArtifactInput,
   CreateWorkerArtifactResponse,
   ClaimWorkerInput,
+  CreateRunArtifactInput,
+  CreateRunArtifactResponse,
   CreateRunInput,
   BenchmarkSourceDescriptor,
   JsonObject,
@@ -49,6 +51,7 @@ import type {
   UpdateWorkerInput,
   UpsertBenchmarkInput,
   UpsertParticipantInput,
+  UploadRunArtifactInput,
   UploadWorkerArtifactInput,
   WorkerConcurrencySample,
   WorkerHeartbeatInput,
@@ -188,7 +191,7 @@ function normalizeArtifacts(data: { items?: BenchmarkArtifact[]; artifacts?: Ben
   return data.items ?? data.artifacts ?? [];
 }
 
-function bodySizeBytes(body: UploadWorkerArtifactInput['body']): number | undefined {
+function bodySizeBytes(body: BodyInit): number | undefined {
   if (typeof body === 'string') return new TextEncoder().encode(body).byteLength;
   if (body instanceof Blob) return body.size;
   if (body instanceof ArrayBuffer) return body.byteLength;
@@ -229,6 +232,28 @@ async function downloadArtifactBody(
     }
   }
   return new TextDecoder().decode(buffer);
+}
+
+/** PUTs raw bytes to a presigned artifact upload URL. */
+async function uploadArtifactBody(
+  doFetch: typeof fetch,
+  uploadUrl: string,
+  body: BodyInit,
+  contentType?: string,
+): Promise<void> {
+  const uploadResponse = await doFetch(uploadUrl, {
+    method: 'PUT',
+    headers: contentType ? { 'Content-Type': contentType } : undefined,
+    body,
+  });
+  if (!uploadResponse.ok) {
+    const errorBody = await uploadResponse.text().catch(() => '');
+    throw new BenchmarkApiError(
+      `Benchmark artifact upload failed with ${uploadResponse.status}`,
+      uploadResponse.status,
+      errorBody,
+    );
+  }
 }
 
 export function createBenchmarkClient(config: BenchmarkClientConfig = {}): BenchmarkClient {
@@ -528,19 +553,32 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
       if (!uploadUrl) {
         throw new Error('Benchmark artifact upload URL is missing.');
       }
-      const uploadResponse = await doFetch(uploadUrl, {
-        method: 'PUT',
-        headers: input.contentType ? { 'Content-Type': input.contentType } : undefined,
-        body: input.body,
-      });
-      if (!uploadResponse.ok) {
-        const errorBody = await uploadResponse.text().catch(() => '');
-        throw new BenchmarkApiError(
-          `Benchmark artifact upload failed with ${uploadResponse.status}`,
-          uploadResponse.status,
-          errorBody,
-        );
+      await uploadArtifactBody(doFetch, uploadUrl, input.body, input.contentType);
+      return response;
+    },
+
+    async createRunArtifact(benchmarkSlug, runId, input: CreateRunArtifactInput) {
+      return request<CreateRunArtifactResponse>(
+        'POST',
+        `/benchmarks/${encodePath(benchmarkSlug)}/runs/${encodePath(runId)}/artifacts`,
+        input as unknown as JsonObject,
+      );
+    },
+
+    async uploadRunArtifact(benchmarkSlug, runId, input: UploadRunArtifactInput) {
+      const sizeBytes = bodySizeBytes(input.body);
+      const artifactInput: CreateRunArtifactInput = {
+        kind: input.kind,
+        contentType: input.contentType,
+        name: input.name,
+        metadata: sizeBytes === undefined ? input.metadata : { ...input.metadata, sizeBytes },
+      };
+      const response = await client.createRunArtifact(benchmarkSlug, runId, artifactInput);
+      const uploadUrl = response.uploadUrl ?? response.artifact?.uploadUrl;
+      if (!uploadUrl) {
+        throw new Error('Benchmark artifact upload URL is missing.');
       }
+      await uploadArtifactBody(doFetch, uploadUrl, input.body, input.contentType);
       return response;
     },
 

@@ -360,6 +360,52 @@ describe('runBenchmark', () => {
     expect(calls.taskData[0]).toEqual({ ttiMs: 42 });
   });
 
+  it('sends type and config.index on the upsert when the config declares them', async () => {
+    const task = vi.fn(async () => ({ data: {} }));
+    const config: BenchmarkConfig<typeof participants[number]> = {
+      benchmarkSlug: 'provider-weekly-composite',
+      benchmarkName: 'Provider Weekly Composite',
+      iterations: 1,
+      concurrency: 1,
+      participants: [participants[0]],
+      type: 'index',
+      index: {
+        layout: 'matrix',
+        spec: { cell: { unit: 'score', decimals: 2, direction: 'higher-better' }, highlight: 'best-in-row' },
+      },
+    };
+
+    await runBenchmark(config, defineTask(task), []);
+
+    expect(calls.upsertBenchmark[0][0]).toBe('provider-weekly-composite');
+    expect(calls.upsertBenchmark[0][1]).toMatchObject({
+      name: 'Provider Weekly Composite',
+      type: 'index',
+      config: {
+        index: {
+          layout: 'matrix',
+          spec: { cell: { unit: 'score', decimals: 2, direction: 'higher-better' }, highlight: 'best-in-row' },
+        },
+      },
+    });
+  });
+
+  it('omits type from the upsert when the config does not declare it', async () => {
+    const task = vi.fn(async () => ({ data: {} }));
+    const config: BenchmarkConfig<typeof participants[number]> = {
+      benchmarkSlug: 's',
+      benchmarkName: 'n',
+      iterations: 1,
+      concurrency: 1,
+      participants: [participants[0]],
+    };
+
+    await runBenchmark(config, defineTask(task), []);
+
+    expect(calls.upsertBenchmark[0][1]).not.toHaveProperty('type');
+    expect(calls.upsertBenchmark[0][1]).not.toHaveProperty('config');
+  });
+
   it('calls config.onComplete once with the run outcome', async () => {
     const onComplete = vi.fn();
     const config: BenchmarkConfig<typeof participants[number]> = {

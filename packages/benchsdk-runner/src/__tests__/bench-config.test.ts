@@ -421,6 +421,105 @@ describe('defineBenchmarkConfig', () => {
       }),
     ).toThrow("display.overview contains unexpected key: 'extra'");
   });
+
+  it('carries a valid index type declaration', () => {
+    const config = defineBenchmarkConfig({
+      benchmarkSlug: 's',
+      benchmarkName: 'n',
+      participants,
+      type: 'index',
+      index: {
+        layout: 'matrix',
+        spec: { cell: { unit: 'score', decimals: 2, direction: 'higher-better' }, highlight: 'best-in-row' },
+      },
+    });
+    expect(config.type).toBe('index');
+    expect(config.index?.layout).toBe('matrix');
+  });
+
+  it('accepts standard and reliability types without a config block', () => {
+    for (const type of ['standard', 'reliability'] as const) {
+      const config = defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, type });
+      expect(config.type).toBe(type);
+    }
+  });
+
+  it('rejects an unknown type', () => {
+    expect(() =>
+      defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, type: 'histogram' as any }),
+    ).toThrow(/type.*must be 'standard', 'index', or 'reliability'/);
+  });
+
+  it("rejects an index block without type: 'index'", () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        index: { layout: 'matrix' },
+      }),
+    ).toThrow(/index.*requires type: 'index'/);
+  });
+
+  it("rejects an index block paired with a non-index type", () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        type: 'standard',
+        index: { layout: 'matrix' },
+      }),
+    ).toThrow(/index.*requires type: 'index'/);
+  });
+
+  it("rejects type: 'index' without an index block", () => {
+    expect(() =>
+      defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, type: 'index' }),
+    ).toThrow(/index.*is required when type is 'index'/);
+  });
+
+  it('rejects a non-object index block', () => {
+    expect(() =>
+      defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, type: 'index', index: 'matrix' as any }),
+    ).toThrow('index must be an object');
+  });
+
+  it('rejects an index block without a layout', () => {
+    expect(() =>
+      defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, type: 'index', index: {} as any }),
+    ).toThrow('index.layout');
+  });
+
+  it('rejects an unknown index layout', () => {
+    expect(() =>
+      defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, type: 'index', index: { layout: 'grid' } }),
+    ).toThrow('index.layout must be one of: model-matrix, matrix');
+  });
+
+  it('rejects a non-object index spec', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        type: 'index',
+        index: { layout: 'matrix', spec: 'x' as any },
+      }),
+    ).toThrow('index.spec must be a plain object');
+  });
+
+  it('rejects unknown keys in the index block', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        type: 'index',
+        index: { layout: 'matrix', extra: true } as any,
+      }),
+    ).toThrow("index contains unexpected key: 'extra'");
+  });
 });
 
 describe('malformed nested containers', () => {

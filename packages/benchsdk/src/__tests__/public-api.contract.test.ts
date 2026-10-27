@@ -27,6 +27,7 @@ import type {
   BenchmarkAnalyticsReadiness,
   BenchmarkEventRateBucket,
   BenchmarkFailurePoint,
+  BenchmarkIndexConfig,
   BenchmarkParticipant,
   BenchmarkResource,
   BenchmarkResultLatencySummary,
@@ -54,11 +55,14 @@ import type {
   BenchmarkRunWorker,
   BenchmarkStepResultSummary,
   BenchmarkTaskBucket,
+  BenchmarkType,
   BenchmarkWorkerAttempt,
   BenchmarkWorkerStatus,
   ClaimWorkerInput,
   CreateWorkerArtifactInput,
   CreateWorkerArtifactResponse,
+  CreateRunArtifactInput,
+  CreateRunArtifactResponse,
   CreateRunInput,
   DefineStepOptions,
   JsonObject,
@@ -89,6 +93,7 @@ import type {
   WorkerHeartbeatInput,
   UpsertBenchmarkInput,
   UpsertParticipantInput,
+  UploadRunArtifactInput,
   UploadWorkerArtifactInput,
 } from '../index';
 import type {
@@ -119,6 +124,7 @@ type _PublicTypeSurface = [
   BenchmarkAnalyticsReadiness,
   BenchmarkEventRateBucket,
   BenchmarkFailurePoint,
+  BenchmarkIndexConfig,
   BenchmarkParticipant,
   BenchmarkResource,
   BenchmarkResultLatencySummary,
@@ -146,11 +152,14 @@ type _PublicTypeSurface = [
   BenchmarkRunWorker,
   BenchmarkStepResultSummary,
   BenchmarkTaskBucket,
+  BenchmarkType,
   BenchmarkWorkerAttempt,
   BenchmarkWorkerStatus,
   ClaimWorkerInput,
   CreateWorkerArtifactInput,
   CreateWorkerArtifactResponse,
+  CreateRunArtifactInput,
+  CreateRunArtifactResponse,
   CreateRunInput,
   DefineStepOptions,
   JsonObject,
@@ -181,6 +190,7 @@ type _PublicTypeSurface = [
   WorkerHeartbeatInput,
   UpsertBenchmarkInput,
   UpsertParticipantInput,
+  UploadRunArtifactInput,
   UploadWorkerArtifactInput,
   BenchmarkReporterArtifactInput,
   BenchmarkReporterBarrierInput,
@@ -337,6 +347,7 @@ function handler(url: string, method: string): Response {
   if (path === '/benchmarks/scale/runs/run_1/workers/worker_1/complete' && method === 'POST') return jsonResponse(lifecycleResponse());
   if (path === '/benchmarks/scale/runs/run_1/workers/worker_1/fail' && method === 'POST') return jsonResponse(lifecycleResponse());
   if (path === '/benchmarks/scale/runs/run_1/workers/worker_1/artifacts' && method === 'POST') return jsonResponse({ artifactId: 'artifact_1', uploadUrl: 'https://upload.test' });
+  if (path === '/benchmarks/scale/runs/run_1/artifacts' && method === 'POST') return jsonResponse({ artifact: { artifactId: 'artifact_run_1', kind: 'dataset' }, artifactId: 'artifact_run_1', objectKey: 'key_1', uploadUrl: 'https://upload.test', uploadUrlExpiresAt: '2026-01-01T00:00:00Z' }, 201);
   if (path === '/benchmarks/scale/runs/run_1/artifacts' && method === 'GET') return jsonResponse({ artifacts: [{ artifactId: 'artifact_run', kind: 'log' }] });
   if (path === '/benchmarks/scale/runs/run_1/workers/worker_1/artifacts' && method === 'GET') return jsonResponse({ items: [{ artifactId: 'artifact_worker', kind: 'log' }] });
   if (path.startsWith('/benchmarks/scale/results') && method === 'GET') return jsonResponse(overviewResponse());
@@ -704,6 +715,37 @@ describe('client method URL paths and response unwrapping', () => {
     const { calls, result } = await capture((c) => c.listWorkerArtifacts('scale', 'run_1', 'worker_1'));
     expect(`${calls[0].method} ${calls[0].url}`).toBe(`GET ${BASE}/benchmarks/scale/runs/run_1/workers/worker_1/artifacts`);
     expect(result).toMatchObject([{ artifactId: 'artifact_worker' }]);
+  });
+
+  it('VAL-SDK-037a: createRunArtifact POST …/runs/{runId}/artifacts → 201 artifact + uploadUrl', async () => {
+    const { calls, result } = await capture((c) => c.createRunArtifact('scale', 'run_1', {
+      kind: 'dataset', name: 'matrix.json', contentType: 'application/json', metadata: { rows: 12 },
+    }));
+    expect(`${calls[0].method} ${calls[0].url}`).toBe(`POST ${BASE}/benchmarks/scale/runs/run_1/artifacts`);
+    expect(calls[0].body).toMatchObject({ kind: 'dataset', name: 'matrix.json', contentType: 'application/json', metadata: { rows: 12 } });
+    expect(result).toMatchObject({
+      artifact: { artifactId: 'artifact_run_1', kind: 'dataset' },
+      uploadUrl: 'https://upload.test',
+      uploadUrlExpiresAt: '2026-01-01T00:00:00Z',
+    });
+  });
+
+  it('VAL-SDK-037b: uploadRunArtifact does create + PUT to uploadUrl; missing URL throws', async () => {
+    const { calls, result } = await capture((c) => c.uploadRunArtifact('scale', 'run_1', {
+      kind: 'dataset', name: 'matrix.json', contentType: 'application/json', body: '{"rows":[]}',
+    }));
+    expect(calls.map((call) => `${call.method} ${call.url}`)).toEqual([
+      `POST ${BASE}/benchmarks/scale/runs/run_1/artifacts`,
+      'PUT https://upload.test',
+    ]);
+    expect(result).toMatchObject({ artifactId: 'artifact_run_1' });
+    // Body size is folded into the artifact's metadata, same as worker uploads.
+    expect(calls[0].body).toMatchObject({ metadata: { sizeBytes: 11 } });
+
+    const missing = recordingClient(() => jsonResponse({ artifactId: 'artifact_run_1' }));
+    const client = createBenchmarkClient({ baseUrl: BASE, apiKey: 'k', fetch: missing.fetchMock });
+    await expect(client.uploadRunArtifact('scale', 'run_1', { kind: 'dataset', body: 'x' }))
+      .rejects.toThrow('upload URL is missing');
   });
 
   it('VAL-SDK-038: getBenchmarkResults GET /benchmarks/{slug}/results?limit=', async () => {
@@ -1561,6 +1603,10 @@ describe('public API surface and type exports', () => {
     for (const name of valueNames) {
       if (name === 'BENCHSDK_RUNNER_VERSION') {
         expect((barrel as Record<string, unknown>)[name]).toBeTypeOf('string');
+        continue;
+      }
+      if (name === 'BENCHMARK_INDEX_LAYOUTS') {
+        expect((barrel as Record<string, unknown>)[name]).toEqual(runnerBarrel.BENCHMARK_INDEX_LAYOUTS);
         continue;
       }
       expect((barrel as Record<string, unknown>)[name]).toBeTypeOf('function');

@@ -180,6 +180,12 @@ export interface UpsertBenchmarkInput {
   // existing benchmark: the API only writes `name` when it is provided.
   name?: string;
   status?: string;
+  /**
+   * The benchmark's declared type ('standard' | 'index' | 'reliability').
+   * Written only when present — an absent key leaves the stored type
+   * untouched, so older runners never reset a typed benchmark to 'standard'.
+   */
+  type?: string;
   config?: JsonObject;
   defaultRunConfig?: JsonObject;
 }
@@ -298,6 +304,17 @@ export interface CreateWorkerArtifactInput {
   metadata?: JsonObject;
 }
 
+export interface CreateRunArtifactInput {
+  kind: string;
+  contentType?: string;
+  name?: string;
+  metadata?: JsonObject;
+}
+
+export interface UploadRunArtifactInput extends CreateRunArtifactInput {
+  body: BodyInit;
+}
+
 export interface UploadWorkerArtifactInput extends CreateWorkerArtifactInput {
   body: BodyInit;
 }
@@ -361,6 +378,14 @@ export interface BenchmarkParticipantLogs {
 }
 
 export interface CreateWorkerArtifactResponse {
+  artifact?: BenchmarkArtifact;
+  artifactId?: string;
+  uploadUrl?: string;
+  uploadUrlExpiresAt?: string;
+  objectKey?: string;
+}
+
+export interface CreateRunArtifactResponse {
   artifact?: BenchmarkArtifact;
   artifactId?: string;
   uploadUrl?: string;
@@ -1004,6 +1029,19 @@ export interface BenchmarkClient {
     workerId: string,
     input: UploadWorkerArtifactInput,
   ): Promise<CreateWorkerArtifactResponse>;
+  /** POST /benchmarks/{slug}/runs/{runId}/artifacts — registers a run-level
+   * artifact and returns its presigned upload URL. */
+  createRunArtifact(
+    benchmarkSlug: string,
+    runId: string,
+    input: CreateRunArtifactInput,
+  ): Promise<CreateRunArtifactResponse>;
+  /** createRunArtifact + PUT of `input.body` to the presigned upload URL. */
+  uploadRunArtifact(
+    benchmarkSlug: string,
+    runId: string,
+    input: UploadRunArtifactInput,
+  ): Promise<CreateRunArtifactResponse>;
   listRunArtifacts(benchmarkSlug: string, runId: string, options?: { limit?: number; offset?: number }): Promise<BenchmarkArtifact[]>;
   listWorkerArtifacts(benchmarkSlug: string, runId: string, workerId: string, options?: { limit?: number; offset?: number }): Promise<BenchmarkArtifact[]>;
   getWorkerArtifact(

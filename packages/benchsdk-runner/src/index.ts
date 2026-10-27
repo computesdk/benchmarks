@@ -15,10 +15,13 @@ export type {
   BenchmarkRunOutcome,
   BenchmarkConfigErrorItem,
   BenchmarkDisplayConfig,
+  BenchmarkIndexConfig,
   BenchmarkMetricDisplay,
   BenchmarkStepDisplay,
   BenchmarkOverviewDisplay,
+  BenchmarkType,
 } from './bench-config.js';
+export { BENCHMARK_INDEX_LAYOUTS } from './bench-config.js';
 
 // Operator / runner entrypoints
 export { NoAvailableParticipantsError } from './no-available-participants.js';
@@ -107,6 +110,8 @@ export type {
   ClaimWorkerInput,
   CreateWorkerArtifactInput,
   CreateWorkerArtifactResponse,
+  CreateRunArtifactInput,
+  CreateRunArtifactResponse,
   CreateRunInput,
   DefineStepOptions,
   JsonObject,
@@ -134,6 +139,7 @@ export type {
   UpdateWorkerInput,
   UpsertBenchmarkInput,
   UpsertParticipantInput,
+  UploadRunArtifactInput,
   UploadWorkerArtifactInput,
   WorkerConcurrencySample,
   WorkerFinishContext,

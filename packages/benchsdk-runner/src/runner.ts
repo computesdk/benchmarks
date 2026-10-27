@@ -709,6 +709,7 @@ export async function runBenchmark<T extends BaseParticipant>(
       const benchmarkConfig: JsonObject = {
         ...(config.scoring ? { scoring: config.scoring as unknown as JsonObject } : {}),
         ...(config.display ? { display: config.display as unknown as JsonObject } : {}),
+        ...(config.index ? { index: config.index as unknown as JsonObject } : {}),
       };
       // Always upsert the target slug so createRun can't 404 on a brand-new
       // --benchmark. A bare retarget leaves an existing benchmark untouched
@@ -727,6 +728,7 @@ export async function runBenchmark<T extends BaseParticipant>(
       const upsertInput: Parameters<BenchmarkClient['upsertBenchmark']>[1] = {};
       if (initializeTarget) {
         upsertInput.name = config.benchmarkName;
+        if (config.type !== undefined) upsertInput.type = config.type;
         if (Object.keys(benchmarkConfig).length > 0) upsertInput.config = benchmarkConfig;
       }
       await client!.upsertBenchmark(config.benchmarkSlug, upsertInput);

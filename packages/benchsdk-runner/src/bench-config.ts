@@ -45,6 +45,30 @@ import type { BenchmarkScoringConfig, HigherIsBetter, LowerIsBetter, ScoringSpec
 export type GroupBy = 'participant' | 'round';
 
 /**
+ * The class of benchmark a `*.bench.ts` declares. 'standard' (the default)
+ * renders the generic runs/results views; a non-standard type names a
+ * purpose-built platform surface and carries a config block of the same name
+ * (`index` → `index: {...}`). 'reliability' is part of the union but has no
+ * config block yet.
+ */
+export type BenchmarkType = 'standard' | 'index' | 'reliability';
+
+/** Layout names an `index` benchmark can declare. */
+export const BENCHMARK_INDEX_LAYOUTS = ['model-matrix', 'matrix'] as const;
+
+/**
+ * Config block for `type: 'index'` benchmarks. `layout` selects the platform
+ * renderer; `spec` is the layout's declarative input (cell format, highlight
+ * rule, ...) when the layout takes one.
+ */
+export interface BenchmarkIndexConfig {
+  /** Renderer name — one of {@link BENCHMARK_INDEX_LAYOUTS}. */
+  layout: string;
+  /** Layout-specific declarative spec. */
+  spec?: JsonObject;
+}
+
+/**
  * A named variant of a benchmark, selected with `--shape <name>`. A shape
  * carries only the parts that make it a distinct *benchmark* — its platform
  * identity plus any stable distinguishing knob (e.g. staggered's delay). The
@@ -304,6 +328,17 @@ export interface BenchmarkConfig<T extends BaseParticipant = BaseParticipant> {
    */
   scoring?: BenchmarkScoringConfig;
   /**
+   * The benchmark's type class on the platform ('standard' is the default).
+   * A non-standard type requires its matching config block — `index` needs
+   * `index: { layout, spec? }`.
+   */
+  type?: BenchmarkType;
+  /**
+   * Index-benchmark declaration, required when `type` is 'index' and rejected
+   * otherwise. `layout` picks the platform renderer (`model-matrix`, `matrix`).
+   */
+  index?: BenchmarkIndexConfig;
+  /**
    * Custom CLI flags this benchmark reads from `process.argv` (e.g. `--file-size`).
    * Declaring them lets the runner distinguish intentional pass-through flags
    * from typos and report unknown flags accurately.
@@ -419,6 +454,20 @@ function assertOnlyAllowedKeys(value: Record<string, unknown>, allowed: readonly
     if (!allowed.includes(key)) {
       throw new Error(`${field} contains unexpected key: '${key}'`);
     }
+  }
+}
+
+function validateBenchmarkIndexConfig(index: BenchmarkIndexConfig): void {
+  if (typeof index !== 'object' || index === null || Array.isArray(index)) {
+    throw new Error('index must be an object');
+  }
+  assertOnlyAllowedKeys(index as unknown as Record<string, unknown>, ['layout', 'spec'], 'index');
+  const layout = assertNonEmptyString(index.layout, 'index.layout');
+  if (!(BENCHMARK_INDEX_LAYOUTS as readonly string[]).includes(layout)) {
+    throw new Error(`index.layout must be one of: ${BENCHMARK_INDEX_LAYOUTS.join(', ')}`);
+  }
+  if (index.spec !== undefined && (index.spec === null || typeof index.spec !== 'object' || Array.isArray(index.spec))) {
+    throw new Error('index.spec must be a plain object');
   }
 }
 
@@ -774,6 +823,24 @@ export function validateBenchmarkConfig<T extends BaseParticipant = BaseParticip
         message: error instanceof Error ? error.message : String(error),
       });
     }
+  }
+  if (config.type !== undefined && !['standard', 'index', 'reliability'].includes(config.type)) {
+    issues.push({ field: 'type', message: `must be 'standard', 'index', or 'reliability' (got ${JSON.stringify(config.type)})` });
+  }
+  if (config.index !== undefined) {
+    if (config.type !== 'index') {
+      issues.push({ field: 'index', message: "requires type: 'index'" });
+    }
+    try {
+      validateBenchmarkIndexConfig(config.index);
+    } catch (error) {
+      issues.push({
+        field: 'index',
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  } else if (config.type === 'index') {
+    issues.push({ field: 'index', message: "is required when type is 'index'" });
   }
   if (config.display?.overview?.defaultMetric === 'compositeScore' && config.scoring === undefined && config.onScore === undefined) {
     issues.push({
