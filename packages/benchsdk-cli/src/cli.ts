@@ -3,6 +3,8 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { BenchmarkApiError } from '@benchsdk/api';
 import type {
+  BenchmarkReliabilityDay,
+  BenchmarkReliabilityRange,
   BenchmarkResultsOverview,
   BenchmarkRunFilterInput,
   BenchmarkRunResults,
@@ -68,6 +70,16 @@ Commands:
                                      Show benchmark or run results. --since/--until
                                      take YYYY-MM-DD, an ISO timestamp, or a
                                      relative 24h/7d/2w
+  reliability <benchmark-slug> [--from YYYY-MM-DD] [--to YYYY-MM-DD]
+             [--bucket day|hour] [--tz <zone>] [--metrics <list>]
+             [--breakdown <list>] [--source-org <slug>] [--format json|table]
+                                     Reliability uptime view for a
+                                     type=reliability benchmark (default:
+                                     last 7 days aggregated per participant)
+  reliability <benchmark-slug> --day YYYY-MM-DD --participant <slug>
+             [--tz <zone>] [--source-org <slug>] [--format json|table]
+                                     Per-slot view of one participant on one
+                                     local day
   iterations <benchmark-slug> --run <id> [--participant <slug>] [--steps <list>] [--format json|table]
                                      Show per-iteration step latencies
   artifacts list <benchmark-slug> <runId> [--worker <id>]
@@ -166,6 +178,11 @@ const subcommandOptionSchema = {
   day: { type: 'string' as const },
   tz: { type: 'string' as const },
   'source-org': { type: 'string' as const },
+  from: { type: 'string' as const },
+  to: { type: 'string' as const },
+  bucket: { type: 'string' as const },
+  metrics: { type: 'string' as const },
+  breakdown: { type: 'string' as const },
   as: { type: 'string' as const },
   ref: { type: 'string' as const },
 };
@@ -238,6 +255,12 @@ Subcommands:
                     [--participant <list>] [--steps <list>|all]
                     [--since <when>] [--until <when>] [--day YYYY-MM-DD]
                     [--tz <zone>] [--source-org <slug>] [--limit N] [--offset N]`;
+    case 'reliability':
+      return `Usage: bench reliability <benchmark-slug> [--from YYYY-MM-DD] [--to YYYY-MM-DD]
+                    [--bucket day|hour] [--tz <zone>] [--metrics <list>]
+                    [--breakdown <list>] [--source-org <slug>] [--format json|table]
+       bench reliability <benchmark-slug> --day YYYY-MM-DD --participant <slug>
+                    [--tz <zone>] [--source-org <slug>] [--format json|table]`;
     case 'iterations':
       return `Usage: bench iterations <benchmark-slug> --run <id> [--participant <slug>] [--steps <list>] [--format json|table]`;
     case 'artifacts':
@@ -737,6 +760,156 @@ function printResultsTables(
   }
 }
 
+async function handleReliability(
+  benchmarkSlug: string,
+  options: {
+    day?: string;
+    participant?: string;
+    from?: string;
+    to?: string;
+    bucket?: string;
+    tz?: string;
+    metrics?: string;
+    breakdown?: string;
+    'source-org'?: string;
+    format?: string;
+  },
+  overrides: { baseUrl?: string; apiKey?: string; org?: string },
+  outputOptions: OutputOptions = {},
+): Promise<void> {
+  // Validate flag combinations before auth/API setup — the two views take
+  // disjoint flags.
+  if (options.day !== undefined) {
+    if (!options.participant?.trim()) {
+      throw new Error(
+        '--participant is required with --day: bench reliability <slug> --day YYYY-MM-DD --participant <slug>',
+      );
+    }
+    const unsupported = (['from', 'to', 'bucket', 'metrics', 'breakdown'] as const).filter(
+      (k) => options[k] !== undefined,
+    );
+    if (unsupported.length > 0) {
+      throw new Error(`--${unsupported.join(' --')} do not apply to the --day view`);
+    }
+  } else {
+    if (options.participant !== undefined) {
+      throw new Error('--participant only applies to the --day view (the range view reports every participant)');
+    }
+    if (options.bucket !== undefined && options.bucket !== 'day' && options.bucket !== 'hour') {
+      throw new Error("--bucket must be 'day' or 'hour'");
+    }
+  }
+
+  const csv = (raw: string | undefined, name: string): string[] | undefined => {
+    if (raw === undefined) return undefined;
+    const items = raw.split(',').map((s) => s.trim()).filter(Boolean);
+    if (items.length === 0) throw new Error(`--${name} must name at least one key`);
+    return items;
+  };
+
+  const { api } = await createApiClient(overrides);
+  const result = await api.getBenchmarkReliability(benchmarkSlug, {
+    sourceOrg: options['source-org']?.trim() || undefined,
+    day: options.day,
+    participant: options.participant?.trim(),
+    from: options.from,
+    to: options.to,
+    timeZone: options.tz ?? Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'UTC',
+    bucket: options.bucket as 'day' | 'hour' | undefined,
+    metrics: csv(options.metrics, 'metrics'),
+    breakdowns: csv(options.breakdown, 'breakdown'),
+  });
+  if (options.format === 'json' || outputOptions.json || outputOptions.format === 'json') {
+    printData(result, { format: 'json' });
+    return;
+  }
+  printReliability(result);
+}
+
+function printReliability(result: BenchmarkReliabilityRange | BenchmarkReliabilityDay): void {
+  const { benchmark, config, timeZone } = result;
+  const interval =
+    config.intervalMs >= 60_000 && config.intervalMs % 60_000 === 0
+      ? `${config.intervalMs / 60_000}m`
+      : `${config.intervalMs}ms`;
+
+  if ('slots' in result) {
+    const t = result.totals;
+    console.log(
+      `${benchmark.slug} — reliability ${result.day} (${timeZone}) — participant ${result.participant} | every ${interval}`,
+    );
+    console.table([
+      {
+        uptime: t.uptime === null ? 'n/a' : fmtRate(t.uptime),
+        passed: t.passed,
+        degraded: t.degraded,
+        failed: t.failed,
+        missed: t.missed,
+        pending: t.pending,
+        p50Ms: t.p50Ms ?? 'n/a',
+        p95Ms: t.p95Ms ?? 'n/a',
+      },
+    ]);
+    // Compact slot strip — one mark per slot, in order.
+    const marks: Record<string, string> = {
+      passed: '.', degraded: '~', failed: 'x', missed: '!', pending: ' ', 'no-data': '?',
+    };
+    console.log(result.slots.map((s) => marks[s.outcome] ?? '?').join(''));
+    const attention = result.slots.filter((s) => s.outcome === 'failed' || s.outcome === 'degraded');
+    for (const s of attention.slice(0, 10)) {
+      console.log(`  ${s.at} ${s.outcome}${s.error ? ` — ${s.error}` : ''}`);
+    }
+    if (attention.length > 10) console.log(`  … and ${attention.length - 10} more`);
+    return;
+  }
+
+  console.log(
+    `${benchmark.slug} — reliability ${result.from} → ${result.to} (${timeZone}, ${result.bucket} buckets) | every ${interval}`,
+  );
+  if (result.participants.length === 0) {
+    console.log('No participants in range.');
+  } else {
+    console.table(
+      result.participants.map((p) => ({
+        participant: p.slug,
+        provider: p.provider ?? '',
+        uptime: p.total.uptime === null ? 'n/a' : fmtRate(p.total.uptime),
+        passed: p.total.passed,
+        degraded: p.total.degraded,
+        failed: p.total.failed,
+        p50Ms: p.total.p50Ms ?? 'n/a',
+        p95Ms: p.total.p95Ms ?? 'n/a',
+        status: p.status?.state ?? '',
+        statusSince: p.status?.since ?? '',
+      })),
+    );
+  }
+  const s = result.scheduler.total;
+  console.log(
+    `scheduler: ${s.fired}/${s.expected} fired, ${s.missed} missed, ${s.pending} pending, ${s.duplicates} duplicates`,
+  );
+  if (result.incidents.length > 0) {
+    console.log('Incidents:');
+    console.table(
+      result.incidents.map((i) => ({
+        participant: i.participant ?? '(scheduler)',
+        kind: i.kind,
+        start: i.start,
+        end: i.end,
+        ongoing: i.ongoing,
+        failed: i.failed,
+        degraded: i.degraded,
+        missed: i.missed,
+        error: i.error ?? '',
+      })),
+    );
+  }
+  if (result.errors.length > 0) {
+    console.log('Top errors:');
+    console.table(result.errors);
+  }
+}
+
 async function handleIterations(
   benchmarkSlug: string,
   options: { run?: string; participant?: string; steps?: string },
@@ -1018,6 +1191,13 @@ export async function run(argv: string[]): Promise<void> {
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench results <benchmark-slug>');
         await handleResults(slug, options, overrides, outputOptions);
+        break;
+      }
+      case 'reliability': {
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest);
+        const [slug] = subPositionals;
+        if (!slug) throw new Error('Benchmark slug required: bench reliability <benchmark-slug>');
+        await handleReliability(slug, options, overrides, outputOptions);
         break;
       }
       case 'iterations': {

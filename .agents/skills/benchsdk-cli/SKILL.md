@@ -134,6 +134,22 @@ bench logs my-benchmark <runId> --participant e2b
 
 Filter flags: `--participant <list>` (comma-separated), `--steps <list>` or `--steps all` (results only), `--since` / `--until` (YYYY-MM-DD, an ISO timestamp, or a relative `24h` / `7d` / `2w`), `--day YYYY-MM-DD` (sugar for since+until on that day — cannot be combined with `--since`/`--until`), `--tz <IANA zone>` for date-only bounds (defaults to the machine's zone), `--source-org <slug>` when a slug is ambiguous across orgs. The response echoes the filter the server applied; a platform without the feature fails loudly instead of returning unfiltered results. `--json` prints the raw response including the `filter` echo.
 
+### Reliability
+
+Uptime views for a `type=reliability` benchmark (e.g. the actions-reliability canary) — the same surface as the dashboard's reliability page and `GET /api/v1/benchmarks/:slug/reliability`:
+
+```bash
+# Aggregated range (default: last 7 days, day buckets, one row per participant + incidents):
+bench reliability my-benchmark
+bench reliability my-benchmark --from 2026-10-01 --to 2026-10-28
+bench reliability my-benchmark --bucket hour --from 2026-10-27T00:00:00Z
+
+# Per-slot view of one participant on one local day:
+bench reliability my-benchmark --day 2026-10-27 --participant e2b
+```
+
+The range view prints each participant's uptime/passed/degraded/failed counts, current status, and scheduler stats (expected vs fired vs missed slots — missed slots attribute downtime to the scheduler rather than the provider), plus incidents and top errors. The day view prints a one-mark-per-slot strip (`.` passed, `~` degraded, `x` failed, `!` missed, ` ` pending) with the failing slots listed. Flags: `--day` requires `--participant` and cannot combine with `--from`/`--to`/`--bucket`/`--metrics`/`--breakdown`; `--metrics`/`--breakdown` take comma-separated task-data keys; `--tz` defaults to the machine's zone; `--source-org` disambiguates shared slugs. `--json` prints the raw response.
+
 ### Artifacts
 
 ```bash

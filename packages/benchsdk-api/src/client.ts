@@ -10,6 +10,9 @@ import type {
   BenchmarkClientConfig,
   BenchmarkParticipant,
   BenchmarkParticipantLogs,
+  BenchmarkReliabilityDay,
+  BenchmarkReliabilityInput,
+  BenchmarkReliabilityRange,
   BenchmarkResource,
   BenchmarkRun,
   BenchmarkResultsOverview,
@@ -624,6 +627,18 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
       return request<BenchmarkResultsOverview>(
         'GET',
         `${benchmarkPath(benchmarkSlug, sourceOrg)}/results${queryString({ limit, offset, ...filterParams(filter) })}`,
+      );
+    },
+
+    async getBenchmarkReliability(benchmarkSlug, input: BenchmarkReliabilityInput = {}) {
+      const { sourceOrg, metrics, breakdowns, ...rest } = input;
+      return request<BenchmarkReliabilityRange | BenchmarkReliabilityDay>(
+        'GET',
+        `${benchmarkPath(benchmarkSlug, sourceOrg)}/reliability${queryString({
+          ...rest,
+          metrics: metrics?.length ? metrics.join(',') : undefined,
+          breakdown: breakdowns?.length ? breakdowns.join(',') : undefined,
+        })}`,
       );
     },
 

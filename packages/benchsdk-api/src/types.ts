@@ -928,6 +928,141 @@ export interface BenchmarkRunSummaryInput {
   scoring?: JsonObject;
 }
 
+// ---------------------------------------------------------------------------
+// Reliability (GET /benchmarks/{slug}/reliability)
+// ---------------------------------------------------------------------------
+
+/** Options for `getBenchmarkReliability`. `day` + `participant` select the
+ * per-slot day view; `from`/`to` (or their default of the last 7 days) select
+ * the aggregated range view. `sourceOrg` routes through `/benchmarks/~/`. */
+export interface BenchmarkReliabilityInput {
+  sourceOrg?: string;
+  /** Local YYYY-MM-DD — the day view; requires `participant`. */
+  day?: string;
+  /** Participant slug (required with `day`). */
+  participant?: string;
+  /** Local YYYY-MM-DD range bounds (day buckets; with `bucket=hour` an
+   * ISO instant also works). */
+  from?: string;
+  to?: string;
+  /** IANA zone for day boundaries; server default UTC. */
+  timeZone?: string;
+  bucket?: "day" | "hour";
+  /** Metric keys (letters, digits, _ . -) to include metric stats for. */
+  metrics?: string[];
+  /** Task-data keys (max 2) to break outcomes down by. */
+  breakdowns?: string[];
+}
+
+export interface BenchmarkReliabilityStats {
+  passed: number;
+  degraded: number;
+  failed: number;
+  /** passed / (passed + degraded + failed); null when nothing counted. */
+  uptime: number | null;
+  p50Ms: number | null;
+  p95Ms: number | null;
+}
+
+export interface BenchmarkReliabilitySchedulerStats {
+  expected: number;
+  fired: number;
+  missed: number;
+  pending: number;
+  duplicates: number;
+}
+
+export interface BenchmarkReliabilityStatus {
+  state: "up" | "degraded" | "down";
+  since: string | null;
+  lastFailureAt: string | null;
+  lastCheckAt: string;
+}
+
+export interface BenchmarkReliabilityIncident {
+  /** null on a scheduler incident (missed fires). */
+  participant: string | null;
+  provider: string | null;
+  kind: "down" | "degraded" | "missed";
+  start: string;
+  end: string;
+  failed: number;
+  degraded: number;
+  missed: number;
+  ongoing: boolean;
+  firstRunId: string | null;
+  error: string | null;
+}
+
+export interface BenchmarkReliabilityMetricStats {
+  p50: number | null;
+  p95: number | null;
+  p99: number | null;
+}
+
+export type BenchmarkReliabilitySlotOutcome =
+  | "passed"
+  | "degraded"
+  | "failed"
+  | "missed"
+  | "pending"
+  | "no-data";
+
+/** Range view: aggregated uptime/status/incidents over `from`/`to`. */
+export interface BenchmarkReliabilityRange {
+  benchmark: { id: string; slug: string; name: string };
+  config: { intervalMs: number; graceMs: number; target: number | null };
+  timeZone: string;
+  from: string;
+  to: string;
+  bucket: "day" | "hour";
+  buckets: { key: string; start: string; end: string }[];
+  participants: {
+    slug: string;
+    provider: string | null;
+    total: BenchmarkReliabilityStats;
+    /** Parallel to the top-level `buckets`. */
+    buckets: BenchmarkReliabilityStats[];
+    status: BenchmarkReliabilityStatus | null;
+  }[];
+  scheduler: {
+    total: BenchmarkReliabilitySchedulerStats;
+    buckets: BenchmarkReliabilitySchedulerStats[];
+  };
+  incidents: BenchmarkReliabilityIncident[];
+  errors: { error: string; count: number }[];
+  metrics?: Record<
+    string,
+    { slug: string; total: BenchmarkReliabilityMetricStats; buckets: BenchmarkReliabilityMetricStats[] }[]
+  >;
+  breakdowns?: {
+    key: string;
+    values: { value: string; passed: number; degraded: number; failed: number }[];
+  }[];
+  generatedAt: string;
+}
+
+/** Day view: every slot of one local day for one participant. */
+export interface BenchmarkReliabilityDay {
+  benchmark: { id: string; slug: string; name: string };
+  config: { intervalMs: number; graceMs: number; target: number | null };
+  timeZone: string;
+  day: string;
+  /** The local day's bounds, so a client can lay out slots not yet due. */
+  start: string;
+  end: string;
+  participant: string;
+  slots: {
+    at: string;
+    outcome: BenchmarkReliabilitySlotOutcome;
+    runId?: string;
+    latencyMs?: number;
+    error?: string;
+  }[];
+  totals: BenchmarkReliabilityStats & { missed: number; pending: number };
+  generatedAt: string;
+}
+
 export interface BenchmarkClient {
   upsertBenchmark(slug: string, input: UpsertBenchmarkInput): Promise<BenchmarkResource>;
   updateBenchmark(slug: string, input: UpdateBenchmarkInput): Promise<BenchmarkResource>;
@@ -1084,5 +1219,15 @@ export interface BenchmarkClient {
     input?: BenchmarkRunIterationInput,
   ): Promise<BenchmarkRunStepIterations>;
   getRunImports(benchmarkSlug: string, runId: string): Promise<BenchmarkRunImports>;
+  /**
+   * GET .../reliability — resolves to `BenchmarkReliabilityDay` when `day` +
+   * `participant` are passed, otherwise `BenchmarkReliabilityRange`. Both
+   * responses share `benchmark`/`config`/`timeZone`/`generatedAt`, so callers
+   * that need the shape can narrow on `'slots' in result`.
+   */
+  getBenchmarkReliability(
+    benchmarkSlug: string,
+    input?: BenchmarkReliabilityInput,
+  ): Promise<BenchmarkReliabilityRange | BenchmarkReliabilityDay>;
   submitRunSummary(benchmarkSlug: string, runId: string, input: BenchmarkRunSummaryInput): Promise<void>;
 }
