@@ -385,7 +385,11 @@ export function parseCliArgs(argv: string[], allowedCustomFlags?: readonly strin
       }
       case '--scheduled-for': {
         const { value, nextIndex } = readValue(arg, i);
-        if (value.trim() === '' || Number.isNaN(Date.parse(value))) {
+        // A full date-time, not just anything Date.parse accepts: a date-only
+        // value silently becomes midnight and lands the run on the wrong slot.
+        const hasDate = /\d{4}-\d{2}-\d{2}/.test(value);
+        const hasTime = /\d{2}:\d{2}/.test(value);
+        if (value.trim() === '' || !hasDate || !hasTime || Number.isNaN(Date.parse(value))) {
           throw new Error(`--scheduled-for expects an ISO-8601 timestamp (got "${value}")`);
         }
         args.scheduledFor = value;

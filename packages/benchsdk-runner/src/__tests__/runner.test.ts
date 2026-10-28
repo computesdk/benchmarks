@@ -146,6 +146,10 @@ describe('parseCliArgs', () => {
     });
     expect(() => parseCliArgs(['--scheduled-for', 'not-a-date'])).toThrow('--scheduled-for');
     expect(() => parseCliArgs(['--scheduled-for', ''])).toThrow('--scheduled-for');
+    // Date-only parses as midnight — silently the wrong slot, so it is rejected.
+    expect(() => parseCliArgs(['--scheduled-for', '2026-10-27'])).toThrow('--scheduled-for');
+    // Time-only has no slot day at all.
+    expect(() => parseCliArgs(['--scheduled-for', '12:00'])).toThrow('--scheduled-for');
   });
 
   it('returns empty object for no args', () => {
