@@ -1222,6 +1222,13 @@ export async function run(argv: string[]): Promise<void> {
         if (sub === 'list') {
           await handleRunsList(slug, options, overrides, outputOptions);
         } else if (sub === 'show') {
+          // `show` shares `runs`' option union for `list` — none of them
+          // apply to a single run, so accept none rather than silently
+          // ignoring e.g. --source-org on a shared slug.
+          const extra = Object.keys(options);
+          if (extra.length > 0) {
+            throw new Error(`Unknown option for this command: --${extra[0]}`);
+          }
           if (!slug || !runId) throw new Error('Usage: bench runs show <benchmark-slug> <runId>');
           await handleRunsShow(slug, runId, overrides, outputOptions);
         } else {
