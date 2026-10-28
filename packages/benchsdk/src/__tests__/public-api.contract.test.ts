@@ -29,6 +29,9 @@ import type {
   BenchmarkFailurePoint,
   BenchmarkIndexConfig,
   BenchmarkParticipant,
+  BenchmarkReliabilityConfig,
+  BenchmarkReliabilityFeedCard,
+  BenchmarkReliabilitySection,
   BenchmarkResource,
   BenchmarkResultLatencySummary,
   BenchmarkResultsOverview,
@@ -126,6 +129,9 @@ type _PublicTypeSurface = [
   BenchmarkFailurePoint,
   BenchmarkIndexConfig,
   BenchmarkParticipant,
+  BenchmarkReliabilityConfig,
+  BenchmarkReliabilityFeedCard,
+  BenchmarkReliabilitySection,
   BenchmarkResource,
   BenchmarkResultLatencySummary,
   BenchmarkResultsOverview,
@@ -1605,8 +1611,19 @@ describe('public API surface and type exports', () => {
         expect((barrel as Record<string, unknown>)[name]).toBeTypeOf('string');
         continue;
       }
-      if (name === 'BENCHMARK_INDEX_LAYOUTS') {
-        expect((barrel as Record<string, unknown>)[name]).toEqual(runnerBarrel.BENCHMARK_INDEX_LAYOUTS);
+      const CONSTANT_EXPORTS = new Set([
+        'BENCHMARK_INDEX_LAYOUTS',
+        'BENCHMARK_RELIABILITY_LAYOUTS',
+        'BENCHMARK_RELIABILITY_SECTION_TYPES',
+        'RELIABILITY_INCIDENT_OUTCOMES',
+        'RELIABILITY_LATENCY_METRIC',
+        'RELIABILITY_METRIC_STATS',
+        'RELIABILITY_UPTIME_WINDOWS',
+      ]);
+      if (CONSTANT_EXPORTS.has(name)) {
+        expect((barrel as Record<string, unknown>)[name]).toEqual(
+          (runnerBarrel as Record<string, unknown>)[name],
+        );
         continue;
       }
       expect((barrel as Record<string, unknown>)[name]).toBeTypeOf('function');
