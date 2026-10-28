@@ -187,7 +187,10 @@ const subcommandOptionSchema = {
   ref: { type: 'string' as const },
 };
 
-export function parseSubcommandOptions(args: string[]): { options: Record<string, string | number>; positionals: string[] } {
+export function parseSubcommandOptions(
+  args: string[],
+  allowed?: readonly string[],
+): { options: Record<string, string | number>; positionals: string[] } {
   const options: Record<string, string | number> = {};
   const positionals: string[] = [];
   let i = 0;
@@ -205,6 +208,12 @@ export function parseSubcommandOptions(args: string[]): { options: Record<string
     const key = namePart.slice(2);
     const schema = subcommandOptionSchema[key as keyof typeof subcommandOptionSchema];
     if (!schema) throw new Error(`Unknown option: ${arg}`);
+    // The schema is global — a flag another command understands would
+    // otherwise be silently ignored here (e.g. `bench results --from`
+    // printing unfiltered results).
+    if (allowed !== undefined && !allowed.includes(key)) {
+      throw new Error(`Unknown option for this command: ${arg}`);
+    }
 
     let rawValue: string;
     if (valuePart !== undefined) {
@@ -799,6 +808,11 @@ async function handleReliability(
       throw new Error("--bucket must be 'day' or 'hour'");
     }
   }
+  if (options['source-org'] !== undefined && !options['source-org'].trim()) {
+    // A blank --source-org must not silently fall back to the active org —
+    // a shared slug would return another benchmark's data without warning.
+    throw new Error('--source-org must name an organization slug');
+  }
 
   const csv = (raw: string | undefined, name: string): string[] | undefined => {
     if (raw === undefined) return undefined;
@@ -809,7 +823,7 @@ async function handleReliability(
 
   const { api } = await createApiClient(overrides);
   const result = await api.getBenchmarkReliability(benchmarkSlug, {
-    sourceOrg: options['source-org']?.trim() || undefined,
+    sourceOrg: options['source-org']?.trim(),
     day: options.day,
     participant: options.participant?.trim(),
     from: options.from,
@@ -907,6 +921,33 @@ function printReliability(result: BenchmarkReliabilityRange | BenchmarkReliabili
   if (result.errors.length > 0) {
     console.log('Top errors:');
     console.table(result.errors);
+  }
+  if (result.metrics && Object.keys(result.metrics).length > 0) {
+    console.log('Metrics:');
+    console.table(
+      Object.entries(result.metrics).flatMap(([key, rows]) =>
+        rows.map((r) => ({
+          metric: key,
+          participant: r.slug,
+          p50: r.total.p50 ?? 'n/a',
+          p95: r.total.p95 ?? 'n/a',
+          p99: r.total.p99 ?? 'n/a',
+        })),
+      ),
+    );
+  }
+  if (result.breakdowns && result.breakdowns.length > 0) {
+    for (const b of result.breakdowns) {
+      console.log(`Breakdown ${b.key}:`);
+      console.table(
+        b.values.map((v) => ({
+          value: v.value,
+          passed: v.passed,
+          degraded: v.degraded,
+          failed: v.failed,
+        })),
+      );
+    }
   }
 }
 
@@ -1151,7 +1192,7 @@ export async function run(argv: string[]): Promise<void> {
       }
       case 'org': {
         const [sub, ...subRest] = rest;
-        const { positionals: subPositionals } = parseSubcommandOptions(subRest);
+        const { positionals: subPositionals } = parseSubcommandOptions(subRest, []);
         if (sub === 'list') {
           await handleOrgList(overrides, outputOptions);
         } else if (sub === 'use') {
@@ -1165,7 +1206,7 @@ export async function run(argv: string[]): Promise<void> {
       }
       case 'benchmarks': {
         const [sub, ...subRest] = rest;
-        const { options } = parseSubcommandOptions(subRest);
+        const { options } = parseSubcommandOptions(subRest, ['limit', 'offset']);
         if (sub === 'list') {
           await handleBenchmarksList(overrides, options, outputOptions);
         } else {
@@ -1174,7 +1215,9 @@ export async function run(argv: string[]): Promise<void> {
         break;
       }
       case 'runs': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, [
+          'limit', 'offset', 'participant', 'since', 'until', 'day', 'tz', 'source-org',
+        ]);
         const [sub, slug, runId] = subPositionals;
         if (sub === 'list') {
           await handleRunsList(slug, options, overrides, outputOptions);
@@ -1187,21 +1230,29 @@ export async function run(argv: string[]): Promise<void> {
         break;
       }
       case 'results': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, [
+          'run', 'participant', 'steps', 'since', 'until', 'day', 'tz', 'source-org',
+          'limit', 'offset',
+        ]);
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench results <benchmark-slug>');
         await handleResults(slug, options, overrides, outputOptions);
         break;
       }
       case 'reliability': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, [
+          'day', 'participant', 'from', 'to', 'bucket', 'tz', 'metrics', 'breakdown',
+          'source-org',
+        ]);
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench reliability <benchmark-slug>');
         await handleReliability(slug, options, overrides, outputOptions);
         break;
       }
       case 'iterations': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, [
+          'run', 'participant', 'steps',
+        ]);
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench iterations <benchmark-slug>');
         await handleIterations(slug, options, overrides, outputOptions);
@@ -1209,7 +1260,7 @@ export async function run(argv: string[]): Promise<void> {
       }
       case 'artifacts': {
         const [sub, ...subRest] = rest;
-        const { options, positionals: subPositionals } = parseSubcommandOptions(subRest);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(subRest, ['worker']);
         if (sub === 'list') {
           const [slug, runId] = subPositionals;
           if (!slug || !runId) throw new Error('Usage: bench artifacts list <benchmark-slug> <runId>');
@@ -1220,21 +1271,25 @@ export async function run(argv: string[]): Promise<void> {
         break;
       }
       case 'logs': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, [
+          'participant', 'worker', 'max-lines',
+        ]);
         const [slug, runId] = subPositionals;
         if (!slug || !runId) throw new Error('Usage: bench logs <benchmark-slug> <runId>');
         await handleLogs(slug, runId, options, overrides, outputOptions);
         break;
       }
       case 'export': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, ['run', 'out']);
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench export <benchmark-slug>');
         await handleExport(slug, options, overrides);
         break;
       }
       case 'fork': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, [
+          'as', 'source-org', 'ref',
+        ]);
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench fork <benchmark-slug>');
         await handleFork(slug, options, overrides, outputOptions);
