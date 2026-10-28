@@ -32,6 +32,7 @@ const USAGE =
   '  bench run <file.bench.ts> [--shape name] [--provider a,b] [--run-key key]\n' +
   '      [--benchmark slug] [--name "My benchmark"]\n' +
   '      [--iterations N] [--concurrency N] [--stagger-delay-ms N] [--group-by participant|round]\n' +
+  '      [--deadline-ms N] [--scheduled-for ISO-8601]\n' +
   '      [--no-ingest | --dry-run] [--check]\n' +
   '  bench check <file.bench.ts> [--base-url <url>] [--api-key <key>]';
 

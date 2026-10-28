@@ -137,6 +137,17 @@ describe('parseCliArgs', () => {
     expect(() => parseCliArgs(['--deadline-ms', 'abc'])).toThrow('--deadline-ms');
   });
 
+  it('parses --scheduled-for and rejects unparseable timestamps', () => {
+    expect(parseCliArgs(['--scheduled-for', '2026-10-27T12:00:00Z'])).toEqual({
+      scheduledFor: '2026-10-27T12:00:00Z',
+    });
+    expect(parseCliArgs(['--scheduled-for=2026-10-27T12:00:00.000Z'])).toEqual({
+      scheduledFor: '2026-10-27T12:00:00.000Z',
+    });
+    expect(() => parseCliArgs(['--scheduled-for', 'not-a-date'])).toThrow('--scheduled-for');
+    expect(() => parseCliArgs(['--scheduled-for', ''])).toThrow('--scheduled-for');
+  });
+
   it('returns empty object for no args', () => {
     expect(parseCliArgs([])).toEqual({});
   });
@@ -390,6 +401,40 @@ describe('runBenchmark', () => {
     });
   });
 
+  it('sends type and config.reliability on the upsert when the config declares them', async () => {
+    const task = vi.fn(async () => ({ data: {} }));
+    const config: BenchmarkConfig<typeof participants[number]> = {
+      benchmarkSlug: 'actions-reliability',
+      benchmarkName: 'Actions Reliability',
+      iterations: 1,
+      concurrency: 1,
+      participants: [participants[0]],
+      type: 'reliability',
+      reliability: {
+        interval: '1m',
+        graceMs: 120_000,
+        degradedWhen: { data: { placementFallback: true } },
+        sections: [{ type: 'uptime' }, { type: 'slot-grid' }, { type: 'incidents' }],
+      },
+    };
+
+    await runBenchmark(config, defineTask(task), []);
+
+    expect(calls.upsertBenchmark[0][0]).toBe('actions-reliability');
+    expect(calls.upsertBenchmark[0][1]).toMatchObject({
+      name: 'Actions Reliability',
+      type: 'reliability',
+      config: {
+        reliability: {
+          interval: '1m',
+          graceMs: 120_000,
+          degradedWhen: { data: { placementFallback: true } },
+          sections: [{ type: 'uptime' }, { type: 'slot-grid' }, { type: 'incidents' }],
+        },
+      },
+    });
+  });
+
   it('omits type from the upsert when the config does not declare it', async () => {
     const task = vi.fn(async () => ({ data: {} }));
     const config: BenchmarkConfig<typeof participants[number]> = {
@@ -512,6 +557,28 @@ describe('runBenchmark', () => {
     } finally {
       process.env = savedEnv;
     }
+  });
+
+  it('records --scheduled-for in the run config trigger so late-reporting runs fill their real slot', async () => {
+    const config: BenchmarkConfig<typeof participants[number]> = {
+      benchmarkSlug: 's',
+      benchmarkName: 'n',
+      iterations: 1,
+      concurrency: 1,
+      participants: [participants[0]],
+      onScore: (lowerIsBetter) => ({
+        metrics: [lowerIsBetter('ttiMs', { unit: 'ms', ceiling: 1000, weights: { median: 1, p95: 0, p99: 0 } })],
+      }),
+    };
+    await runBenchmark(config, defineTask(async () => ({ data: { ttiMs: 100 } })), [
+      '--scheduled-for',
+      '2026-10-27T12:00:00Z',
+    ]);
+    expect(calls.createRun[0][1].config.trigger.scheduledFor).toBe('2026-10-27T12:00:00Z');
+
+    // No flag → no scheduledFor key, so the platform falls back to nearest-slot.
+    await runBenchmark(config, defineTask(async () => ({ data: { ttiMs: 100 } })), []);
+    expect(calls.createRun[1][1].config.trigger.scheduledFor).toBeUndefined();
   });
 
   it('propagates a ScoringSpecError from a misconfigured onScore instead of swallowing it as a warning', async () => {

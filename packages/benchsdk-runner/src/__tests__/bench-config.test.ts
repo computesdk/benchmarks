@@ -437,11 +437,9 @@ describe('defineBenchmarkConfig', () => {
     expect(config.index?.layout).toBe('matrix');
   });
 
-  it('accepts standard and reliability types without a config block', () => {
-    for (const type of ['standard', 'reliability'] as const) {
-      const config = defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, type });
-      expect(config.type).toBe(type);
-    }
+  it('accepts standard type without a config block', () => {
+    const config = defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, type: 'standard' });
+    expect(config.type).toBe('standard');
   });
 
   it('rejects an unknown type', () => {
@@ -519,6 +517,216 @@ describe('defineBenchmarkConfig', () => {
         index: { layout: 'matrix', extra: true } as any,
       }),
     ).toThrow("index contains unexpected key: 'extra'");
+  });
+});
+
+describe('reliability config', () => {
+  const reliable = (reliability: unknown) =>
+    defineBenchmarkConfig({
+      benchmarkSlug: 's',
+      benchmarkName: 'n',
+      participants,
+      type: 'reliability',
+      reliability: reliability as any,
+    });
+
+  it('carries a valid reliability declaration', () => {
+    const config = reliable({
+      interval: '1m',
+      graceMs: 120_000,
+      degradedWhen: { data: { placementFallback: true } },
+      target: { uptime: 0.999 },
+      layout: 'series',
+      sections: [
+        { type: 'uptime', windows: ['24h', '7d'] },
+        { type: 'slot-grid' },
+        { type: 'metric', metric: 'latency', stats: ['p50', 'p95'] },
+        { type: 'breakdown', by: 'provider', label: 'By provider' },
+        { type: 'incidents', outcomes: ['failed', 'missed'] },
+      ],
+      feedCard: { strip: '24h', stat: 'uptime' },
+    });
+    expect(config.type).toBe('reliability');
+    expect(config.reliability?.interval).toBe('1m');
+  });
+
+  it('carries a minimal reliability declaration (interval only)', () => {
+    const config = reliable({ interval: '30s' });
+    expect(config.reliability?.interval).toBe('30s');
+  });
+
+  it("rejects a reliability block without type: 'reliability'", () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        reliability: { interval: '1m' },
+      }),
+    ).toThrow(/reliability.*requires type: 'reliability'/);
+  });
+
+  it("rejects a reliability block paired with a non-reliability type", () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        type: 'index',
+        index: { layout: 'matrix' },
+        reliability: { interval: '1m' },
+      }),
+    ).toThrow(/reliability.*requires type: 'reliability'/);
+  });
+
+  it("rejects type: 'reliability' without a reliability block", () => {
+    expect(() =>
+      defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, type: 'reliability' }),
+    ).toThrow(/reliability.*is required when type is 'reliability'/);
+  });
+
+  it('rejects a non-object reliability block', () => {
+    expect(() => reliable('1m')).toThrow('reliability must be an object');
+    expect(() => reliable(null)).toThrow('reliability must be an object');
+    expect(() => reliable([])).toThrow('reliability must be an object');
+  });
+
+  it('requires an interval', () => {
+    expect(() => reliable({})).toThrow('reliability.interval');
+  });
+
+  it.each(['1', 'abc', 'm', '5x', '-5m'])('rejects malformed interval %s', (interval) => {
+    expect(() => reliable({ interval })).toThrow('reliability.interval');
+  });
+
+  it.each(['0s', '29s', '15s'])('rejects interval %s below the 30s minimum', (interval) => {
+    expect(() => reliable({ interval })).toThrow(/reliability\.interval.*30s/);
+  });
+
+  it.each(['30s', '45s', '1m', '5m', '1h', '24h'])('accepts interval %s at or above the 30s minimum', (interval) => {
+    const config = reliable({ interval });
+    expect(config.reliability?.interval).toBe(interval);
+  });
+
+  it('rejects a non-positive or non-integer graceMs', () => {
+    for (const graceMs of [0, -1, 1.5, 'x' as any]) {
+      expect(() => reliable({ interval: '1m', graceMs })).toThrow('reliability.graceMs');
+    }
+  });
+
+  it('rejects a degradedWhen without a data object', () => {
+    expect(() => reliable({ interval: '1m', degradedWhen: {} })).toThrow('reliability.degradedWhen.data');
+    expect(() => reliable({ interval: '1m', degradedWhen: 'x' })).toThrow('reliability.degradedWhen');
+  });
+
+  it('rejects non-scalar values in degradedWhen.data', () => {
+    expect(() =>
+      reliable({ interval: '1m', degradedWhen: { data: { nested: {} } } }),
+    ).toThrow(/reliability\.degradedWhen\.data\.nested.*string, number, or boolean/);
+  });
+
+  it('accepts string, number, and boolean values in degradedWhen.data', () => {
+    const config = reliable({
+      interval: '1m',
+      degradedWhen: { data: { fallback: true, code: 'pin_refused', attempt: 2 } },
+    });
+    expect(config.reliability?.degradedWhen?.data).toEqual({ fallback: true, code: 'pin_refused', attempt: 2 });
+  });
+
+  it.each([0, 1, 1.5, -0.5, '0.9' as any])('rejects out-of-range target.uptime %s', (uptime) => {
+    expect(() => reliable({ interval: '1m', target: { uptime } })).toThrow(/reliability\.target\.uptime.*between 0 and 1/);
+  });
+
+  it('rejects an unknown layout', () => {
+    expect(() => reliable({ interval: '1m', layout: 'grid' })).toThrow(/reliability\.layout.*series/);
+  });
+
+  it('rejects a non-array sections list', () => {
+    expect(() => reliable({ interval: '1m', sections: 'uptime' })).toThrow('reliability.sections must be an array');
+  });
+
+  it('rejects an unknown section type (the runner is the strict check)', () => {
+    expect(() => reliable({ interval: '1m', sections: [{ type: 'heatmap' }] })).toThrow(
+      /reliability\.sections\[0\]\.type.*uptime.*slot-grid.*metric.*breakdown.*incidents/,
+    );
+  });
+
+  it('rejects a section without a type', () => {
+    expect(() => reliable({ interval: '1m', sections: [{}] })).toThrow('reliability.sections[0].type');
+    expect(() => reliable({ interval: '1m', sections: ['uptime'] })).toThrow('reliability.sections[0]');
+  });
+
+  it('rejects unknown keys in a section', () => {
+    expect(() =>
+      reliable({ interval: '1m', sections: [{ type: 'uptime', windows: ['24h'], extra: 1 }] }),
+    ).toThrow(/reliability\.sections\[0\].*unexpected key.*'extra'/);
+  });
+
+  it('rejects unknown windows in an uptime section', () => {
+    expect(() =>
+      reliable({ interval: '1m', sections: [{ type: 'uptime', windows: ['1h'] }] }),
+    ).toThrow(/reliability\.sections\[0\]\.windows.*24h.*7d.*30d/);
+  });
+
+  it('requires a metric name in a metric section', () => {
+    expect(() => reliable({ interval: '1m', sections: [{ type: 'metric' }] })).toThrow('reliability.sections[0].metric');
+  });
+
+  it('accepts the built-in latency metric without a display.metrics declaration', () => {
+    const config = reliable({ interval: '1m', sections: [{ type: 'metric', metric: 'latency' }] });
+    expect(config.reliability?.sections?.[0]).toEqual({ type: 'metric', metric: 'latency' });
+  });
+
+  it('accepts a metric section for a metric declared in display.metrics', () => {
+    const config = defineBenchmarkConfig({
+      benchmarkSlug: 's',
+      benchmarkName: 'n',
+      participants,
+      type: 'reliability',
+      display: { metrics: [{ key: 'workloadMs', label: 'Workload' }] },
+      reliability: { interval: '1m', sections: [{ type: 'metric', metric: 'workloadMs' }] },
+    });
+    expect(config.reliability?.sections?.[0]).toEqual({ type: 'metric', metric: 'workloadMs' });
+  });
+
+  it('rejects a metric section for a metric not declared in display.metrics', () => {
+    expect(() =>
+      defineBenchmarkConfig({
+        benchmarkSlug: 's',
+        benchmarkName: 'n',
+        participants,
+        type: 'reliability',
+        display: { metrics: [{ key: 'other', label: 'Other' }] },
+        reliability: { interval: '1m', sections: [{ type: 'metric', metric: 'workloadMs' }] },
+      }),
+    ).toThrow(/metric.*workloadMs.*not declared in display\.metrics/);
+  });
+
+  it('rejects unknown stats in a metric section', () => {
+    expect(() =>
+      reliable({ interval: '1m', sections: [{ type: 'metric', metric: 'latency', stats: ['p90'] }] }),
+    ).toThrow(/reliability\.sections\[0\]\.stats.*p50.*p95.*p99/);
+  });
+
+  it('requires a breakdown.by name', () => {
+    expect(() => reliable({ interval: '1m', sections: [{ type: 'breakdown' }] })).toThrow('reliability.sections[0].by');
+  });
+
+  it('rejects unknown outcomes in an incidents section', () => {
+    expect(() =>
+      reliable({ interval: '1m', sections: [{ type: 'incidents', outcomes: ['crashed'] }] }),
+    ).toThrow(/reliability\.sections\[0\]\.outcomes.*failed.*missed.*degraded/);
+  });
+
+  it('rejects invalid feedCard values and keys', () => {
+    expect(() => reliable({ interval: '1m', feedCard: { strip: '7d' } })).toThrow('reliability.feedCard.strip');
+    expect(() => reliable({ interval: '1m', feedCard: { stat: 'uptime' } })).not.toThrow();
+    expect(() => reliable({ interval: '1m', feedCard: { stat: 'checks' } })).toThrow('reliability.feedCard.stat');
+    expect(() => reliable({ interval: '1m', feedCard: { extra: 1 } })).toThrow(/reliability\.feedCard.*unexpected key.*'extra'/);
+  });
+
+  it('rejects unknown keys in the reliability block', () => {
+    expect(() => reliable({ interval: '1m', extra: true })).toThrow("reliability contains unexpected key: 'extra'");
   });
 });
 

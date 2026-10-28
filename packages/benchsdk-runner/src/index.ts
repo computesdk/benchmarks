@@ -19,9 +19,20 @@ export type {
   BenchmarkMetricDisplay,
   BenchmarkStepDisplay,
   BenchmarkOverviewDisplay,
+  BenchmarkReliabilityConfig,
+  BenchmarkReliabilitySection,
+  BenchmarkReliabilityFeedCard,
   BenchmarkType,
 } from './bench-config.js';
 export { BENCHMARK_INDEX_LAYOUTS } from './bench-config.js';
+export {
+  BENCHMARK_RELIABILITY_LAYOUTS,
+  BENCHMARK_RELIABILITY_SECTION_TYPES,
+  RELIABILITY_INCIDENT_OUTCOMES,
+  RELIABILITY_LATENCY_METRIC,
+  RELIABILITY_METRIC_STATS,
+  RELIABILITY_UPTIME_WINDOWS,
+} from './bench-config.js';
 
 // Operator / runner entrypoints
 export { NoAvailableParticipantsError } from './no-available-participants.js';

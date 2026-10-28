@@ -377,6 +377,39 @@ display: {
 
 Everything is optional and falls back gracefully: an undeclared step renders title-cased in first-seen order, and an undeclared metric renders with a generic number format and `higher-better` direction — a new `measure()` key shows up in the UI with no config at all; declaring it only improves its presentation. Well-known keys (`uploadMs`, `throughputMbps`, `compositeScore`, ...) have built-in platform defaults the manifest can refine.
 
+### Benchmark types
+
+`config.type` selects which platform surface renders the benchmark: `'standard'` (default), `'index'`, or `'reliability'`. A non-standard type requires its matching config block and is rejected otherwise; the runner is the strict check — the platform skips unknown options at render time, but `defineBenchmarkConfig` throws on them so typos fail loudly at definition time.
+
+```ts
+export const config = defineBenchmarkConfig({
+  benchmarkSlug: 'actions-reliability',
+  benchmarkName: 'Actions Reliability',
+  type: 'reliability',
+  reliability: {
+    interval: '1m',                        // scheduled cadence; >= '30s', '<n>s|m|h'
+    graceMs: 120_000,                      // how long a slot waits for its run
+    degradedWhen: { data: { placementFallback: true } }, // success-but-degraded predicate
+    target: { uptime: 0.999 },
+    layout: 'series',
+    sections: [
+      { type: 'uptime', windows: ['24h', '7d', '30d'] },
+      { type: 'slot-grid' },
+      { type: 'metric', metric: 'workloadMs', stats: ['p50', 'p95', 'p99'] },
+      { type: 'breakdown', by: 'provider' },
+      { type: 'incidents', outcomes: ['failed', 'missed', 'degraded'] },
+    ],
+    feedCard: { strip: '24h', stat: 'uptime' },
+  },
+  display: { metrics: [{ key: 'workloadMs', label: 'Workload', unit: 'ms' }] },
+  // ...
+});
+```
+
+A `metric` section's key must be declared in `display.metrics`, or be the built-in `'latency'` (overall task latency — every benchmark reports it). An `index` benchmark declares `index: { layout: 'model-matrix' | 'matrix', spec? }` instead.
+
+Scheduled reliability runs stamp `--scheduled-for <iso>` so the platform assigns the run to its real slot even when it reports late; without it the run falls back to the nearest slot by creation time.
+
 ### Phases in the UI
 
 The run page's chart and iteration-table dropdowns offer an "Overall task" entry plus one entry per `step()` name — the platform calls these **phases**. They are pure display slices over the run's stored step rows, not something you configure: pick a phase and the chart shows just that slice's data. `display.steps` controls their labels and order, so the dropdown, the "By Step" table columns, and the latency scatter all agree. (Not to be confused with `config.phases`, which splits a run's iterations into named segments like cold/warm.)
@@ -480,6 +513,8 @@ bench run <file.bench.ts> [flags]
 | `--iterations N` | Override total iterations (per phase when phases exist). |
 | `--concurrency N` | Override max in-flight tasks. |
 | `--stagger-delay-ms N` | Override stagger delay. |
+| `--deadline-ms N` | Wall-clock budget for task execution; on expiry the run drains and finishes. |
+| `--scheduled-for ISO-8601` | Stamp the scheduled slot this run belongs to (reliability runs). |
 | `--group-by participant\|round` | Override task ordering. |
 | `--shape name` | Use a declared shape. |
 | `--benchmark slug` | Report under a different platform slug. |

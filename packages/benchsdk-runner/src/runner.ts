@@ -74,6 +74,13 @@ export interface CliArgs {
   groupBy?: GroupBy;
   /** Participant names from `--provider a,b` (repeatable). */
   providers?: string[];
+  /**
+   * Scheduled slot this run belongs to (`--scheduled-for`), an ISO-8601
+   * timestamp stamped into `config.trigger.scheduledFor` so the platform's
+   * reliability slot engine assigns the run to its real slot even when it
+   * reports late.
+   */
+  scheduledFor?: string;
   /** When true, run locally and do not ingest/report to the platform. */
   noIngest?: boolean;
 }
@@ -376,6 +383,15 @@ export function parseCliArgs(argv: string[], allowedCustomFlags?: readonly strin
         i = nextIndex;
         break;
       }
+      case '--scheduled-for': {
+        const { value, nextIndex } = readValue(arg, i);
+        if (value.trim() === '' || Number.isNaN(Date.parse(value))) {
+          throw new Error(`--scheduled-for expects an ISO-8601 timestamp (got "${value}")`);
+        }
+        args.scheduledFor = value;
+        i = nextIndex;
+        break;
+      }
       case '--no-ingest':
       case '--dry-run':
         args.noIngest = true;
@@ -448,6 +464,7 @@ export function mergeConfig<T extends BaseParticipant>(
     deadlineMs: args.deadlineMs ?? config.deadlineMs,
     groupBy: args.groupBy ?? config.groupBy ?? 'participant',
     providers: args.providers ?? config.defaultProviders,
+    scheduledFor: args.scheduledFor,
   };
   if (!Number.isInteger(resolved.iterations) || resolved.iterations < 1) {
     throw new Error(`iterations must be an integer >= 1 (got ${resolved.iterations})`);
@@ -585,7 +602,7 @@ export function resolveTriggerSource(env: NodeJS.ProcessEnv = process.env): stri
   return env.GITHUB_EVENT_NAME?.trim() || 'manual';
 }
 
-function triggerToJson(env: NodeJS.ProcessEnv = process.env): JsonObject {
+function triggerToJson(env: NodeJS.ProcessEnv = process.env, scheduledFor?: string): JsonObject {
   const requestedBy = env.BENCH_TRIGGER_REQUESTED_BY?.trim();
   const requestId = env.BENCH_TRIGGER_REQUEST_ID?.trim();
   const event = env.GITHUB_EVENT_NAME?.trim();
@@ -594,6 +611,7 @@ function triggerToJson(env: NodeJS.ProcessEnv = process.env): JsonObject {
     ...(event ? { event } : {}),
     ...(requestedBy ? { requestedBy } : {}),
     ...(requestId ? { requestId } : {}),
+    ...(scheduledFor ? { scheduledFor } : {}),
   };
 }
 
@@ -621,7 +639,7 @@ export function runConfigToJson<T extends BaseParticipant>(
     ...(config.dimensions ? { dimensions: config.dimensions } : {}),
     ...(config.scoring ? { scoring: config.scoring } : {}),
     participants,
-    trigger: triggerToJson(env),
+    trigger: triggerToJson(env, resolved.scheduledFor),
   };
   return JSON.parse(JSON.stringify(runConfig)) as JsonObject;
 }
@@ -710,6 +728,7 @@ export async function runBenchmark<T extends BaseParticipant>(
         ...(config.scoring ? { scoring: config.scoring as unknown as JsonObject } : {}),
         ...(config.display ? { display: config.display as unknown as JsonObject } : {}),
         ...(config.index ? { index: config.index as unknown as JsonObject } : {}),
+        ...(config.reliability ? { reliability: config.reliability as unknown as JsonObject } : {}),
       };
       // Always upsert the target slug so createRun can't 404 on a brand-new
       // --benchmark. A bare retarget leaves an existing benchmark untouched

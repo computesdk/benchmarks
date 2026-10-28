@@ -48,8 +48,7 @@ export type GroupBy = 'participant' | 'round';
  * The class of benchmark a `*.bench.ts` declares. 'standard' (the default)
  * renders the generic runs/results views; a non-standard type names a
  * purpose-built platform surface and carries a config block of the same name
- * (`index` → `index: {...}`). 'reliability' is part of the union but has no
- * config block yet.
+ * (`index` → `index: {...}`, `reliability` → `reliability: {...}`).
  */
 export type BenchmarkType = 'standard' | 'index' | 'reliability';
 
@@ -66,6 +65,101 @@ export interface BenchmarkIndexConfig {
   layout: string;
   /** Layout-specific declarative spec. */
   spec?: JsonObject;
+}
+
+/** Built-in metric every benchmark reports — overall task latency. A `metric`
+ *  section can chart it without declaring it in `display.metrics`. */
+export const RELIABILITY_LATENCY_METRIC = 'latency';
+
+/** Layout names a `reliability` benchmark can declare. */
+export const BENCHMARK_RELIABILITY_LAYOUTS = ['series'] as const;
+
+export const RELIABILITY_UPTIME_WINDOWS = ['24h', '7d', '30d'] as const;
+export const RELIABILITY_METRIC_STATS = ['p50', 'p95', 'p99'] as const;
+export const RELIABILITY_INCIDENT_OUTCOMES = ['failed', 'missed', 'degraded'] as const;
+export const BENCHMARK_RELIABILITY_SECTION_TYPES = ['uptime', 'slot-grid', 'metric', 'breakdown', 'incidents'] as const;
+
+const RELIABILITY_DURATION_PATTERN = /^(\d+)([smh])$/;
+const RELIABILITY_DURATION_UNIT_MS = { s: 1_000, m: 60_000, h: 3_600_000 } as const;
+const RELIABILITY_MIN_INTERVAL_MS = 30_000;
+
+function parseReliabilityDurationMs(value: string): number | undefined {
+  const m = RELIABILITY_DURATION_PATTERN.exec(value);
+  if (!m) return undefined;
+  const unit = m[2] as keyof typeof RELIABILITY_DURATION_UNIT_MS;
+  return Number(m[1]) * RELIABILITY_DURATION_UNIT_MS[unit];
+}
+
+/** Uptime summary over trailing windows. */
+export interface ReliabilityUptimeSection {
+  type: 'uptime';
+  /** Windows to compute — subset of {@link RELIABILITY_UPTIME_WINDOWS}; defaults to all. */
+  windows?: string[];
+}
+
+/** The minute/hour slot grid (the reliability heatmap). */
+export interface ReliabilitySlotGridSection {
+  type: 'slot-grid';
+}
+
+/** A percentile chart over one measured metric across the period. */
+export interface ReliabilityMetricSection {
+  type: 'metric';
+  /** Metric key — must be declared in `display.metrics`, or {@link RELIABILITY_LATENCY_METRIC}. */
+  metric: string;
+  /** Percentiles to chart — subset of {@link RELIABILITY_METRIC_STATS}; defaults to all. */
+  stats?: string[];
+}
+
+/** Pass/fail breakdown grouped by a task-data key (e.g. 'provider', 'region'). */
+export interface ReliabilityBreakdownSection {
+  type: 'breakdown';
+  by: string;
+  label?: string;
+}
+
+/** Incident list — slots that missed plus failed/degraded runs. */
+export interface ReliabilityIncidentsSection {
+  type: 'incidents';
+  /** Outcomes listed — subset of {@link RELIABILITY_INCIDENT_OUTCOMES}; defaults to all. */
+  outcomes?: string[];
+}
+
+export type BenchmarkReliabilitySection =
+  | ReliabilityUptimeSection
+  | ReliabilitySlotGridSection
+  | ReliabilityMetricSection
+  | ReliabilityBreakdownSection
+  | ReliabilityIncidentsSection;
+
+/** Compact strip the reliability benchmark contributes to shared feeds. */
+export interface BenchmarkReliabilityFeedCard {
+  strip?: '24h';
+  stat?: 'uptime';
+}
+
+/**
+ * Config block for `type: 'reliability'` benchmarks. Declares the scheduled
+ * cadence the platform computes slots against, the degraded criteria, and
+ * which reliability sections the page renders. Validation is strict — the
+ * platform skips unknown section types, but the runner rejects them so a typo
+ * fails loudly at definition time.
+ */
+export interface BenchmarkReliabilityConfig {
+  /** Scheduled cadence, e.g. '30s', '1m', '5m', '1h'. Minimum 30s. */
+  interval: string;
+  /** How long after a slot start the platform waits for its run before calling it missed. */
+  graceMs?: number;
+  /** Task-data predicate marking a successful result as degraded (e.g. `{ data: { placementFallback: true } }`). */
+  degradedWhen?: { data: Record<string, string | number | boolean> };
+  /** SLO the uptime figure is graded against. */
+  target?: { uptime: number };
+  /** Page layout — one of {@link BENCHMARK_RELIABILITY_LAYOUTS}. */
+  layout?: string;
+  /** Page sections, in render order. Unknown types are rejected. */
+  sections?: BenchmarkReliabilitySection[];
+  /** The card this benchmark shows in shared feeds. */
+  feedCard?: BenchmarkReliabilityFeedCard;
 }
 
 /**
@@ -228,6 +322,12 @@ export interface ResolvedRunConfig {
   staggerDelayMs: number;
   groupBy: GroupBy;
   providers?: string[];
+  /**
+   * The scheduled slot this run belongs to (`--scheduled-for`), an ISO-8601
+   * timestamp. Reliability runs stamp it so a late-reporting run fills its
+   * real slot instead of whichever slot it happened to land in.
+   */
+  scheduledFor?: string;
 }
 
 /**
@@ -338,6 +438,12 @@ export interface BenchmarkConfig<T extends BaseParticipant = BaseParticipant> {
    * otherwise. `layout` picks the platform renderer (`model-matrix`, `matrix`).
    */
   index?: BenchmarkIndexConfig;
+  /**
+   * Reliability-benchmark declaration, required when `type` is 'reliability'
+   * and rejected otherwise. Declares the scheduled interval, degraded
+   * criteria, and which sections the platform's reliability surface renders.
+   */
+  reliability?: BenchmarkReliabilityConfig;
   /**
    * Custom CLI flags this benchmark reads from `process.argv` (e.g. `--file-size`).
    * Declaring them lets the runner distinguish intentional pass-through flags
@@ -468,6 +574,167 @@ function validateBenchmarkIndexConfig(index: BenchmarkIndexConfig): void {
   }
   if (index.spec !== undefined && (index.spec === null || typeof index.spec !== 'object' || Array.isArray(index.spec))) {
     throw new Error('index.spec must be a plain object');
+  }
+}
+
+function validateBenchmarkReliabilityConfig(
+  reliability: BenchmarkReliabilityConfig,
+  display?: BenchmarkDisplayConfig,
+): void {
+  if (typeof reliability !== 'object' || reliability === null || Array.isArray(reliability)) {
+    throw new Error('reliability must be an object');
+  }
+  assertOnlyAllowedKeys(
+    reliability as unknown as Record<string, unknown>,
+    ['interval', 'graceMs', 'degradedWhen', 'target', 'layout', 'sections', 'feedCard'],
+    'reliability',
+  );
+
+  const interval = assertNonEmptyString(reliability.interval, 'reliability.interval');
+  const intervalMs = parseReliabilityDurationMs(interval);
+  if (intervalMs === undefined) {
+    throw new Error(`reliability.interval must be a duration like '30s', '1m', '5m', '1h' (got '${interval}')`);
+  }
+  if (intervalMs < RELIABILITY_MIN_INTERVAL_MS) {
+    throw new Error(`reliability.interval must be at least 30s (got '${interval}')`);
+  }
+
+  if (reliability.graceMs !== undefined) {
+    if (!Number.isInteger(reliability.graceMs) || reliability.graceMs <= 0) {
+      throw new Error(`reliability.graceMs must be a positive integer (got ${reliability.graceMs})`);
+    }
+  }
+
+  if (reliability.degradedWhen !== undefined) {
+    const dw = reliability.degradedWhen as unknown;
+    if (dw === null || typeof dw !== 'object' || Array.isArray(dw)) {
+      throw new Error('reliability.degradedWhen must be an object');
+    }
+    assertOnlyAllowedKeys(dw as Record<string, unknown>, ['data'], 'reliability.degradedWhen');
+    const data = (dw as { data: unknown }).data;
+    if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+      throw new Error('reliability.degradedWhen.data must be a plain object');
+    }
+    for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
+      const type = typeof value;
+      if (type !== 'string' && type !== 'number' && type !== 'boolean') {
+        throw new Error(`reliability.degradedWhen.data.${key} must be a string, number, or boolean (got ${type})`);
+      }
+    }
+  }
+
+  if (reliability.target !== undefined) {
+    const target = reliability.target as unknown;
+    if (target === null || typeof target !== 'object' || Array.isArray(target)) {
+      throw new Error('reliability.target must be an object');
+    }
+    assertOnlyAllowedKeys(target as Record<string, unknown>, ['uptime'], 'reliability.target');
+    const uptime = (target as { uptime: unknown }).uptime;
+    if (typeof uptime !== 'number' || !Number.isFinite(uptime) || uptime <= 0 || uptime >= 1) {
+      throw new Error(`reliability.target.uptime must be between 0 and 1 exclusive (got ${uptime})`);
+    }
+  }
+
+  if (reliability.layout !== undefined) {
+    const layout = assertNonEmptyString(reliability.layout, 'reliability.layout');
+    if (!(BENCHMARK_RELIABILITY_LAYOUTS as readonly string[]).includes(layout)) {
+      throw new Error(`reliability.layout must be one of: ${BENCHMARK_RELIABILITY_LAYOUTS.join(', ')}`);
+    }
+  }
+
+  if (reliability.sections !== undefined) {
+    if (!Array.isArray(reliability.sections)) {
+      throw new Error('reliability.sections must be an array');
+    }
+    const displayMetricKeys = new Set((Array.isArray(display?.metrics) ? display!.metrics : []).map((m) => m?.key));
+    for (let i = 0; i < reliability.sections.length; i++) {
+      const field = `reliability.sections[${i}]`;
+      const section = reliability.sections[i] as unknown;
+      if (section === null || typeof section !== 'object' || Array.isArray(section)) {
+        throw new Error(`${field} must be an object`);
+      }
+      const obj = section as Record<string, unknown>;
+      const type = obj.type;
+      if (typeof type !== 'string' || type.trim() === '') {
+        throw new Error(`${field}.type must be a non-empty string`);
+      }
+      // Unlike the platform, which skips unknown section types at render time,
+      // the runner rejects them so a typo fails at definition time.
+      if (!(BENCHMARK_RELIABILITY_SECTION_TYPES as readonly string[]).includes(type)) {
+        throw new Error(
+          `${field}.type must be one of: ${BENCHMARK_RELIABILITY_SECTION_TYPES.join(', ')} (got '${type}')`,
+        );
+      }
+      switch (type) {
+        case 'uptime': {
+          assertOnlyAllowedKeys(obj, ['type', 'windows'], field);
+          if (obj.windows !== undefined) {
+            if (!Array.isArray(obj.windows)) throw new Error(`${field}.windows must be an array`);
+            for (const w of obj.windows) {
+              if (!(RELIABILITY_UPTIME_WINDOWS as readonly string[]).includes(w as string)) {
+                throw new Error(`${field}.windows entries must be one of: ${RELIABILITY_UPTIME_WINDOWS.join(', ')} (got ${JSON.stringify(w)})`);
+              }
+            }
+          }
+          break;
+        }
+        case 'slot-grid': {
+          assertOnlyAllowedKeys(obj, ['type'], field);
+          break;
+        }
+        case 'metric': {
+          assertOnlyAllowedKeys(obj, ['type', 'metric', 'stats'], field);
+          const metric = assertNonEmptyString(obj.metric, `${field}.metric`);
+          if (metric !== RELIABILITY_LATENCY_METRIC && !displayMetricKeys.has(metric)) {
+            throw new Error(
+              `${field} metric '${metric}' is not declared in display.metrics`,
+            );
+          }
+          if (obj.stats !== undefined) {
+            if (!Array.isArray(obj.stats)) throw new Error(`${field}.stats must be an array`);
+            for (const s of obj.stats) {
+              if (!(RELIABILITY_METRIC_STATS as readonly string[]).includes(s as string)) {
+                throw new Error(`${field}.stats entries must be one of: ${RELIABILITY_METRIC_STATS.join(', ')} (got ${JSON.stringify(s)})`);
+              }
+            }
+          }
+          break;
+        }
+        case 'breakdown': {
+          assertOnlyAllowedKeys(obj, ['type', 'by', 'label'], field);
+          assertNonEmptyString(obj.by, `${field}.by`);
+          if (obj.label !== undefined) assertNonEmptyString(obj.label, `${field}.label`);
+          break;
+        }
+        case 'incidents': {
+          assertOnlyAllowedKeys(obj, ['type', 'outcomes'], field);
+          if (obj.outcomes !== undefined) {
+            if (!Array.isArray(obj.outcomes)) throw new Error(`${field}.outcomes must be an array`);
+            for (const o of obj.outcomes) {
+              if (!(RELIABILITY_INCIDENT_OUTCOMES as readonly string[]).includes(o as string)) {
+                throw new Error(`${field}.outcomes entries must be one of: ${RELIABILITY_INCIDENT_OUTCOMES.join(', ')} (got ${JSON.stringify(o)})`);
+              }
+            }
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  if (reliability.feedCard !== undefined) {
+    const fc = reliability.feedCard as unknown;
+    if (fc === null || typeof fc !== 'object' || Array.isArray(fc)) {
+      throw new Error('reliability.feedCard must be an object');
+    }
+    assertOnlyAllowedKeys(fc as Record<string, unknown>, ['strip', 'stat'], 'reliability.feedCard');
+    const { strip, stat } = fc as { strip?: unknown; stat?: unknown };
+    if (strip !== undefined && strip !== '24h') {
+      throw new Error(`reliability.feedCard.strip must be '24h' (got ${JSON.stringify(strip)})`);
+    }
+    if (stat !== undefined && stat !== 'uptime') {
+      throw new Error(`reliability.feedCard.stat must be 'uptime' (got ${JSON.stringify(stat)})`);
+    }
   }
 }
 
@@ -841,6 +1108,21 @@ export function validateBenchmarkConfig<T extends BaseParticipant = BaseParticip
     }
   } else if (config.type === 'index') {
     issues.push({ field: 'index', message: "is required when type is 'index'" });
+  }
+  if (config.reliability !== undefined) {
+    if (config.type !== 'reliability') {
+      issues.push({ field: 'reliability', message: "requires type: 'reliability'" });
+    }
+    try {
+      validateBenchmarkReliabilityConfig(config.reliability, config.display);
+    } catch (error) {
+      issues.push({
+        field: 'reliability',
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  } else if (config.type === 'reliability') {
+    issues.push({ field: 'reliability', message: "is required when type is 'reliability'" });
   }
   if (config.display?.overview?.defaultMetric === 'compositeScore' && config.scoring === undefined && config.onScore === undefined) {
     issues.push({
