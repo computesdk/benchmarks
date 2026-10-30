@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-10-23T22:25:28.024Z",
+  "timestamp": "2026-10-30T13:39:04.282Z",
   "config": {
     "mode": "sandbox-dax"
   },
@@ -10,10 +10,10 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 76837,
+          "totalMs": 300026,
           "phasesCompleted": 0,
           "phasesTotal": 7,
-          "error": "no benchmark phases ran (script did not start) (exit code 1, 0/7 phases completed): Exec failed: command was killed because the environment ran out of memory"
+          "error": "no benchmark phases ran (script did not start) (exit code 1, 0/7 phases completed): fetch failed"
         }
       ],
       "summary": {
@@ -60,19 +60,19 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 63731,
+          "totalMs": 64679,
           "phasesCompleted": 7,
           "phasesTotal": 7,
-          "prepareMs": 4970,
-          "cacheClearMs": 78,
-          "bunDownloadMs": 296,
-          "bunUnpackMs": 621,
-          "cloneMs": 1875,
-          "installMs": 11534,
-          "typecheckMs": 40645,
+          "prepareMs": 4955,
+          "cacheClearMs": 84,
+          "bunDownloadMs": 409,
+          "bunUnpackMs": 622,
+          "cloneMs": 1854,
+          "installMs": 12175,
+          "typecheckMs": 40724,
           "diskAfterClone": 350384128,
-          "diskAfterInstall": 3065081856,
-          "diskAfterTypecheck": 3068960768,
+          "diskAfterInstall": 3072966656,
+          "diskAfterTypecheck": 3076845568,
           "commit": "08fb47373509ba64b13441061314eeacf4264f51",
           "bunVersion": "1.3.14",
           "nodeVersion": "v22.23.4",
@@ -84,39 +84,39 @@
       ],
       "summary": {
         "totalMs": {
-          "median": 63731,
-          "p95": 63731,
-          "p99": 63731
+          "median": 64679,
+          "p95": 64679,
+          "p99": 64679
         },
         "prepareMs": {
-          "median": 4970,
-          "p95": 4970,
-          "p99": 4970
+          "median": 4955,
+          "p95": 4955,
+          "p99": 4955
         },
         "bunDownloadMs": {
-          "median": 296,
-          "p95": 296,
-          "p99": 296
+          "median": 409,
+          "p95": 409,
+          "p99": 409
         },
         "bunUnpackMs": {
-          "median": 621,
-          "p95": 621,
-          "p99": 621
+          "median": 622,
+          "p95": 622,
+          "p99": 622
         },
         "cloneMs": {
-          "median": 1875,
-          "p95": 1875,
-          "p99": 1875
+          "median": 1854,
+          "p95": 1854,
+          "p99": 1854
         },
         "installMs": {
-          "median": 11534,
-          "p95": 11534,
-          "p99": 11534
+          "median": 12175,
+          "p95": 12175,
+          "p99": 12175
         },
         "typecheckMs": {
-          "median": 40645,
-          "p95": 40645,
-          "p99": 40645
+          "median": 40724,
+          "p95": 40724,
+          "p99": 40724
         }
       },
       "successRate": 1
@@ -126,17 +126,17 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 86757,
+          "totalMs": 96125,
           "phasesCompleted": 7,
           "phasesTotal": 7,
-          "prepareMs": 12747,
-          "cacheClearMs": 14,
-          "bunDownloadMs": 351,
-          "bunUnpackMs": 980,
-          "cloneMs": 2823,
-          "installMs": 19782,
-          "typecheckMs": 33232,
-          "diskAfterClone": 338070528,
+          "prepareMs": 13327,
+          "cacheClearMs": 20,
+          "bunDownloadMs": 369,
+          "bunUnpackMs": 1089,
+          "cloneMs": 2580,
+          "installMs": 22846,
+          "typecheckMs": 36676,
+          "diskAfterClone": 338074624,
           "diskAfterInstall": 2,
           "diskAfterTypecheck": 2,
           "commit": "08fb47373509ba64b13441061314eeacf4264f51",
@@ -151,39 +151,39 @@
       ],
       "summary": {
         "totalMs": {
-          "median": 86757,
-          "p95": 86757,
-          "p99": 86757
+          "median": 96125,
+          "p95": 96125,
+          "p99": 96125
         },
         "prepareMs": {
-          "median": 12747,
-          "p95": 12747,
-          "p99": 12747
+          "median": 13327,
+          "p95": 13327,
+          "p99": 13327
         },
         "bunDownloadMs": {
-          "median": 351,
-          "p95": 351,
-          "p99": 351
+          "median": 369,
+          "p95": 369,
+          "p99": 369
         },
         "bunUnpackMs": {
-          "median": 980,
-          "p95": 980,
-          "p99": 980
+          "median": 1089,
+          "p95": 1089,
+          "p99": 1089
         },
         "cloneMs": {
-          "median": 2823,
-          "p95": 2823,
-          "p99": 2823
+          "median": 2580,
+          "p95": 2580,
+          "p99": 2580
         },
         "installMs": {
-          "median": 19782,
-          "p95": 19782,
-          "p99": 19782
+          "median": 22846,
+          "p95": 22846,
+          "p99": 22846
         },
         "typecheckMs": {
-          "median": 33232,
-          "p95": 33232,
-          "p99": 33232
+          "median": 36676,
+          "p95": 36676,
+          "p99": 36676
         }
       },
       "successRate": 1
@@ -193,22 +193,22 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 49751,
+          "totalMs": 52954,
           "phasesCompleted": 7,
           "phasesTotal": 7,
-          "prepareMs": 1360,
-          "cacheClearMs": 88,
-          "bunDownloadMs": 337,
-          "bunUnpackMs": 499,
-          "cloneMs": 1320,
-          "installMs": 12877,
-          "typecheckMs": 26250,
+          "prepareMs": 1359,
+          "cacheClearMs": 89,
+          "bunDownloadMs": 272,
+          "bunUnpackMs": 498,
+          "cloneMs": 6101,
+          "installMs": 12358,
+          "typecheckMs": 25293,
           "diskAfterClone": 479232,
           "diskAfterInstall": 21786624,
           "diskAfterTypecheck": 21839872,
           "commit": "08fb47373509ba64b13441061314eeacf4264f51",
           "bunVersion": "1.3.14",
-          "nodeVersion": "v24.22.1",
+          "nodeVersion": "v24.22.2",
           "architecture": "x86_64",
           "kernel": "Linux 6.1.166",
           "logicalCpus": "8",
@@ -218,39 +218,39 @@
       ],
       "summary": {
         "totalMs": {
-          "median": 49751,
-          "p95": 49751,
-          "p99": 49751
+          "median": 52954,
+          "p95": 52954,
+          "p99": 52954
         },
         "prepareMs": {
-          "median": 1360,
-          "p95": 1360,
-          "p99": 1360
+          "median": 1359,
+          "p95": 1359,
+          "p99": 1359
         },
         "bunDownloadMs": {
-          "median": 337,
-          "p95": 337,
-          "p99": 337
+          "median": 272,
+          "p95": 272,
+          "p99": 272
         },
         "bunUnpackMs": {
-          "median": 499,
-          "p95": 499,
-          "p99": 499
+          "median": 498,
+          "p95": 498,
+          "p99": 498
         },
         "cloneMs": {
-          "median": 1320,
-          "p95": 1320,
-          "p99": 1320
+          "median": 6101,
+          "p95": 6101,
+          "p99": 6101
         },
         "installMs": {
-          "median": 12877,
-          "p95": 12877,
-          "p99": 12877
+          "median": 12358,
+          "p95": 12358,
+          "p99": 12358
         },
         "typecheckMs": {
-          "median": 26250,
-          "p95": 26250,
-          "p99": 26250
+          "median": 25293,
+          "p95": 25293,
+          "p99": 25293
         }
       },
       "successRate": 1
@@ -260,19 +260,19 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 81330,
+          "totalMs": 59094,
           "phasesCompleted": 7,
           "phasesTotal": 7,
-          "prepareMs": 4668,
-          "cacheClearMs": 105,
-          "bunDownloadMs": 497,
-          "bunUnpackMs": 625,
-          "cloneMs": 1559,
-          "installMs": 30143,
-          "typecheckMs": 26696,
+          "prepareMs": 2170,
+          "cacheClearMs": 56,
+          "bunDownloadMs": 459,
+          "bunUnpackMs": 615,
+          "cloneMs": 1655,
+          "installMs": 19606,
+          "typecheckMs": 25763,
           "diskAfterClone": 352653312,
-          "diskAfterInstall": 3229499392,
-          "diskAfterTypecheck": 3233533952,
+          "diskAfterInstall": 3229609984,
+          "diskAfterTypecheck": 3233644544,
           "commit": "08fb47373509ba64b13441061314eeacf4264f51",
           "bunVersion": "1.3.14",
           "nodeVersion": "v24.0.1",
@@ -285,39 +285,39 @@
       ],
       "summary": {
         "totalMs": {
-          "median": 81330,
-          "p95": 81330,
-          "p99": 81330
+          "median": 59094,
+          "p95": 59094,
+          "p99": 59094
         },
         "prepareMs": {
-          "median": 4668,
-          "p95": 4668,
-          "p99": 4668
+          "median": 2170,
+          "p95": 2170,
+          "p99": 2170
         },
         "bunDownloadMs": {
-          "median": 497,
-          "p95": 497,
-          "p99": 497
+          "median": 459,
+          "p95": 459,
+          "p99": 459
         },
         "bunUnpackMs": {
-          "median": 625,
-          "p95": 625,
-          "p99": 625
+          "median": 615,
+          "p95": 615,
+          "p99": 615
         },
         "cloneMs": {
-          "median": 1559,
-          "p95": 1559,
-          "p99": 1559
+          "median": 1655,
+          "p95": 1655,
+          "p99": 1655
         },
         "installMs": {
-          "median": 30143,
-          "p95": 30143,
-          "p99": 30143
+          "median": 19606,
+          "p95": 19606,
+          "p99": 19606
         },
         "typecheckMs": {
-          "median": 26696,
-          "p95": 26696,
-          "p99": 26696
+          "median": 25763,
+          "p95": 25763,
+          "p99": 25763
         }
       },
       "successRate": 1
@@ -327,11 +327,11 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 1196,
+          "totalMs": 857,
           "phasesCompleted": 2,
           "phasesTotal": 7,
-          "prepareMs": 288,
-          "cacheClearMs": 21,
+          "prepareMs": 233,
+          "cacheClearMs": 45,
           "commit": "08fb47373509ba64b13441061314eeacf4264f51",
           "architecture": "x86_64",
           "kernel": "Linux 4.19.0-gvisor",
@@ -343,14 +343,14 @@
       ],
       "summary": {
         "totalMs": {
-          "median": 1196,
-          "p95": 1196,
-          "p99": 1196
+          "median": 857,
+          "p95": 857,
+          "p99": 857
         },
         "prepareMs": {
-          "median": 288,
-          "p95": 288,
-          "p99": 288
+          "median": 233,
+          "p95": 233,
+          "p99": 233
         },
         "bunDownloadMs": {
           "median": 0,
@@ -385,19 +385,19 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 149627,
+          "totalMs": 189879,
           "phasesCompleted": 7,
           "phasesTotal": 7,
-          "prepareMs": 9338,
-          "cacheClearMs": 80,
-          "bunDownloadMs": 253,
-          "bunUnpackMs": 782,
-          "cloneMs": 4435,
-          "installMs": 51205,
-          "typecheckMs": 64059,
-          "diskAfterClone": 349716480,
-          "diskAfterInstall": 3113410560,
-          "diskAfterTypecheck": 3117203456,
+          "prepareMs": 13094,
+          "cacheClearMs": 138,
+          "bunDownloadMs": 438,
+          "bunUnpackMs": 900,
+          "cloneMs": 5881,
+          "installMs": 74987,
+          "typecheckMs": 72593,
+          "diskAfterClone": 349712384,
+          "diskAfterInstall": 3113558016,
+          "diskAfterTypecheck": 3117350912,
           "commit": "08fb47373509ba64b13441061314eeacf4264f51",
           "bunVersion": "1.3.14",
           "nodeVersion": "v24.21.0",
@@ -410,39 +410,39 @@
       ],
       "summary": {
         "totalMs": {
-          "median": 149627,
-          "p95": 149627,
-          "p99": 149627
+          "median": 189879,
+          "p95": 189879,
+          "p99": 189879
         },
         "prepareMs": {
-          "median": 9338,
-          "p95": 9338,
-          "p99": 9338
+          "median": 13094,
+          "p95": 13094,
+          "p99": 13094
         },
         "bunDownloadMs": {
-          "median": 253,
-          "p95": 253,
-          "p99": 253
+          "median": 438,
+          "p95": 438,
+          "p99": 438
         },
         "bunUnpackMs": {
-          "median": 782,
-          "p95": 782,
-          "p99": 782
+          "median": 900,
+          "p95": 900,
+          "p99": 900
         },
         "cloneMs": {
-          "median": 4435,
-          "p95": 4435,
-          "p99": 4435
+          "median": 5881,
+          "p95": 5881,
+          "p99": 5881
         },
         "installMs": {
-          "median": 51205,
-          "p95": 51205,
-          "p99": 51205
+          "median": 74987,
+          "p95": 74987,
+          "p99": 74987
         },
         "typecheckMs": {
-          "median": 64059,
-          "p95": 64059,
-          "p99": 64059
+          "median": 72593,
+          "p95": 72593,
+          "p99": 72593
         }
       },
       "successRate": 1
@@ -452,15 +452,15 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 19550,
+          "totalMs": 20958,
           "phasesCompleted": 6,
           "phasesTotal": 7,
-          "prepareMs": 201334916,
-          "cacheClearMs": 41,
-          "bunDownloadMs": 213,
-          "bunUnpackMs": 594,
-          "cloneMs": 2012,
-          "installMs": 7120,
+          "prepareMs": 131535319,
+          "cacheClearMs": 34,
+          "bunDownloadMs": 326,
+          "bunUnpackMs": 599,
+          "cloneMs": 1820,
+          "installMs": 7969,
           "diskAfterClone": 349470720,
           "commit": "08fb47373509ba64b13441061314eeacf4264f51\r",
           "bunVersion": "1.3.14\r",
@@ -470,39 +470,39 @@
           "logicalCpus": "8\r",
           "cpuModel": "AMD EPYC\r",
           "memoryKib": "16390000\r",
-          "error": "install\r phase failed (exit code 1, 6/7 phases completed): \u001b[0m\u001b[31merror\u001b[0m\u001b[2m:\u001b[0m failed to download \u001b[1mundici@5.29.0\u001b[0m: Fail |   \u001b[2mhttps://registry.npmjs.org/undici/-/undici-5.29.0.tgz\u001b[0m | \u001b[0m\u001b[31merror\u001b[0m\u001b[2m:\u001b[0m failed to download \u001b[1m@ai-sdk/p | rovider@3.0.12\u001b[0m: Fail |   \u001b[2mhttps://regist | done. | \u001b[0m\u001b[1mbun install \u001b[0m\u001b[2mv1.3.14 (0d9b296a)\u001b[0m | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **codesandbox** | 8 CPU / 15.63 GiB | unknown, AMD EPYC | 2.012s | 7.120s | — | — | ❌ install |"
+          "error": "install\r phase failed (exit code 1, 6/7 phases completed): \u001b[0m\u001b[31merror\u001b[0m\u001b[2m:\u001b[0m failed to download \u001b[1md3-time-format@4.1.0\u001b[0m: Fail |   \u001b[2mhttps://registry.npmjs.org/d3-time-format/-/d3-time-format-4.1.0.tgz\u001b[0m | \u001b[0m\u001b[31merror\u001b[0m\u001b[2m:\u001b[0m failed to download \u001b[1m@octokit/request-error@7.1.0\u001b[0m: | Fail |   \u001b[2mhttps://registry.npmjs.org/@octokit/r | done. | \u001b[0m\u001b[1mbun install \u001b[0m\u001b[2mv1.3.14 (0d9b296a)\u001b[0m | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **codesandbox** | 8 CPU / 15.63 GiB | unknown, AMD EPYC | 1.820s | 7.969s | — | — | ❌ install |"
         }
       ],
       "summary": {
         "totalMs": {
-          "median": 19550,
-          "p95": 19550,
-          "p99": 19550
+          "median": 20958,
+          "p95": 20958,
+          "p99": 20958
         },
         "prepareMs": {
-          "median": 201334916,
-          "p95": 201334916,
-          "p99": 201334916
+          "median": 131535319,
+          "p95": 131535319,
+          "p99": 131535319
         },
         "bunDownloadMs": {
-          "median": 213,
-          "p95": 213,
-          "p99": 213
+          "median": 326,
+          "p95": 326,
+          "p99": 326
         },
         "bunUnpackMs": {
-          "median": 594,
-          "p95": 594,
-          "p99": 594
+          "median": 599,
+          "p95": 599,
+          "p99": 599
         },
         "cloneMs": {
-          "median": 2012,
-          "p95": 2012,
-          "p99": 2012
+          "median": 1820,
+          "p95": 1820,
+          "p99": 1820
         },
         "installMs": {
-          "median": 7120,
-          "p95": 7120,
-          "p99": 7120
+          "median": 7969,
+          "p95": 7969,
+          "p99": 7969
         },
         "typecheckMs": {
           "median": 0,
@@ -517,19 +517,19 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 50534,
+          "totalMs": 53209,
           "phasesCompleted": 7,
           "phasesTotal": 7,
-          "prepareMs": 5648,
-          "cacheClearMs": 17,
-          "bunDownloadMs": 551,
-          "bunUnpackMs": 442,
-          "cloneMs": 2810,
-          "installMs": 12100,
-          "typecheckMs": 24957,
-          "diskAfterClone": 3186688,
-          "diskAfterInstall": 159301632,
-          "diskAfterTypecheck": 159543296,
+          "prepareMs": 4558,
+          "cacheClearMs": 20,
+          "bunDownloadMs": 530,
+          "bunUnpackMs": 461,
+          "cloneMs": 4580,
+          "installMs": 12885,
+          "typecheckMs": 26193,
+          "diskAfterClone": 3182592,
+          "diskAfterInstall": 159334400,
+          "diskAfterTypecheck": 159576064,
           "commit": "08fb47373509ba64b13441061314eeacf4264f51",
           "bunVersion": "1.3.14",
           "nodeVersion": "v24.21.0",
@@ -542,39 +542,39 @@
       ],
       "summary": {
         "totalMs": {
-          "median": 50534,
-          "p95": 50534,
-          "p99": 50534
+          "median": 53209,
+          "p95": 53209,
+          "p99": 53209
         },
         "prepareMs": {
-          "median": 5648,
-          "p95": 5648,
-          "p99": 5648
+          "median": 4558,
+          "p95": 4558,
+          "p99": 4558
         },
         "bunDownloadMs": {
-          "median": 551,
-          "p95": 551,
-          "p99": 551
+          "median": 530,
+          "p95": 530,
+          "p99": 530
         },
         "bunUnpackMs": {
-          "median": 442,
-          "p95": 442,
-          "p99": 442
+          "median": 461,
+          "p95": 461,
+          "p99": 461
         },
         "cloneMs": {
-          "median": 2810,
-          "p95": 2810,
-          "p99": 2810
+          "median": 4580,
+          "p95": 4580,
+          "p99": 4580
         },
         "installMs": {
-          "median": 12100,
-          "p95": 12100,
-          "p99": 12100
+          "median": 12885,
+          "p95": 12885,
+          "p99": 12885
         },
         "typecheckMs": {
-          "median": 24957,
-          "p95": 24957,
-          "p99": 24957
+          "median": 26193,
+          "p95": 26193,
+          "p99": 26193
         }
       },
       "successRate": 1
@@ -584,185 +584,35 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 74400,
-          "phasesCompleted": 7,
-          "phasesTotal": 7,
-          "prepareMs": 9226,
-          "cacheClearMs": 168,
-          "bunDownloadMs": 171,
-          "bunUnpackMs": 540,
-          "cloneMs": 1640,
-          "installMs": 14033,
-          "typecheckMs": 37425,
-          "diskAfterClone": 350404608,
-          "diskAfterInstall": 3102072832,
-          "diskAfterTypecheck": 3105968128,
-          "commit": "08fb47373509ba64b13441061314eeacf4264f51",
-          "bunVersion": "1.3.14",
-          "nodeVersion": "v25.9.0",
-          "architecture": "x86_64",
-          "kernel": "Linux 6.8.0-100-generic",
-          "logicalCpus": "48",
-          "cpuModel": "AMD EPYC 9254 24-Core Processor",
-          "memoryKib": "395741756"
+          "totalMs": 0,
+          "error": "runCommand failed after 30073ms: Daytona command execution failed: Request failed with status code 502"
         }
       ],
       "summary": {
         "totalMs": {
-          "median": 74400,
-          "p95": 74400,
-          "p99": 74400
+          "median": 0,
+          "p95": 0,
+          "p99": 0
         },
         "prepareMs": {
-          "median": 9226,
-          "p95": 9226,
-          "p99": 9226
+          "median": 0,
+          "p95": 0,
+          "p99": 0
         },
         "bunDownloadMs": {
-          "median": 171,
-          "p95": 171,
-          "p99": 171
+          "median": 0,
+          "p95": 0,
+          "p99": 0
         },
         "bunUnpackMs": {
-          "median": 540,
-          "p95": 540,
-          "p99": 540
+          "median": 0,
+          "p95": 0,
+          "p99": 0
         },
         "cloneMs": {
-          "median": 1640,
-          "p95": 1640,
-          "p99": 1640
-        },
-        "installMs": {
-          "median": 14033,
-          "p95": 14033,
-          "p99": 14033
-        },
-        "typecheckMs": {
-          "median": 37425,
-          "p95": 37425,
-          "p99": 37425
-        }
-      },
-      "successRate": 1
-    },
-    {
-      "provider": "declaw",
-      "mode": "sandbox-dax",
-      "iterations": [
-        {
-          "totalMs": 230287,
-          "phasesCompleted": 7,
-          "phasesTotal": 7,
-          "prepareMs": 13825,
-          "cacheClearMs": 91,
-          "bunDownloadMs": 727,
-          "bunUnpackMs": 793,
-          "cloneMs": 3846,
-          "installMs": 35785,
-          "typecheckMs": 162052,
-          "diskAfterClone": 3182592,
-          "diskAfterInstall": 159498240,
-          "diskAfterTypecheck": 159739904,
-          "commit": "08fb47373509ba64b13441061314eeacf4264f51",
-          "bunVersion": "1.3.14",
-          "nodeVersion": "v24.14.1",
-          "architecture": "x86_64",
-          "kernel": "Linux 6.1.102",
-          "logicalCpus": "8",
-          "cpuModel": "Intel(R) Xeon(R) Processor",
-          "memoryKib": "16403536"
-        }
-      ],
-      "summary": {
-        "totalMs": {
-          "median": 230287,
-          "p95": 230287,
-          "p99": 230287
-        },
-        "prepareMs": {
-          "median": 13825,
-          "p95": 13825,
-          "p99": 13825
-        },
-        "bunDownloadMs": {
-          "median": 727,
-          "p95": 727,
-          "p99": 727
-        },
-        "bunUnpackMs": {
-          "median": 793,
-          "p95": 793,
-          "p99": 793
-        },
-        "cloneMs": {
-          "median": 3846,
-          "p95": 3846,
-          "p99": 3846
-        },
-        "installMs": {
-          "median": 35785,
-          "p95": 35785,
-          "p99": 35785
-        },
-        "typecheckMs": {
-          "median": 162052,
-          "p95": 162052,
-          "p99": 162052
-        }
-      },
-      "successRate": 1
-    },
-    {
-      "provider": "e2b",
-      "mode": "sandbox-dax",
-      "iterations": [
-        {
-          "totalMs": 24142,
-          "phasesCompleted": 5,
-          "phasesTotal": 7,
-          "prepareMs": 4830,
-          "cacheClearMs": 162,
-          "bunDownloadMs": 1086,
-          "bunUnpackMs": 1031,
-          "cloneMs": 3313,
-          "diskAfterClone": 350034944,
-          "commit": "08fb47373509ba64b13441061314eeacf4264f51",
-          "bunVersion": "1.3.14",
-          "nodeVersion": "v20.9.0",
-          "architecture": "x86_64",
-          "kernel": "Linux 6.1.158+",
-          "logicalCpus": "8",
-          "cpuModel": "Intel(R) Xeon(R) Processor @ 2.60GHz",
-          "memoryKib": "16392004",
-          "error": "install phase failed (exit code 1, 5/7 phases completed): gyp ERR! node-gyp -v v13.1.0 | gyp ERR! $npm_package_name opencode | gyp ERR! $npm_package_version 0.25.10 | gyp ERR! not ok | error: install script from \"tree-sitter-powershell\" exited with 1 | Processing triggers for debianutils (5.7-0.5~deb12u1) ... | bun install v1.3.14 (0d9b296a) | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **e2b** | 8 CPU / 15.63 GiB | unknown, Intel(R) Xeon(R) Processor @ 2.60GHz | 3.313s | 8.936s | — | — | ❌ install |"
-        }
-      ],
-      "summary": {
-        "totalMs": {
-          "median": 24142,
-          "p95": 24142,
-          "p99": 24142
-        },
-        "prepareMs": {
-          "median": 4830,
-          "p95": 4830,
-          "p99": 4830
-        },
-        "bunDownloadMs": {
-          "median": 1086,
-          "p95": 1086,
-          "p99": 1086
-        },
-        "bunUnpackMs": {
-          "median": 1031,
-          "p95": 1031,
-          "p99": 1031
-        },
-        "cloneMs": {
-          "median": 3313,
-          "p95": 3313,
-          "p99": 3313
+          "median": 0,
+          "p95": 0,
+          "p99": 0
         },
         "installMs": {
           "median": 0,
@@ -778,21 +628,136 @@
       "successRate": 0
     },
     {
+      "provider": "declaw",
+      "mode": "sandbox-dax",
+      "iterations": [
+        {
+          "totalMs": 0,
+          "error": "sandbox create failed after 245ms: Failed to create Declaw sandbox: Request failed after 3 retries: fetch failed"
+        }
+      ],
+      "summary": {
+        "totalMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "prepareMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "bunDownloadMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "bunUnpackMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "cloneMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "installMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "typecheckMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        }
+      },
+      "successRate": 0
+    },
+    {
+      "provider": "e2b",
+      "mode": "sandbox-dax",
+      "iterations": [
+        {
+          "totalMs": 75865,
+          "phasesCompleted": 7,
+          "phasesTotal": 7,
+          "prepareMs": 4639,
+          "cacheClearMs": 90,
+          "bunDownloadMs": 713,
+          "bunUnpackMs": 875,
+          "cloneMs": 3014,
+          "installMs": 17171,
+          "typecheckMs": 40800,
+          "diskAfterClone": 350039040,
+          "diskAfterInstall": 3,
+          "diskAfterTypecheck": 3,
+          "commit": "08fb47373509ba64b13441061314eeacf4264f51",
+          "bunVersion": "1.3.14",
+          "nodeVersion": "v20.9.0",
+          "architecture": "x86_64",
+          "kernel": "Linux 6.1.158+",
+          "logicalCpus": "8",
+          "cpuModel": "Intel(R) Xeon(R) Processor @ 2.60GHz",
+          "memoryKib": "16392004"
+        }
+      ],
+      "summary": {
+        "totalMs": {
+          "median": 75865,
+          "p95": 75865,
+          "p99": 75865
+        },
+        "prepareMs": {
+          "median": 4639,
+          "p95": 4639,
+          "p99": 4639
+        },
+        "bunDownloadMs": {
+          "median": 713,
+          "p95": 713,
+          "p99": 713
+        },
+        "bunUnpackMs": {
+          "median": 875,
+          "p95": 875,
+          "p99": 875
+        },
+        "cloneMs": {
+          "median": 3014,
+          "p95": 3014,
+          "p99": 3014
+        },
+        "installMs": {
+          "median": 17171,
+          "p95": 17171,
+          "p99": 17171
+        },
+        "typecheckMs": {
+          "median": 40800,
+          "p95": 40800,
+          "p99": 40800
+        }
+      },
+      "successRate": 1
+    },
+    {
       "provider": "freestyle",
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 301350,
+          "totalMs": 306325,
           "phasesCompleted": 6,
           "phasesTotal": 7,
-          "prepareMs": 14266,
-          "cacheClearMs": 671,
-          "bunDownloadMs": 2213,
-          "bunUnpackMs": 1064,
-          "cloneMs": 7595,
-          "installMs": 27170,
-          "diskAfterClone": 352657408,
-          "diskAfterInstall": 3237326848,
+          "prepareMs": 14600,
+          "cacheClearMs": 962,
+          "bunDownloadMs": 1035,
+          "bunUnpackMs": 1215,
+          "cloneMs": 6619,
+          "installMs": 22382,
+          "diskAfterClone": 352665600,
+          "diskAfterInstall": 3229601792,
           "commit": "08fb47373509ba64b13441061314eeacf4264f51",
           "bunVersion": "1.3.14",
           "nodeVersion": "v22.19.0",
@@ -801,39 +766,39 @@
           "logicalCpus": "4",
           "cpuModel": "19/01",
           "memoryKib": "8131924",
-          "error": "script failed after install (exit code 124, 6/7 phases completed): Saved lockfile | $ bun run --cwd packages/core fix-node-pty | $ bun run script/fix-node-pty.ts | $ husky | $ bun turbo typecheck | @opencode-ai/server:typecheck: $ tsgo --noEmit | @opencode-ai/stats-core:typecheck: cache miss, executing ddb12b0b42bd2545 | @opencode-ai/stats-core:typecheck: $ tsgo --noEmit | @opencode-ai/stats-server:typecheck: cache miss, executing 42ca173e6e3fb9c1 | @opencode-ai/stats-server:typecheck: $ tsgo --noEmit"
+          "error": "script failed after install (exit code 124, 6/7 phases completed): Saved lockfile | $ bun run --cwd packages/core fix-node-pty | $ bun run script/fix-node-pty.ts | $ husky | $ bun turbo typecheck | @opencode-ai/enterprise:typecheck: $ tsgo --noEmit | @opencode-ai/client:typecheck: cache miss, executing 453b800cf2b5948c | @opencode-ai/client:typecheck: $ tsgo --noEmit | @opencode-ai/core:typecheck: cache miss, executing 1489020ac241273e | @opencode-ai/core:typecheck: $ tsgo --noEmit"
         }
       ],
       "summary": {
         "totalMs": {
-          "median": 301350,
-          "p95": 301350,
-          "p99": 301350
+          "median": 306325,
+          "p95": 306325,
+          "p99": 306325
         },
         "prepareMs": {
-          "median": 14266,
-          "p95": 14266,
-          "p99": 14266
+          "median": 14600,
+          "p95": 14600,
+          "p99": 14600
         },
         "bunDownloadMs": {
-          "median": 2213,
-          "p95": 2213,
-          "p99": 2213
+          "median": 1035,
+          "p95": 1035,
+          "p99": 1035
         },
         "bunUnpackMs": {
-          "median": 1064,
-          "p95": 1064,
-          "p99": 1064
+          "median": 1215,
+          "p95": 1215,
+          "p99": 1215
         },
         "cloneMs": {
-          "median": 7595,
-          "p95": 7595,
-          "p99": 7595
+          "median": 6619,
+          "p95": 6619,
+          "p99": 6619
         },
         "installMs": {
-          "median": 27170,
-          "p95": 27170,
-          "p99": 27170
+          "median": 22382,
+          "p95": 22382,
+          "p99": 22382
         },
         "typecheckMs": {
           "median": 0,
@@ -848,11 +813,11 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 2010,
+          "totalMs": 1857,
           "phasesCompleted": 2,
           "phasesTotal": 7,
-          "prepareMs": 1517,
-          "cacheClearMs": 61,
+          "prepareMs": 1416,
+          "cacheClearMs": 62,
           "commit": "08fb47373509ba64b13441061314eeacf4264f51",
           "architecture": "x86_64",
           "kernel": "Linux 6.1.155+",
@@ -864,14 +829,14 @@
       ],
       "summary": {
         "totalMs": {
-          "median": 2010,
-          "p95": 2010,
-          "p99": 2010
+          "median": 1857,
+          "p95": 1857,
+          "p99": 1857
         },
         "prepareMs": {
-          "median": 1517,
-          "p95": 1517,
-          "p99": 1517
+          "median": 1416,
+          "p95": 1416,
+          "p99": 1416
         },
         "bunDownloadMs": {
           "median": 0,
@@ -906,63 +871,63 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 52563,
+          "totalMs": 58660,
           "phasesCompleted": 7,
           "phasesTotal": 7,
-          "prepareMs": 5406,
-          "cacheClearMs": 107,
-          "bunDownloadMs": 1237,
-          "bunUnpackMs": 642,
-          "cloneMs": 3323,
-          "installMs": 10986,
-          "typecheckMs": 27418,
+          "prepareMs": 5276,
+          "cacheClearMs": 134,
+          "bunDownloadMs": 1501,
+          "bunUnpackMs": 633,
+          "cloneMs": 3871,
+          "installMs": 13974,
+          "typecheckMs": 29547,
           "diskAfterClone": 352759808,
-          "diskAfterInstall": 3214958592,
-          "diskAfterTypecheck": 3218993152,
+          "diskAfterInstall": 3223019520,
+          "diskAfterTypecheck": 3227054080,
           "commit": "08fb47373509ba64b13441061314eeacf4264f51",
           "bunVersion": "1.3.14",
           "nodeVersion": "v24.18.0",
           "architecture": "aarch64",
-          "kernel": "Linux 6.18.44+",
+          "kernel": "Linux 7.3.0",
           "logicalCpus": "8",
-          "memoryKib": "16436864"
+          "memoryKib": "16437060"
         }
       ],
       "summary": {
         "totalMs": {
-          "median": 52563,
-          "p95": 52563,
-          "p99": 52563
+          "median": 58660,
+          "p95": 58660,
+          "p99": 58660
         },
         "prepareMs": {
-          "median": 5406,
-          "p95": 5406,
-          "p99": 5406
+          "median": 5276,
+          "p95": 5276,
+          "p99": 5276
         },
         "bunDownloadMs": {
-          "median": 1237,
-          "p95": 1237,
-          "p99": 1237
+          "median": 1501,
+          "p95": 1501,
+          "p99": 1501
         },
         "bunUnpackMs": {
-          "median": 642,
-          "p95": 642,
-          "p99": 642
+          "median": 633,
+          "p95": 633,
+          "p99": 633
         },
         "cloneMs": {
-          "median": 3323,
-          "p95": 3323,
-          "p99": 3323
+          "median": 3871,
+          "p95": 3871,
+          "p99": 3871
         },
         "installMs": {
-          "median": 10986,
-          "p95": 10986,
-          "p99": 10986
+          "median": 13974,
+          "p95": 13974,
+          "p99": 13974
         },
         "typecheckMs": {
-          "median": 27418,
-          "p95": 27418,
-          "p99": 27418
+          "median": 29547,
+          "p95": 29547,
+          "p99": 29547
         }
       },
       "successRate": 1
@@ -973,7 +938,7 @@
       "iterations": [
         {
           "totalMs": 0,
-          "error": "sandbox create failed after 3844ms: Failed to create HopX sandbox: Request failed with status code 526"
+          "error": "sandbox create failed after 4016ms: Failed to create HopX sandbox: Request failed with status code 526"
         }
       ],
       "summary": {
@@ -1020,19 +985,19 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 34338,
+          "totalMs": 36134,
           "phasesCompleted": 7,
           "phasesTotal": 7,
-          "prepareMs": 2763,
-          "cacheClearMs": 17,
-          "bunDownloadMs": 219,
-          "bunUnpackMs": 426,
-          "cloneMs": 967,
-          "installMs": 8132,
-          "typecheckMs": 19371,
+          "prepareMs": 3124,
+          "cacheClearMs": 19,
+          "bunDownloadMs": 320,
+          "bunUnpackMs": 448,
+          "cloneMs": 1136,
+          "installMs": 9430,
+          "typecheckMs": 19279,
           "diskAfterClone": 479232,
-          "diskAfterInstall": 21684224,
-          "diskAfterTypecheck": 21737472,
+          "diskAfterInstall": 21688320,
+          "diskAfterTypecheck": 21741568,
           "commit": "08fb47373509ba64b13441061314eeacf4264f51",
           "bunVersion": "1.3.14",
           "nodeVersion": "v22.23.2",
@@ -1045,39 +1010,39 @@
       ],
       "summary": {
         "totalMs": {
-          "median": 34338,
-          "p95": 34338,
-          "p99": 34338
+          "median": 36134,
+          "p95": 36134,
+          "p99": 36134
         },
         "prepareMs": {
-          "median": 2763,
-          "p95": 2763,
-          "p99": 2763
+          "median": 3124,
+          "p95": 3124,
+          "p99": 3124
         },
         "bunDownloadMs": {
-          "median": 219,
-          "p95": 219,
-          "p99": 219
+          "median": 320,
+          "p95": 320,
+          "p99": 320
         },
         "bunUnpackMs": {
-          "median": 426,
-          "p95": 426,
-          "p99": 426
+          "median": 448,
+          "p95": 448,
+          "p99": 448
         },
         "cloneMs": {
-          "median": 967,
-          "p95": 967,
-          "p99": 967
+          "median": 1136,
+          "p95": 1136,
+          "p99": 1136
         },
         "installMs": {
-          "median": 8132,
-          "p95": 8132,
-          "p99": 8132
+          "median": 9430,
+          "p95": 9430,
+          "p99": 9430
         },
         "typecheckMs": {
-          "median": 19371,
-          "p95": 19371,
-          "p99": 19371
+          "median": 19279,
+          "p95": 19279,
+          "p99": 19279
         }
       },
       "successRate": 1
@@ -1087,19 +1052,17 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 48759,
-          "phasesCompleted": 7,
+          "totalMs": 51455,
+          "phasesCompleted": 6,
           "phasesTotal": 7,
-          "prepareMs": 3661,
+          "prepareMs": 3603,
           "cacheClearMs": 36,
-          "bunDownloadMs": 399,
-          "bunUnpackMs": 530,
-          "cloneMs": 1829,
-          "installMs": 10822,
-          "typecheckMs": 25157,
+          "bunDownloadMs": 339,
+          "bunUnpackMs": 531,
+          "cloneMs": 1806,
+          "installMs": 11374,
           "diskAfterClone": 352616448,
           "diskAfterInstall": 3,
-          "diskAfterTypecheck": 3,
           "commit": "08fb47373509ba64b13441061314eeacf4264f51",
           "bunVersion": "1.3.14",
           "nodeVersion": "v22.23.2",
@@ -1107,172 +1070,40 @@
           "kernel": "Linux 6.12.111",
           "logicalCpus": "8",
           "cpuModel": "AMD EPYC",
-          "memoryKib": "16401904"
+          "memoryKib": "16401904",
+          "error": "typecheck phase failed (exit code 1, 6/7 phases completed): $ bun turbo typecheck |  ERROR  opencode#typecheck: command (/tmp/opencode-provider-benchmark/repo/packages/opencode) /tmp/opencode-provider-benchmark/bun/bin/bun run typecheck exited (1) |  ERROR  run failed: command  exited (1) | error: \"turbo\" exited with code 1 | error: script \"typecheck\" exited with code 1 |   Time:    21.316s | Failed:    opencode#typecheck | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **microsandbox** | 8 CPU / 15.64 GiB | unknown, AMD EPYC | 1.806s | 11.374s | 21.366s (failed) | — | ❌ typecheck |"
         }
       ],
       "summary": {
         "totalMs": {
-          "median": 48759,
-          "p95": 48759,
-          "p99": 48759
+          "median": 51455,
+          "p95": 51455,
+          "p99": 51455
         },
         "prepareMs": {
-          "median": 3661,
-          "p95": 3661,
-          "p99": 3661
+          "median": 3603,
+          "p95": 3603,
+          "p99": 3603
         },
         "bunDownloadMs": {
-          "median": 399,
-          "p95": 399,
-          "p99": 399
+          "median": 339,
+          "p95": 339,
+          "p99": 339
         },
         "bunUnpackMs": {
-          "median": 530,
-          "p95": 530,
-          "p99": 530
+          "median": 531,
+          "p95": 531,
+          "p99": 531
         },
         "cloneMs": {
-          "median": 1829,
-          "p95": 1829,
-          "p99": 1829
+          "median": 1806,
+          "p95": 1806,
+          "p99": 1806
         },
         "installMs": {
-          "median": 10822,
-          "p95": 10822,
-          "p99": 10822
-        },
-        "typecheckMs": {
-          "median": 25157,
-          "p95": 25157,
-          "p99": 25157
-        }
-      },
-      "successRate": 1
-    },
-    {
-      "provider": "miosa",
-      "mode": "sandbox-dax",
-      "iterations": [
-        {
-          "totalMs": 40702,
-          "phasesCompleted": 7,
-          "phasesTotal": 7,
-          "prepareMs": 1244,
-          "cacheClearMs": 9,
-          "bunDownloadMs": 370,
-          "bunUnpackMs": 423,
-          "cloneMs": 3773,
-          "installMs": 9718,
-          "typecheckMs": 21235,
-          "diskAfterClone": 352620544,
-          "diskAfterInstall": 3,
-          "diskAfterTypecheck": 3,
-          "commit": "08fb47373509ba64b13441061314eeacf4264f51",
-          "bunVersion": "1.3.14",
-          "nodeVersion": "v22.23.1",
-          "architecture": "x86_64",
-          "kernel": "Linux 6.1.158",
-          "logicalCpus": "8",
-          "cpuModel": "AMD EPYC",
-          "memoryKib": "16400900"
-        }
-      ],
-      "summary": {
-        "totalMs": {
-          "median": 40702,
-          "p95": 40702,
-          "p99": 40702
-        },
-        "prepareMs": {
-          "median": 1244,
-          "p95": 1244,
-          "p99": 1244
-        },
-        "bunDownloadMs": {
-          "median": 370,
-          "p95": 370,
-          "p99": 370
-        },
-        "bunUnpackMs": {
-          "median": 423,
-          "p95": 423,
-          "p99": 423
-        },
-        "cloneMs": {
-          "median": 3773,
-          "p95": 3773,
-          "p99": 3773
-        },
-        "installMs": {
-          "median": 9718,
-          "p95": 9718,
-          "p99": 9718
-        },
-        "typecheckMs": {
-          "median": 21235,
-          "p95": 21235,
-          "p99": 21235
-        }
-      },
-      "successRate": 1
-    },
-    {
-      "provider": "modal",
-      "mode": "sandbox-dax",
-      "iterations": [
-        {
-          "totalMs": 85913,
-          "phasesCompleted": 6,
-          "phasesTotal": 7,
-          "prepareMs": 8669,
-          "cacheClearMs": 8,
-          "bunDownloadMs": 335,
-          "bunUnpackMs": 715,
-          "cloneMs": 2440,
-          "installMs": 22456,
-          "diskAfterClone": 0,
-          "diskAfterInstall": 0,
-          "commit": "08fb47373509ba64b13441061314eeacf4264f51",
-          "bunVersion": "1.3.14",
-          "nodeVersion": "v22.23.3",
-          "architecture": "x86_64",
-          "kernel": "Linux 4.19.0-gvisor",
-          "logicalCpus": "4",
-          "cpuModel": "unknown",
-          "memoryKib": "474842144",
-          "error": "typecheck phase failed (exit code 1, 6/7 phases completed): $ husky | $ bun turbo typecheck |  ERROR  @opencode-ai/desktop#typecheck: command (/tmp/opencode-provider-benchmark/repo/packages/desktop) /tmp/opencode-provider-benchmark/bun/bin/bun run typecheck exited (2) |  ERROR  run failed: command  exited (2) | error: \"turbo\" exited with code 2 |   Time:    45.427s | Failed:    @opencode-ai/desktop#typecheck | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **modal** | 4 CPU / 452.84 GiB | unknown, unknown | 2.440s | 22.456s | 45.524s (failed) | — | ❌ typecheck |"
-        }
-      ],
-      "summary": {
-        "totalMs": {
-          "median": 85913,
-          "p95": 85913,
-          "p99": 85913
-        },
-        "prepareMs": {
-          "median": 8669,
-          "p95": 8669,
-          "p99": 8669
-        },
-        "bunDownloadMs": {
-          "median": 335,
-          "p95": 335,
-          "p99": 335
-        },
-        "bunUnpackMs": {
-          "median": 715,
-          "p95": 715,
-          "p99": 715
-        },
-        "cloneMs": {
-          "median": 2440,
-          "p95": 2440,
-          "p99": 2440
-        },
-        "installMs": {
-          "median": 22456,
-          "p95": 22456,
-          "p99": 22456
+          "median": 11374,
+          "p95": 11374,
+          "p99": 11374
         },
         "typecheckMs": {
           "median": 0,
@@ -1283,21 +1114,136 @@
       "successRate": 0
     },
     {
+      "provider": "miosa",
+      "mode": "sandbox-dax",
+      "iterations": [
+        {
+          "totalMs": 0,
+          "error": "sandbox create failed after 2747ms: SANDBOX_BOOT_FAILED: MIOSA API POST /sandboxes failed with 502 (SANDBOX_BOOT_FAILED): sandbox entered error state: {:guest_route_missing, \"172.16.93.86\"}: {\"state\":\"error\",\"sandbox_id\":\"5ae8338a-194e-4192-ac8b-f24d504da99c\",\"last_error\":{\"at\":\"2026-10-30T13:32:08.472092Z\",\"create_trace\":{\"admission_id\":\"1732c7f4-8b7b-453b-ba14-cf864abd4404\",\"completed_at_unix_ms\":1793367128466,\"operation_id\":\"ace02312-cf80-4304-aae1-77ae5c6f923c\",\"phases\":[{\"at_unix_ms\":1793367126020,\"duration_ms\":53,\"node\":\"miosa_compute@compute-01.fleet.miosa.internal\",\"phase\":\"admission\",\"status\":\"ok\"},{\"at_unix_ms\":1793367126109,\"duration_ms\":89,\"node\":\"miosa_compute@compute-01.fleet.miosa.internal\",\"phase\":\"placement\",\"status\":\"ok\"},{\"at_unix_ms\":1793367126145,\"duration_ms\":36,\"node\":\"miosa_compute@miosa-host-06.fleet.miosa.internal\",\"phase\":\"record_and_dispatch\",\"status\":\"ok\"},{\"at_unix_ms\":1793367126145,\"duration_ms\":0,\"node\":\"miosa_compute@miosa-host-06.fleet.miosa.internal\",\"phase\":\"host_boot_started\",\"status\":\"ok\"}],\"sandbox_id\":\"5ae8338a-194e-4192-ac8b-f24d504da99c\",\"started_at_unix_ms\":1793367125959,\"status\":\"failed\",\"template_id\":\"miosa-sandbox-prod-1\",\"total_ms\":2507},\"reason\":\"{:guest_route_missing, \\\"172.16.93.86\\\"}\",\"source\":\"boot_failure\",\"template_id\":\"miosa-sandbox-prod-1\"}}"
+        }
+      ],
+      "summary": {
+        "totalMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "prepareMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "bunDownloadMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "bunUnpackMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "cloneMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "installMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "typecheckMs": {
+          "median": 0,
+          "p95": 0,
+          "p99": 0
+        }
+      },
+      "successRate": 0
+    },
+    {
+      "provider": "modal",
+      "mode": "sandbox-dax",
+      "iterations": [
+        {
+          "totalMs": 105547,
+          "phasesCompleted": 7,
+          "phasesTotal": 7,
+          "prepareMs": 8548,
+          "cacheClearMs": 9,
+          "bunDownloadMs": 332,
+          "bunUnpackMs": 682,
+          "cloneMs": 2788,
+          "installMs": 21871,
+          "typecheckMs": 64395,
+          "diskAfterClone": 0,
+          "diskAfterInstall": 0,
+          "diskAfterTypecheck": 0,
+          "commit": "08fb47373509ba64b13441061314eeacf4264f51",
+          "bunVersion": "1.3.14",
+          "nodeVersion": "v22.23.3",
+          "architecture": "x86_64",
+          "kernel": "Linux 4.19.0-gvisor",
+          "logicalCpus": "4",
+          "cpuModel": "unknown",
+          "memoryKib": "344643628"
+        }
+      ],
+      "summary": {
+        "totalMs": {
+          "median": 105547,
+          "p95": 105547,
+          "p99": 105547
+        },
+        "prepareMs": {
+          "median": 8548,
+          "p95": 8548,
+          "p99": 8548
+        },
+        "bunDownloadMs": {
+          "median": 332,
+          "p95": 332,
+          "p99": 332
+        },
+        "bunUnpackMs": {
+          "median": 682,
+          "p95": 682,
+          "p99": 682
+        },
+        "cloneMs": {
+          "median": 2788,
+          "p95": 2788,
+          "p99": 2788
+        },
+        "installMs": {
+          "median": 21871,
+          "p95": 21871,
+          "p99": 21871
+        },
+        "typecheckMs": {
+          "median": 64395,
+          "p95": 64395,
+          "p99": 64395
+        }
+      },
+      "successRate": 1
+    },
+    {
       "provider": "mosaic",
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 74606,
+          "totalMs": 58636,
           "phasesCompleted": 7,
           "phasesTotal": 7,
-          "prepareMs": 1534,
-          "cacheClearMs": 146,
-          "bunDownloadMs": 312,
-          "bunUnpackMs": 627,
-          "cloneMs": 2384,
-          "installMs": 29385,
-          "typecheckMs": 30043,
-          "diskAfterClone": 352620544,
+          "prepareMs": 1505,
+          "cacheClearMs": 109,
+          "bunDownloadMs": 249,
+          "bunUnpackMs": 621,
+          "cloneMs": 2249,
+          "installMs": 14273,
+          "typecheckMs": 28978,
+          "diskAfterClone": 352616448,
           "diskAfterInstall": 3,
           "diskAfterTypecheck": 3,
           "commit": "08fb47373509ba64b13441061314eeacf4264f51",
@@ -1312,39 +1258,39 @@
       ],
       "summary": {
         "totalMs": {
-          "median": 74606,
-          "p95": 74606,
-          "p99": 74606
+          "median": 58636,
+          "p95": 58636,
+          "p99": 58636
         },
         "prepareMs": {
-          "median": 1534,
-          "p95": 1534,
-          "p99": 1534
+          "median": 1505,
+          "p95": 1505,
+          "p99": 1505
         },
         "bunDownloadMs": {
-          "median": 312,
-          "p95": 312,
-          "p99": 312
+          "median": 249,
+          "p95": 249,
+          "p99": 249
         },
         "bunUnpackMs": {
-          "median": 627,
-          "p95": 627,
-          "p99": 627
+          "median": 621,
+          "p95": 621,
+          "p99": 621
         },
         "cloneMs": {
-          "median": 2384,
-          "p95": 2384,
-          "p99": 2384
+          "median": 2249,
+          "p95": 2249,
+          "p99": 2249
         },
         "installMs": {
-          "median": 29385,
-          "p95": 29385,
-          "p99": 29385
+          "median": 14273,
+          "p95": 14273,
+          "p99": 14273
         },
         "typecheckMs": {
-          "median": 30043,
-          "p95": 30043,
-          "p99": 30043
+          "median": 28978,
+          "p95": 28978,
+          "p99": 28978
         }
       },
       "successRate": 1
@@ -1354,19 +1300,19 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 52842,
+          "totalMs": 46214,
           "phasesCompleted": 7,
           "phasesTotal": 7,
-          "prepareMs": 3698,
-          "cacheClearMs": 21,
-          "bunDownloadMs": 282,
-          "bunUnpackMs": 437,
-          "cloneMs": 1401,
-          "installMs": 19425,
-          "typecheckMs": 22264,
-          "diskAfterClone": 3182592,
-          "diskAfterInstall": 159469568,
-          "diskAfterTypecheck": 159711232,
+          "prepareMs": 5813,
+          "cacheClearMs": 40,
+          "bunDownloadMs": 233,
+          "bunUnpackMs": 458,
+          "cloneMs": 1247,
+          "installMs": 9455,
+          "typecheckMs": 21712,
+          "diskAfterClone": 3186688,
+          "diskAfterInstall": 159490048,
+          "diskAfterTypecheck": 159731712,
           "commit": "08fb47373509ba64b13441061314eeacf4264f51",
           "bunVersion": "1.3.14",
           "nodeVersion": "v22.23.3",
@@ -1379,39 +1325,39 @@
       ],
       "summary": {
         "totalMs": {
-          "median": 52842,
-          "p95": 52842,
-          "p99": 52842
+          "median": 46214,
+          "p95": 46214,
+          "p99": 46214
         },
         "prepareMs": {
-          "median": 3698,
-          "p95": 3698,
-          "p99": 3698
+          "median": 5813,
+          "p95": 5813,
+          "p99": 5813
         },
         "bunDownloadMs": {
-          "median": 282,
-          "p95": 282,
-          "p99": 282
+          "median": 233,
+          "p95": 233,
+          "p99": 233
         },
         "bunUnpackMs": {
-          "median": 437,
-          "p95": 437,
-          "p99": 437
+          "median": 458,
+          "p95": 458,
+          "p99": 458
         },
         "cloneMs": {
-          "median": 1401,
-          "p95": 1401,
-          "p99": 1401
+          "median": 1247,
+          "p95": 1247,
+          "p99": 1247
         },
         "installMs": {
-          "median": 19425,
-          "p95": 19425,
-          "p99": 19425
+          "median": 9455,
+          "p95": 9455,
+          "p99": 9455
         },
         "typecheckMs": {
-          "median": 22264,
-          "p95": 22264,
-          "p99": 22264
+          "median": 21712,
+          "p95": 21712,
+          "p99": 21712
         }
       },
       "successRate": 1
@@ -1422,7 +1368,7 @@
       "iterations": [
         {
           "totalMs": 0,
-          "error": "sandbox create failed after 289ms: Your customer account is currently disabled."
+          "error": "sandbox create failed after 287ms: Your customer account is currently disabled."
         }
       ],
       "summary": {
@@ -1469,17 +1415,17 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 78955,
+          "totalMs": 81074,
           "phasesCompleted": 7,
           "phasesTotal": 7,
-          "prepareMs": 18572,
-          "cacheClearMs": 1000,
-          "bunDownloadMs": 2930,
-          "bunUnpackMs": 761,
-          "cloneMs": 3887,
-          "installMs": 14662,
-          "typecheckMs": 31291,
-          "diskAfterClone": 350026752,
+          "prepareMs": 16090,
+          "cacheClearMs": 610,
+          "bunDownloadMs": 1178,
+          "bunUnpackMs": 1253,
+          "cloneMs": 4903,
+          "installMs": 16069,
+          "typecheckMs": 33601,
+          "diskAfterClone": 350030848,
           "diskAfterInstall": 3,
           "diskAfterTypecheck": 3,
           "commit": "08fb47373509ba64b13441061314eeacf4264f51",
@@ -1494,39 +1440,39 @@
       ],
       "summary": {
         "totalMs": {
-          "median": 78955,
-          "p95": 78955,
-          "p99": 78955
+          "median": 81074,
+          "p95": 81074,
+          "p99": 81074
         },
         "prepareMs": {
-          "median": 18572,
-          "p95": 18572,
-          "p99": 18572
+          "median": 16090,
+          "p95": 16090,
+          "p99": 16090
         },
         "bunDownloadMs": {
-          "median": 2930,
-          "p95": 2930,
-          "p99": 2930
+          "median": 1178,
+          "p95": 1178,
+          "p99": 1178
         },
         "bunUnpackMs": {
-          "median": 761,
-          "p95": 761,
-          "p99": 761
+          "median": 1253,
+          "p95": 1253,
+          "p99": 1253
         },
         "cloneMs": {
-          "median": 3887,
-          "p95": 3887,
-          "p99": 3887
+          "median": 4903,
+          "p95": 4903,
+          "p99": 4903
         },
         "installMs": {
-          "median": 14662,
-          "p95": 14662,
-          "p99": 14662
+          "median": 16069,
+          "p95": 16069,
+          "p99": 16069
         },
         "typecheckMs": {
-          "median": 31291,
-          "p95": 31291,
-          "p99": 31291
+          "median": 33601,
+          "p95": 33601,
+          "p99": 33601
         }
       },
       "successRate": 1
@@ -1536,17 +1482,17 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 32418,
+          "totalMs": 36190,
           "phasesCompleted": 7,
           "phasesTotal": 7,
-          "prepareMs": 1800,
-          "cacheClearMs": 24,
-          "bunDownloadMs": 342,
-          "bunUnpackMs": 502,
-          "cloneMs": 1059,
-          "installMs": 7771,
-          "typecheckMs": 19317,
-          "diskAfterClone": 349437952,
+          "prepareMs": 1788,
+          "cacheClearMs": 23,
+          "bunDownloadMs": 419,
+          "bunUnpackMs": 497,
+          "cloneMs": 4567,
+          "installMs": 7845,
+          "typecheckMs": 19479,
+          "diskAfterClone": 349433856,
           "diskAfterInstall": 3,
           "diskAfterTypecheck": 3,
           "commit": "08fb47373509ba64b13441061314eeacf4264f51",
@@ -1561,39 +1507,39 @@
       ],
       "summary": {
         "totalMs": {
-          "median": 32418,
-          "p95": 32418,
-          "p99": 32418
+          "median": 36190,
+          "p95": 36190,
+          "p99": 36190
         },
         "prepareMs": {
-          "median": 1800,
-          "p95": 1800,
-          "p99": 1800
+          "median": 1788,
+          "p95": 1788,
+          "p99": 1788
         },
         "bunDownloadMs": {
-          "median": 342,
-          "p95": 342,
-          "p99": 342
+          "median": 419,
+          "p95": 419,
+          "p99": 419
         },
         "bunUnpackMs": {
-          "median": 502,
-          "p95": 502,
-          "p99": 502
+          "median": 497,
+          "p95": 497,
+          "p99": 497
         },
         "cloneMs": {
-          "median": 1059,
-          "p95": 1059,
-          "p99": 1059
+          "median": 4567,
+          "p95": 4567,
+          "p99": 4567
         },
         "installMs": {
-          "median": 7771,
-          "p95": 7771,
-          "p99": 7771
+          "median": 7845,
+          "p95": 7845,
+          "p99": 7845
         },
         "typecheckMs": {
-          "median": 19317,
-          "p95": 19317,
-          "p99": 19317
+          "median": 19479,
+          "p95": 19479,
+          "p99": 19479
         }
       },
       "successRate": 1
@@ -1604,7 +1550,7 @@
       "iterations": [
         {
           "totalMs": 0,
-          "error": "runCommand failed after 10163ms: run.cloud API 1000: exec stream closed before completion (1000)"
+          "error": "runCommand failed after 11923ms: run.cloud API 1000: exec stream closed before completion (1000)"
         }
       ],
       "summary": {
@@ -1651,22 +1597,22 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 89706,
+          "totalMs": 67341,
           "phasesCompleted": 7,
           "phasesTotal": 7,
-          "prepareMs": 4877,
-          "cacheClearMs": 53,
-          "bunDownloadMs": 539,
-          "bunUnpackMs": 707,
-          "cloneMs": 2358,
-          "installMs": 13053,
-          "typecheckMs": 61590,
-          "diskAfterClone": 352722944,
+          "prepareMs": 3678,
+          "cacheClearMs": 677,
+          "bunDownloadMs": 1376,
+          "bunUnpackMs": 734,
+          "cloneMs": 3189,
+          "installMs": 16237,
+          "typecheckMs": 33418,
+          "diskAfterClone": 352727040,
           "diskAfterInstall": 3,
           "diskAfterTypecheck": 3,
           "commit": "08fb47373509ba64b13441061314eeacf4264f51",
           "bunVersion": "1.3.14",
-          "nodeVersion": "v24.18.0",
+          "nodeVersion": "v24.22.1",
           "architecture": "aarch64",
           "kernel": "Linux 6.1.155",
           "logicalCpus": "8",
@@ -1675,39 +1621,39 @@
       ],
       "summary": {
         "totalMs": {
-          "median": 89706,
-          "p95": 89706,
-          "p99": 89706
+          "median": 67341,
+          "p95": 67341,
+          "p99": 67341
         },
         "prepareMs": {
-          "median": 4877,
-          "p95": 4877,
-          "p99": 4877
+          "median": 3678,
+          "p95": 3678,
+          "p99": 3678
         },
         "bunDownloadMs": {
-          "median": 539,
-          "p95": 539,
-          "p99": 539
+          "median": 1376,
+          "p95": 1376,
+          "p99": 1376
         },
         "bunUnpackMs": {
-          "median": 707,
-          "p95": 707,
-          "p99": 707
+          "median": 734,
+          "p95": 734,
+          "p99": 734
         },
         "cloneMs": {
-          "median": 2358,
-          "p95": 2358,
-          "p99": 2358
+          "median": 3189,
+          "p95": 3189,
+          "p99": 3189
         },
         "installMs": {
-          "median": 13053,
-          "p95": 13053,
-          "p99": 13053
+          "median": 16237,
+          "p95": 16237,
+          "p99": 16237
         },
         "typecheckMs": {
-          "median": 61590,
-          "p95": 61590,
-          "p99": 61590
+          "median": 33418,
+          "p95": 33418,
+          "p99": 33418
         }
       },
       "successRate": 1
@@ -1717,19 +1663,19 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 89105,
+          "totalMs": 124961,
           "phasesCompleted": 7,
           "phasesTotal": 7,
-          "prepareMs": 15536,
-          "cacheClearMs": 349,
-          "bunDownloadMs": 382,
-          "bunUnpackMs": 657,
-          "cloneMs": 2072,
-          "installMs": 26645,
-          "typecheckMs": 39784,
+          "prepareMs": 34394,
+          "cacheClearMs": 433,
+          "bunDownloadMs": 550,
+          "bunUnpackMs": 812,
+          "cloneMs": 3033,
+          "installMs": 23110,
+          "typecheckMs": 58062,
           "diskAfterClone": 334919680,
-          "diskAfterInstall": 2707185664,
-          "diskAfterTypecheck": 2709362688,
+          "diskAfterInstall": 2707243008,
+          "diskAfterTypecheck": 2709420032,
           "commit": "08fb47373509ba64b13441061314eeacf4264f51",
           "bunVersion": "1.3.14",
           "nodeVersion": "v24.22.1",
@@ -1742,39 +1688,39 @@
       ],
       "summary": {
         "totalMs": {
-          "median": 89105,
-          "p95": 89105,
-          "p99": 89105
+          "median": 124961,
+          "p95": 124961,
+          "p99": 124961
         },
         "prepareMs": {
-          "median": 15536,
-          "p95": 15536,
-          "p99": 15536
+          "median": 34394,
+          "p95": 34394,
+          "p99": 34394
         },
         "bunDownloadMs": {
-          "median": 382,
-          "p95": 382,
-          "p99": 382
+          "median": 550,
+          "p95": 550,
+          "p99": 550
         },
         "bunUnpackMs": {
-          "median": 657,
-          "p95": 657,
-          "p99": 657
+          "median": 812,
+          "p95": 812,
+          "p99": 812
         },
         "cloneMs": {
-          "median": 2072,
-          "p95": 2072,
-          "p99": 2072
+          "median": 3033,
+          "p95": 3033,
+          "p99": 3033
         },
         "installMs": {
-          "median": 26645,
-          "p95": 26645,
-          "p99": 26645
+          "median": 23110,
+          "p95": 23110,
+          "p99": 23110
         },
         "typecheckMs": {
-          "median": 39784,
-          "p95": 39784,
-          "p99": 39784
+          "median": 58062,
+          "p95": 58062,
+          "p99": 58062
         }
       },
       "successRate": 1
@@ -1784,17 +1730,17 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 53095,
+          "totalMs": 64256,
           "phasesCompleted": 7,
           "phasesTotal": 7,
-          "prepareMs": 2625,
-          "cacheClearMs": 30,
-          "bunDownloadMs": 245,
-          "bunUnpackMs": 616,
-          "cloneMs": 1684,
-          "installMs": 10097,
-          "typecheckMs": 35495,
-          "diskAfterClone": 349437952,
+          "prepareMs": 2464,
+          "cacheClearMs": 28,
+          "bunDownloadMs": 529,
+          "bunUnpackMs": 615,
+          "cloneMs": 6298,
+          "installMs": 10764,
+          "typecheckMs": 41294,
+          "diskAfterClone": 349433856,
           "diskAfterInstall": 3,
           "diskAfterTypecheck": 3,
           "commit": "08fb47373509ba64b13441061314eeacf4264f51",
@@ -1809,39 +1755,39 @@
       ],
       "summary": {
         "totalMs": {
-          "median": 53095,
-          "p95": 53095,
-          "p99": 53095
+          "median": 64256,
+          "p95": 64256,
+          "p99": 64256
         },
         "prepareMs": {
-          "median": 2625,
-          "p95": 2625,
-          "p99": 2625
+          "median": 2464,
+          "p95": 2464,
+          "p99": 2464
         },
         "bunDownloadMs": {
-          "median": 245,
-          "p95": 245,
-          "p99": 245
+          "median": 529,
+          "p95": 529,
+          "p99": 529
         },
         "bunUnpackMs": {
-          "median": 616,
-          "p95": 616,
-          "p99": 616
+          "median": 615,
+          "p95": 615,
+          "p99": 615
         },
         "cloneMs": {
-          "median": 1684,
-          "p95": 1684,
-          "p99": 1684
+          "median": 6298,
+          "p95": 6298,
+          "p99": 6298
         },
         "installMs": {
-          "median": 10097,
-          "p95": 10097,
-          "p99": 10097
+          "median": 10764,
+          "p95": 10764,
+          "p99": 10764
         },
         "typecheckMs": {
-          "median": 35495,
-          "p95": 35495,
-          "p99": 35495
+          "median": 41294,
+          "p95": 41294,
+          "p99": 41294
         }
       },
       "successRate": 1
@@ -1851,19 +1797,19 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 79520,
+          "totalMs": 60782,
           "phasesCompleted": 7,
           "phasesTotal": 7,
-          "prepareMs": 5676,
-          "cacheClearMs": 260,
-          "bunDownloadMs": 496,
-          "bunUnpackMs": 767,
-          "cloneMs": 3191,
-          "installMs": 18214,
-          "typecheckMs": 39964,
-          "diskAfterClone": 352657408,
-          "diskAfterInstall": 3241582592,
-          "diskAfterTypecheck": 3245604864,
+          "prepareMs": 5147,
+          "cacheClearMs": 228,
+          "bunDownloadMs": 2067,
+          "bunUnpackMs": 513,
+          "cloneMs": 2291,
+          "installMs": 15230,
+          "typecheckMs": 26397,
+          "diskAfterClone": 352661504,
+          "diskAfterInstall": 3249647616,
+          "diskAfterTypecheck": 3253669888,
           "commit": "08fb47373509ba64b13441061314eeacf4264f51",
           "bunVersion": "1.3.14",
           "nodeVersion": "v24.22.1",
@@ -1876,39 +1822,39 @@
       ],
       "summary": {
         "totalMs": {
-          "median": 79520,
-          "p95": 79520,
-          "p99": 79520
+          "median": 60782,
+          "p95": 60782,
+          "p99": 60782
         },
         "prepareMs": {
-          "median": 5676,
-          "p95": 5676,
-          "p99": 5676
+          "median": 5147,
+          "p95": 5147,
+          "p99": 5147
         },
         "bunDownloadMs": {
-          "median": 496,
-          "p95": 496,
-          "p99": 496
+          "median": 2067,
+          "p95": 2067,
+          "p99": 2067
         },
         "bunUnpackMs": {
-          "median": 767,
-          "p95": 767,
-          "p99": 767
+          "median": 513,
+          "p95": 513,
+          "p99": 513
         },
         "cloneMs": {
-          "median": 3191,
-          "p95": 3191,
-          "p99": 3191
+          "median": 2291,
+          "p95": 2291,
+          "p99": 2291
         },
         "installMs": {
-          "median": 18214,
-          "p95": 18214,
-          "p99": 18214
+          "median": 15230,
+          "p95": 15230,
+          "p99": 15230
         },
         "typecheckMs": {
-          "median": 39964,
-          "p95": 39964,
-          "p99": 39964
+          "median": 26397,
+          "p95": 26397,
+          "p99": 26397
         }
       },
       "successRate": 1
@@ -1918,208 +1864,8 @@
       "mode": "sandbox-dax",
       "iterations": [
         {
-          "totalMs": 78158,
-          "phasesCompleted": 7,
-          "phasesTotal": 7,
-          "prepareMs": 18952,
-          "cacheClearMs": 222,
-          "bunDownloadMs": 429,
-          "bunUnpackMs": 710,
-          "cloneMs": 2300,
-          "installMs": 11112,
-          "typecheckMs": 39864,
-          "diskAfterClone": 352649216,
-          "diskAfterInstall": 3247132672,
-          "diskAfterTypecheck": 3251167232,
-          "commit": "08fb47373509ba64b13441061314eeacf4264f51",
-          "bunVersion": "1.3.14",
-          "nodeVersion": "v24.16.0",
-          "architecture": "x86_64",
-          "kernel": "Linux 7.0.7",
-          "logicalCpus": "8",
-          "cpuModel": "AMD EPYC 9554P 64-Core Processor",
-          "memoryKib": "16371968"
-        }
-      ],
-      "summary": {
-        "totalMs": {
-          "median": 78158,
-          "p95": 78158,
-          "p99": 78158
-        },
-        "prepareMs": {
-          "median": 18952,
-          "p95": 18952,
-          "p99": 18952
-        },
-        "bunDownloadMs": {
-          "median": 429,
-          "p95": 429,
-          "p99": 429
-        },
-        "bunUnpackMs": {
-          "median": 710,
-          "p95": 710,
-          "p99": 710
-        },
-        "cloneMs": {
-          "median": 2300,
-          "p95": 2300,
-          "p99": 2300
-        },
-        "installMs": {
-          "median": 11112,
-          "p95": 11112,
-          "p99": 11112
-        },
-        "typecheckMs": {
-          "median": 39864,
-          "p95": 39864,
-          "p99": 39864
-        }
-      },
-      "successRate": 1
-    },
-    {
-      "provider": "upstash",
-      "mode": "sandbox-dax",
-      "iterations": [
-        {
-          "totalMs": 56283,
-          "phasesCompleted": 7,
-          "phasesTotal": 7,
-          "prepareMs": 6764,
-          "cacheClearMs": 45,
-          "bunDownloadMs": 307,
-          "bunUnpackMs": 622,
-          "cloneMs": 1632,
-          "installMs": 11568,
-          "typecheckMs": 25572,
-          "diskAfterClone": 350351360,
-          "diskAfterInstall": 3,
-          "diskAfterTypecheck": 3,
-          "commit": "08fb47373509ba64b13441061314eeacf4264f51",
-          "bunVersion": "1.3.14",
-          "nodeVersion": "v25.9.0",
-          "architecture": "aarch64",
-          "kernel": "Linux 7.0.0-1011-aws",
-          "logicalCpus": "48",
-          "memoryKib": "194328760"
-        }
-      ],
-      "summary": {
-        "totalMs": {
-          "median": 56283,
-          "p95": 56283,
-          "p99": 56283
-        },
-        "prepareMs": {
-          "median": 6764,
-          "p95": 6764,
-          "p99": 6764
-        },
-        "bunDownloadMs": {
-          "median": 307,
-          "p95": 307,
-          "p99": 307
-        },
-        "bunUnpackMs": {
-          "median": 622,
-          "p95": 622,
-          "p99": 622
-        },
-        "cloneMs": {
-          "median": 1632,
-          "p95": 1632,
-          "p99": 1632
-        },
-        "installMs": {
-          "median": 11568,
-          "p95": 11568,
-          "p99": 11568
-        },
-        "typecheckMs": {
-          "median": 25572,
-          "p95": 25572,
-          "p99": 25572
-        }
-      },
-      "successRate": 1
-    },
-    {
-      "provider": "vercel",
-      "mode": "sandbox-dax",
-      "iterations": [
-        {
-          "totalMs": 63779,
-          "phasesCompleted": 7,
-          "phasesTotal": 7,
-          "prepareMs": 12253,
-          "cacheClearMs": 83,
-          "bunDownloadMs": 261,
-          "bunUnpackMs": 656,
-          "cloneMs": 1663,
-          "installMs": 12028,
-          "typecheckMs": 31172,
-          "diskAfterClone": 349949952,
-          "diskAfterInstall": 3087441920,
-          "diskAfterTypecheck": 3091288064,
-          "commit": "08fb47373509ba64b13441061314eeacf4264f51",
-          "bunVersion": "1.3.14",
-          "nodeVersion": "v24.22.1",
-          "architecture": "x86_64",
-          "kernel": "Linux 6.18.49",
-          "logicalCpus": "8",
-          "cpuModel": "Intel(R) Xeon(R) Processor @ 2.90GHz",
-          "memoryKib": "17042920"
-        }
-      ],
-      "summary": {
-        "totalMs": {
-          "median": 63779,
-          "p95": 63779,
-          "p99": 63779
-        },
-        "prepareMs": {
-          "median": 12253,
-          "p95": 12253,
-          "p99": 12253
-        },
-        "bunDownloadMs": {
-          "median": 261,
-          "p95": 261,
-          "p99": 261
-        },
-        "bunUnpackMs": {
-          "median": 656,
-          "p95": 656,
-          "p99": 656
-        },
-        "cloneMs": {
-          "median": 1663,
-          "p95": 1663,
-          "p99": 1663
-        },
-        "installMs": {
-          "median": 12028,
-          "p95": 12028,
-          "p99": 12028
-        },
-        "typecheckMs": {
-          "median": 31172,
-          "p95": 31172,
-          "p99": 31172
-        }
-      },
-      "successRate": 1
-    },
-    {
-      "provider": "opencomputer",
-      "mode": "sandbox-dax",
-      "iterations": [
-        {
           "totalMs": 0,
-          "error": "sandbox create failed after 846ms: Failed to create sandbox: 503 {\"error\":\"no cells available with capacity\"}"
+          "error": "sandbox create failed after 37ms: Failed to create Tensorlake sandbox: API error (status 400): Per-sandbox RAM limit exceeded: requested 16384 MB, max 16000 MB"
         }
       ],
       "summary": {
@@ -2160,6 +1906,139 @@
         }
       },
       "successRate": 0
+    },
+    {
+      "provider": "upstash",
+      "mode": "sandbox-dax",
+      "iterations": [
+        {
+          "totalMs": 57264,
+          "phasesCompleted": 7,
+          "phasesTotal": 7,
+          "prepareMs": 6427,
+          "cacheClearMs": 58,
+          "bunDownloadMs": 375,
+          "bunUnpackMs": 624,
+          "cloneMs": 1696,
+          "installMs": 11755,
+          "typecheckMs": 25959,
+          "diskAfterClone": 350355456,
+          "diskAfterInstall": 3,
+          "diskAfterTypecheck": 3,
+          "commit": "08fb47373509ba64b13441061314eeacf4264f51",
+          "bunVersion": "1.3.14",
+          "nodeVersion": "v25.9.0",
+          "architecture": "aarch64",
+          "kernel": "Linux 7.0.0-1011-aws",
+          "logicalCpus": "48",
+          "memoryKib": "194328760"
+        }
+      ],
+      "summary": {
+        "totalMs": {
+          "median": 57264,
+          "p95": 57264,
+          "p99": 57264
+        },
+        "prepareMs": {
+          "median": 6427,
+          "p95": 6427,
+          "p99": 6427
+        },
+        "bunDownloadMs": {
+          "median": 375,
+          "p95": 375,
+          "p99": 375
+        },
+        "bunUnpackMs": {
+          "median": 624,
+          "p95": 624,
+          "p99": 624
+        },
+        "cloneMs": {
+          "median": 1696,
+          "p95": 1696,
+          "p99": 1696
+        },
+        "installMs": {
+          "median": 11755,
+          "p95": 11755,
+          "p99": 11755
+        },
+        "typecheckMs": {
+          "median": 25959,
+          "p95": 25959,
+          "p99": 25959
+        }
+      },
+      "successRate": 1
+    },
+    {
+      "provider": "vercel",
+      "mode": "sandbox-dax",
+      "iterations": [
+        {
+          "totalMs": 83372,
+          "phasesCompleted": 7,
+          "phasesTotal": 7,
+          "prepareMs": 10899,
+          "cacheClearMs": 87,
+          "bunDownloadMs": 403,
+          "bunUnpackMs": 748,
+          "cloneMs": 1751,
+          "installMs": 23179,
+          "typecheckMs": 40114,
+          "diskAfterClone": 349945856,
+          "diskAfterInstall": 3087589376,
+          "diskAfterTypecheck": 3091435520,
+          "commit": "08fb47373509ba64b13441061314eeacf4264f51",
+          "bunVersion": "1.3.14",
+          "nodeVersion": "v24.22.1",
+          "architecture": "x86_64",
+          "kernel": "Linux 6.18.56",
+          "logicalCpus": "8",
+          "cpuModel": "Intel(R) Xeon(R) Processor @ 2.90GHz",
+          "memoryKib": "17042876"
+        }
+      ],
+      "summary": {
+        "totalMs": {
+          "median": 83372,
+          "p95": 83372,
+          "p99": 83372
+        },
+        "prepareMs": {
+          "median": 10899,
+          "p95": 10899,
+          "p99": 10899
+        },
+        "bunDownloadMs": {
+          "median": 403,
+          "p95": 403,
+          "p99": 403
+        },
+        "bunUnpackMs": {
+          "median": 748,
+          "p95": 748,
+          "p99": 748
+        },
+        "cloneMs": {
+          "median": 1751,
+          "p95": 1751,
+          "p99": 1751
+        },
+        "installMs": {
+          "median": 23179,
+          "p95": 23179,
+          "p99": 23179
+        },
+        "typecheckMs": {
+          "median": 40114,
+          "p95": 40114,
+          "p99": 40114
+        }
+      },
+      "successRate": 1
     }
   ]
 }
