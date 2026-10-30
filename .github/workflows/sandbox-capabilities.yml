@@ -143,7 +143,7 @@ jobs:
         run: |
           COMMON_KEYS='BENCHMARKS_PLATFORM_API_KEY'
           case "$PROVIDER" in
-            archil) PROVIDER_KEYS='ARCHIL_API_KEY|ARCHIL_REGION|ARCHIL_DISK_ID' ;;
+            archil) PROVIDER_KEYS='ARCHIL_API_KEY|ARCHIL_REGION|ARCHIL_DISK_ID_CAPABILITY' ;;
             arker) PROVIDER_KEYS='ARKER_API_KEY' ;;
             beam) PROVIDER_KEYS='BEAM_TOKEN|BEAM_WORKSPACE_ID' ;;
             blaxel) PROVIDER_KEYS='BL_API_KEY|BL_WORKSPACE' ;;
@@ -184,6 +184,7 @@ jobs:
             KEYS="^(${COMMON_KEYS})="
           fi
           . benchmarks/scripts/load-vault-secrets.sh "$KEYS"
+          if [ -n "${ARCHIL_DISK_ID_CAPABILITY:-}" ]; then export ARCHIL_DISK_ID="$ARCHIL_DISK_ID_CAPABILITY"; fi
 
           RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           pnpm exec -- tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/capabilities.bench.ts \
