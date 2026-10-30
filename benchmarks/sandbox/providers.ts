@@ -52,9 +52,24 @@ export const providers: ProviderConfig[] = [
   // --- Direct mode (provider SDK packages) ---
   {
     name: 'archil',
-    requiredEnvVars: ['ARCHIL_API_KEY', 'ARCHIL_REGION', 'ARCHIL_DISK_ID'],
-    createCompute: () => archil({ apiKey: process.env.ARCHIL_API_KEY!, region: process.env.ARCHIL_REGION! }),
-    sandboxOptions: { diskId: process.env.ARCHIL_DISK_ID! }
+    // Execution mode is env-driven because this registry is shared with
+    // reliability/storage benches that must stay on the exec-mode shared
+    // disk. Workflows set ARCHIL_EXECUTION=persistent for sandbox-family
+    // benches: create() then provisions a dedicated VM (own rootfs, state
+    // persists across commands, destroy() actually deletes) instead of
+    // resolving a shared-disk exec handle. baseImage must carry node —
+    // Archil's default (ubuntu) fails the `node -v` readiness probe.
+    requiredEnvVars: process.env.ARCHIL_EXECUTION === 'persistent'
+      ? ['ARCHIL_API_KEY', 'ARCHIL_REGION']
+      : ['ARCHIL_API_KEY', 'ARCHIL_REGION', 'ARCHIL_DISK_ID'],
+    createCompute: () => archil({
+      apiKey: process.env.ARCHIL_API_KEY!,
+      region: process.env.ARCHIL_REGION!,
+      execution: process.env.ARCHIL_EXECUTION === 'persistent' ? 'persistent' : 'exec',
+    }),
+    sandboxOptions: process.env.ARCHIL_EXECUTION === 'persistent'
+      ? { baseImage: 'node:24-bookworm', maxTtlSeconds: 900 }
+      : { diskId: process.env.ARCHIL_DISK_ID! },
   },
   {
     // Arker sizes via `platforms` on the factory, not sandbox.create(), so like
