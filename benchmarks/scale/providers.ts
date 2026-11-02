@@ -1,5 +1,4 @@
 // import { daytona } from '@computesdk/daytona';
-import { declaw } from '@computesdk/declaw';
 import { e2b } from '@computesdk/e2b';
 import { isorun } from '@computesdk/isorun';
 import { modal } from '@computesdk/modal';
@@ -19,7 +18,7 @@ import type { BurstProviderConfig } from './types.js';
  * `sandboxOptions.timeout` (in ms) is the per-sandbox keep-alive. This is
  * the canonical field name across the @computesdk/* adapters — each adapter
  * destructures `options.timeout` and maps it to the provider's native field
- * (e2b → timeoutMs, runloop/declaw/tensorlake → seconds, etc.). The
+ * (e2b → timeoutMs, runloop/tensorlake → seconds, etc.). The
  * two-phase runner holds every sandbox alive between create and the
  * coordinated end-of-test destroy, so this value must comfortably exceed
  * the worst-case burst duration. 30min is conservative.
@@ -70,14 +69,6 @@ export const providers: BurstProviderConfig[] = [
     concurrencyTarget: 100_000,
     perRequestTimeoutMs: 120_000,
     sandboxOptions: { timeout: KEEP_ALIVE_MS, cpus: 0.1, memoryMb: 100, ephemeralDiskMb: 100 },
-  },
-  {
-    name: 'declaw',
-    requiredEnvVars: ['DECLAW_API_KEY'],
-    createCompute: () => declaw({ apiKey: process.env.DECLAW_API_KEY! }),
-    concurrencyTarget: 100_000,
-    perRequestTimeoutMs: 120_000,
-    sandboxOptions: { timeout: KEEP_ALIVE_MS },
   },
   {
     name: 'isorun',

@@ -319,7 +319,7 @@
           "logicalCpus": "6",
           "cpuModel": "unknown",
           "memoryKib": "4007328",
-          "error": "bun_download phase failed (exit code 1, 2/7 phases completed): E: Unable to locate package git | E: Unable to locate package python3 | E: Unable to locate package python3-setuptools | E: Unable to locate package unzip | /tmp/dax-benchmark.sh: line 187: curl: command not found | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **cloud-run** | 6 CPU / 3.82 GiB | unknown, unknown | 0.000s | 0.000s | — | — | ❌ Bun download |"
+          "error": "bun_download phase failed (exit code 1, 2/7 phases completed): E: Unable to locate package git | E: Unable to locate package python3 | E: Unable to locate package python3-setuptools | E: Unable to locate package unzip | /tmp/dax-benchmark.sh: line 187: curl: command not found | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **cloud-run** | 6 CPU / 3.82 GiB | unknown, unknown | 0.000s | 0.000s | \u2014 | \u2014 | \u274c Bun download |"
         }
       ],
       "summary": {
@@ -589,73 +589,6 @@
           "median": 36035,
           "p95": 36035,
           "p99": 36035
-        }
-      },
-      "successRate": 1
-    },
-    {
-      "provider": "declaw",
-      "mode": "sandbox-dax",
-      "iterations": [
-        {
-          "totalMs": 218017,
-          "phasesCompleted": 7,
-          "phasesTotal": 7,
-          "prepareMs": 5668,
-          "cacheClearMs": 83,
-          "bunDownloadMs": 706,
-          "bunUnpackMs": 779,
-          "cloneMs": 5323,
-          "installMs": 28401,
-          "typecheckMs": 163116,
-          "diskAfterClone": 3182592,
-          "diskAfterInstall": 159485952,
-          "diskAfterTypecheck": 159727616,
-          "commit": "08fb47373509ba64b13441061314eeacf4264f51",
-          "bunVersion": "1.3.14",
-          "nodeVersion": "v24.14.1",
-          "architecture": "x86_64",
-          "kernel": "Linux 6.1.102",
-          "logicalCpus": "8",
-          "cpuModel": "Intel(R) Xeon(R) Processor",
-          "memoryKib": "16403536"
-        }
-      ],
-      "summary": {
-        "totalMs": {
-          "median": 218017,
-          "p95": 218017,
-          "p99": 218017
-        },
-        "prepareMs": {
-          "median": 5668,
-          "p95": 5668,
-          "p99": 5668
-        },
-        "bunDownloadMs": {
-          "median": 706,
-          "p95": 706,
-          "p99": 706
-        },
-        "bunUnpackMs": {
-          "median": 779,
-          "p95": 779,
-          "p99": 779
-        },
-        "cloneMs": {
-          "median": 5323,
-          "p95": 5323,
-          "p99": 5323
-        },
-        "installMs": {
-          "median": 28401,
-          "p95": 28401,
-          "p99": 28401
-        },
-        "typecheckMs": {
-          "median": 163116,
-          "p95": 163116,
-          "p99": 163116
         }
       },
       "successRate": 1
@@ -1111,7 +1044,7 @@
           "logicalCpus": "8",
           "cpuModel": "AMD EPYC",
           "memoryKib": "16400900",
-          "error": "install phase failed (exit code 1, 5/7 phases completed): gyp ERR! node-gyp -v v13.1.0 | gyp ERR! $npm_package_name opencode | gyp ERR! $npm_package_version 0.25.10 | gyp ERR! not ok | error: install script from \"tree-sitter-powershell\" exited with 1 | done. | bun install v1.3.14 (0d9b296a) | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **miosa** | 8 CPU / 15.64 GiB | unknown, AMD EPYC | 1.677s | 8.745s | — | — | ❌ install |"
+          "error": "install phase failed (exit code 1, 5/7 phases completed): gyp ERR! node-gyp -v v13.1.0 | gyp ERR! $npm_package_name opencode | gyp ERR! $npm_package_version 0.25.10 | gyp ERR! not ok | error: install script from \"tree-sitter-powershell\" exited with 1 | done. | bun install v1.3.14 (0d9b296a) | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **miosa** | 8 CPU / 15.64 GiB | unknown, AMD EPYC | 1.677s | 8.745s | \u2014 | \u2014 | \u274c install |"
         }
       ],
       "summary": {

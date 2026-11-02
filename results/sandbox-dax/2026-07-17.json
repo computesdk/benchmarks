@@ -410,54 +410,6 @@
       "successRate": 0
     },
     {
-      "provider": "declaw",
-      "mode": "sandbox-dax",
-      "iterations": [
-        {
-          "totalMs": 0,
-          "error": "Dax benchmark failed with exit code 127: HTTP 403: "
-        }
-      ],
-      "summary": {
-        "totalMs": {
-          "median": 0,
-          "p95": 0,
-          "p99": 0
-        },
-        "prepareMs": {
-          "median": 0,
-          "p95": 0,
-          "p99": 0
-        },
-        "bunDownloadMs": {
-          "median": 0,
-          "p95": 0,
-          "p99": 0
-        },
-        "bunUnpackMs": {
-          "median": 0,
-          "p95": 0,
-          "p99": 0
-        },
-        "cloneMs": {
-          "median": 0,
-          "p95": 0,
-          "p99": 0
-        },
-        "installMs": {
-          "median": 0,
-          "p95": 0,
-          "p99": 0
-        },
-        "typecheckMs": {
-          "median": 0,
-          "p95": 0,
-          "p99": 0
-        }
-      },
-      "successRate": 0
-    },
-    {
       "provider": "e2b",
       "mode": "sandbox-dax",
       "iterations": [

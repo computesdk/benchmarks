@@ -589,7 +589,7 @@ async function main() {
     // Exit explicitly so the Namespace instance reaps promptly. The coordinator
     // is the container's PID 1 and its work is done (burst accounted, survivors
     // destroyed, artifacts uploaded, worker finished) — but provider SDKs can
-    // hold the event loop open past this point (e.g. @declaw/sdk keeps a
+    // hold the event loop open past this point (e.g. a provider SDK keeping a
     // module-level keep-alive undici Agent and may have create requests still
     // in flight), so relying on natural drain can strand the VM until its
     // deadline. A clean exit(0) avoids that; the crash/SIGTERM paths exit(1).

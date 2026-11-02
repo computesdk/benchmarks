@@ -338,7 +338,7 @@
           "logicalCpus": "5",
           "cpuModel": "unknown",
           "memoryKib": "4007556",
-          "error": "bun_download phase failed (exit code 1, 2/7 phases completed): E: Unable to locate package git | E: Unable to locate package python3 | E: Unable to locate package python3-setuptools | E: Unable to locate package unzip | /tmp/dax-benchmark.sh: line 187: curl: command not found | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **cloud-run** | 5 CPU / 3.82 GiB | unknown, unknown | 0.000s | 0.000s | — | — | ❌ Bun download |"
+          "error": "bun_download phase failed (exit code 1, 2/7 phases completed): E: Unable to locate package git | E: Unable to locate package python3 | E: Unable to locate package python3-setuptools | E: Unable to locate package unzip | /tmp/dax-benchmark.sh: line 187: curl: command not found | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **cloud-run** | 5 CPU / 3.82 GiB | unknown, unknown | 0.000s | 0.000s | \u2014 | \u2014 | \u274c Bun download |"
         }
       ],
       "summary": {
@@ -470,7 +470,7 @@
           "logicalCpus": "8\r",
           "cpuModel": "AMD EPYC\r",
           "memoryKib": "16390000\r",
-          "error": "install\r phase failed (exit code 1, 6/7 phases completed):   \u001b[2mhttps://registry.npmjs.org/react-remove-scroll/-/react-remove-scroll-2.5.5.tgz\u001b[0m | \u001b[0m\u001b[31merror\u001b[0m\u001b[2m:\u001b[0m failed to download \u001b[1m@aws-sdk/credential-provider-process@3.775.0\u001b[0m: Fail |   \u001b[2mhttps://registry.npmjs.org/@aws-sdk/credential-provider-process/-/credential-provider-process-3.77 | 5.0.tgz\u001b[0m | \u001b[0m\u001b[31merror\u001b[0m\u001b[2m:\u001b[0m failed | done. | \u001b[0m\u001b[1mbun install \u001b[0m\u001b[2mv1.3.14 (0d9b296a)\u001b[0m | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **codesandbox** | 8 CPU / 15.63 GiB | unknown, AMD EPYC | 1.882s | 6.621s | — | — | ❌ install |"
+          "error": "install\r phase failed (exit code 1, 6/7 phases completed):   \u001b[2mhttps://registry.npmjs.org/react-remove-scroll/-/react-remove-scroll-2.5.5.tgz\u001b[0m | \u001b[0m\u001b[31merror\u001b[0m\u001b[2m:\u001b[0m failed to download \u001b[1m@aws-sdk/credential-provider-process@3.775.0\u001b[0m: Fail |   \u001b[2mhttps://registry.npmjs.org/@aws-sdk/credential-provider-process/-/credential-provider-process-3.77 | 5.0.tgz\u001b[0m | \u001b[0m\u001b[31merror\u001b[0m\u001b[2m:\u001b[0m failed | done. | \u001b[0m\u001b[1mbun install \u001b[0m\u001b[2mv1.3.14 (0d9b296a)\u001b[0m | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **codesandbox** | 8 CPU / 15.63 GiB | unknown, AMD EPYC | 1.882s | 6.621s | \u2014 | \u2014 | \u274c install |"
         }
       ],
       "summary": {
@@ -647,73 +647,6 @@
       "successRate": 1
     },
     {
-      "provider": "declaw",
-      "mode": "sandbox-dax",
-      "iterations": [
-        {
-          "totalMs": 185882,
-          "phasesCompleted": 7,
-          "phasesTotal": 7,
-          "prepareMs": 12894,
-          "cacheClearMs": 84,
-          "bunDownloadMs": 704,
-          "bunUnpackMs": 689,
-          "cloneMs": 3295,
-          "installMs": 28308,
-          "typecheckMs": 126593,
-          "diskAfterClone": 3182592,
-          "diskAfterInstall": 159240192,
-          "diskAfterTypecheck": 159481856,
-          "commit": "08fb47373509ba64b13441061314eeacf4264f51",
-          "bunVersion": "1.3.14",
-          "nodeVersion": "v24.14.1",
-          "architecture": "x86_64",
-          "kernel": "Linux 6.1.102",
-          "logicalCpus": "8",
-          "cpuModel": "Intel(R) Xeon(R) Processor",
-          "memoryKib": "16403536"
-        }
-      ],
-      "summary": {
-        "totalMs": {
-          "median": 185882,
-          "p95": 185882,
-          "p99": 185882
-        },
-        "prepareMs": {
-          "median": 12894,
-          "p95": 12894,
-          "p99": 12894
-        },
-        "bunDownloadMs": {
-          "median": 704,
-          "p95": 704,
-          "p99": 704
-        },
-        "bunUnpackMs": {
-          "median": 689,
-          "p95": 689,
-          "p99": 689
-        },
-        "cloneMs": {
-          "median": 3295,
-          "p95": 3295,
-          "p99": 3295
-        },
-        "installMs": {
-          "median": 28308,
-          "p95": 28308,
-          "p99": 28308
-        },
-        "typecheckMs": {
-          "median": 126593,
-          "p95": 126593,
-          "p99": 126593
-        }
-      },
-      "successRate": 1
-    },
-    {
       "provider": "e2b",
       "mode": "sandbox-dax",
       "iterations": [
@@ -735,7 +668,7 @@
           "logicalCpus": "8",
           "cpuModel": "Intel(R) Xeon(R) Processor @ 2.60GHz",
           "memoryKib": "16392004",
-          "error": "install phase failed (exit code 1, 5/7 phases completed): gyp ERR! node-gyp -v v13.1.0 | gyp ERR! $npm_package_name opencode | gyp ERR! $npm_package_version 0.25.10 | gyp ERR! not ok | error: install script from \"tree-sitter-powershell\" exited with 1 | done. | bun install v1.3.14 (0d9b296a) | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **e2b** | 8 CPU / 15.63 GiB | unknown, Intel(R) Xeon(R) Processor @ 2.60GHz | 3.927s | 9.787s | — | — | ❌ install |"
+          "error": "install phase failed (exit code 1, 5/7 phases completed): gyp ERR! node-gyp -v v13.1.0 | gyp ERR! $npm_package_name opencode | gyp ERR! $npm_package_version 0.25.10 | gyp ERR! not ok | error: install script from \"tree-sitter-powershell\" exited with 1 | done. | bun install v1.3.14 (0d9b296a) | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **e2b** | 8 CPU / 15.63 GiB | unknown, Intel(R) Xeon(R) Processor @ 2.60GHz | 3.927s | 9.787s | \u2014 | \u2014 | \u274c install |"
         }
       ],
       "summary": {
@@ -859,7 +792,7 @@
           "logicalCpus": "8",
           "cpuModel": "AMD EPYC",
           "memoryKib": "32891860",
-          "error": "bun_download phase failed (exit code 1, 2/7 phases completed): curl: (60) SSL certificate OpenSSL verify result: certificate is not yet valid (9) | More details here: https://curl.se/docs/sslcerts.html | curl failed to verify the legitimacy of the server and therefore could not | establish a secure connection to it. To learn more about this situation and | how to fix it, please visit the webpage mentioned above. | Nothing to do. | Complete! | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **givemeanode** | 8 CPU / 31.37 GiB | unknown, AMD EPYC | 0.000s | 0.000s | — | — | ❌ Bun download |"
+          "error": "bun_download phase failed (exit code 1, 2/7 phases completed): curl: (60) SSL certificate OpenSSL verify result: certificate is not yet valid (9) | More details here: https://curl.se/docs/sslcerts.html | curl failed to verify the legitimacy of the server and therefore could not | establish a secure connection to it. To learn more about this situation and | how to fix it, please visit the webpage mentioned above. | Nothing to do. | Complete! | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **givemeanode** | 8 CPU / 31.37 GiB | unknown, AMD EPYC | 0.000s | 0.000s | \u2014 | \u2014 | \u274c Bun download |"
         }
       ],
       "summary": {
@@ -1374,7 +1307,7 @@
           "logicalCpus": "8",
           "cpuModel": "AMD EPYC",
           "memoryKib": "16437876",
-          "error": "typecheck phase failed (exit code 1, 6/7 phases completed):  ERROR  opencode#typecheck: command (/tmp/opencode-provider-benchmark/repo/packages/opencode) /tmp/opencode-provider-benchmark/bun/bin/bun run typecheck exited (1) |  ERROR  run failed: command  exited (1) | error: \"turbo\" exited with code 1 | error: script \"typecheck\" exited with code 1 | time=\"2026-10-20T19:33:34Z\" level=fatal msg=\"exec failed with exit code 1\" |   Time:    23.443s | Failed:    opencode#typecheck | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **namespace** | 8 CPU / 15.68 GiB | unknown, AMD EPYC | 1.831s | 12.481s | 23.482s (failed) | — | ❌ typecheck |"
+          "error": "typecheck phase failed (exit code 1, 6/7 phases completed):  ERROR  opencode#typecheck: command (/tmp/opencode-provider-benchmark/repo/packages/opencode) /tmp/opencode-provider-benchmark/bun/bin/bun run typecheck exited (1) |  ERROR  run failed: command  exited (1) | error: \"turbo\" exited with code 1 | error: script \"typecheck\" exited with code 1 | time=\"2026-10-20T19:33:34Z\" level=fatal msg=\"exec failed with exit code 1\" |   Time:    23.443s | Failed:    opencode#typecheck | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **namespace** | 8 CPU / 15.68 GiB | unknown, AMD EPYC | 1.831s | 12.481s | 23.482s (failed) | \u2014 | \u274c typecheck |"
         }
       ],
       "summary": {

@@ -80,9 +80,6 @@ importers:
       '@computesdk/daytona':
         specifier: ^1.7.50
         version: 1.7.50(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-      '@computesdk/declaw':
-        specifier: 0.2.24
-        version: 0.2.24
       '@computesdk/e2b':
         specifier: ^1.7.68
         version: 1.7.68
@@ -803,9 +800,6 @@ packages:
   '@computesdk/daytona@1.7.50':
     resolution: {integrity: sha512-BTnM1SFugx+iqb3KwBQppvPnQmsY92cvkx/UyaJzeruiQ4k9Njsso5YWD2/7NsOgjD6YibA8EaNBESrv3n6cjg==}
 
-  '@computesdk/declaw@0.2.24':
-    resolution: {integrity: sha512-nB3UJeb4jvUZYw0DPGH54vqhMShBExxtaw1sX6FGrArSz93i+v0wzabozjLeDiBhXKQPY1hw7XXaJYpWQVr6Yg==}
-
   '@computesdk/e2b@1.7.68':
     resolution: {integrity: sha512-44HwFGDmn9MFOnskgGHDTBf3wl9e/KCwrN58lE+jij2Qqr9wvQ5pHi3w7ooBYr6wODlLgWkXC0m3tiY6mGL9yA==}
 
@@ -981,10 +975,6 @@ packages:
 
   '@daytonaio/sdk@0.224.1':
     resolution: {integrity: sha512-ao+bGXdFd36G7b2d4HuQ8dM8G/IhcpwQGrwuwKR3HMYxVbPwclbgaPc01hqvSrvXIjFmuwNdilklITjTeoUIew==}
-
-  '@declaw/sdk@1.6.0':
-    resolution: {integrity: sha512-RkJaVVctSa3d9A6x02FdjIK4iPvRnZUC6zOZW/RaLoOruYmTy4yzBKX4VebhaTVM30HaqcU7QBv8uEz1bEeYhg==}
-    engines: {node: '>=20.18.1'}
 
   '@e2b/dockerfile-utils@0.1.1':
     resolution: {integrity: sha512-eDmlWRMrJNzSUbBOf6Y/qTChd1Ys/o3YY8PK6tRQmwkV2u7z3ZS2cak/YJB07odHMT/Z6HJKoUElR/b0N6bHUw==}
@@ -6705,12 +6695,6 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@computesdk/declaw@0.2.24':
-    dependencies:
-      '@computesdk/provider': 2.1.19
-      '@declaw/sdk': 1.6.0
-      computesdk: 4.1.13
-
   '@computesdk/e2b@1.7.68':
     dependencies:
       '@computesdk/provider': 2.1.20
@@ -7079,12 +7063,6 @@ snapshots:
       - debug
       - supports-color
       - utf-8-validate
-
-  '@declaw/sdk@1.6.0':
-    dependencies:
-      eventsource-parser: 3.1.1
-    optionalDependencies:
-      undici: 7.30.1
 
   '@e2b/dockerfile-utils@0.1.1': {}
 

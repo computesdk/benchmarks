@@ -153,7 +153,6 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   cloudflare:   { vcpu: 8, memoryMib: 16384, diskMb: 20000, image: 'builder' },
   codesandbox:  { vmTier: VMTier.Small },                  // Small = 8 CPU, 16 GiB
   northflank:   { deploymentPlan: process.env.NORTHFLANK_DEPLOYMENT_PLAN || 'nf-compute-50', ephemeralStorageSize: 5120 },  // 5 GiB ephemeral storage
-  declaw:       { templateId: 'node-large' },              // node-large template: 8 vCPU / 16 GiB RAM / 8 GiB disk
   superserve:   { templateId: 'node22-8cpu-16gb' },           // 8 vCPU / 16 GiB template built in the pre-step
   createos:     { shape: 's-8vcpu-16gb', ephemeralDiskMb: 61440 }, // 8 vCPU, 16 GiB RAM, 60 GiB disk
   opencomputer: { cpuCount: 4, memoryMB: 16384, timeout: 600_000 },
