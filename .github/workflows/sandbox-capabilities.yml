@@ -67,7 +67,6 @@ jobs:
           - codesandbox
           - createos
           - daytona
-          - declaw
           - e2b
           # - ec2-firecrab  # pending @computesdk/ec2-firecrab publish + host/vault
           - givemeanode
@@ -153,7 +152,6 @@ jobs:
             codesandbox) PROVIDER_KEYS='CSB_API_KEY' ;;
             createos) PROVIDER_KEYS='CREATEOS_SANDBOX_API_KEY' ;;
             daytona) PROVIDER_KEYS='DAYTONA_API_KEY' ;;
-            declaw) PROVIDER_KEYS='DECLAW_API_KEY' ;;
             e2b) PROVIDER_KEYS='E2B_API_KEY' ;;
             givemeanode) PROVIDER_KEYS='GMN_API_HOST|GMN_TOKEN' ;;
             hopx) PROVIDER_KEYS='HOPX_API_KEY' ;;
