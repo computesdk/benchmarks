@@ -319,7 +319,7 @@
           "logicalCpus": "5",
           "cpuModel": "unknown",
           "memoryKib": "4010108",
-          "error": "bun_download phase failed (exit code 1, 2/7 phases completed): E: Unable to locate package git | E: Unable to locate package python3 | E: Unable to locate package python3-setuptools | E: Unable to locate package unzip | /tmp/dax-benchmark.sh: line 187: curl: command not found | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **cloud-run** | 5 CPU / 3.82 GiB | unknown, unknown | 0.000s | 0.000s | \u2014 | \u2014 | \u274c Bun download |"
+          "error": "bun_download phase failed (exit code 1, 2/7 phases completed): E: Unable to locate package git | E: Unable to locate package python3 | E: Unable to locate package python3-setuptools | E: Unable to locate package unzip | /tmp/dax-benchmark.sh: line 187: curl: command not found | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **cloud-run** | 5 CPU / 3.82 GiB | unknown, unknown | 0.000s | 0.000s | — | — | ❌ Bun download |"
         }
       ],
       "summary": {
@@ -377,7 +377,7 @@
           "logicalCpus": "8",
           "cpuModel": "AMD EPYC",
           "memoryKib": "4401424",
-          "error": "bun_download phase failed (exit code 1, 2/7 phases completed): E: Unable to locate package git | E: Unable to locate package python3 | E: Unable to locate package python3-setuptools | E: Unable to locate package unzip | /tmp/dax-benchmark.sh: line 187: curl: command not found | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **cloudflare** | 8 CPU / 4.20 GiB | unknown, AMD EPYC | 0.000s | 0.000s | \u2014 | \u2014 | \u274c Bun download |"
+          "error": "bun_download phase failed (exit code 1, 2/7 phases completed): E: Unable to locate package git | E: Unable to locate package python3 | E: Unable to locate package python3-setuptools | E: Unable to locate package unzip | /tmp/dax-benchmark.sh: line 187: curl: command not found | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **cloudflare** | 8 CPU / 4.20 GiB | unknown, AMD EPYC | 0.000s | 0.000s | — | — | ❌ Bun download |"
         }
       ],
       "summary": {
@@ -599,6 +599,73 @@
           "median": 36894,
           "p95": 36894,
           "p99": 36894
+        }
+      },
+      "successRate": 1
+    },
+    {
+      "provider": "declaw",
+      "mode": "sandbox-dax",
+      "iterations": [
+        {
+          "totalMs": 191939,
+          "phasesCompleted": 7,
+          "phasesTotal": 7,
+          "prepareMs": 5709,
+          "cacheClearMs": 101,
+          "bunDownloadMs": 757,
+          "bunUnpackMs": 782,
+          "cloneMs": 5154,
+          "installMs": 29021,
+          "typecheckMs": 137334,
+          "diskAfterClone": 3182592,
+          "diskAfterInstall": 159477760,
+          "diskAfterTypecheck": 159719424,
+          "commit": "08fb47373509ba64b13441061314eeacf4264f51",
+          "bunVersion": "1.3.14",
+          "nodeVersion": "v24.14.1",
+          "architecture": "x86_64",
+          "kernel": "Linux 6.1.102",
+          "logicalCpus": "8",
+          "cpuModel": "Intel(R) Xeon(R) Processor",
+          "memoryKib": "16403536"
+        }
+      ],
+      "summary": {
+        "totalMs": {
+          "median": 191939,
+          "p95": 191939,
+          "p99": 191939
+        },
+        "prepareMs": {
+          "median": 5709,
+          "p95": 5709,
+          "p99": 5709
+        },
+        "bunDownloadMs": {
+          "median": 757,
+          "p95": 757,
+          "p99": 757
+        },
+        "bunUnpackMs": {
+          "median": 782,
+          "p95": 782,
+          "p99": 782
+        },
+        "cloneMs": {
+          "median": 5154,
+          "p95": 5154,
+          "p99": 5154
+        },
+        "installMs": {
+          "median": 29021,
+          "p95": 29021,
+          "p99": 29021
+        },
+        "typecheckMs": {
+          "median": 137334,
+          "p95": 137334,
+          "p99": 137334
         }
       },
       "successRate": 1
@@ -1474,7 +1541,7 @@
           "totalMs": 34252,
           "phasesCompleted": 0,
           "phasesTotal": 7,
-          "error": "install phase failed (exit code 1, 0/7 phases completed): Resolved, downloaded and extracted [537] | Saved lockfile | $ bun run --cwd packages/core fix-node-pty | $ bun run script/fix-node-pty.ts | $ husky |    } |  } | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **sandbox0** | 8 CPU / 16.00 GiB | unknown, unknown | 1.829s | 24.570s | \u2014 | \u2014 | \u274c install |"
+          "error": "install phase failed (exit code 1, 0/7 phases completed): Resolved, downloaded and extracted [537] | Saved lockfile | $ bun run --cwd packages/core fix-node-pty | $ bun run script/fix-node-pty.ts | $ husky |    } |  } | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **sandbox0** | 8 CPU / 16.00 GiB | unknown, unknown | 1.829s | 24.570s | — | — | ❌ install |"
         }
       ],
       "summary": {

@@ -530,6 +530,73 @@
       "successRate": 1
     },
     {
+      "provider": "declaw",
+      "mode": "sandbox-dax",
+      "iterations": [
+        {
+          "totalMs": 68636,
+          "phasesCompleted": 7,
+          "phasesTotal": 7,
+          "prepareMs": 4508,
+          "cacheClearMs": 46,
+          "bunDownloadMs": 372,
+          "bunUnpackMs": 577,
+          "cloneMs": 1974,
+          "installMs": 11683,
+          "typecheckMs": 42284,
+          "diskAfterClone": 3182592,
+          "diskAfterInstall": 159514624,
+          "diskAfterTypecheck": 159756288,
+          "commit": "08fb47373509ba64b13441061314eeacf4264f51",
+          "bunVersion": "1.3.14",
+          "nodeVersion": "v24.14.1",
+          "architecture": "x86_64",
+          "kernel": "Linux 6.1.102",
+          "logicalCpus": "8",
+          "cpuModel": "Intel(R) Xeon(R) Processor @ 3.80GHz",
+          "memoryKib": "16403536"
+        }
+      ],
+      "summary": {
+        "totalMs": {
+          "median": 68636,
+          "p95": 68636,
+          "p99": 68636
+        },
+        "prepareMs": {
+          "median": 4508,
+          "p95": 4508,
+          "p99": 4508
+        },
+        "bunDownloadMs": {
+          "median": 372,
+          "p95": 372,
+          "p99": 372
+        },
+        "bunUnpackMs": {
+          "median": 577,
+          "p95": 577,
+          "p99": 577
+        },
+        "cloneMs": {
+          "median": 1974,
+          "p95": 1974,
+          "p99": 1974
+        },
+        "installMs": {
+          "median": 11683,
+          "p95": 11683,
+          "p99": 11683
+        },
+        "typecheckMs": {
+          "median": 42284,
+          "p95": 42284,
+          "p99": 42284
+        }
+      },
+      "successRate": 1
+    },
+    {
       "provider": "e2b",
       "mode": "sandbox-dax",
       "iterations": [

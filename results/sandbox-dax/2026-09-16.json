@@ -271,7 +271,7 @@
           "logicalCpus": "5",
           "cpuModel": "unknown",
           "memoryKib": "4010108",
-          "error": "bun_download phase failed (exit code 1, 2/7 phases completed): E: Unable to locate package git | E: Unable to locate package python3 | E: Unable to locate package python3-setuptools | E: Unable to locate package unzip | /tmp/dax-benchmark.sh: line 187: curl: command not found | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **cloud-run** | 5 CPU / 3.82 GiB | unknown, unknown | 0.000s | 0.000s | \u2014 | \u2014 | \u274c Bun download |"
+          "error": "bun_download phase failed (exit code 1, 2/7 phases completed): E: Unable to locate package git | E: Unable to locate package python3 | E: Unable to locate package python3-setuptools | E: Unable to locate package unzip | /tmp/dax-benchmark.sh: line 187: curl: command not found | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **cloud-run** | 5 CPU / 3.82 GiB | unknown, unknown | 0.000s | 0.000s | — | — | ❌ Bun download |"
         }
       ],
       "summary": {
@@ -543,6 +543,73 @@
           "median": 36167,
           "p95": 36167,
           "p99": 36167
+        }
+      },
+      "successRate": 1
+    },
+    {
+      "provider": "declaw",
+      "mode": "sandbox-dax",
+      "iterations": [
+        {
+          "totalMs": 274256,
+          "phasesCompleted": 7,
+          "phasesTotal": 7,
+          "prepareMs": 7260,
+          "cacheClearMs": 93,
+          "bunDownloadMs": 736,
+          "bunUnpackMs": 759,
+          "cloneMs": 4853,
+          "installMs": 33061,
+          "typecheckMs": 213420,
+          "diskAfterClone": 3182592,
+          "diskAfterInstall": 159473664,
+          "diskAfterTypecheck": 159715328,
+          "commit": "08fb47373509ba64b13441061314eeacf4264f51",
+          "bunVersion": "1.3.14",
+          "nodeVersion": "v24.14.1",
+          "architecture": "x86_64",
+          "kernel": "Linux 6.1.102",
+          "logicalCpus": "8",
+          "cpuModel": "Intel(R) Xeon(R) Processor",
+          "memoryKib": "16403536"
+        }
+      ],
+      "summary": {
+        "totalMs": {
+          "median": 274256,
+          "p95": 274256,
+          "p99": 274256
+        },
+        "prepareMs": {
+          "median": 7260,
+          "p95": 7260,
+          "p99": 7260
+        },
+        "bunDownloadMs": {
+          "median": 736,
+          "p95": 736,
+          "p99": 736
+        },
+        "bunUnpackMs": {
+          "median": 759,
+          "p95": 759,
+          "p99": 759
+        },
+        "cloneMs": {
+          "median": 4853,
+          "p95": 4853,
+          "p99": 4853
+        },
+        "installMs": {
+          "median": 33061,
+          "p95": 33061,
+          "p99": 33061
+        },
+        "typecheckMs": {
+          "median": 213420,
+          "p95": 213420,
+          "p99": 213420
         }
       },
       "successRate": 1
@@ -866,7 +933,7 @@
           "logicalCpus": "8",
           "cpuModel": "AMD EPYC",
           "memoryKib": "527672",
-          "error": "clone phase failed (exit code 1, 4/7 phases completed): fatal: fetch-pack: invalid index-pack output | fatal: git checkout: --detach does not take a path argument 'FETCH_HEAD' | fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree. | Use '--' to separate paths from revisions, like this: | 'git <command> [<revision>...] -- [<file>...]' | Setting up python3-setuptools (66.1.1-1+deb12u2) ... | Setting up build-essential (12.9) ... | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **microsandbox** | 8 CPU / 0.50 GiB | unknown, AMD EPYC | 0.721s | 0.000s | \u2014 | \u2014 | \u274c clone |"
+          "error": "clone phase failed (exit code 1, 4/7 phases completed): fatal: fetch-pack: invalid index-pack output | fatal: git checkout: --detach does not take a path argument 'FETCH_HEAD' | fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree. | Use '--' to separate paths from revisions, like this: | 'git <command> [<revision>...] -- [<file>...]' | Setting up python3-setuptools (66.1.1-1+deb12u2) ... | Setting up build-essential (12.9) ... | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **microsandbox** | 8 CPU / 0.50 GiB | unknown, AMD EPYC | 0.721s | 0.000s | — | — | ❌ clone |"
         }
       ],
       "summary": {

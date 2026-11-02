@@ -4117,6 +4117,827 @@
       "successRate": 1
     },
     {
+      "provider": "declaw",
+      "mode": "staggered",
+      "concurrency": 100,
+      "staggerDelayMs": 200,
+      "wallClockMs": 30105.7,
+      "timeToFirstReadyMs": 107.83,
+      "rampProfile": [
+        {
+          "launchedAt": 0,
+          "readyAt": 538.14,
+          "ttiMs": 135.81
+        },
+        {
+          "launchedAt": 200.47,
+          "readyAt": 825.52,
+          "ttiMs": 128.77
+        },
+        {
+          "launchedAt": 401.67,
+          "readyAt": 7741.85,
+          "ttiMs": 135.62
+        },
+        {
+          "launchedAt": 602.14,
+          "readyAt": 10832.67,
+          "ttiMs": 119.44
+        },
+        {
+          "launchedAt": 803.35,
+          "readyAt": 1327.65,
+          "ttiMs": 117.04
+        },
+        {
+          "launchedAt": 1004.08,
+          "readyAt": 1588.52,
+          "ttiMs": 136.55
+        },
+        {
+          "launchedAt": 1205.43,
+          "readyAt": 1883.21,
+          "ttiMs": 135.62
+        },
+        {
+          "launchedAt": 1406.27,
+          "readyAt": 11641.02,
+          "ttiMs": 125.42
+        },
+        {
+          "launchedAt": 1606.9,
+          "readyAt": 2304.27,
+          "ttiMs": 121.65
+        },
+        {
+          "launchedAt": 1807.13,
+          "readyAt": 2338.92,
+          "ttiMs": 132.82
+        },
+        {
+          "launchedAt": 2008.22,
+          "readyAt": 2627.16,
+          "ttiMs": 124.66
+        },
+        {
+          "launchedAt": 2208.3,
+          "readyAt": 2763.84,
+          "ttiMs": 124.43
+        },
+        {
+          "launchedAt": 2409.58,
+          "readyAt": 3042.65,
+          "ttiMs": 114.53
+        },
+        {
+          "launchedAt": 2610.01,
+          "readyAt": 3209.04,
+          "ttiMs": 119.26
+        },
+        {
+          "launchedAt": 2810.44,
+          "readyAt": 3347.28,
+          "ttiMs": 115.77
+        },
+        {
+          "launchedAt": 3010.94,
+          "readyAt": 3611.65,
+          "ttiMs": 114.46
+        },
+        {
+          "launchedAt": 3211.28,
+          "readyAt": 13445.55,
+          "ttiMs": 124.72
+        },
+        {
+          "launchedAt": 3412.15,
+          "readyAt": 10039.5,
+          "ttiMs": 117.55
+        },
+        {
+          "launchedAt": 3612.89,
+          "readyAt": 13862.81,
+          "ttiMs": 138.56
+        },
+        {
+          "launchedAt": 3813.18,
+          "readyAt": 14097.37,
+          "ttiMs": 161.71
+        },
+        {
+          "launchedAt": 4013.6,
+          "readyAt": 4661.04,
+          "ttiMs": 123.49
+        },
+        {
+          "launchedAt": 4214.29,
+          "readyAt": 4898.66,
+          "ttiMs": 124.05
+        },
+        {
+          "launchedAt": 4414.9,
+          "readyAt": 5167.03,
+          "ttiMs": 135.71
+        },
+        {
+          "launchedAt": 4614.67,
+          "readyAt": 5418.01,
+          "ttiMs": 116.94
+        },
+        {
+          "launchedAt": 4814.88,
+          "readyAt": 5534.25,
+          "ttiMs": 144.2
+        },
+        {
+          "launchedAt": 5014.91,
+          "readyAt": 5957.52,
+          "ttiMs": 137.13
+        },
+        {
+          "launchedAt": 5215.45,
+          "readyAt": 15545.14,
+          "ttiMs": 225.17
+        },
+        {
+          "launchedAt": 5416.72,
+          "readyAt": 6026,
+          "ttiMs": 114.54
+        },
+        {
+          "launchedAt": 5616.72,
+          "readyAt": 6391.29,
+          "ttiMs": 114.39
+        },
+        {
+          "launchedAt": 5817.24,
+          "readyAt": 12370.28,
+          "ttiMs": 118.51
+        },
+        {
+          "launchedAt": 6018.41,
+          "readyAt": 6800.74,
+          "ttiMs": 115.85
+        },
+        {
+          "launchedAt": 6219.51,
+          "readyAt": 7115.73,
+          "ttiMs": 122.53
+        },
+        {
+          "launchedAt": 6420.47,
+          "readyAt": 16641.77,
+          "ttiMs": 116.27
+        },
+        {
+          "launchedAt": 6620.93,
+          "readyAt": 7235.24,
+          "ttiMs": 120.93
+        },
+        {
+          "launchedAt": 6821.1,
+          "readyAt": 17062.37,
+          "ttiMs": 126.95
+        },
+        {
+          "launchedAt": 7021.84,
+          "readyAt": 7693.07,
+          "ttiMs": 127.05
+        },
+        {
+          "launchedAt": 7222.37,
+          "readyAt": 17464.76,
+          "ttiMs": 124.69
+        },
+        {
+          "launchedAt": 7423.54,
+          "readyAt": 7953.34,
+          "ttiMs": 121.08
+        },
+        {
+          "launchedAt": 7624.21,
+          "readyAt": 8217.83,
+          "ttiMs": 126.61
+        },
+        {
+          "launchedAt": 7825.16,
+          "readyAt": 18129.36,
+          "ttiMs": 201.85
+        },
+        {
+          "launchedAt": 8025.88,
+          "readyAt": 8707.99,
+          "ttiMs": 113.37
+        },
+        {
+          "launchedAt": 8226.17,
+          "readyAt": 8826.74,
+          "ttiMs": 115.47
+        },
+        {
+          "launchedAt": 8427.12,
+          "readyAt": 9302.45,
+          "ttiMs": 118.27
+        },
+        {
+          "launchedAt": 8627.08,
+          "readyAt": 9608.98,
+          "ttiMs": 137.61
+        },
+        {
+          "launchedAt": 8827.96,
+          "readyAt": 19193.09,
+          "ttiMs": 246.22
+        },
+        {
+          "launchedAt": 9028.34,
+          "readyAt": 9541.85,
+          "ttiMs": 114.59
+        },
+        {
+          "launchedAt": 9229.27,
+          "readyAt": 19573.27,
+          "ttiMs": 222.11
+        },
+        {
+          "launchedAt": 9429.98,
+          "readyAt": 19693.95,
+          "ttiMs": 159.79
+        },
+        {
+          "launchedAt": 9631.17,
+          "readyAt": 10248.3,
+          "ttiMs": 132.2
+        },
+        {
+          "launchedAt": 9831.37,
+          "readyAt": 10337.77,
+          "ttiMs": 115.97
+        },
+        {
+          "launchedAt": 10031.81,
+          "readyAt": 15622.76,
+          "ttiMs": 122.47
+        },
+        {
+          "launchedAt": 10232.04,
+          "readyAt": 20457.95,
+          "ttiMs": 121.53
+        },
+        {
+          "launchedAt": 10432.03,
+          "readyAt": 20646.7,
+          "ttiMs": 110.75
+        },
+        {
+          "launchedAt": 10633.44,
+          "readyAt": 20864,
+          "ttiMs": 122.9
+        },
+        {
+          "launchedAt": 10833.9,
+          "readyAt": 11601.8,
+          "ttiMs": 111.42
+        },
+        {
+          "launchedAt": 11033.92,
+          "readyAt": 13300.08,
+          "ttiMs": 123.3
+        },
+        {
+          "launchedAt": 11234.22,
+          "readyAt": 12049.5,
+          "ttiMs": 119.34
+        },
+        {
+          "launchedAt": 11435.44,
+          "readyAt": 13530.19,
+          "ttiMs": 123.76
+        },
+        {
+          "launchedAt": 11636.15,
+          "readyAt": 12430.14,
+          "ttiMs": 117.63
+        },
+        {
+          "launchedAt": 11837.07,
+          "readyAt": 22090.68,
+          "ttiMs": 144.4
+        },
+        {
+          "launchedAt": 12038.42,
+          "readyAt": 22276.52,
+          "ttiMs": 134.2
+        },
+        {
+          "launchedAt": 12239.27,
+          "readyAt": 22511.62,
+          "ttiMs": 150.91
+        },
+        {
+          "launchedAt": 12440.49,
+          "readyAt": 13047.57,
+          "ttiMs": 115.92
+        },
+        {
+          "launchedAt": 12641.59,
+          "readyAt": 22882.98,
+          "ttiMs": 125.36
+        },
+        {
+          "launchedAt": 12841.89,
+          "readyAt": 23087.95,
+          "ttiMs": 126.25
+        },
+        {
+          "launchedAt": 13042.66,
+          "readyAt": 23307.88,
+          "ttiMs": 143.58
+        },
+        {
+          "launchedAt": 13243.32,
+          "readyAt": 14033.66,
+          "ttiMs": 114.92
+        },
+        {
+          "launchedAt": 13443.91,
+          "readyAt": 14981.85,
+          "ttiMs": 109.99
+        },
+        {
+          "launchedAt": 13643.95,
+          "readyAt": 14646.76,
+          "ttiMs": 115.09
+        },
+        {
+          "launchedAt": 13844.16,
+          "readyAt": 16022.35,
+          "ttiMs": 132.85
+        },
+        {
+          "launchedAt": 14044.82,
+          "readyAt": 24285.85,
+          "ttiMs": 128.92
+        },
+        {
+          "launchedAt": 14245.42,
+          "readyAt": 15598.51,
+          "ttiMs": 124.84
+        },
+        {
+          "launchedAt": 14445.68,
+          "readyAt": 15757.85,
+          "ttiMs": 138.44
+        },
+        {
+          "launchedAt": 14645.82,
+          "readyAt": 24918.2,
+          "ttiMs": 157.47
+        },
+        {
+          "launchedAt": 14846.06,
+          "readyAt": 25090.3,
+          "ttiMs": 138.23
+        },
+        {
+          "launchedAt": 15046.95,
+          "readyAt": 25352.27,
+          "ttiMs": 172.43
+        },
+        {
+          "launchedAt": 15247.02,
+          "readyAt": 25496,
+          "ttiMs": 139.69
+        },
+        {
+          "launchedAt": 15448.61,
+          "readyAt": 25711.76,
+          "ttiMs": 157.24
+        },
+        {
+          "launchedAt": 15649.09,
+          "readyAt": 25894.6,
+          "ttiMs": 129.39
+        },
+        {
+          "launchedAt": 15850.38,
+          "readyAt": 26103.6,
+          "ttiMs": 131.94
+        },
+        {
+          "launchedAt": 16051.64,
+          "readyAt": 26278.81,
+          "ttiMs": 118.62
+        },
+        {
+          "launchedAt": 16252.53,
+          "readyAt": 26489.99,
+          "ttiMs": 125.56
+        },
+        {
+          "launchedAt": 16453.16,
+          "readyAt": 26695.68,
+          "ttiMs": 118.61
+        },
+        {
+          "launchedAt": 16653.97,
+          "readyAt": 17264.75,
+          "ttiMs": 116.85
+        },
+        {
+          "launchedAt": 16854.33,
+          "readyAt": 18116.82,
+          "ttiMs": 125.82
+        },
+        {
+          "launchedAt": 17055.64,
+          "readyAt": 27277.39,
+          "ttiMs": 120.96
+        },
+        {
+          "launchedAt": 17256.61,
+          "readyAt": 18416.62,
+          "ttiMs": 124.47
+        },
+        {
+          "launchedAt": 17457.07,
+          "readyAt": 27720.14,
+          "ttiMs": 143
+        },
+        {
+          "launchedAt": 17658.03,
+          "readyAt": 18837.83,
+          "ttiMs": 198.93
+        },
+        {
+          "launchedAt": 17859.51,
+          "readyAt": 27849.52,
+          "ttiMs": 133.23
+        },
+        {
+          "launchedAt": 18060.61,
+          "readyAt": 28290.98,
+          "ttiMs": 126.47
+        },
+        {
+          "launchedAt": 18260.79,
+          "readyAt": 19128.2,
+          "ttiMs": 124.62
+        },
+        {
+          "launchedAt": 18461.53,
+          "readyAt": 19771.36,
+          "ttiMs": 119.95
+        },
+        {
+          "launchedAt": 18662.28,
+          "readyAt": 19960.8,
+          "ttiMs": 141.2
+        },
+        {
+          "launchedAt": 18863.01,
+          "readyAt": 29121.1,
+          "ttiMs": 144.3
+        },
+        {
+          "launchedAt": 19062.99,
+          "readyAt": 29325.64,
+          "ttiMs": 159.9
+        },
+        {
+          "launchedAt": 19264.37,
+          "readyAt": 20347.49,
+          "ttiMs": 107.83
+        },
+        {
+          "launchedAt": 19465.11,
+          "readyAt": 21093.33,
+          "ttiMs": 125.97
+        },
+        {
+          "launchedAt": 19665.73,
+          "readyAt": 20933.6,
+          "ttiMs": 127.04
+        },
+        {
+          "launchedAt": 19865.81,
+          "readyAt": 30105.65,
+          "ttiMs": 126.99
+        }
+      ],
+      "iterations": [
+        {
+          "ttiMs": 135.81
+        },
+        {
+          "ttiMs": 128.77
+        },
+        {
+          "ttiMs": 135.62
+        },
+        {
+          "ttiMs": 119.44
+        },
+        {
+          "ttiMs": 117.04
+        },
+        {
+          "ttiMs": 136.55
+        },
+        {
+          "ttiMs": 135.62
+        },
+        {
+          "ttiMs": 125.42
+        },
+        {
+          "ttiMs": 121.65
+        },
+        {
+          "ttiMs": 132.82
+        },
+        {
+          "ttiMs": 124.66
+        },
+        {
+          "ttiMs": 124.43
+        },
+        {
+          "ttiMs": 114.53
+        },
+        {
+          "ttiMs": 119.26
+        },
+        {
+          "ttiMs": 115.77
+        },
+        {
+          "ttiMs": 114.46
+        },
+        {
+          "ttiMs": 124.72
+        },
+        {
+          "ttiMs": 117.55
+        },
+        {
+          "ttiMs": 138.56
+        },
+        {
+          "ttiMs": 161.71
+        },
+        {
+          "ttiMs": 123.49
+        },
+        {
+          "ttiMs": 124.05
+        },
+        {
+          "ttiMs": 135.71
+        },
+        {
+          "ttiMs": 116.94
+        },
+        {
+          "ttiMs": 144.2
+        },
+        {
+          "ttiMs": 137.13
+        },
+        {
+          "ttiMs": 225.17
+        },
+        {
+          "ttiMs": 114.54
+        },
+        {
+          "ttiMs": 114.39
+        },
+        {
+          "ttiMs": 118.51
+        },
+        {
+          "ttiMs": 115.85
+        },
+        {
+          "ttiMs": 122.53
+        },
+        {
+          "ttiMs": 116.27
+        },
+        {
+          "ttiMs": 120.93
+        },
+        {
+          "ttiMs": 126.95
+        },
+        {
+          "ttiMs": 127.05
+        },
+        {
+          "ttiMs": 124.69
+        },
+        {
+          "ttiMs": 121.08
+        },
+        {
+          "ttiMs": 126.61
+        },
+        {
+          "ttiMs": 201.85
+        },
+        {
+          "ttiMs": 113.37
+        },
+        {
+          "ttiMs": 115.47
+        },
+        {
+          "ttiMs": 118.27
+        },
+        {
+          "ttiMs": 137.61
+        },
+        {
+          "ttiMs": 246.22
+        },
+        {
+          "ttiMs": 114.59
+        },
+        {
+          "ttiMs": 222.11
+        },
+        {
+          "ttiMs": 159.79
+        },
+        {
+          "ttiMs": 132.2
+        },
+        {
+          "ttiMs": 115.97
+        },
+        {
+          "ttiMs": 122.47
+        },
+        {
+          "ttiMs": 121.53
+        },
+        {
+          "ttiMs": 110.75
+        },
+        {
+          "ttiMs": 122.9
+        },
+        {
+          "ttiMs": 111.42
+        },
+        {
+          "ttiMs": 123.3
+        },
+        {
+          "ttiMs": 119.34
+        },
+        {
+          "ttiMs": 123.76
+        },
+        {
+          "ttiMs": 117.63
+        },
+        {
+          "ttiMs": 144.4
+        },
+        {
+          "ttiMs": 134.2
+        },
+        {
+          "ttiMs": 150.91
+        },
+        {
+          "ttiMs": 115.92
+        },
+        {
+          "ttiMs": 125.36
+        },
+        {
+          "ttiMs": 126.25
+        },
+        {
+          "ttiMs": 143.58
+        },
+        {
+          "ttiMs": 114.92
+        },
+        {
+          "ttiMs": 109.99
+        },
+        {
+          "ttiMs": 115.09
+        },
+        {
+          "ttiMs": 132.85
+        },
+        {
+          "ttiMs": 128.92
+        },
+        {
+          "ttiMs": 124.84
+        },
+        {
+          "ttiMs": 138.44
+        },
+        {
+          "ttiMs": 157.47
+        },
+        {
+          "ttiMs": 138.23
+        },
+        {
+          "ttiMs": 172.43
+        },
+        {
+          "ttiMs": 139.69
+        },
+        {
+          "ttiMs": 157.24
+        },
+        {
+          "ttiMs": 129.39
+        },
+        {
+          "ttiMs": 131.94
+        },
+        {
+          "ttiMs": 118.62
+        },
+        {
+          "ttiMs": 125.56
+        },
+        {
+          "ttiMs": 118.61
+        },
+        {
+          "ttiMs": 116.85
+        },
+        {
+          "ttiMs": 125.82
+        },
+        {
+          "ttiMs": 120.96
+        },
+        {
+          "ttiMs": 124.47
+        },
+        {
+          "ttiMs": 143
+        },
+        {
+          "ttiMs": 198.93
+        },
+        {
+          "ttiMs": 133.23
+        },
+        {
+          "ttiMs": 126.47
+        },
+        {
+          "ttiMs": 124.62
+        },
+        {
+          "ttiMs": 119.95
+        },
+        {
+          "ttiMs": 141.2
+        },
+        {
+          "ttiMs": 144.3
+        },
+        {
+          "ttiMs": 159.9
+        },
+        {
+          "ttiMs": 107.83
+        },
+        {
+          "ttiMs": 125.97
+        },
+        {
+          "ttiMs": 127.04
+        },
+        {
+          "ttiMs": 126.99
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "median": 125.1,
+          "p95": 157.47,
+          "p99": 172.43
+        }
+      },
+      "compositeScore": 98.6,
+      "successRate": 1
+    },
+    {
       "provider": "e2b",
       "mode": "staggered",
       "concurrency": 100,

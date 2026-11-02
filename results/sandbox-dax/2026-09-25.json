@@ -271,7 +271,7 @@
           "logicalCpus": "5",
           "cpuModel": "unknown",
           "memoryKib": "4010108",
-          "error": "bun_download phase failed (exit code 1, 2/7 phases completed): E: Unable to locate package git | E: Unable to locate package python3 | E: Unable to locate package python3-setuptools | E: Unable to locate package unzip | /tmp/dax-benchmark.sh: line 187: curl: command not found | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **cloud-run** | 5 CPU / 3.82 GiB | unknown, unknown | 0.000s | 0.000s | \u2014 | \u2014 | \u274c Bun download |"
+          "error": "bun_download phase failed (exit code 1, 2/7 phases completed): E: Unable to locate package git | E: Unable to locate package python3 | E: Unable to locate package python3-setuptools | E: Unable to locate package unzip | /tmp/dax-benchmark.sh: line 187: curl: command not found | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **cloud-run** | 5 CPU / 3.82 GiB | unknown, unknown | 0.000s | 0.000s | — | — | ❌ Bun download |"
         }
       ],
       "summary": {
@@ -329,7 +329,7 @@
           "logicalCpus": "8",
           "cpuModel": "AMD EPYC",
           "memoryKib": "4407288",
-          "error": "bun_download phase failed (exit code 1, 2/7 phases completed): E: Unable to locate package git | E: Unable to locate package python3 | E: Unable to locate package python3-setuptools | E: Unable to locate package unzip | /tmp/dax-benchmark.sh: line 187: curl: command not found | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **cloudflare** | 8 CPU / 4.20 GiB | unknown, AMD EPYC | 0.000s | 0.000s | \u2014 | \u2014 | \u274c Bun download |"
+          "error": "bun_download phase failed (exit code 1, 2/7 phases completed): E: Unable to locate package git | E: Unable to locate package python3 | E: Unable to locate package python3-setuptools | E: Unable to locate package unzip | /tmp/dax-benchmark.sh: line 187: curl: command not found | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **cloudflare** | 8 CPU / 4.20 GiB | unknown, AMD EPYC | 0.000s | 0.000s | — | — | ❌ Bun download |"
         }
       ],
       "summary": {
@@ -551,6 +551,73 @@
           "median": 35724,
           "p95": 35724,
           "p99": 35724
+        }
+      },
+      "successRate": 1
+    },
+    {
+      "provider": "declaw",
+      "mode": "sandbox-dax",
+      "iterations": [
+        {
+          "totalMs": 180750,
+          "phasesCompleted": 7,
+          "phasesTotal": 7,
+          "prepareMs": 5426,
+          "cacheClearMs": 80,
+          "bunDownloadMs": 563,
+          "bunUnpackMs": 752,
+          "cloneMs": 4823,
+          "installMs": 26688,
+          "typecheckMs": 130696,
+          "diskAfterClone": 3182592,
+          "diskAfterInstall": 159498240,
+          "diskAfterTypecheck": 159739904,
+          "commit": "08fb47373509ba64b13441061314eeacf4264f51",
+          "bunVersion": "1.3.14",
+          "nodeVersion": "v24.14.1",
+          "architecture": "x86_64",
+          "kernel": "Linux 6.1.102",
+          "logicalCpus": "8",
+          "cpuModel": "Intel(R) Xeon(R) Processor",
+          "memoryKib": "16403536"
+        }
+      ],
+      "summary": {
+        "totalMs": {
+          "median": 180750,
+          "p95": 180750,
+          "p99": 180750
+        },
+        "prepareMs": {
+          "median": 5426,
+          "p95": 5426,
+          "p99": 5426
+        },
+        "bunDownloadMs": {
+          "median": 563,
+          "p95": 563,
+          "p99": 563
+        },
+        "bunUnpackMs": {
+          "median": 752,
+          "p95": 752,
+          "p99": 752
+        },
+        "cloneMs": {
+          "median": 4823,
+          "p95": 4823,
+          "p99": 4823
+        },
+        "installMs": {
+          "median": 26688,
+          "p95": 26688,
+          "p99": 26688
+        },
+        "typecheckMs": {
+          "median": 130696,
+          "p95": 130696,
+          "p99": 130696
         }
       },
       "successRate": 1
@@ -878,7 +945,7 @@
           "logicalCpus": "8",
           "cpuModel": "AMD EPYC",
           "memoryKib": "16401904",
-          "error": "typecheck phase failed (exit code 1, 6/7 phases completed): error: prepare script from \"opencode\" exited with 127 | $ bun turbo typecheck | error: Cannot run \"/tmp/opencode-provider-benchmark/repo/turbo.json\" | note: Bun cannot run json files directly | error: script \"typecheck\" exited with code 1 | Setting up build-essential (12.9) ... | bun install v1.3.14 (0d9b296a) | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **microsandbox** | 8 CPU / 15.64 GiB | unknown, AMD EPYC | 2.421s | 9.203s | 0.006s (failed) | \u2014 | \u274c typecheck |"
+          "error": "typecheck phase failed (exit code 1, 6/7 phases completed): error: prepare script from \"opencode\" exited with 127 | $ bun turbo typecheck | error: Cannot run \"/tmp/opencode-provider-benchmark/repo/turbo.json\" | note: Bun cannot run json files directly | error: script \"typecheck\" exited with code 1 | Setting up build-essential (12.9) ... | bun install v1.3.14 (0d9b296a) | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **microsandbox** | 8 CPU / 15.64 GiB | unknown, AMD EPYC | 2.421s | 9.203s | 0.006s (failed) | — | ❌ typecheck |"
         }
       ],
       "summary": {
@@ -1145,7 +1212,7 @@
           "logicalCpus": "8",
           "cpuModel": "AMD EPYC",
           "memoryKib": "16437876",
-          "error": "typecheck phase failed (exit code 1, 6/7 phases completed):  ERROR  opencode#typecheck: command (/tmp/opencode-provider-benchmark/repo/packages/opencode) /tmp/opencode-provider-benchmark/bun/bin/bun run typecheck exited (1) |  ERROR  run failed: command  exited (1) | error: \"turbo\" exited with code 1 | error: script \"typecheck\" exited with code 1 | time=\"2026-09-25T16:52:18Z\" level=fatal msg=\"exec failed with exit code 1\" |   Time:    24.149s | Failed:    opencode#typecheck | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **namespace** | 8 CPU / 15.68 GiB | unknown, AMD EPYC | 1.371s | 11.110s | 24.197s (failed) | \u2014 | \u274c typecheck |"
+          "error": "typecheck phase failed (exit code 1, 6/7 phases completed):  ERROR  opencode#typecheck: command (/tmp/opencode-provider-benchmark/repo/packages/opencode) /tmp/opencode-provider-benchmark/bun/bin/bun run typecheck exited (1) |  ERROR  run failed: command  exited (1) | error: \"turbo\" exited with code 1 | error: script \"typecheck\" exited with code 1 | time=\"2026-09-25T16:52:18Z\" level=fatal msg=\"exec failed with exit code 1\" |   Time:    24.149s | Failed:    opencode#typecheck | | Provider | CPU / RAM | Region / CPU | Clone | Install | Typecheck | Workload total | Result | | |---|---|---|---:|---:|---:|---:|---| | | **namespace** | 8 CPU / 15.68 GiB | unknown, AMD EPYC | 1.371s | 11.110s | 24.197s (failed) | — | ❌ typecheck |"
         }
       ],
       "summary": {

@@ -355,6 +355,54 @@
       "successRate": 1
     },
     {
+      "provider": "declaw",
+      "mode": "concurrent",
+      "concurrency": 10,
+      "wallClockMs": 825.67,
+      "timeToFirstReadyMs": 705.45,
+      "iterations": [
+        {
+          "ttiMs": 763.92
+        },
+        {
+          "ttiMs": 778.2
+        },
+        {
+          "ttiMs": 787.55
+        },
+        {
+          "ttiMs": 813.12
+        },
+        {
+          "ttiMs": 819.49
+        },
+        {
+          "ttiMs": 804.51
+        },
+        {
+          "ttiMs": 820.58
+        },
+        {
+          "ttiMs": 705.45
+        },
+        {
+          "ttiMs": 757.13
+        },
+        {
+          "ttiMs": 812.5
+        }
+      ],
+      "summary": {
+        "ttiMs": {
+          "median": 796.03,
+          "p95": 820.58,
+          "p99": 820.58
+        }
+      },
+      "compositeScore": 91.94,
+      "successRate": 1
+    },
+    {
       "provider": "e2b",
       "mode": "concurrent",
       "concurrency": 10,
