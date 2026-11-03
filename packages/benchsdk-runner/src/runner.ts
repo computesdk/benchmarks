@@ -158,6 +158,8 @@ function runWithConcurrency<T>(fns: Array<() => Promise<T>>, limit: number): Pro
   });
 }
 
+const ROUND_REPORTER_CONCURRENCY = 16;
+
 function getErrorCode(error: unknown): string {
   if (error instanceof Error && 'code' in error && typeof (error as { code: unknown }).code === 'string' && (error as { code: string }).code) {
     return (error as { code: string }).code;
@@ -1083,49 +1085,53 @@ async function runGroupedByRound<T extends BaseParticipant>(
   const metricsSamples: BenchmarkSystemMetricsSample[] = [];
 
   for (const participant of available) {
+    reporters.set(participant.name, null);
     logBuffers.set(participant.name, new LogBuffer());
     failed.set(participant.name, false);
     recordsByParticipant.set(participant.name, []);
-    if (noIngest || !client) {
-      reporters.set(participant.name, null);
-      continue;
-    }
-    // One worker per participant drives every round sequentially. The platform
-    // reads `targetConcurrency` as tasks-per-worker, so it must be the full
-    // schedule length — otherwise only one task is planned and every record
-    // past the first falls outside the worker's task range.
-    await client.planWorkers(config.benchmarkSlug, runId, participant.name, {
-      workerCount: 1,
-      targetConcurrency: schedule.length,
-    });
-    let reporter: BenchmarkReporter | null = null;
-    try {
-      reporter = await BenchmarkReporter.claim({
-        baseUrl,
-        apiKey,
-        token,
-        orgSlug,
-        orgId,
-        benchmarkSlug: config.benchmarkSlug,
-        runId: runId,
-        participantSlug: participant.name,
-        processKind: 'process',
-        processKey: process.env.HOSTNAME ?? 'local',
+  }
+
+  await runWithConcurrency(
+    available.map((participant) => async () => {
+      if (noIngest || !client) return;
+      // One worker per participant drives every round sequentially. The platform
+      // reads `targetConcurrency` as tasks-per-worker, so it must be the full
+      // schedule length — otherwise only one task is planned and every record
+      // past the first falls outside the worker's task range.
+      await client.planWorkers(config.benchmarkSlug, runId, participant.name, {
+        workerCount: 1,
+        targetConcurrency: schedule.length,
       });
-    } catch (error) {
-      console.warn(`  ${participant.name}: reporter claim failed (${error instanceof Error ? error.message : String(error)}) — running without platform reporting.`);
-    }
-    if (!reporter) {
-      console.warn(`  ${participant.name}: could not claim a platform worker — running without platform reporting.`);
-    }
-    reporters.set(participant.name, reporter);
-    // First reporter to appear starts the one shared collector, with an
-    // immediate baseline sample so a run that finishes inside one round still
-    // uploads metrics.
-    if (reporter && !metricsCollector) {
-      metricsCollector = createSystemMetricsCollector();
-      metricsSamples.push(await metricsCollector.sample());
-    }
+      let reporter: BenchmarkReporter | null = null;
+      try {
+        reporter = await BenchmarkReporter.claim({
+          baseUrl,
+          apiKey,
+          token,
+          orgSlug,
+          orgId,
+          benchmarkSlug: config.benchmarkSlug,
+          runId: runId,
+          participantSlug: participant.name,
+          processKind: 'process',
+          processKey: process.env.HOSTNAME ?? 'local',
+        });
+      } catch (error) {
+        console.warn(`  ${participant.name}: reporter claim failed (${error instanceof Error ? error.message : String(error)}) — running without platform reporting.`);
+      }
+      if (!reporter) {
+        console.warn(`  ${participant.name}: could not claim a platform worker — running without platform reporting.`);
+      }
+      reporters.set(participant.name, reporter);
+    }),
+    ROUND_REPORTER_CONCURRENCY,
+  );
+
+  // Create one shared collector only after all claims settle, so setup tasks
+  // cannot race to create or sample it.
+  if ([...reporters.values()].some((reporter) => reporter !== null)) {
+    metricsCollector = createSystemMetricsCollector();
+    metricsSamples.push(await metricsCollector.sample());
   }
 
   console.log(`Interleaving ${available.length} participant(s), ${schedule.length} round(s) each.\n`);
@@ -1202,15 +1208,21 @@ async function runGroupedByRound<T extends BaseParticipant>(
       .catch(() => {});
   }
 
+  await runWithConcurrency(
+    available.map((participant) => async () => {
+      const reporter = reporters.get(participant.name) ?? null;
+      const logBuffer = logBuffers.get(participant.name)!;
+      if (reporter && !logBuffer.isEmpty()) {
+        await reporter
+          .uploadArtifact({ kind: 'coordinator.log', contentType: 'text/plain', name: 'worker.log', body: logBuffer.toText() })
+          .catch(() => {});
+      }
+      await reporter?.finish(failed.get(participant.name) ?? false);
+    }),
+    ROUND_REPORTER_CONCURRENCY,
+  );
+
   for (const participant of available) {
-    const reporter = reporters.get(participant.name) ?? null;
-    const logBuffer = logBuffers.get(participant.name)!;
-    if (reporter && !logBuffer.isEmpty()) {
-      await reporter
-        .uploadArtifact({ kind: 'coordinator.log', contentType: 'text/plain', name: 'worker.log', body: logBuffer.toText() })
-        .catch(() => {});
-    }
-    await reporter?.finish(failed.get(participant.name) ?? false);
     console.log(`  ${participant.name}: done${failed.get(participant.name) ? ' (with errors)' : ''}.`);
   }
 
