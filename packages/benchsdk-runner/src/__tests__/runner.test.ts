@@ -946,13 +946,20 @@ describe('runBenchmark', () => {
   it('groupBy round: claims one reporter per participant, interleaves rounds, finishes each', async () => {
     const recorded: Record<string, TaskResultRecord[]> = { e2b: [], modal: [] };
     const finished: Record<string, boolean> = {};
+    const finishCalls: Record<string, number> = {};
+    const finishCompletions: string[] = [];
     reporterClaim.mockImplementation(async (cfg: any) => ({
       taskIndexStart: 0,
       recordResult: (r: TaskResultRecord) => recorded[cfg.participantSlug].push(r),
       uploadArtifact: async () => ({}),
       setProgress: () => {},
       heartbeat: async () => {},
-      finish: async (failedFlag: boolean) => { finished[cfg.participantSlug] = failedFlag; },
+      finish: async (failedFlag: boolean) => {
+        finishCalls[cfg.participantSlug] = (finishCalls[cfg.participantSlug] ?? 0) + 1;
+        await new Promise((resolve) => setTimeout(resolve, cfg.participantSlug === 'e2b' ? 20 : 0));
+        finishCompletions.push(cfg.participantSlug);
+        finished[cfg.participantSlug] = failedFlag;
+      },
     }));
 
     // Task returns a pre-measured step + data; records interleave e2b,modal per round.
@@ -983,11 +990,93 @@ describe('runBenchmark', () => {
     expect(recorded.e2b[0].status).toBe('success');
     expect(finished.e2b).toBe(false);
     expect(finished.modal).toBe(false);
+    expect(finishCalls).toEqual({ e2b: 1, modal: 1 });
+    expect(finishCompletions).toEqual(['modal', 'e2b']);
+    expect(
+      vi.mocked(console.log).mock.calls
+        .map(([line]) => line)
+        .filter((line): line is string => typeof line === 'string' && line.endsWith(': done.')),
+    ).toEqual(['  e2b: done.', '  modal: done.']);
     // runWorker is NOT used in round mode; the single worker per participant is
     // planned for every task in the schedule, not just one.
     expect(runWorker).not.toHaveBeenCalled();
     expect(fakeClient.planWorkers).toHaveBeenCalledTimes(2);
     expect(calls.planWorkers[0][3]).toMatchObject({ workerCount: 1, targetConcurrency: 2 });
+  });
+
+  it('groupBy round: reporter claims overlap across participants', async () => {
+    const claimDelayMs = 40;
+    const claimParticipants = Array.from({ length: 6 }, (_, i) => ({
+      name: `provider-${i}`,
+      requiredEnvVars: [],
+    }));
+    let activeClaims = 0;
+    let maxActiveClaims = 0;
+    reporterClaim.mockImplementation(async () => {
+      activeClaims++;
+      maxActiveClaims = Math.max(maxActiveClaims, activeClaims);
+      await new Promise((resolve) => setTimeout(resolve, claimDelayMs));
+      activeClaims--;
+      return {
+        taskIndexStart: 0,
+        recordResult: () => {},
+        uploadArtifact: async () => ({}),
+        setProgress: () => {},
+        heartbeat: async () => {},
+        finish: async () => {},
+      };
+    });
+
+    const startedAt = Date.now();
+    await runBenchmark(
+      { benchmarkSlug: 's', benchmarkName: 'n', iterations: 1, groupBy: 'round', participants: claimParticipants },
+      defineTask(async () => ({ data: { ok: true } })),
+      [],
+    );
+    const elapsedMs = Date.now() - startedAt;
+
+    expect(maxActiveClaims).toBe(claimParticipants.length);
+    expect(elapsedMs).toBeLessThan((claimDelayMs * claimParticipants.length) / 2);
+  });
+
+  it('groupBy round: a failed reporter claim still runs its participant without reporting', async () => {
+    const recordResult = vi.fn();
+    const finish = vi.fn(async () => {});
+    const participantsSeen: string[] = [];
+    reporterClaim.mockImplementation(async (cfg: any) => {
+      if (cfg.participantSlug === 'modal') throw new Error('claim unavailable');
+      return {
+        taskIndexStart: 0,
+        recordResult,
+        uploadArtifact: async () => ({}),
+        setProgress: () => {},
+        heartbeat: async () => {},
+        finish,
+      };
+    });
+    const warnSpy = vi.mocked(console.warn);
+    const task = defineTask(async (ctx: any) => {
+      participantsSeen.push(ctx.participant.name);
+      return { data: { ok: true } };
+    });
+
+    const outcome = await runBenchmark(
+      { benchmarkSlug: 's', benchmarkName: 'n', iterations: 1, groupBy: 'round', participants },
+      task,
+      [],
+    );
+
+    expect(participantsSeen).toEqual(['e2b', 'modal']);
+    expect(outcome.participants.map((p) => p.records.map((record) => record.status))).toEqual([['success'], ['success']]);
+    expect(reporterClaim).toHaveBeenCalledTimes(2);
+    expect(recordResult).toHaveBeenCalledTimes(1);
+    expect(finish).toHaveBeenCalledTimes(1);
+    expect(warnSpy).toHaveBeenCalledWith(
+      '  modal: reporter claim failed (claim unavailable) — running without platform reporting.',
+    );
+    expect(warnSpy).toHaveBeenCalledWith(
+      '  modal: could not claim a platform worker — running without platform reporting.',
+    );
   });
 
   it('groupBy round: uploads a single shared system-metrics artifact (not one per participant)', async () => {
