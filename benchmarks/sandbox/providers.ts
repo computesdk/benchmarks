@@ -25,7 +25,7 @@ import { mosaic } from '@computesdk/mosaic';
 import { namespace } from '@computesdk/namespace';
 import { northflank } from '@computesdk/northflank';
 import { novita } from '@computesdk/novita';
-import { opencomputer } from '@computesdk/opencomputer';
+// import { opencomputer } from '@computesdk/opencomputer';
 import { promigence } from '@computesdk/promigence';
 // import { quilt } from '@computesdk/quilt';
 import { railway } from '@computesdk/railway';
@@ -274,15 +274,16 @@ export const providers: ProviderConfig[] = [
     requiredEnvVars: ['NOVITA_API_KEY'],
     createCompute: () => novita({ apiKey: process.env.NOVITA_API_KEY! }),
   },
-  {
-    name: 'opencomputer',
-    requiredEnvVars: ['OPENCOMPUTER_API_KEY', 'OPENCOMPUTER_API_URL'],
-    createCompute: () => opencomputer({
-      apiKey: process.env.OPENCOMPUTER_API_KEY!,
-      apiUrl: process.env.OPENCOMPUTER_API_URL!,
-    }),
-    sandboxOptions: { timeout: 600_000 },
-  },
+  // Parked on account access — re-activate when OpenComputer returns.
+  // {
+  //   name: 'opencomputer',
+  //   requiredEnvVars: ['OPENCOMPUTER_API_KEY', 'OPENCOMPUTER_API_URL'],
+  //   createCompute: () => opencomputer({
+  //     apiKey: process.env.OPENCOMPUTER_API_KEY!,
+  //     apiUrl: process.env.OPENCOMPUTER_API_URL!,
+  //   }),
+  //   sandboxOptions: { timeout: 600_000 },
+  // },
   {
     name: 'promigence',
     requiredEnvVars: ['PROMIGENCE_API_KEY'],
