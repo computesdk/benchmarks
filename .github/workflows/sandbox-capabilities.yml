@@ -79,12 +79,12 @@ jobs:
           - mosaic
           - namespace
           - northflank
-          - opencomputer
+          # - opencomputer  # parked — re-activate with the registry
           # - runloop
           - run-cloud
           - sandbox0
           - sail
-          - sprites
+          # - sprites  # daily+stealth only
           - superserve
           - tenki
           - tensorlake
@@ -167,7 +167,6 @@ jobs:
             run-cloud) PROVIDER_KEYS='RUN_CLOUD_API_KEY' ;;
             sandbox0) PROVIDER_KEYS='SANDBOX0_TOKEN' ;;
             sail) PROVIDER_KEYS='SAIL_API_KEY' ;;
-            sprites) PROVIDER_KEYS='SPRITES_TOKEN' ;;
             superserve) PROVIDER_KEYS='SUPERSERVE_API_KEY' ;;
             tenki) PROVIDER_KEYS='TENKI_API_KEY' ;;
             tensorlake) PROVIDER_KEYS='TENSORLAKE_API_KEY' ;;
