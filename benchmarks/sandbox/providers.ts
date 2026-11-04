@@ -17,7 +17,7 @@ import { gravixlayer } from '@computesdk/gravixlayer';
 import { hopx } from '@computesdk/hopx';
 import { isorun } from '@computesdk/isorun';
 // import { lelantos } from '@computesdk/lelantos';
-import { lightning } from '@computesdk/lightning';
+// import { lightning } from '@computesdk/lightning';
 import { modal } from '@computesdk/modal';
 import { microsandbox } from '@computesdk/microsandbox';
 import { miosa } from '@computesdk/miosa';
@@ -208,19 +208,20 @@ export const providers: ProviderConfig[] = [
   //   requiredEnvVars: ['LELANTOS_API_KEY'],
   //   createCompute: () => lelantos({ apiKey: process.env.LELANTOS_API_KEY! }),
   // },
-  {
-    name: 'lightning',
-    requiredEnvVars: ['LIGHTNING_API_KEY'],
-    // Lightning sizes sandboxes via `instanceType` on the provider factory (the SDK
-    // ignores an instanceType passed to sandbox.create()), so it can't be sized through
-    // DAX_RESOURCE_OPTIONS like most providers. The dax workflow sets
-    // LIGHTNING_INSTANCE_TYPE=cpu-8 for the standardized 8 vCPU / 16 GiB profile;
-    // it defaults to cpu-1 (the SDK default) everywhere else.
-    createCompute: () => lightning({
-      apiKey: process.env.LIGHTNING_API_KEY!,
-      instanceType: process.env.LIGHTNING_INSTANCE_TYPE || 'cpu-1',
-    }),
-  },
+  // Parked with OpenComputer — re-activate when Lightning AI returns.
+  // {
+  //   name: 'lightning',
+  //   requiredEnvVars: ['LIGHTNING_API_KEY'],
+  //   // Lightning sizes sandboxes via `instanceType` on the provider factory (the SDK
+  //   // ignores an instanceType passed to sandbox.create()), so it can't be sized through
+  //   // DAX_RESOURCE_OPTIONS like most providers. The dax workflow sets
+  //   // LIGHTNING_INSTANCE_TYPE=cpu-8 for the standardized 8 vCPU / 16 GiB profile;
+  //   // it defaults to cpu-1 (the SDK default) everywhere else.
+  //   createCompute: () => lightning({
+  //     apiKey: process.env.LIGHTNING_API_KEY!,
+  //     instanceType: process.env.LIGHTNING_INSTANCE_TYPE || 'cpu-1',
+  //   }),
+  // },
   {
     name: 'modal',
     requiredEnvVars: ['MODAL_TOKEN_ID', 'MODAL_TOKEN_SECRET'],
