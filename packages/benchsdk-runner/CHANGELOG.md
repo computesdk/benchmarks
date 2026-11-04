@@ -1,5 +1,11 @@
 # @benchsdk/runner
 
+## 0.8.1
+
+### Patch Changes
+
+- 656a448: Run round-mode reporter setup and finalization concurrently for up to 16 participants.
+
 ## 0.8.0
 
 ### Minor Changes
