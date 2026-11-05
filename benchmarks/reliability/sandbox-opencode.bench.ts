@@ -48,6 +48,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
         }),
         participant.timeout ?? 120_000,
         'Sandbox creation timed out',
+        (s: any) => s.destroy(),
       ),
     );
 

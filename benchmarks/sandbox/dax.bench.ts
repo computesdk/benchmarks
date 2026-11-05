@@ -351,6 +351,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
       compute.sandbox.create(opts),
       p.timeout ?? timeout,
       'Sandbox creation timed out',
+      (s) => s.destroy(),
     ),
   ).catch((err: unknown) => {
     const message = `sandbox create failed after ${Date.now() - createStart}ms: ${formatError(err)}`;

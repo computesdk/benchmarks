@@ -82,7 +82,7 @@ export class BurstLifecycle {
     };
 
     try {
-      const sandbox = await withTimeout(this.compute.sandbox.create(sandboxOptions), perRequestTimeoutMs);
+      const sandbox = await withTimeout(this.compute.sandbox.create(sandboxOptions), perRequestTimeoutMs, (s: any) => s.destroy());
       result.latency_ms = Math.round(performance.now() - t0);
       result.provider_metadata = extractProviderMetadata(sandbox);
       this.survivors.set(idx, { sandbox, result });
@@ -240,14 +240,25 @@ function truncate(s: string, n: number): string {
   return s.length > n ? s.slice(0, n) : s;
 }
 
-// NOTE: Promise.race only ignores the late resolution; it does NOT cancel the
-// underlying SDK request. If sandbox.create() resolves after the timeout,
-// the sandbox is created and the handle is lost (leaked). True cancellation
-// requires SDK-level support for AbortSignal or similar.
-export async function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+// The timer cannot cancel the underlying SDK request. If `p` resolves after
+// the timeout, `onLate` receives the value (e.g. a sandbox to destroy) so it
+// isn't leaked.
+export async function withTimeout<T>(p: Promise<T>, ms: number, onLate?: (value: T) => unknown): Promise<T> {
   let timer: NodeJS.Timeout | undefined;
+  let timedOut = false;
+  if (onLate) {
+    p.then(
+      (value) => {
+        if (timedOut) Promise.resolve().then(() => onLate(value)).catch(() => {});
+      },
+      () => {},
+    );
+  }
   const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error(`Operation timed out after ${ms}ms`)), ms);
+    timer = setTimeout(() => {
+      timedOut = true;
+      reject(new Error(`Operation timed out after ${ms}ms`));
+    }, ms);
   });
   try {
     return await Promise.race([p, timeout]);
