@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 import { defineBenchmarkConfig, defineTask, TaskError } from '@benchsdk/runner';
 import type { JsonObject, TaskStepRecord } from '@benchsdk/api';
 import { VMTier } from '@codesandbox/sdk';
-import { withTimeout } from '../src/util/timeout.js';
+import { drainLateCleanups, withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
 import { sandboxId } from '../src/util/sandbox-id.js';
 import { providers } from './providers.js';
@@ -429,3 +429,5 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
   });
   return { data, steps, latencyMs: timing.totalMs };
 });
+
+export const beforeExit = () => drainLateCleanups();

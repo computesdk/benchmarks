@@ -483,6 +483,16 @@ Run with:
 bench run payload.bench.ts --payload-bytes 4096 --iterations 10
 ```
 
+## `beforeExit` — cleanup before the process exits
+
+`bench run` calls `process.exit` when the run ends, which cuts off any background work still running. A bench file can export an optional `beforeExit` hook; the CLI awaits it after the run (even a failed one), right before exiting. The sandbox benches use it to wait for late sandbox deletes:
+
+```ts
+import { drainLateCleanups } from '../src/util/timeout.js';
+
+export const beforeExit = () => drainLateCleanups();
+```
+
 ## `onComplete` — aggregate output
 
 `onComplete` fires once after all participants finish and receives the full `BenchmarkRunOutcome`:

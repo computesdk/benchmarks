@@ -43,6 +43,20 @@ describe('runBenchmarkFile', () => {
     }
   });
 
+  it('awaits the beforeExit export even when the run fails', async () => {
+    const g = globalThis as { __beforeExitCalls?: number };
+    g.__beforeExitCalls = 0;
+    process.env.BENCHMARKS_PLATFORM_API_KEY = 'test-key';
+    try {
+      await expect(
+        runBenchmarkFile(['run', fixture('before-exit.bench.ts')]),
+      ).rejects.toBeInstanceOf(NoAvailableParticipantsError);
+      expect(g.__beforeExitCalls).toBe(1);
+    } finally {
+      delete process.env.BENCHMARKS_PLATFORM_API_KEY;
+    }
+  });
+
   it('rejects before checking participants when no platform credentials are set', async () => {
     delete process.env.BENCHMARKS_PLATFORM_API_KEY;
     delete process.env.BENCHMARKS_PLATFORM_TOKEN;

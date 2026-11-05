@@ -1,4 +1,5 @@
 import { log } from './logger.js';
+import { trackLateCleanup } from '../src/util/timeout.js';
 import type {
   BurstProviderConfig,
   SandboxResult,
@@ -241,22 +242,13 @@ function truncate(s: string, n: number): string {
 }
 
 // The timer cannot cancel the underlying SDK request. If `p` resolves after
-// the timeout, `onLate` receives the value (e.g. a sandbox to destroy) so it
-// isn't leaked.
+// the timeout, `onLate` receives the value (e.g. a sandbox to destroy); the
+// coordinator drains these via `drainLateCleanups` before it exits.
 export async function withTimeout<T>(p: Promise<T>, ms: number, onLate?: (value: T) => unknown): Promise<T> {
   let timer: NodeJS.Timeout | undefined;
-  let timedOut = false;
-  if (onLate) {
-    p.then(
-      (value) => {
-        if (timedOut) Promise.resolve().then(() => onLate(value)).catch(() => {});
-      },
-      () => {},
-    );
-  }
   const timeout = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
-      timedOut = true;
+      if (onLate) trackLateCleanup(() => p.then(onLate, () => {}));
       reject(new Error(`Operation timed out after ${ms}ms`));
     }, ms);
   });
