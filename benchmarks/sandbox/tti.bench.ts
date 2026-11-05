@@ -84,6 +84,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
         compute.sandbox.create(participant.sandboxOptions),
         participant.timeout ?? CREATE_TIMEOUT_MS,
         'Sandbox creation timed out',
+        (s) => s.destroy(),
       );
       createMs = performance.now() - createStart;
       return s;
