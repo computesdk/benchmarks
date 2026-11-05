@@ -128,6 +128,9 @@ export const config = defineBenchmarkConfig({
 const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // archil maps vcpus -> vcpuCount, memoryMiB -> memSizeMiB on the VM create
   // (persistent mode only; ignored on the shared-disk exec path).
+  // Agent37 tops out at 4 vCPU (sizes 2/4, 4/8, 4/16, 4/32 GB), so dax runs on
+  // 4 vCPU / 16 GiB — the closest shape to the standardized 8 vCPU / 16 GiB profile.
+  agent37:      { cpu: 4, memory: 16384 },
   archil:       { vcpus: 8, memoryMiB: 16384 },
   arker:        { templateId: 'ubuntu-full-8' },           // 8 vCPU / 16 GiB golden
   modal:        { cpu: 4, cpuLimit: 4, memoryMiB: 16384, templateId: 'node:22' }, // Modal: 1 core = 2 vCPUs, so 4 cores = 8 vCPUs

@@ -41,6 +41,9 @@ importers:
       '@codesandbox/sdk':
         specifier: ^2.4.2
         version: 2.4.2(@hey-api/openapi-ts@0.99.0(magicast@0.3.5)(typescript@5.9.3))(@xterm/xterm@5.5.0)(ink@7.1.1(bufferutil@4.1.0)(react@19.2.8)(utf-8-validate@6.0.6))
+      '@computesdk/agent37':
+        specifier: ^0.1.1
+        version: 0.1.1
       '@computesdk/anchorbrowser':
         specifier: ^0.2.22
         version: 0.2.22(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -755,6 +758,9 @@ packages:
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
     engines: {node: '>=0.1.90'}
 
+  '@computesdk/agent37@0.1.1':
+    resolution: {integrity: sha512-n6M/m/mHV8CWpTAJWUOkQ//njw28O6T69LIS5oLZw5+sBB20CAZsOJYB98IXGzD/TKUJeCr+LUhIEwD46j+4Bw==}
+
   '@computesdk/anchorbrowser@0.2.22':
     resolution: {integrity: sha512-W/a/5IUmtUX17C0dmXeQnxElzAXC6Tk5X2Rx1CzLBthHrhQqvoTUTw4g2+a5rrALYynxlolqDd3mlnZYg8wMSw==}
 
@@ -882,6 +888,9 @@ packages:
 
   '@computesdk/provider@2.1.20':
     resolution: {integrity: sha512-BlvIouuwrxMeAyxQ1vaDiqHxSguJFlAFRtLTpLZ1kfWZa6VKsEDxvAqUqdsxKzLmjwZl9noqVMgFoCHam87yCw==}
+
+  '@computesdk/provider@2.1.21':
+    resolution: {integrity: sha512-gjqedh7SfXnACoP9xmrqQaU6cOVpt6TLyWhkQxInfK2gwHtyrkLDrkhZIAXxmELhxnAIWx0L3oSJo43eOsL66A==}
 
   '@computesdk/quilt@1.0.18':
     resolution: {integrity: sha512-ogrlMwpnvRczx5XZf+cWNM+4fu8x+SM+ZqHzYvVbgue4Ow7tX99uuCeACuppMewALq0qvtz7CP8dgIeZvRcqtA==}
@@ -3238,6 +3247,9 @@ packages:
 
   computesdk@4.1.14:
     resolution: {integrity: sha512-87WwccvpbsfuiN6IxoUhNhLzm0RvwVcai3bPleG1x2EgLRLfd5O96EZSnSQGfdVBkkGBPt5hpvMwR8v7VOCsEg==}
+
+  computesdk@4.1.15:
+    resolution: {integrity: sha512-Ns+Nwtdgme0p8RnSrxkiLmiu4/7q2hm+woTuGTay2dPtuOdSy/7iJnWKt01y3vrAiQsJ8o6sW4FIO5tGHhr76w==}
 
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
@@ -6571,6 +6583,11 @@ snapshots:
   '@colors/colors@1.5.0':
     optional: true
 
+  '@computesdk/agent37@0.1.1':
+    dependencies:
+      '@computesdk/provider': 2.1.21
+      computesdk: 4.1.15
+
   '@computesdk/anchorbrowser@0.2.22(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
     dependencies:
       '@computesdk/provider': 2.1.20
@@ -6875,6 +6892,12 @@ snapshots:
     dependencies:
       '@computesdk/cmd': 0.4.1
       computesdk: 4.1.14
+      daemond: 0.1.8
+
+  '@computesdk/provider@2.1.21':
+    dependencies:
+      '@computesdk/cmd': 0.4.1
+      computesdk: 4.1.15
       daemond: 0.1.8
 
   '@computesdk/quilt@1.0.18':
@@ -9317,6 +9340,11 @@ snapshots:
       daemond: 0.1.8
 
   computesdk@4.1.14:
+    dependencies:
+      '@computesdk/cmd': 0.4.1
+      daemond: 0.1.8
+
+  computesdk@4.1.15:
     dependencies:
       '@computesdk/cmd': 0.4.1
       daemond: 0.1.8
