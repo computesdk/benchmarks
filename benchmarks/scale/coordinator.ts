@@ -6,6 +6,7 @@ import { BenchReporter } from './bench-reporter.js';
 import { getProvider } from './providers.js';
 import { log } from './logger.js';
 import { BurstLifecycle } from './runner.js';
+import { drainLateCleanups } from '../src/util/timeout.js';
 import type { ProgressStats, MetricsSample, GlobalConcurrency } from './types.js';
 
 // dotenv only matters for local invocation. In production the env is set by
@@ -593,6 +594,7 @@ async function main() {
     // module-level keep-alive undici Agent and may have create requests still
     // in flight), so relying on natural drain can strand the VM until its
     // deadline. A clean exit(0) avoids that; the crash/SIGTERM paths exit(1).
+    await drainLateCleanups();
     log.ok('coordinator complete — exiting');
     process.exit(0);
   } catch (err: any) {
@@ -607,6 +609,7 @@ async function main() {
     } catch (e: any) {
       log.error(`failed to record failure: ${e?.message ?? e}`);
     }
+    await drainLateCleanups();
     // Exit non-zero: as PID 1 this stops the container, the Namespace instance
     // reaps, and the non-zero exit is visible in DescribeInstance shutdownReasons
     // (so start.ts can flag the shard).

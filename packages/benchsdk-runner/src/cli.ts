@@ -6,7 +6,9 @@
  *
  * `run` imports a benchmark module, reads its `config` and `task` exports and
  * drives `runBenchmark`; CLI flags override the config's knobs and
- * `config.onComplete` (if any) fires once the run finishes. The benchmark is
+ * `config.onComplete` (if any) fires once the run finishes. An optional
+ * `beforeExit` export is awaited after the run (even a failed one), before the
+ * process exits — e.g. to wait for background sandbox cleanup. The benchmark is
  * declared in the file (`--shape` picks a named variant) and materialized on
  * run; a run is opened as a side effect, shared across sibling processes when
  * they pass the same `--run-key`. There are no imperative `create` commands.
@@ -41,6 +43,7 @@ interface BenchmarkModule {
   config?: unknown;
   task?: unknown;
   default?: unknown;
+  beforeExit?: unknown;
 }
 
 function isBenchmarkConfig(value: unknown): value is BenchmarkConfig {
@@ -237,12 +240,22 @@ export async function runBenchmarkFile(argv: string[]): Promise<void> {
     envFlags.push('--name', process.env.BENCHMARK_NAME);
   }
 
-  await runBenchmark(
-    config as BenchmarkConfig<BaseParticipant>,
-    task as BenchmarkTask<BaseParticipant>,
-    [...envFlags, ...runnerFlags],
-    { baseUrl, apiKey },
-  );
+  try {
+    await runBenchmark(
+      config as BenchmarkConfig<BaseParticipant>,
+      task as BenchmarkTask<BaseParticipant>,
+      [...envFlags, ...runnerFlags],
+      { baseUrl, apiKey },
+    );
+  } finally {
+    if (typeof mod.beforeExit === 'function') {
+      try {
+        await (mod.beforeExit as () => unknown)();
+      } catch (err) {
+        console.warn('beforeExit failed:', String(err));
+      }
+    }
+  }
 }
 
 /** Executable entry: dispatches to benchmark execution or platform data commands. */

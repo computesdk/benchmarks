@@ -1,7 +1,7 @@
 
 import '../src/env.js';
 import { defineBenchmarkConfig, defineTask, TaskError } from '@benchsdk/runner';
-import { withTimeout } from '../src/util/timeout.js';
+import { drainLateCleanups, withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
 import { sandboxId } from '../src/util/sandbox-id.js';
 import { providers } from '../sandbox/providers.js';
@@ -107,3 +107,5 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
     }
   }
 });
+
+export const beforeExit = () => drainLateCleanups();
