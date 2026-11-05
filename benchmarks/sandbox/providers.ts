@@ -18,7 +18,7 @@ import { gravixlayer } from '@computesdk/gravixlayer';
 import { hopx } from '@computesdk/hopx';
 import { isorun } from '@computesdk/isorun';
 // import { lelantos } from '@computesdk/lelantos';
-import { lightning } from '@computesdk/lightning';
+// import { lightning } from '@computesdk/lightning';
 import { modal } from '@computesdk/modal';
 import { microsandbox } from '@computesdk/microsandbox';
 import { miosa } from '@computesdk/miosa';
@@ -26,12 +26,11 @@ import { mosaic } from '@computesdk/mosaic';
 import { namespace } from '@computesdk/namespace';
 import { northflank } from '@computesdk/northflank';
 import { novita } from '@computesdk/novita';
-import { opencomputer } from '@computesdk/opencomputer';
+// import { opencomputer } from '@computesdk/opencomputer';
 import { promigence } from '@computesdk/promigence';
 // import { quilt } from '@computesdk/quilt';
 import { railway } from '@computesdk/railway';
 import { runCloud } from '@computesdk/run-cloud';
-// import { runloop } from '@computesdk/runloop';
 import { sandbox0 } from '@computesdk/sandbox0';
 import { sail } from '@computesdk/sail';
 import { sprites } from '@computesdk/sprites';
@@ -215,19 +214,20 @@ export const providers: ProviderConfig[] = [
   //   requiredEnvVars: ['LELANTOS_API_KEY'],
   //   createCompute: () => lelantos({ apiKey: process.env.LELANTOS_API_KEY! }),
   // },
-  {
-    name: 'lightning',
-    requiredEnvVars: ['LIGHTNING_API_KEY'],
-    // Lightning sizes sandboxes via `instanceType` on the provider factory (the SDK
-    // ignores an instanceType passed to sandbox.create()), so it can't be sized through
-    // DAX_RESOURCE_OPTIONS like most providers. The dax workflow sets
-    // LIGHTNING_INSTANCE_TYPE=cpu-8 for the standardized 8 vCPU / 16 GiB profile;
-    // it defaults to cpu-1 (the SDK default) everywhere else.
-    createCompute: () => lightning({
-      apiKey: process.env.LIGHTNING_API_KEY!,
-      instanceType: process.env.LIGHTNING_INSTANCE_TYPE || 'cpu-1',
-    }),
-  },
+  // Parked with OpenComputer — re-activate when Lightning AI returns.
+  // {
+  //   name: 'lightning',
+  //   requiredEnvVars: ['LIGHTNING_API_KEY'],
+  //   // Lightning sizes sandboxes via `instanceType` on the provider factory (the SDK
+  //   // ignores an instanceType passed to sandbox.create()), so it can't be sized through
+  //   // DAX_RESOURCE_OPTIONS like most providers. The dax workflow sets
+  //   // LIGHTNING_INSTANCE_TYPE=cpu-8 for the standardized 8 vCPU / 16 GiB profile;
+  //   // it defaults to cpu-1 (the SDK default) everywhere else.
+  //   createCompute: () => lightning({
+  //     apiKey: process.env.LIGHTNING_API_KEY!,
+  //     instanceType: process.env.LIGHTNING_INSTANCE_TYPE || 'cpu-1',
+  //   }),
+  // },
   {
     name: 'modal',
     requiredEnvVars: ['MODAL_TOKEN_ID', 'MODAL_TOKEN_SECRET'],
@@ -281,15 +281,16 @@ export const providers: ProviderConfig[] = [
     requiredEnvVars: ['NOVITA_API_KEY'],
     createCompute: () => novita({ apiKey: process.env.NOVITA_API_KEY! }),
   },
-  {
-    name: 'opencomputer',
-    requiredEnvVars: ['OPENCOMPUTER_API_KEY', 'OPENCOMPUTER_API_URL'],
-    createCompute: () => opencomputer({
-      apiKey: process.env.OPENCOMPUTER_API_KEY!,
-      apiUrl: process.env.OPENCOMPUTER_API_URL!,
-    }),
-    sandboxOptions: { timeout: 600_000 },
-  },
+  // Parked on account access — re-activate when OpenComputer returns.
+  // {
+  //   name: 'opencomputer',
+  //   requiredEnvVars: ['OPENCOMPUTER_API_KEY', 'OPENCOMPUTER_API_URL'],
+  //   createCompute: () => opencomputer({
+  //     apiKey: process.env.OPENCOMPUTER_API_KEY!,
+  //     apiUrl: process.env.OPENCOMPUTER_API_URL!,
+  //   }),
+  //   sandboxOptions: { timeout: 600_000 },
+  // },
   {
     name: 'promigence',
     requiredEnvVars: ['PROMIGENCE_API_KEY'],
@@ -305,11 +306,6 @@ export const providers: ProviderConfig[] = [
     requiredEnvVars: ['RAILWAY_API_TOKEN', 'RAILWAY_ENVIRONMENT_ID'],
     createCompute: () => railway({ token: process.env.RAILWAY_API_TOKEN!, environmentId: process.env.RAILWAY_ENVIRONMENT_ID! }),
   },
-  // {
-  //   name: 'runloop',
-  //   requiredEnvVars: ['RUNLOOP_API_KEY'],
-  //   createCompute: () => runloop({ apiKey: process.env.RUNLOOP_API_KEY! }),
-  // },
   {
     name: 'run-cloud',
     requiredEnvVars: ['RUN_CLOUD_API_KEY'],
