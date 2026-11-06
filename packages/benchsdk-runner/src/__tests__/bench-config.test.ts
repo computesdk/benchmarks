@@ -162,6 +162,25 @@ describe('defineBenchmarkConfig', () => {
     ).toThrow("display.byStep contains unexpected key");
   });
 
+  it('carries display.untested providers', () => {
+    const config = defineBenchmarkConfig({
+      benchmarkSlug: 's',
+      benchmarkName: 'n',
+      participants,
+      display: { untested: ['railway', 'render'] },
+    });
+    expect(config.display?.untested).toEqual(['railway', 'render']);
+  });
+
+  it('rejects an invalid display.untested list', () => {
+    expect(() =>
+      defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, display: { untested: 'railway' as any } }),
+    ).toThrow('display.untested must be an array');
+    expect(() =>
+      defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, display: { untested: ['railway', 'railway'] } }),
+    ).toThrow('duplicate display.untested provider: railway');
+  });
+
   it('carries byStep hidden step and metric defaults', () => {
     const config = defineBenchmarkConfig({
       benchmarkSlug: 's',

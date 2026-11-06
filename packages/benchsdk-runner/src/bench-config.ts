@@ -520,6 +520,12 @@ export interface BenchmarkDisplayConfig {
   overview?: BenchmarkOverviewDisplay;
   /** Per-step results defaults. */
   byStep?: BenchmarkByStepDisplay;
+  /**
+   * Providers that are not benchmarked yet (parked or awaiting entry). The
+   * platform lists them, with their logos, in an "Untested" section after the
+   * scored providers. A provider with results in the run is shown as scored.
+   */
+  untested?: string[];
 }
 
 export interface BenchmarkConfigErrorItem {
@@ -815,7 +821,7 @@ function validateBenchmarkDisplayConfig(display: BenchmarkDisplayConfig): void {
   if (typeof display !== 'object' || display === null || Array.isArray(display)) {
     throw new Error('display must be an object');
   }
-  assertOnlyAllowedKeys(display as unknown as Record<string, unknown>, ['metrics', 'steps', 'overview', 'byStep'], 'display');
+  assertOnlyAllowedKeys(display as unknown as Record<string, unknown>, ['metrics', 'steps', 'overview', 'byStep', 'untested'], 'display');
   const displayMetricKeys = new Set<string>();
   if (display.metrics !== undefined) {
     if (!Array.isArray(display.metrics)) {
@@ -910,6 +916,19 @@ function validateBenchmarkDisplayConfig(display: BenchmarkDisplayConfig): void {
       for (let i = 0; i < list.length; i++) {
         assertNonEmptyString(list[i], `display.byStep.${field}[${i}]`);
       }
+    }
+  }
+  if (display.untested !== undefined) {
+    if (!Array.isArray(display.untested)) {
+      throw new Error('display.untested must be an array');
+    }
+    const seen = new Set<string>();
+    for (let i = 0; i < display.untested.length; i++) {
+      const provider = assertNonEmptyString(display.untested[i], `display.untested[${i}]`);
+      if (seen.has(provider)) {
+        throw new Error(`duplicate display.untested provider: ${provider}`);
+      }
+      seen.add(provider);
     }
   }
 }

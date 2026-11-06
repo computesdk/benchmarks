@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import type { BenchmarkResult, BenchmarkMode, ConcurrentBenchmarkResult, StaggeredBenchmarkResult } from './types.js';
 import { sortByCompositeScore, computeCompositeScores } from './scoring.js';
+import { loadUntestedProviders, renderUntestedSection, untestedSectionHeight, type UntestedProvider } from './untested-svg.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '../..');
@@ -104,7 +105,7 @@ function buildFootnote(results: BenchmarkResult[], mode: string): string {
   return '';
 }
 
-function generateSVG(results: BenchmarkResult[], timestamp: string, mode: string): string {
+function generateSVG(results: BenchmarkResult[], timestamp: string, mode: string, untested: UntestedProvider[]): string {
   // Compute scores if any are missing
   if (!results.every(r => r.compositeScore !== undefined)) {
     computeCompositeScores(results);
@@ -120,12 +121,13 @@ function generateSVG(results: BenchmarkResult[], timestamp: string, mode: string
   const tableTop = headerHeight + padding;
   const tableBottom = tableTop + tableHeaderHeight + (sorted.length * rowHeight);
   const footnoteHeight = 20;
+  const untestedHeight = untestedSectionHeight(untested.length, width - 2 * padding);
 
   // For concurrency modes, add extra space for wall-clock metrics
   const hasConcurrencyMetrics = mode === 'burst' || mode === 'staggered';
   const concurrencyMetricsHeight = hasConcurrencyMetrics ? (sorted.length * 20 + 40) : 0;
 
-  const height = tableBottom + padding + 30 + footnoteHeight + concurrencyMetricsHeight;
+  const height = tableBottom + untestedHeight + padding + 30 + footnoteHeight + concurrencyMetricsHeight;
 
   // Column positions
   const cols = {
@@ -243,9 +245,11 @@ function generateSVG(results: BenchmarkResult[], timestamp: string, mode: string
     }
   });
 
+  svg += renderUntestedSection(untested, padding, tableBottom, width - 2 * padding);
+
   // Add concurrency-specific metrics section
   if (hasConcurrencyMetrics && sorted.length > 0) {
-    const metricsY = tableBottom + 20;
+    const metricsY = tableBottom + untestedHeight + 20;
     const metricsLabel = mode === 'burst' ? 'BURST METRICS' : 'STAGGERED METRICS';
     svg += `
   <text class="metrics-label" x="${padding}" y="${metricsY}">${metricsLabel}</text>
@@ -283,14 +287,15 @@ function generateSVG(results: BenchmarkResult[], timestamp: string, mode: string
   return svg;
 }
 
-function generateForMode(mode: string): boolean {
+async function generateForMode(mode: string): Promise<boolean> {
   const data = getMostRecentFile(mode);
   if (!data) {
     console.log(`No results found for mode: ${mode}`);
     return false;
   }
 
-  const svg = generateSVG(data.results, data.timestamp, mode);
+  const tested = data.results.filter(r => !r.skipped).map(r => r.provider);
+  const svg = generateSVG(data.results, data.timestamp, mode, await loadUntestedProviders(tested));
   const svgPath = path.join(ROOT, `${modeToDir(mode)}.svg`);
   fs.writeFileSync(svgPath, svg);
   console.log(`SVG written to ${svgPath}`);
@@ -307,13 +312,13 @@ function generateForMode(mode: string): boolean {
   return true;
 }
 
-function main() {
+async function main() {
   const requestedMode = getArgValue(args, '--mode');
 
   if (requestedMode) {
     // Generate SVG for a specific mode
     const mode = requestedMode === 'concurrent' ? 'burst' : requestedMode;
-    if (!generateForMode(mode)) {
+    if (!(await generateForMode(mode))) {
       process.exit(1);
     }
   } else {
@@ -321,7 +326,7 @@ function main() {
     const modes = ['burst'];
     let generated = 0;
     for (const mode of modes) {
-      if (generateForMode(mode)) {
+      if (await generateForMode(mode)) {
         generated++;
       }
     }
@@ -332,4 +337,4 @@ function main() {
   }
 }
 
-main();
+await main();

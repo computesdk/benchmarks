@@ -27,6 +27,7 @@ import { drainLateCleanups, withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
 import { sandboxId } from '../src/util/sandbox-id.js';
 import { providers } from './providers.js';
+import { UNTESTED_SANDBOX_PROVIDERS } from './untested.js';
 import type { ProviderConfig } from './types.js';
 import { BENCH_SCRIPT_PATH } from './dax.js';
 import type { DaxTimingResult } from './dax.js';
@@ -111,6 +112,7 @@ export const config = defineBenchmarkConfig({
       { key: 'typecheck', label: 'Typecheck' },
     ],
     overview: { defaultMetric: 'task', defaultLayout: 'ranking' },
+    untested: UNTESTED_SANDBOX_PROVIDERS,
   },
   onComplete: (outcome) =>
     writeDaxLegacyResults(outcome.participants, {
