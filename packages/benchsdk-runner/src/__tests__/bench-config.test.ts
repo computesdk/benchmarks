@@ -753,7 +753,7 @@ describe('malformed nested containers', () => {
   });
 
   it('rejects a shapes value that is not a plain object', () => {
-    expect(() => defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, shapes: ['x' as any] })).toThrow('shapes');
+    expect(() => defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, shapes: ['x'] as any })).toThrow('shapes');
   });
 
   it('rejects a malformed shape entry without crashing', () => {

@@ -147,7 +147,7 @@ describe('score resolves missing metric unit from display.metrics', () => {
       ],
     } as unknown as BenchmarkRunOutcome;
 
-    const results = score(outcome, spec, [{ key: 'durationMs', label: 'Duration', unit: 'ms' }]);
+    const results = score(outcome, spec, [{ key: 'durationMs', unit: 'ms' }]);
     expect(results[0].metrics[0]).toMatchObject({ name: 'durationMs', unit: 'ms', median: 100 });
   });
 
@@ -164,7 +164,7 @@ describe('score resolves missing metric unit from display.metrics', () => {
       ],
     } as unknown as BenchmarkRunOutcome;
 
-    const results = score(outcome, spec, [{ key: 'durationMs', label: 'Duration', unit: 'ms' }]);
+    const results = score(outcome, spec, [{ key: 'durationMs', unit: 'ms' }]);
     expect(results[0].metrics[0]).toMatchObject({ name: 'latency', unit: 'ms', median: 100 });
   });
 
@@ -181,7 +181,7 @@ describe('score resolves missing metric unit from display.metrics', () => {
       ],
     } as unknown as BenchmarkRunOutcome;
 
-    const results = score(outcome, spec, [{ key: 'durationMs', label: 'Duration', unit: 'ms' }]);
+    const results = score(outcome, spec, [{ key: 'durationMs', unit: 'ms' }]);
     expect(results[0].metrics[0].unit).toBe('s');
   });
 });
@@ -194,7 +194,7 @@ describe('scoringConfigToSpec', () => {
       },
       undefined,
       {
-        metrics: [{ key: 'ttiMs', label: 'Time to interactive', unit: 'ms' }],
+        metrics: [{ key: 'ttiMs', unit: 'ms' }],
       },
     );
 
@@ -217,7 +217,7 @@ describe('scoringConfigToSpec', () => {
       },
       undefined,
       {
-        metrics: [{ key: 'ttiMs', label: 'Time to interactive', unit: 'ms' }],
+        metrics: [{ key: 'ttiMs', unit: 'ms' }],
       },
     );
 

@@ -772,7 +772,7 @@ describe('runBenchmark', () => {
       benchmarkName: 'Sandbox TTI',
       iterations: 1,
       participants: [participants[0]],
-      scoring: { metrics: [{ key: 'ttiMs', ceiling: 60000, weights: { median: 1 } }] },
+      scoring: { metrics: [{ key: 'ttiMs', ceiling: 60000, weights: { median: 1, p95: 0, p99: 0 } }] },
     };
     fakeClient.getBenchmark.mockRejectedValueOnce(new BenchmarkApiError('not found', 404, ''));
 
