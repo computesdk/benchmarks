@@ -23,6 +23,7 @@ import { fileURLToPath } from 'node:url';
 import { defineBenchmarkConfig, defineTask, TaskError } from '@benchsdk/runner';
 import type { JsonObject, TaskStepRecord } from '@benchsdk/api';
 import { VMTier } from '@codesandbox/sdk';
+import { cloudRun } from '@computesdk/gcp/cloud-run';
 import { drainLateCleanups, withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
 import { sandboxId } from '../src/util/sandbox-id.js';
@@ -74,10 +75,11 @@ export const config = defineBenchmarkConfig({
   // Without a scoring spec the worker submits a summary with zero result
   // rows, so the merged run summary is always empty (summary.results[] is
   // what benchmarks-platform leaderboards and the composite bench read).
-  // totalMs ceiling: 5 min — the run completes phases 7/7 well under it.
+  // totalMs ceiling: 200s, 2× the p90 of provider medians (32–121s observed);
+  // scoring scale only — phase deadlines still decide pass/fail.
   scoring: {
     metrics: [
-      { key: 'totalMs', unit: 'ms', ceiling: 300_000, weights: { median: 0.6, p95: 0.25, p99: 0.15 } },
+      { key: 'totalMs', unit: 'ms', ceiling: 200_000, weights: { median: 0.6, p95: 0.25, p99: 0.15 } },
     ],
   },
   defaultProviders: ['e2b', 'modal', 'tensorlake'],
@@ -135,7 +137,7 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   arker:        { templateId: 'ubuntu-full-8' },           // 8 vCPU / 16 GiB golden
   modal:        { cpu: 4, cpuLimit: 4, memoryMiB: 16384, templateId: 'node:22' }, // Modal: 1 core = 2 vCPUs, so 4 cores = 8 vCPUs
   tenki:        { cpuCores: 8, memoryMb: 16384, diskSizeGb: 20 }, // default disk cannot hold the OpenCode install
-  tensorlake:   { cpus: 8, memoryMb: 16384 },
+  tensorlake:   { cpus: 8, memoryMb: 16000 },            // Tensorlake caps memory at 16000 MB (16384 is rejected with a 400)
   isorun:       { vcpus: 8, memMiB: 16384 },
   runloop:      { launch_parameters: { resource_size_request: 'CUSTOM_SIZE', custom_cpu_cores: 8, custom_gb_memory: 16 } },
   upstash:      { size: 'large' },                          // large = 8 cores, 16 GB
@@ -184,6 +186,19 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // `timeout` is the same lifetime backstop as blaxel/novita: the sandbox must
   // outlive the 10-minute build deadline.
   promigence:   { image: 'node:22', tier: 'large', timeout: 900_000 },
+};
+
+// Provider-factory overrides for settings the SDK reads only from provider
+// config, not from create() options.
+// Cloud Run sandboxes have no network unless egress is allowed, and Dax needs it
+// to download Bun/Node and clone the repo. @computesdk/gcp reads `allowEgress`
+// from the cloudRun() config only.
+const DAX_COMPUTE_OVERRIDES: Record<string, ProviderConfig['createCompute']> = {
+  'cloud-run': () => cloudRun({
+    sandboxUrl: process.env.CLOUD_RUN_SANDBOX_URL!,
+    sandboxSecret: process.env.CLOUD_RUN_SANDBOX_SECRET!,
+    allowEgress: true,
+  }),
 };
 
 function getSandboxOptionsWithResources(providerName: string, baseOptions?: Record<string, any>): Record<string, any> {
@@ -345,7 +360,7 @@ function daxPhaseSteps(t: DaxTimingResult): TaskStepRecord[] {
 export const task = defineTask<ProviderConfig>(async (ctx) => {
   const p = ctx.participant;
   const { log } = ctx;
-  const compute = p.createCompute();
+  const compute = (DAX_COMPUTE_OVERRIDES[p.name] ?? p.createCompute)();
   const opts = getSandboxOptionsWithResources(p.name, p.sandboxOptions);
 
   const createStart = Date.now();
