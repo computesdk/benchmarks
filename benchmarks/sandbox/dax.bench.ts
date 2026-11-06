@@ -23,6 +23,7 @@ import { fileURLToPath } from 'node:url';
 import { defineBenchmarkConfig, defineTask, TaskError } from '@benchsdk/runner';
 import type { JsonObject, TaskStepRecord } from '@benchsdk/api';
 import { VMTier } from '@codesandbox/sdk';
+import { cloudRun } from '@computesdk/gcp/cloud-run';
 import { drainLateCleanups, withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
 import { sandboxId } from '../src/util/sandbox-id.js';
@@ -186,6 +187,19 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   promigence:   { image: 'node:22', tier: 'large', timeout: 900_000 },
 };
 
+// Provider-factory overrides for settings the SDK reads only from provider
+// config, not from create() options.
+// Cloud Run sandboxes have no network unless egress is allowed, and Dax needs it
+// to download Bun/Node and clone the repo. @computesdk/gcp reads `allowEgress`
+// from the cloudRun() config only.
+const DAX_COMPUTE_OVERRIDES: Record<string, ProviderConfig['createCompute']> = {
+  'cloud-run': () => cloudRun({
+    sandboxUrl: process.env.CLOUD_RUN_SANDBOX_URL!,
+    sandboxSecret: process.env.CLOUD_RUN_SANDBOX_SECRET!,
+    allowEgress: true,
+  }),
+};
+
 function getSandboxOptionsWithResources(providerName: string, baseOptions?: Record<string, any>): Record<string, any> {
   const resourceOpts = DAX_RESOURCE_OPTIONS[providerName];
   if (!resourceOpts) return baseOptions ?? {};
@@ -345,7 +359,7 @@ function daxPhaseSteps(t: DaxTimingResult): TaskStepRecord[] {
 export const task = defineTask<ProviderConfig>(async (ctx) => {
   const p = ctx.participant;
   const { log } = ctx;
-  const compute = p.createCompute();
+  const compute = (DAX_COMPUTE_OVERRIDES[p.name] ?? p.createCompute)();
   const opts = getSandboxOptionsWithResources(p.name, p.sandboxOptions);
 
   const createStart = Date.now();
