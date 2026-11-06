@@ -125,7 +125,7 @@ jobs:
           - run-cloud
           - sail
           - sandbox0
-          - sprites
+          # - sprites  # untested — see benchmarks/sandbox/untested.ts
           - superserve
           - tenki
           - tensorlake

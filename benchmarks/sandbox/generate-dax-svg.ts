@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { DaxBenchmarkResult } from './dax.js';
+import { loadUntestedProviders, renderUntestedSection, untestedSectionHeight } from './untested-svg.js';
 
 const root = path.resolve(import.meta.dirname, '../..');
 const inputPath = path.join(root, 'results', 'sandbox-dax', 'latest.json');
@@ -53,7 +54,10 @@ const sectionGap = 28;
 const tableHeaderHeight = 42;
 const tableRowHeight = 42;
 const tableTop = headerHeight + sectionGap + 34;
-const height = tableTop + tableHeaderHeight + results.length * tableRowHeight + 52;
+const tableBottom = tableTop + tableHeaderHeight + results.length * tableRowHeight;
+const untested = await loadUntestedProviders(results.map((result) => result.provider));
+const untestedHeight = untestedSectionHeight(untested.length, width - 2 * padding);
+const height = tableBottom + untestedHeight + 52;
 const timestamp = new Date(data.timestamp).toISOString().slice(0, 10);
 const logoPath = 'M1036.26,1002.28h237.87l-.93,19.09c-8.38,110.32-49.81,198.3-123.82,262.07-73.09,63.31-170.84,95.43-290.48,95.43-130.81,0-235.55-44.69-311.43-133.6-74.48-87.98-112.65-209.48-112.65-361.23v-60.51c0-96.83,17.7-183.41,51.68-257.43,34.91-74.95,85.19-133.61,149.89-173.63,64.7-40.04,140.12-60.52,225.3-60.52,117.77,0,214.13,32.12,286.29,95.9,72.62,63.3,114.98,153.61,126.15,267.67l1.86,19.08h-238.34l-.93-15.83c-4.65-59.11-20.95-101.94-47.95-127.08-27-25.6-69.83-38.17-127.08-38.17-61.91,0-107.06,20.95-137.33,65.17-31.65,45.15-47.94,117.77-48.87,215.53v74.48c0,102.41,15.36,177.83,45.62,223.91,28.86,44.22,74.01,65.63,137.79,65.63,58.19,0,101.48-12.57,128.95-38.17,26.99-25.14,43.29-66.1,47.48-121.5l.93-16.3Z';
 const cols = [
@@ -128,6 +132,8 @@ results.forEach((result, index) => {
     svg += `  <text class="table-text" x="${cols[valueIndex + 4].x}" y="${y + 27}">${successful ? format(value) : '—'}</text>\n`;
   });
 });
+
+svg += renderUntestedSection(untested, padding, tableBottom, width - 2 * padding);
 
 svg += `  <text class="small" x="${padding}" y="${height - 18}">DAX phases: prepare, Bun download, Bun unpack, clone, install, and typecheck. Lower duration is better.</text>
 </svg>\n`;
