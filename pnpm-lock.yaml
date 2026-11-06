@@ -42,8 +42,8 @@ importers:
         specifier: ^2.4.2
         version: 2.4.2(@hey-api/openapi-ts@0.99.0(magicast@0.3.5)(typescript@5.9.3))(@xterm/xterm@5.5.0)(ink@7.1.1(bufferutil@4.1.0)(react@19.2.8)(utf-8-validate@6.0.6))
       '@computesdk/agent37':
-        specifier: ^0.1.2
-        version: 0.1.2
+        specifier: ^0.1.3
+        version: 0.1.3
       '@computesdk/anchorbrowser':
         specifier: ^0.2.24
         version: 0.2.24(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -51,8 +51,8 @@ importers:
         specifier: ^0.4.29
         version: 0.4.29(zod@4.6.7)
       '@computesdk/arker':
-        specifier: ^0.1.21
-        version: 0.1.21(@computesdk/daytona@1.7.52(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@computesdk/e2b@1.7.70)(@computesdk/modal@1.9.28)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        specifier: ^0.1.22
+        version: 0.1.22(@computesdk/daytona@1.7.52(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@computesdk/e2b@1.7.71)(@computesdk/modal@1.9.28)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@computesdk/beam':
         specifier: ^0.3.25
         version: 0.3.25(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
@@ -84,8 +84,8 @@ importers:
         specifier: ^1.7.52
         version: 1.7.52(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@computesdk/e2b':
-        specifier: ^1.7.70
-        version: 1.7.70
+        specifier: ^1.7.71
+        version: 1.7.71
       '@computesdk/ec2-firecrab':
         specifier: ^1.0.5
         version: 1.0.5
@@ -93,8 +93,8 @@ importers:
         specifier: ^0.2.19
         version: 0.2.19(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@computesdk/gcp':
-        specifier: ^0.1.10
-        version: 0.1.10
+        specifier: ^0.1.11
+        version: 0.1.11
       '@computesdk/givemeanode':
         specifier: ^1.2.15
         version: 1.2.15
@@ -168,8 +168,8 @@ importers:
         specifier: ^1.0.21
         version: 1.0.21
       '@computesdk/sandbox0':
-        specifier: ^1.0.22
-        version: 1.0.22(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        specifier: ^1.0.23
+        version: 1.0.23(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@computesdk/sprites':
         specifier: ^0.1.34
         version: 0.1.34
@@ -750,8 +750,8 @@ packages:
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
     engines: {node: '>=0.1.90'}
 
-  '@computesdk/agent37@0.1.2':
-    resolution: {integrity: sha512-ZyxiQ4W2DuM+1VqoPxT4WHCF+RmMtoBz5W/Hn3fo1LidTLmD3AIYWohida0lcC+SMRYQ0GNofg+K9Te5hSmP+g==}
+  '@computesdk/agent37@0.1.3':
+    resolution: {integrity: sha512-G58pSw8FE1m1nPzKUbvhZ/zgin05OS3l1WP9IIo9XVSc1pj3iEpW4JFkVKJxInUE0YJZXnz8bFAGNcByhEt5yA==}
 
   '@computesdk/anchorbrowser@0.2.24':
     resolution: {integrity: sha512-KiyXeFUruX31ON6eYHhMWgc5dkcRlAAIqO4Q2ZcOOmjD+mH/VXbDpiG3XB4C9ug0Q9jcaReBNBpcRMALgxK76w==}
@@ -759,8 +759,8 @@ packages:
   '@computesdk/archil@0.4.29':
     resolution: {integrity: sha512-U2AocWb7j104/z0mTkjWIG9sgczd9QFDpW87oV4JXu0OWbN2cYlL9GLz+3orhqiDHaKB7IoBGVEWlNB7YUYf3A==}
 
-  '@computesdk/arker@0.1.21':
-    resolution: {integrity: sha512-3ZdvWou3cHZhDiCul54qKFZcUGOD9b8gZial7JxgYV5EJdtN5louUBpehyeezg8nPEtiXuPUMpQ6B4f9TVA8xA==}
+  '@computesdk/arker@0.1.22':
+    resolution: {integrity: sha512-p7R7HBeswSe+Y+QR6h8qL1zfucnT/IKmxAWXEhdS8QEfshZDWgV7Y7sEVTw4XaVK+lCbjfdsz4ZFGlvzKbR+qw==}
 
   '@computesdk/beam@0.3.25':
     resolution: {integrity: sha512-uGAXT5EyRylMwvIUyovpeuOsNX8Zgfhm/WN09JdoRZMGP3VSuHOoj3f7d1OJl+oQ80DrMG1Cvzqy9KP4snh2xA==}
@@ -798,8 +798,8 @@ packages:
   '@computesdk/daytona@1.7.52':
     resolution: {integrity: sha512-GTSsFmNgXdIEnOoJZEjk84FgWoPakFzPLbIpiQRPHZt9OkWKPUUxV5FtEfKyz49l4wk2iG71fIIV4A+eEqHxzQ==}
 
-  '@computesdk/e2b@1.7.70':
-    resolution: {integrity: sha512-ybQxuAV6TUPFJG31owLkvf7vqAStefHHaeZPJ87PmGL10kCSN7mcEszo9xSkkyvs90Uf1aFVFx+G/qChGzgWcQ==}
+  '@computesdk/e2b@1.7.71':
+    resolution: {integrity: sha512-EQS0PVUx8ooV/KayYOv6MFBmgUyCmqbE0TegISDRr+4dZTnn0kh3vPyhYFbEw1e/83iGpm0KiEFZv0YERxgVJg==}
 
   '@computesdk/ec2-firecrab@1.0.5':
     resolution: {integrity: sha512-GCVFU72xYFU5QwVILNp1hup2qli8WPo2S2d8UZ/hIObGGt/xMXZ4HN2z3Lz8TxKiiwYcMmht+YRQx6DYCMZVcw==}
@@ -807,8 +807,8 @@ packages:
   '@computesdk/freestyle@0.2.19':
     resolution: {integrity: sha512-xXNl71tymKBH5LbE3HyogplAb6FmEA5AWOw8wfsQJz7UAhBBrFuBge4kNrt0my+Aq2yYIUOhEqD6byEdEFwPUA==}
 
-  '@computesdk/gcp@0.1.10':
-    resolution: {integrity: sha512-0xTvM455iRJgtpji1o3jedoK5QeEuW7ukvG6UX5yc/sG/GqitJtXwQP7V9bqNNkN+efDda/wAq41yRluKszqtw==}
+  '@computesdk/gcp@0.1.11':
+    resolution: {integrity: sha512-3JeaBbORObjNPIvtclJ6seDQA5EPFZEr/F/EgitBDq1WGuRd030HZdwBJFiuu0+//Y9jfzyDk5Eud6zaZYvktg==}
     hasBin: true
 
   '@computesdk/givemeanode@1.2.15':
@@ -897,8 +897,8 @@ packages:
     resolution: {integrity: sha512-kzId/VDVIpv6CDPgkLw5bLw9na/yuRS1m4str7nG5M9FrXrNNVNaStpRP5L8ZWPSGyq22D5g7Yk1dYQw++ArNA==}
     engines: {node: '>=22'}
 
-  '@computesdk/sandbox0@1.0.22':
-    resolution: {integrity: sha512-I6F/txNNTlmaTpnoAsuxdpHxgnZAq3tGund/cfd7f1/KjeLgha0S8vF3tRnigxrkeFnCdC2tIzKDRcKwxjdg6Q==}
+  '@computesdk/sandbox0@1.0.23':
+    resolution: {integrity: sha512-ENgnLI22bJSVdNcvRMWdAxgtVJdblVHMt6KFH//scSlrF4OjqDC6a02u9pSOZNSDrmGz7gzgQFljSBfvQ6liTA==}
 
   '@computesdk/sprites@0.1.34':
     resolution: {integrity: sha512-CQTBzL71wYlR8N3wORTztRtIHV2k5bbPd2p0vqN7ChkJp2kdU451Ep5AYurPHDrdl8tgzzCd0oF30HeoVL7kvw==}
@@ -5961,14 +5961,14 @@ snapshots:
 
   '@archildata/api-types@0.0.81': {}
 
-  '@arker-ai/sdk@1.3.0(@computesdk/daytona@1.7.52(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@computesdk/e2b@1.7.70)(@computesdk/modal@1.9.28)(bufferutil@4.1.0)(computesdk@4.1.16)(utf-8-validate@6.0.6)':
+  '@arker-ai/sdk@1.3.0(@computesdk/daytona@1.7.52(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@computesdk/e2b@1.7.71)(@computesdk/modal@1.9.28)(bufferutil@4.1.0)(computesdk@4.1.16)(utf-8-validate@6.0.6)':
     dependencies:
       dockerfile-ast: 0.7.1
       tar: 7.5.22
       ws: 8.22.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
     optionalDependencies:
       '@computesdk/daytona': 1.7.52(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-      '@computesdk/e2b': 1.7.70
+      '@computesdk/e2b': 1.7.71
       '@computesdk/modal': 1.9.28
       computesdk: 4.1.16
     transitivePeerDependencies:
@@ -6569,7 +6569,7 @@ snapshots:
   '@colors/colors@1.5.0':
     optional: true
 
-  '@computesdk/agent37@0.1.2':
+  '@computesdk/agent37@0.1.3':
     dependencies:
       '@computesdk/provider': 2.1.22
       computesdk: 4.1.16
@@ -6593,9 +6593,9 @@ snapshots:
     transitivePeerDependencies:
       - zod
 
-  '@computesdk/arker@0.1.21(@computesdk/daytona@1.7.52(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@computesdk/e2b@1.7.70)(@computesdk/modal@1.9.28)(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
+  '@computesdk/arker@0.1.22(@computesdk/daytona@1.7.52(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@computesdk/e2b@1.7.71)(@computesdk/modal@1.9.28)(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
     dependencies:
-      '@arker-ai/sdk': 1.3.0(@computesdk/daytona@1.7.52(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@computesdk/e2b@1.7.70)(@computesdk/modal@1.9.28)(bufferutil@4.1.0)(computesdk@4.1.16)(utf-8-validate@6.0.6)
+      '@arker-ai/sdk': 1.3.0(@computesdk/daytona@1.7.52(bufferutil@4.1.0)(utf-8-validate@6.0.6))(@computesdk/e2b@1.7.71)(@computesdk/modal@1.9.28)(bufferutil@4.1.0)(computesdk@4.1.16)(utf-8-validate@6.0.6)
       '@computesdk/provider': 2.1.22
       computesdk: 4.1.16
     transitivePeerDependencies:
@@ -6700,7 +6700,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@computesdk/e2b@1.7.70':
+  '@computesdk/e2b@1.7.71':
     dependencies:
       '@computesdk/provider': 2.1.22
       computesdk: 4.1.16
@@ -6720,7 +6720,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@computesdk/gcp@0.1.10':
+  '@computesdk/gcp@0.1.11':
     dependencies:
       '@computesdk/provider': 2.1.22
       computesdk: 4.1.16
@@ -6910,7 +6910,7 @@ snapshots:
       '@sailresearch/sdk': 0.5.9
       computesdk: 4.1.16
 
-  '@computesdk/sandbox0@1.0.22(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
+  '@computesdk/sandbox0@1.0.23(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
     dependencies:
       '@computesdk/provider': 2.1.22
       computesdk: 4.1.16
