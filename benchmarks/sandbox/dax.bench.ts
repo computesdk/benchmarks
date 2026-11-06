@@ -75,10 +75,11 @@ export const config = defineBenchmarkConfig({
   // Without a scoring spec the worker submits a summary with zero result
   // rows, so the merged run summary is always empty (summary.results[] is
   // what benchmarks-platform leaderboards and the composite bench read).
-  // totalMs ceiling: 5 min — the run completes phases 7/7 well under it.
+  // totalMs ceiling: 200s, 2× the p90 of provider medians (32–121s observed);
+  // scoring scale only — phase deadlines still decide pass/fail.
   scoring: {
     metrics: [
-      { key: 'totalMs', unit: 'ms', ceiling: 300_000, weights: { median: 0.6, p95: 0.25, p99: 0.15 } },
+      { key: 'totalMs', unit: 'ms', ceiling: 200_000, weights: { median: 0.6, p95: 0.25, p99: 0.15 } },
     ],
   },
   defaultProviders: ['e2b', 'modal', 'tensorlake'],
