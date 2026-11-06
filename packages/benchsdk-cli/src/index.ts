@@ -1,5 +1,7 @@
-export { run, oauthLogin, BENCH_OAUTH_CLIENT_ID, BENCH_OAUTH_SCOPE } from './cli.js';
+export { run, oauthLogin, getVersion as getCliVersion, BENCH_OAUTH_CLIENT_ID, BENCH_OAUTH_SCOPE } from './cli.js';
 export type { OAuthLoginOptions } from './cli.js';
+export { COMMANDS, GLOBAL_BOOLEAN_FLAGS, GLOBAL_STRING_FLAGS } from './commands.js';
+export type { BenchCommand } from './commands.js';
 export {
   resolveAuth,
   createApiClient,

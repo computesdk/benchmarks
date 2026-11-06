@@ -1,0 +1,366 @@
+{
+  "schemaVersion": 1,
+  "bin": "bench",
+  "package": "@benchsdk/runner",
+  "version": "0.8.3",
+  "source": {
+    "repo": "computesdk/benchmarks",
+    "released": false
+  },
+  "cli": {
+    "package": "@benchsdk/cli",
+    "version": "0.9.3"
+  },
+  "globalFlags": [
+    "--base-url",
+    "--api-key",
+    "--org",
+    "--format",
+    "--json",
+    "--verbose",
+    "--version",
+    "--help"
+  ],
+  "commands": [
+    {
+      "path": [
+        "run"
+      ],
+      "args": [
+        "<file.bench.ts>"
+      ],
+      "flags": [
+        "--shape",
+        "--provider",
+        "--run-key",
+        "--benchmark",
+        "--slug",
+        "--name",
+        "--iterations",
+        "--concurrency",
+        "--stagger-delay-ms",
+        "--group-by",
+        "--deadline-ms",
+        "--scheduled-for",
+        "--no-ingest",
+        "--dry-run",
+        "--check",
+        "--validate",
+        "--base-url",
+        "--api-key"
+      ],
+      "summary": "Execute a benchmark file",
+      "since": "0.2.0",
+      "flagsSince": {
+        "--no-ingest": "0.3.0",
+        "--dry-run": "0.3.0",
+        "--check": "0.5.0",
+        "--validate": "0.5.0",
+        "--deadline-ms": "0.6.3",
+        "--scheduled-for": "0.8.0"
+      },
+      "package": "@benchsdk/runner"
+    },
+    {
+      "path": [
+        "check"
+      ],
+      "args": [
+        "<file.bench.ts>"
+      ],
+      "flags": [
+        "--base-url",
+        "--api-key",
+        "--shape",
+        "--provider",
+        "--no-ingest",
+        "--dry-run"
+      ],
+      "summary": "Validate config, auth, participants and scoring for a benchmark file without running it",
+      "since": "0.5.0",
+      "package": "@benchsdk/runner"
+    },
+    {
+      "path": [
+        "auth",
+        "login"
+      ],
+      "args": [],
+      "flags": [],
+      "summary": "Authenticate with OAuth device flow",
+      "since": "0.2.0",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "auth",
+        "logout"
+      ],
+      "args": [],
+      "flags": [],
+      "summary": "Remove saved credentials",
+      "since": "0.2.0",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "auth",
+        "status"
+      ],
+      "args": [],
+      "flags": [],
+      "summary": "Show current user and active organization",
+      "since": "0.2.0",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "org",
+        "list"
+      ],
+      "args": [],
+      "flags": [],
+      "summary": "List organizations",
+      "since": "0.2.0",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "org",
+        "use"
+      ],
+      "args": [
+        "<slug>"
+      ],
+      "flags": [],
+      "summary": "Set active organization",
+      "since": "0.2.0",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "benchmarks",
+        "list"
+      ],
+      "args": [],
+      "flags": [
+        "--limit",
+        "--offset"
+      ],
+      "summary": "List benchmarks",
+      "since": "0.2.0",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "runs",
+        "list"
+      ],
+      "args": [
+        "[benchmark-slug]"
+      ],
+      "flags": [
+        "--limit",
+        "--offset",
+        "--participant",
+        "--since",
+        "--until",
+        "--day",
+        "--tz",
+        "--source-org"
+      ],
+      "summary": "List benchmark runs (omit the slug to list runs across every benchmark you can read)",
+      "since": "0.2.0",
+      "flagsSince": {
+        "--participant": "0.8.0",
+        "--since": "0.8.0",
+        "--until": "0.8.0",
+        "--day": "0.8.0",
+        "--tz": "0.8.0",
+        "--source-org": "0.8.0"
+      },
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "runs",
+        "show"
+      ],
+      "args": [
+        "<benchmark-slug>",
+        "<runId>"
+      ],
+      "flags": [],
+      "summary": "Show a single run",
+      "since": "0.2.0",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "runs",
+        "run-again"
+      ],
+      "args": [
+        "<benchmark-slug>",
+        "<runId>"
+      ],
+      "flags": [
+        "--wait",
+        "--timeout"
+      ],
+      "summary": "Run the benchmark of a run again on the latest code (--wait polls until it reports a run)",
+      "since": "0.9.3",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "runs",
+        "run-again-status"
+      ],
+      "args": [
+        "<benchmark-slug>",
+        "<runAgainId>"
+      ],
+      "flags": [],
+      "summary": "Show run-again progress: the run it reported, or null while pending",
+      "since": "0.9.3",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "results"
+      ],
+      "args": [
+        "<benchmark-slug>"
+      ],
+      "flags": [
+        "--run",
+        "--participant",
+        "--steps",
+        "--since",
+        "--until",
+        "--day",
+        "--tz",
+        "--source-org",
+        "--limit",
+        "--offset"
+      ],
+      "summary": "Show benchmark or run results",
+      "since": "0.2.0",
+      "flagsSince": {
+        "--participant": "0.8.0",
+        "--steps": "0.8.0",
+        "--since": "0.8.0",
+        "--until": "0.8.0",
+        "--day": "0.8.0",
+        "--tz": "0.8.0",
+        "--source-org": "0.8.0",
+        "--limit": "0.8.0",
+        "--offset": "0.8.0"
+      },
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "reliability"
+      ],
+      "args": [
+        "<benchmark-slug>"
+      ],
+      "flags": [
+        "--day",
+        "--participant",
+        "--from",
+        "--to",
+        "--bucket",
+        "--tz",
+        "--metrics",
+        "--breakdown",
+        "--source-org"
+      ],
+      "summary": "Reliability uptime view for a type=reliability benchmark, or one participant on one day with --day --participant",
+      "since": "0.9.2",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "iterations"
+      ],
+      "args": [
+        "<benchmark-slug>"
+      ],
+      "flags": [
+        "--run",
+        "--participant",
+        "--steps"
+      ],
+      "summary": "Show per-iteration step latencies",
+      "since": "0.3.0",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "artifacts",
+        "list"
+      ],
+      "args": [
+        "<benchmark-slug>",
+        "<runId>"
+      ],
+      "flags": [
+        "--worker"
+      ],
+      "summary": "List run artifacts",
+      "since": "0.2.0",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "logs"
+      ],
+      "args": [
+        "<benchmark-slug>",
+        "<runId>"
+      ],
+      "flags": [
+        "--participant",
+        "--worker",
+        "--max-lines"
+      ],
+      "summary": "Show participant worker logs (parsed, like the dashboard log view)",
+      "since": "0.6.0",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "export"
+      ],
+      "args": [
+        "<benchmark-slug>"
+      ],
+      "flags": [
+        "--run",
+        "--out"
+      ],
+      "summary": "Export benchmark or run results to JSON",
+      "since": "0.2.0",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "fork"
+      ],
+      "args": [
+        "<benchmark-slug>"
+      ],
+      "flags": [
+        "--as",
+        "--source-org",
+        "--ref"
+      ],
+      "summary": "Fork a catalog benchmark into your org as a private benchmark that tracks the upstream bench file",
+      "since": "0.9.0",
+      "package": "@benchsdk/cli"
+    }
+  ]
+}

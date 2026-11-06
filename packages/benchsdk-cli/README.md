@@ -10,6 +10,7 @@ You rarely need to install this package directly: it is bundled into the `bench`
 - **`resolveAuth(override?)`** — resolve base URL and credentials from env vars, `~/.benchsdk/config.json`, and `~/.benchsdk/credentials.json`.
 - **`createApiClient(override?)`** — authenticated `BenchmarkClient` plus resolved `CliAuth`.
 - **`AuthError`** — thrown when no credentials can be found or a token cannot be refreshed.
+- **`COMMANDS`** — every platform command with its arguments, allowed flags, and the version that first shipped it (`since`, `flagsSince`). `run()` reads its per-command flag allowlists from this table, and `bench __manifest` in `@benchsdk/runner` publishes it as `cli-manifest.json`. Add new commands and flags here first.
 
 ## Install
 
@@ -73,8 +74,11 @@ When installed with `@benchsdk/runner`, these are available through the `bench` 
 - `bench runs run-again-status <slug> <runAgainId>`
 - `bench results <slug> [--run <id>] [--format json|table] [--participant <list>] [--steps <list>|all] [--since <when>] [--until <when>] [--day YYYY-MM-DD] [--tz <zone>] [--source-org <slug>] [--limit N] [--offset N]`
 - `bench reliability <slug> [--from YYYY-MM-DD] [--to YYYY-MM-DD] [--bucket day|hour] [--tz <zone>] [--metrics <list>] [--breakdown <list>] [--source-org <slug>] [--format json|table]` — uptime range for a `type=reliability` benchmark; `--day YYYY-MM-DD --participant <slug>` for the per-slot day view
+- `bench iterations <slug> --run <id> [--participant <slug>] [--steps <list>]`
 - `bench artifacts list <slug> <runId> [--worker <id>]`
+- `bench logs <slug> <runId> [--participant <slug>] [--worker <id>] [--max-lines N]`
 - `bench export <slug> [--run <id>] [--out <dir>]`
+- `bench fork <slug> [--as <new-slug>] [--source-org <slug>] [--ref <sha>]`
 
 See the [`benchsdk-cli` skill](../../.agents/skills/benchsdk-cli/SKILL.md) for the full CLI reference, OAuth device-code flow, and CI/non-interactive use.
 

@@ -21,6 +21,7 @@
   },
   "files": [
     "dist",
+    "cli-manifest.json",
     "README.md"
   ],
   "scripts": {
@@ -28,6 +29,7 @@
     "clean": "rimraf dist",
     "dev": "tsup --watch",
     "lint": "eslint",
+    "manifest": "tsup && node scripts/cli-manifest.mjs",
     "prepare": "tsup",
     "pretest": "tsup",
     "test": "vitest run",

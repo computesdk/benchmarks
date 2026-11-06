@@ -16,10 +16,11 @@ import { loadCredentials, saveCredentials, clearCredentials, loadConfig } from '
 import { createApiClient, getMe, listOrganizations, setActiveOrganization } from './client.js';
 import { printData, type OutputOptions } from './output.js';
 import { getApiBaseUrl, getAuthBaseUrl, getPlatformBaseUrl } from './platform.js';
+import { findCommand, groupFlags, GLOBAL_BOOLEAN_FLAGS, GLOBAL_STRING_FLAGS } from './commands.js';
 
 let packageVersion: string | undefined;
 
-async function getVersion(): Promise<string> {
+export async function getVersion(): Promise<string> {
   if (packageVersion) return packageVersion;
 
   const candidates: string[] = [];
@@ -129,8 +130,8 @@ interface ParsedOptions {
 export function parseGlobalArgs(argv: string[]): ParsedOptions {
   const values: GlobalOptions = {};
   const positionals: string[] = [];
-  const stringGlobals = new Set(['base-url', 'api-key', 'org', 'format']);
-  const booleanGlobals = new Set(['json', 'verbose', 'version', 'help']);
+  const stringGlobals = new Set<string>(GLOBAL_STRING_FLAGS);
+  const booleanGlobals = new Set<string>(GLOBAL_BOOLEAN_FLAGS);
 
   let i = 0;
   while (i < argv.length) {
@@ -193,18 +194,6 @@ const subcommandOptionSchema = {
   wait: { type: 'boolean' as const },
   timeout: { type: 'number' as const },
 };
-
-export const RUNS_SUBCOMMAND_OPTIONS = {
-  list: ['limit', 'offset', 'participant', 'since', 'until', 'day', 'tz', 'source-org'],
-  show: [],
-  'run-again': ['wait', 'timeout'],
-  'run-again-status': [],
-} as const;
-
-const runsSubcommandOptionUnion = [
-  ...RUNS_SUBCOMMAND_OPTIONS.list,
-  ...RUNS_SUBCOMMAND_OPTIONS['run-again'],
-];
 
 export function parseSubcommandOptions(
   args: string[],
@@ -271,6 +260,12 @@ function assertSubcommandOptions(
 ): void {
   const extra = Object.keys(options).find((key) => !allowed.includes(key));
   if (extra) throw new Error(`Unknown option for this command: --${extra}`);
+}
+
+function flagsOf(...path: string[]): readonly string[] {
+  const command = findCommand(path);
+  if (!command) throw new Error(`bench ${path.join(' ')} is missing from COMMANDS`);
+  return command.flags;
 }
 
 function commandHelp(command?: string): string {
@@ -1301,6 +1296,7 @@ export async function run(argv: string[]): Promise<void> {
     switch (command) {
       case 'auth': {
         const [sub, ...subRest] = rest;
+        parseSubcommandOptions(subRest, groupFlags('auth'));
         if (sub === 'login') {
           await oauthLogin({ baseUrl: overrides.baseUrl, verbose: values.verbose });
         } else if (sub === 'logout') {
@@ -1314,7 +1310,7 @@ export async function run(argv: string[]): Promise<void> {
       }
       case 'org': {
         const [sub, ...subRest] = rest;
-        const { positionals: subPositionals } = parseSubcommandOptions(subRest, []);
+        const { positionals: subPositionals } = parseSubcommandOptions(subRest, groupFlags('org'));
         if (sub === 'list') {
           await handleOrgList(overrides, outputOptions);
         } else if (sub === 'use') {
@@ -1328,7 +1324,7 @@ export async function run(argv: string[]): Promise<void> {
       }
       case 'benchmarks': {
         const [sub, ...subRest] = rest;
-        const { options } = parseSubcommandOptions(subRest, ['limit', 'offset']);
+        const { options } = parseSubcommandOptions(subRest, groupFlags('benchmarks'));
         if (sub === 'list') {
           await handleBenchmarksList(
             overrides,
@@ -1341,13 +1337,10 @@ export async function run(argv: string[]): Promise<void> {
         break;
       }
       case 'runs': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(
-          rest,
-          runsSubcommandOptionUnion,
-        );
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, groupFlags('runs'));
         const [sub, slug, runId] = subPositionals;
         if (sub === 'list') {
-          assertSubcommandOptions(options, RUNS_SUBCOMMAND_OPTIONS.list);
+          assertSubcommandOptions(options, flagsOf('runs', 'list'));
           await handleRunsList(
             slug,
             options as Parameters<typeof handleRunsList>[1],
@@ -1355,11 +1348,11 @@ export async function run(argv: string[]): Promise<void> {
             outputOptions,
           );
         } else if (sub === 'show') {
-          assertSubcommandOptions(options, RUNS_SUBCOMMAND_OPTIONS.show);
+          assertSubcommandOptions(options, flagsOf('runs', 'show'));
           if (!slug || !runId) throw new Error('Usage: bench runs show <benchmark-slug> <runId>');
           await handleRunsShow(slug, runId, overrides, outputOptions);
         } else if (sub === 'run-again') {
-          assertSubcommandOptions(options, RUNS_SUBCOMMAND_OPTIONS['run-again']);
+          assertSubcommandOptions(options, flagsOf('runs', 'run-again'));
           if (!slug || !runId) {
             throw new Error(
               'Usage: bench runs run-again <benchmark-slug> <runId> [--wait] [--timeout <seconds>]',
@@ -1373,7 +1366,7 @@ export async function run(argv: string[]): Promise<void> {
             outputOptions,
           );
         } else if (sub === 'run-again-status') {
-          assertSubcommandOptions(options, RUNS_SUBCOMMAND_OPTIONS['run-again-status']);
+          assertSubcommandOptions(options, flagsOf('runs', 'run-again-status'));
           if (!slug || !runId) {
             throw new Error(
               'Usage: bench runs run-again-status <benchmark-slug> <runAgainId>',
@@ -1386,10 +1379,7 @@ export async function run(argv: string[]): Promise<void> {
         break;
       }
       case 'results': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, [
-          'run', 'participant', 'steps', 'since', 'until', 'day', 'tz', 'source-org',
-          'limit', 'offset',
-        ]);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, flagsOf('results'));
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench results <benchmark-slug>');
         await handleResults(
@@ -1401,10 +1391,7 @@ export async function run(argv: string[]): Promise<void> {
         break;
       }
       case 'reliability': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, [
-          'day', 'participant', 'from', 'to', 'bucket', 'tz', 'metrics', 'breakdown',
-          'source-org',
-        ]);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, flagsOf('reliability'));
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench reliability <benchmark-slug>');
         await handleReliability(
@@ -1416,9 +1403,7 @@ export async function run(argv: string[]): Promise<void> {
         break;
       }
       case 'iterations': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, [
-          'run', 'participant', 'steps',
-        ]);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, flagsOf('iterations'));
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench iterations <benchmark-slug>');
         await handleIterations(
@@ -1431,7 +1416,7 @@ export async function run(argv: string[]): Promise<void> {
       }
       case 'artifacts': {
         const [sub, ...subRest] = rest;
-        const { options, positionals: subPositionals } = parseSubcommandOptions(subRest, ['worker']);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(subRest, groupFlags('artifacts'));
         if (sub === 'list') {
           const [slug, runId] = subPositionals;
           if (!slug || !runId) throw new Error('Usage: bench artifacts list <benchmark-slug> <runId>');
@@ -1442,9 +1427,7 @@ export async function run(argv: string[]): Promise<void> {
         break;
       }
       case 'logs': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, [
-          'participant', 'worker', 'max-lines',
-        ]);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, flagsOf('logs'));
         const [slug, runId] = subPositionals;
         if (!slug || !runId) throw new Error('Usage: bench logs <benchmark-slug> <runId>');
         await handleLogs(
@@ -1457,7 +1440,7 @@ export async function run(argv: string[]): Promise<void> {
         break;
       }
       case 'export': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, ['run', 'out']);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, flagsOf('export'));
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench export <benchmark-slug>');
         await handleExport(
@@ -1468,9 +1451,7 @@ export async function run(argv: string[]): Promise<void> {
         break;
       }
       case 'fork': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, [
-          'as', 'source-org', 'ref',
-        ]);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, flagsOf('fork'));
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench fork <benchmark-slug>');
         await handleFork(

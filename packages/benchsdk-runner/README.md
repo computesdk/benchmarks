@@ -90,6 +90,19 @@ bench export <slug> --out ./exports
 
 See the [benchsdk-cli skill](../../.agents/skills/benchsdk-cli/SKILL.md) for the full CLI reference, OAuth device-code login, config/credentials files, and CI use.
 
+### Command manifest
+
+`cli-manifest.json` (shipped in the package) lists every `bench` command with its arguments, flags, and the version that first shipped it (`since`). It is the output of the hidden `bench __manifest [--released]` command: the runner verbs `run` and `check` from `src/commands.ts`, plus the `COMMANDS` table exported by `@benchsdk/cli`. Tools that check references to `bench` commands (such as the platform's API surface map) read this file.
+
+After changing a command or flag, rebuild `@benchsdk/cli` and regenerate the file:
+
+```sh
+pnpm --filter @benchsdk/cli run build
+pnpm --filter @benchsdk/runner run manifest
+```
+
+`src/__tests__/manifest.test.ts` fails when the committed file differs from `bench __manifest`. The release workflow regenerates it after `changeset version` (`pnpm run version-packages`), so version bumps stay in sync.
+
 ## Examples and full guide
 
 For a step-by-step authoring guide and runnable examples covering every capability, see [`WRITING_BENCHMARKS.md`](../../WRITING_BENCHMARKS.md) and the [`examples/`](../../examples) directory.

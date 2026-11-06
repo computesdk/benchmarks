@@ -62,6 +62,9 @@ jobs:
           # workflow run) is configured via the NPM_CONFIG_PROVENANCE env var
           # below rather than a `--provenance` CLI flag, which @changesets/cli
           # does not support.
+          # Regenerates packages/benchsdk-runner/cli-manifest.json after the
+          # version bump so the release PR passes the manifest test.
+          version: pnpm run version-packages
           publish: pnpm changeset publish
           title: "Version Packages"
           commit: "Version Packages"
