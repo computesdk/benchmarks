@@ -1,6 +1,6 @@
 # Benchmark Methodology
 
-This document describes how ComputeSDK Benchmarks measures sandbox provider performance. Our goal is transparent, reproducible, and fair measurement.
+This document describes sandbox TTI and Dax measurements, plus the scoring configuration used by the benchmark suites in this repository. Our goal is transparent, reproducible, and fair measurement. See [THROUGHPUT.md](./THROUGHPUT.md) for browser workloads and [AI_GATEWAYS.md](./AI_GATEWAYS.md) for AI gateway workloads.
 
 ## What We Measure
 
@@ -41,7 +41,7 @@ This metric matters because it's what developers actually experience—the time 
 
 ## Test Procedure
 
-Each benchmark iteration executes the following steps:
+Each TTI iteration executes the following steps (simplified; see [tti.bench.ts](./benchmarks/sandbox/tti.bench.ts) for timeout and cleanup handling):
 
 ```typescript
 // 1. Start timer
@@ -70,112 +70,84 @@ We use a minimal command to isolate sandbox startup time from command complexity
 
 ## Test Modes
 
-We run three independent TTI tests daily, each measuring a different aspect of provider performance.
-
-### Sequential TTI
-
-Sandboxes are created one at a time. Each sandbox is created, tested, and destroyed before the next begins.
-
-```bash
-pnpm run bench:sequential -- --iterations 100
-```
-
-| Parameter | Value |
-|-----------|-------|
-| Iterations per provider | 100 |
-| Timeout per iteration | 120 seconds |
-
-This is the baseline measurement — isolated cold-start performance with no contention.
-
-### Staggered TTI
-
-Sandboxes are launched with a fixed delay between each, ramping up concurrent load gradually.
-
-```bash
-pnpm run bench:staggered -- --concurrency 100 --stagger-delay-ms 200
-```
-
-| Parameter | Default |
-|-----------|---------|
-| Concurrency | 100 sandboxes |
-| Stagger delay | 200ms between launches |
-| Timeout per sandbox | 120 seconds |
-
-Each sandbox still measures its own individual TTI. Additionally, we capture a **ramp profile** — the TTI of each sandbox plotted against its launch offset — which reveals how TTI degrades as concurrent load increases.
-
-**What staggered reveals that burst doesn't:**
-- How TTI degrades as concurrent load gradually increases
-- Queue depth impact — providers with pre-warmed pools may handle early requests fast but slow down as the pool drains
-- Rate limiting behavior — some providers throttle after N requests/second
-- Sustainable throughput under steady load
+**Burst is the active TTI test shape.** Sequential and staggered TTI were retired on 2026-08-11; their historic results remain in [results/sequential_tti](./results/sequential_tti) and [results/staggered_tti](./results/staggered_tti). The old `bench:sequential` and `bench:staggered` scripts no longer exist.
 
 ### Burst TTI
 
-All sandboxes are created simultaneously — no waiting between launches.
+The runner opens up to `concurrency` task slots at once, with no configured delay between launches. When iterations and concurrency are both 100, this launches 100 sandbox tasks per provider as a burst; it does not guarantee that requests reach the provider at exactly the same instant.
 
 ```bash
-pnpm run bench:burst -- --concurrency 100
+pnpm run bench:burst -- --iterations 100 --concurrency 100
 ```
 
-| Parameter | Default |
+| Scheduled TTI parameter | Value |
 |-----------|---------|
+| Iterations per provider | 100 |
 | Concurrency | 100 sandboxes |
-| Timeout per sandbox | 120 seconds |
+| Sandbox creation timeout | 120 seconds by default; provider overrides apply |
+| First-command timeout | 30 seconds |
+| Cleanup timeout | 15 seconds by default; provider overrides apply |
 
 Each sandbox still measures its own individual TTI. We also capture:
 
 | Metric | Description |
 |--------|-------------|
-| **Wall Clock** | Total time from first request to last sandbox ready |
-| **Time to First Ready** | How quickly the fastest sandbox responded under load |
+| **Wall Clock** | Time from first launch to last measured TTI completion, excluding cleanup |
+| **Time to First Ready** | Time from first launch to first measured TTI completion |
 | **Individual TTI** | Per-sandbox startup time (same stats: median, p95, p99, etc.) |
-| **Success Rate** | Fraction of sandboxes that came up successfully |
+| **Success Rate** | Fraction of tasks that completed creation and the first command successfully |
 
 **Why burst matters:** AI agents and orchestration tools often spin up many sandboxes at once. Burst testing reveals how providers handle sudden spikes — provisioning queue depth, rate limiting, and failure rates under peak demand.
 
-### Running All Tests
+### Local Defaults
 
-By default, `pnpm run bench` runs all three tests in sequence:
+`pnpm run bench` and `pnpm run bench:burst` are aliases for the same TTI workload, with **3 iterations and concurrency 3**. The bench file itself defaults to 2 iterations and concurrency 1 when invoked directly without overrides. Neither script runs the retired modes or the other benchmark suites.
 
 ```bash
-pnpm run bench                          # Runs sequential → staggered → burst
-pnpm run bench:sequential               # Sequential only
-pnpm run bench:staggered                # Staggered only
-pnpm run bench:burst                    # Burst only
-
-# The bare `bench` chain does not forward flags; to target a single
-# provider, pass the flag to each per-mode script:
-pnpm run bench:sequential -- --provider e2b
-pnpm run bench:staggered -- --provider e2b
-pnpm run bench:burst -- --provider e2b
+pnpm run bench
+pnpm run bench:burst -- --provider e2b --iterations 10 --concurrency 10
 ```
 
 ## Test Configuration
 
-### Daily Automated Runs
+### Automated Sandbox Runs
+
+The checked-in [TTI workflow](./.github/workflows/sandbox-tti-benchmarks.yml) and [Dax workflow](./.github/workflows/sandbox-dax-benchmarks.yml) define these scheduled defaults. Manual inputs can override iteration counts and TTI concurrency.
 
 | Parameter | Value |
 |-----------|-------|
-| Sequential iterations | 100 |
-| Staggered/Burst concurrency | 100 sandboxes |
-| Stagger delay | 200ms |
-| Timeout per sandbox | 120 seconds |
-| Run frequency | Daily at 00:00 UTC |
-| Runner environment | GitHub Actions (namespace-profile-default) |
-| Node.js version | 24.x |
+| TTI iterations / concurrency | 100 / 100 per provider |
+| TTI schedule | Weekly, Friday at 13:00 UTC |
+| Dax iterations / concurrency | 1 / 1 per provider |
+| Dax schedule | Weekly, Friday at 13:30 UTC |
+| Node.js version on the benchmark runner | 24.x |
+
+These workflows also run on matching source pushes and support manual dispatch. TTI source-push runs default to 10 iterations and concurrency 10. Other suites have their own schedules in [.github/workflows](./.github/workflows).
 
 ### Provider Integration
 
-**ComputeSDK**: Uses ComputeSDK for consistency and ease-of-use (e2b, daytona, blaxel, modal, vercel, hopx, codesandbox, runloop, namespace)
+Sandbox workloads use **ComputeSDK** through the shared [provider registry](./benchmarks/sandbox/providers.ts). Registered providers include E2B, Daytona, Blaxel, Modal, Vercel, Hopx, CodeSandbox, Cloud Run, Cloudflare, and Tensorlake, among others. The registry is the source of truth for provider clients and sandbox options; each workflow's matrix determines which providers it actually runs. Registered does not mean included in every scheduled run.
+
+Images, templates, resource controls, and timeout overrides are provider-specific. The workload is shared, but the underlying sandbox configuration is not identical across providers.
 
 ### Provider Execution Order
 
-Within each test mode, providers are tested **sequentially** to:
-- Avoid resource contention on the test runner
-- Prevent rate limiting issues
-- Ensure consistent network conditions per provider
+The sandbox workflows run providers in separate matrix jobs, which may execute in parallel. There is no randomized provider ordering in these workflows.
 
-The order is randomized each run to prevent systematic bias from time-of-day effects.
+For local multi-provider runs, the runner defaults to `groupBy: 'participant'` (finish one participant before the next). Dax declares `groupBy: 'round'` (one iteration per provider before the next round). These orderings are distinct from within-provider task concurrency.
+
+## Dax: Sandbox Build Workload
+
+[dax.bench.ts](./benchmarks/sandbox/dax.bench.ts) runs [dax-benchmark.sh](./benchmarks/scripts/dax-benchmark.sh) inside a newly created sandbox. The script prepares dependencies, clears caches, downloads and unpacks pinned Bun, clones the pinned OpenCode revision, installs dependencies, and runs typechecking.
+
+- **Scored duration:** `totalMs` is the wall-clock duration of the build-script `runCommand` call, including preparation and downloads, but excluding sandbox creation and destruction. Individual phase timings and disk usage are also reported, but do not receive separate scoring weights.
+- **Scoring scale:** `totalMs` has a **200,000 ms (200-second) ceiling**, with median/P95/P99 weights **0.60/0.25/0.15**. This is not a pass/fail deadline: a successful build at or above 200 seconds receives zero timing points, not a timeout failure.
+- **Pass/fail:** creation and build execution each have a default **600,000 ms** timeout, subject to provider overrides. Phase failures, a nonzero script exit, or a missing completion marker fail the build. These execution deadlines and completion checks—not the scoring ceiling—decide success. Cleanup has a separate default 15-second timeout; cleanup errors are logged without failing an otherwise successful task.
+- **Node.js:** preparation retains a working preinstalled Node only if it meets `BENCH_MIN_NODE_VERSION` (default **22.19.0**). Missing, unusable, or older Node is replaced by the pinned `BENCH_NODE_VERSION` (default **24.14.1**). The script checks the active version again after installation. Bun is pinned separately (default **1.3.14**).
+- **Resources:** the target is 8 vCPU / 16 GiB where provider controls permit, with provider-specific mappings and exceptions. **Tensorlake requests 8 vCPU / 16000 MB**, not 16384 MB. See `DAX_RESOURCE_OPTIONS` for the actual requests; this is not a guarantee of identical resources across providers.
+- **Network:** the Dax Cloud Run client sets **`allowEgress: true`** so the sandbox can download tools and clone the repository.
+
+The Dax bench file defaults to 3 iterations, concurrency 1, and providers E2B, Modal, and Tensorlake for local invocation; workflow inputs and provider selection override these defaults.
 
 ## Statistical Reporting
 
@@ -186,81 +158,101 @@ For each provider, we report:
 | **Median** | Middle value (typical case) |
 | **P95** | 95th percentile (tail latency) |
 | **P99** | 99th percentile (extreme tail) |
-| **Success Rate** | Iterations completed without error |
+| **Success Rate** | Fraction of task records meeting the benchmark's success rule |
 
 We emphasize **median** as the primary metric because it's robust to outliers and represents the typical developer experience.
 
 ### Composite Score
 
-Providers are ranked by a composite score (0–100, higher = better) that combines timing metrics with reliability. The same scoring formula is used across all three test modes.
+Benchmarks with a `scoring` block use a composite score (0–100, higher = better) that combines weighted metric scores with reliability. The implementation is in [the runner's scoring module](./packages/benchsdk-runner/src/scoring.ts).
 
-**Formula**: `compositeScore = timingScore × successRate`
+**Formula**: `compositeScore = round(weightedMetricScore × successRate, 2)`
 
-Each timing metric is scored against a **fixed 10-second ceiling**:
+For lower-is-better metrics (all scored durations), each statistic is normalized against that metric's configured ceiling:
 
 ```
-metricScore = 100 × (1 − value / 10,000ms)
+statScore = max(0, 100 × (1 − value / ceiling))
 ```
 
-A 200ms median scores 98. A 4,000ms median scores 60. Anything at or above 10s scores 0. These scores are **absolute** — they don't shift when providers are added or removed.
+For higher-is-better metrics (throughput), the configured floor and ceiling define the scale:
 
-The **timingScore** is a weighted sum of individual metric scores. The **successRate** (0–1) acts as a linear multiplier — a provider with 50% success has its score halved.
+```text
+statScore = 100 × clamp((value − floor) / (ceiling − floor), 0, 1)
+weightedMetricScore = sum(weight[metric, statistic] × statScore[metric, statistic])
+```
 
-Before computing timing statistics, the bottom 5% and top 5% of successful iteration times are trimmed to reduce the influence of outliers caused by transient network issues or cold-start anomalies. Min and max values are still computed from the full dataset for display purposes but are not used in scoring.
+Ceilings are **per metric, not a universal 10 seconds**. Scores are absolute within a benchmark's configured scale: adding or removing providers does not rescale them. For TTI's 10,000 ms ceiling, a 200 ms statistic scores 98, a 4,000 ms statistic scores 60, and anything at or above 10,000 ms scores zero. A zero timing score does not itself fail a task.
 
-**Timing weights** (sum to 1.0):
+### Per-Benchmark Scoring Configuration
 
-| Metric | Weight | Rationale |
-|--------|--------|-----------|
-| Median | 0.60 | Primary signal — typical developer experience |
-| P95 | 0.25 | Tail latency — consistency matters |
-| P99 | 0.15 | Extreme tail — worst-case exposure |
+The table reflects every scored `*.bench.ts` in [benchmarks](./benchmarks). Weights are **median / P95 / P99**, and sum to 1.0 **across all metrics in a benchmark**, not separately for each row. All time values below are milliseconds; higher-is-better rows explicitly show their floor.
 
-**Why multiplicative?** A provider with lower than 100% success rate shouldn't rank above a provider with 100% success and a slightly slower median. The multiplicative penalty ensures reliability is non-negotiable — a provider must be both fast *and* reliable to score well.
+| Benchmark source | Metric | Direction | Scoring ceiling (floor for throughput) | Weights: median / P95 / P99 |
+|------------------|--------|-----------|----------------------------------------|----------------------------|
+| [Sandbox TTI](./benchmarks/sandbox/tti.bench.ts) | `ttiMs` | Lower | 10,000 ms | 0.60 / 0.25 / 0.15 |
+| [Sandbox Dax](./benchmarks/sandbox/dax.bench.ts) | `totalMs` | Lower | 200,000 ms | 0.60 / 0.25 / 0.15 |
+| [Browser lifecycle](./benchmarks/browser/browser.bench.ts) | `totalMs` | Lower | 10,000 ms | 0.40 / 0.20 / 0.10 |
+| Browser lifecycle | `createMs` | Lower | 10,000 ms | 0.30 / 0 / 0 |
+| [Browser throughput](./benchmarks/browser/browser-throughput.bench.ts) | `actionsPerSecond` | Higher | 10 actions/s (floor 0) | 0.40 / 0 / 0 |
+| Browser throughput | `taskMs` | Lower | 30,000 ms | 0.25 / 0.20 / 0 |
+| Browser throughput | `screenshotMs` | Lower | 30,000 ms | 0.15 / 0 / 0 |
+| [Storage lifecycle](./benchmarks/storage/storage.bench.ts) | `uploadMs` | Lower | 30,000 ms | 0.25 / 0.10 / 0.05 |
+| Storage lifecycle | `downloadMs` | Lower | 30,000 ms | 0.35 / 0.15 / 0.05 |
+| Storage lifecycle | `throughputMbps` | Higher | 1,000 Mbps (floor 1 Mbps) | 0.05 / 0 / 0 |
+| [Snapshot & fork](./benchmarks/storage/snapshot-fork.bench.ts) | `snapshotCreateMs` | Lower | 60,000 ms | 0.40 / 0 / 0 |
+| Snapshot & fork | `forkFromSnapshotMs` | Lower | 60,000 ms | 0.35 / 0 / 0 |
+| Snapshot & fork | `forkFromLiveMs` | Lower | 60,000 ms | 0.15 / 0 / 0 |
+| Snapshot & fork | `forkFirstReadMs` | Lower | 60,000 ms | 0.10 / 0 / 0 |
+| AI gateways: [Anthropic](./benchmarks/ai-gateway/ai-gateway.bench.ts), [OpenAI](./benchmarks/ai-gateway/ai-gateway-openai.bench.ts), [Gemini](./benchmarks/ai-gateway/ai-gateway-gemini.bench.ts), [Kimi](./benchmarks/ai-gateway/ai-gateway-kimi.bench.ts) | `coldE2eMs` | Lower | 20,000 ms | 0.30 / 0.15 / 0 |
+| Each AI gateway workload above | `warmTtftMs` | Lower | 20,000 ms | 0.30 / 0.15 / 0 |
+| Each AI gateway workload above | `outputTokensPerSec` | Higher | 200 tokens/s (floor 5 tokens/s) | 0.10 / 0 / 0 |
 
-When all providers have 100% success, ranking is determined purely by weighted timing.
+Storage lifecycle uses separate file-size dimensions; multi-size runs also declare `scoring.groupBy: 'file_size'`. The [AI gateway model index](./benchmarks/ai-gateway/ai-gateway-model-index.bench.ts) and [OpenCode reliability probe](./benchmarks/reliability/sandbox-opencode.bench.ts) have **no `scoring` block** and do not declare a composite score.
+
+### Statistics and Success Rate
+
+- Metric samples come from records with `status === 'success'`; errored records do not contribute partial measurements to declarative scoring. Finite scalar values and arrays of finite numeric samples are supported.
+- By default, each metric's sorted sample set has `floor(sampleCount × 0.05)` samples trimmed from **each** end before median/P95/P99 are calculated. With fewer than 20 samples, nothing is trimmed. P95 and P99 use nearest-rank percentiles on the trimmed set. Min/max are not part of the declarative score output or scoring formula; some suite-specific result formats include additional statistics.
+- A metric with no samples contributes no points; its weight is not redistributed. A participant with no records has success rate zero and is marked skipped; no passing records means a composite score of zero.
+- `successRate = passing records / all records` for the participant (and file-size group, where applicable). By default a passing record has `status === 'success'`. Additional `requireData` rules also require **all** named data fields to match: browser throughput requires `actionsCompleted === ACTIONS_PER_SESSION` (currently **10**), and snapshot/fork requires `verified === true`.
+- A completed record that fails an extra `requireData` check still contributes its numeric samples, but lowers success rate and therefore the composite. This differs from an errored record, which contributes no metric samples.
+- TTI creation or first-command failures count against success rate. Its cleanup errors are logged, not promoted to task failures.
+
+The success rate (0–1) is a **linear multiplier**: 50% success halves the weighted metric score. It penalizes unreliability but **does not guarantee** that every 100%-successful provider outranks every less-reliable provider. When all providers have 100% success, only the weighted metric score determines rank. Scores from different workloads or configurations are not directly comparable.
 
 ## Environment & Infrastructure
 
 ### Test Runner
 
-All benchmarks run on GitHub Actions using Namespace runners:
-
-- **OS**: Ubuntu (latest LTS)
-- **Profile**: namespace-profile-default
-- **Network**: Namespace's infrastructure
-- **Location**: Namespace-managed infrastructure
+The automated workflows specify their own runner environments and Node.js versions. See the [workflow definitions](./.github/workflows) for each suite; there is no single runner or schedule shared by every benchmark. Sandbox TTI and Dax currently set up Node.js 24 on the runner, independently of the Node.js version inside a sandbox.
 
 ### Network Considerations
 
-Network latency between the GitHub runner and each provider's API endpoints varies. This is **intentional**—it reflects real-world conditions where developers call these APIs from various locations.
+Network latency between the runner, provider APIs, and any workload download endpoints varies and is included wherever the timed operation uses that network path. Provider configurations may specify regions, and results are not normalized to remove geographic effects.
 
-We do not:
-- Run from provider-specific regions to artificially reduce latency
-- Use dedicated/reserved network capacity
-- Retry failed requests (failures count against success rate)
+The TTI task does not retry failed creation or first-command operations; task failures count against success rate. This is not a claim that provider SDKs or other benchmark workloads never retry internally.
 
 ## Results Storage
 
-Results are stored in per-test subdirectories with a `latest.json` symlink in each:
+Published JSON results are stored in per-suite subdirectories. Current TTI and Dax writers create date-named files and copy the newest payload to a regular `latest.json` file (not a symlink):
 
 ```
 results/
-├── sequential_tti/
-│   ├── 2026-03-02T00-43-35-416Z.json
-│   ├── ...
-│   └── latest.json → most recent
-├── staggered_tti/
-│   ├── ...
-│   └── latest.json → most recent
-└── burst_tti/
-    ├── ...
-    └── latest.json → most recent
+├── burst_tti/
+│   ├── YYYY-MM-DD.json
+│   └── latest.json
+├── sandbox-dax/
+│   ├── YYYY-MM-DD.json
+│   └── latest.json
+├── sequential_tti/  # historical only
+└── staggered_tti/   # historical only
 ```
 
-Active test modes generate an SVG visualization; the sequential and staggered TTI tests are retired, so only `burst_tti.svg` is currently generated. Historic results for the retired tests remain available in `results/sequential_tti/` and `results/staggered_tti/`.
+The TTI workflow generates `burst_tti.svg`; it no longer generates sequential or staggered visualizations. Other suites publish their own result files and visualizations.
 
-### JSON Schema
+### TTI JSON Format
+
+An illustrative one-iteration TTI result follows. Burst results use the legacy mode label **`concurrent`**, not `burst`. The common schema is [results/schema.json](./results/schema.json); suite-specific formats are not interchangeable with this TTI example.
 
 ```json
 {
@@ -272,32 +264,34 @@ Active test modes generate an SVG visualization; the sequential and staggered TT
     "arch": "x64"
   },
   "config": {
-    "iterations": 100,
+    "iterations": 1,
     "timeoutMs": 120000
   },
   "results": [
     {
       "provider": "provider-name",
-      "mode": "sequential | staggered | burst",
+      "mode": "concurrent",
+      "concurrency": 1,
+      "wallClockMs": 123.45,
+      "timeToFirstReadyMs": 123.45,
       "iterations": [
-        { "ttiMs": 123.45 },
-        { "ttiMs": 0, "error": "error message" }
+        { "ttiMs": 123.45 }
       ],
       "summary": {
         "ttiMs": {
-          "median": 125.0,
-          "p95": 140.0,
-          "p99": 148.0
+          "median": 123.45,
+          "p95": 123.45,
+          "p99": 123.45
         }
       },
-      "compositeScore": 96.85,
+      "compositeScore": 98.77,
       "successRate": 1.0
     }
   ]
 }
 ```
 
-Staggered results additionally include `concurrency`, `staggerDelayMs`, `wallClockMs`, `timeToFirstReadyMs`, and `rampProfile`. Burst results include `concurrency`, `wallClockMs`, and `timeToFirstReadyMs`.
+Failed TTI iterations contain an `error` field rather than a synthetic zero-duration success. Historic staggered results additionally include `staggerDelayMs` and `rampProfile`. The TTI JSON writer retains `config.timeoutMs: 120000` as the default creation timeout; consult the source for provider overrides and the separate command deadline.
 
 ### Running Locally
 
@@ -307,65 +301,43 @@ Reproduce our results:
 git clone https://github.com/computesdk/benchmarks.git
 cd benchmarks
 pnpm install
-cp benchmarks/.env.example benchmarks/.env  # Add your API keys
+pnpm -r --filter './packages/**' build
+cp benchmarks/.env.example benchmarks/.env  # Configure providers locally
 
-# Run all 3 tests
+# TTI smoke run (3 iterations, concurrency 3)
 pnpm run bench
 
-# Run individual tests
-pnpm run bench:sequential -- --iterations 10
-pnpm run bench:staggered -- --concurrency 10 --stagger-delay-ms 200
-pnpm run bench:burst -- --concurrency 10
+# Match the scheduled TTI workload size for one provider
+pnpm run bench:burst -- --provider e2b --iterations 100 --concurrency 100
 
-# Single provider (pass the flag to each per-mode script; the bare
-# `bench` chain does not forward flags)
-pnpm run bench:sequential -- --provider e2b
+# Dax (bench-file defaults: 3 iterations, concurrency 1)
+pnpm run bench:sandbox:dax -- --provider tensorlake
 ```
 
-**Note**: Your results will differ based on your network location and conditions.
-
-## Quarterly Stress Tests
-
-Starting Q2 2026, we're introducing large-scale stress tests that go beyond daily measurements.
-
-### What We're Exploring
-
-**Concurrency at scale** — How do providers perform when spinning up thousands of sandboxes simultaneously?
-
-Example test: *Spin up 10,000 sandboxes concurrently, measure time until all are interactive, track failure rates.*
-
-**Sustained load** — Can providers maintain performance over extended periods under continuous demand?
-
-**Recovery behavior** — How quickly do providers recover from partial failures or rate limiting?
-
-### Why This Matters
-
-Daily benchmarks show performance at moderate scale. Stress tests reveal how providers behave when infrastructure is under pressure—which is when reliability matters most.
-
-Methodology details will be published before the first quarterly test runs.
-
----
+**Note**: Configure provider access and runner authentication as described in the [runner guide](./packages/benchsdk-runner/README.md). Local results will differ based on configuration, network location, and conditions.
 
 ## Fairness & Limitations
 
 ### What This Benchmark Shows
 
 - Relative performance between providers under consistent conditions
-- Cold-start times for on-demand sandbox creation
+- Time to first successful command for on-demand sandbox creation
+- Dax build completion time and phase diagnostics
 - Provider reliability (success rate over time)
-- Performance under concurrent load (staggered and burst)
+- Performance under the configured burst load (plus historical sequential/staggered data)
 
-### What This Benchmark Does NOT Show (Yet)
+### Limits of These Measurements
 
-- Performance with pre-warmed pools or snapshots
-- Geographic variation
-- Cost efficiency
-- Feature differences between providers
+- A newly requested sandbox does not imply cold physical infrastructure: providers may use pre-warmed pools, cached images, or snapshot-backed templates.
+- A single run does not establish geographic variation or performance at every possible concurrency level.
+- TTI and Dax scores do not measure cost efficiency or provider feature completeness.
+- Other suites, such as storage snapshot/fork, measure different operations and should be interpreted using their own workloads and scoring scales.
 
 ## Changelog
 
 | Date | Change |
 |------|--------|
+| 2026-11-06 | Aligned scoring ceilings/weights, success rules, TTI status and defaults, Dax setup/resources, and result format with source |
 | 2026-03-04 | Added staggered TTI and burst TTI test modes; separated results into per-test subdirectories |
 | 2026-03-01 | Added composite scoring methodology |
 | 2026-02-19 | Initial methodology documentation |
