@@ -8,6 +8,8 @@ REPO_URL="${BENCH_REPO_URL:-https://github.com/anomalyco/opencode.git}"
 COMMIT="${BENCH_COMMIT:-08fb47373509ba64b13441061314eeacf4264f51}"
 BUN_VERSION="${BENCH_BUN_VERSION:-1.3.14}"
 NODE_VERSION="${BENCH_NODE_VERSION:-24.14.1}"
+# Oldest preinstalled Node.js to keep; older ones are replaced by NODE_VERSION.
+MIN_NODE_VERSION="${BENCH_MIN_NODE_VERSION:-22.19.0}"
 ROOT="${BENCH_ROOT:-/tmp/opencode-provider-benchmark}"
 KEEP_ROOT="${BENCH_KEEP_ROOT:-false}"
 PROVIDER="${BENCH_PROVIDER:-unknown}"
@@ -157,10 +159,16 @@ prepare() {
   # setuptools is optional - only needed for node-gyp native module compilation,
   # not for the clone/install/typecheck benchmark. Skip the check entirely.
 
-  # Install Node.js only if it's not already available. Some sandboxes (e.g.
-  # Vercel) ship Node.js pre-installed; respect that rather than trying to
-  # override it (the symlink may not take precedence in PATH).
-  if ! command -v node >/dev/null 2>&1; then
+  # Install the pinned Node.js when none is available or the preinstalled one is
+  # older than MIN_NODE_VERSION. Some sandboxes (e.g. Vercel) ship a recent Node;
+  # keep that. Older ones (E2B `base` ships 20.9) break the native-addon build:
+  # `bunx node-gyp@latest` pulls undici 8, which needs Node >= 22.19.
+  if ! node_is_recent_enough; then
+    local existing
+    existing="$(node_version_string)"
+    if [ -n "$existing" ]; then
+      printf 'BENCH_META\tpreinstalled_node_version\t%s\n' "$existing"
+    fi
     local archive="node-v${NODE_VERSION}-${NODE_ARCH}.tar.gz"
     local prefix="/opt/node-v${NODE_VERSION}-${NODE_ARCH}"
     if ! curl -fsSL "https://nodejs.org/download/release/v${NODE_VERSION}/${archive}" -o "/tmp/${archive}"; then
@@ -176,11 +184,46 @@ prepare() {
     for executable in node npm npx corepack; do
       "${SUDO[@]}" ln -sfn "$prefix/bin/$executable" "/usr/local/bin/$executable"
     done
+    # A preinstalled node earlier in PATH (/usr/bin, nvm, ...) would still win
+    # over the /usr/local/bin symlinks, so put the pinned one first.
+    export PATH="$prefix/bin:$PATH"
+    hash -r
   fi
   if ! command -v node >/dev/null 2>&1; then
     printf 'BENCH_ERROR\tprepare\tnode_not_found\n' >&2
     return 1
   fi
+  if ! node_is_recent_enough; then
+    printf 'BENCH_ERROR\tprepare\tnode_too_old_%s\n' "$(node_version_string)" >&2
+    return 1
+  fi
+}
+
+# Prints the active Node.js version without the leading "v" (e.g. 20.9.0), or
+# nothing when node is missing or does not run.
+node_version_string() {
+  command -v node >/dev/null 2>&1 || return 0
+  node --version 2>/dev/null | tr -d 'v\r' | head -n 1
+}
+
+# Succeeds when the active Node.js is >= MIN_NODE_VERSION. Pure shell integer
+# comparison: busybox/minimal images may lack `sort -V`.
+node_is_recent_enough() {
+  local have
+  have="$(node_version_string)"
+  [ -n "$have" ] || return 1
+  local IFS=.
+  local -a h m
+  read -r -a h <<<"$have"
+  read -r -a m <<<"$MIN_NODE_VERSION"
+  local i hv mv
+  for i in 0 1 2; do
+    hv="${h[$i]:-0}"; hv="${hv%%[!0-9]*}"; hv="${hv:-0}"
+    mv="${m[$i]:-0}"
+    if (( 10#$hv > 10#$mv )); then return 0; fi
+    if (( 10#$hv < 10#$mv )); then return 1; fi
+  done
+  return 0
 }
 
 download_bun() {
