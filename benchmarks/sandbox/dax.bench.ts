@@ -24,7 +24,7 @@ import { defineBenchmarkConfig, defineTask, TaskError } from '@benchsdk/runner';
 import type { JsonObject, TaskStepRecord } from '@benchsdk/api';
 import { VMTier } from '@codesandbox/sdk';
 import { cloudRun } from '@computesdk/gcp/cloud-run';
-import { drainLateCleanups, withTimeout } from '../src/util/timeout.js';
+import { drainLateCleanups, trackLateCleanup, withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
 import { sandboxId } from '../src/util/sandbox-id.js';
 import { providers } from './providers.js';
@@ -399,7 +399,17 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
       .step('destroy', () => withTimeout(sandbox.destroy(), p.destroyTimeoutMs ?? destroyTimeoutMs, 'Destroy timeout'), {
         reportConcurrency: false,
       })
-      .catch((err: unknown) => log('destroy failed', { level: 'warn', meta: { error: formatError(err) } }));
+      .catch((err: unknown) => {
+        log('destroy failed', { level: 'warn', meta: { error: formatError(err) } });
+        // withTimeout can't cancel the in-flight DELETE, but if it hung or
+        // failed the sandbox would leak — retry once and let beforeExit drain it.
+        trackLateCleanup(() =>
+          sandbox.destroy().then(
+            () => log('destroy retry succeeded', { level: 'info', meta: { provider: p.name, sandboxId: sandboxId(sandbox) } }),
+            (retryErr: unknown) => log('destroy retry failed', { level: 'error', meta: { provider: p.name, sandboxId: sandboxId(sandbox), error: formatError(retryErr) } }),
+          ),
+        );
+      });
     log('sandbox', { level: 'info', meta: { provider: p.name, sandboxId: sandboxId(sandbox) } });
   }
 
