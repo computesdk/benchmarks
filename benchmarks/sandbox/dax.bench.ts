@@ -135,7 +135,7 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   agent37:      { cpu: 4, memory: 16384 },
   archil:       { vcpus: 8, memoryMiB: 16384 },
   arker:        { templateId: 'ubuntu-full-8' },           // 8 vCPU / 16 GiB golden
-  modal:        { cpu: 4, cpuLimit: 4, memoryMiB: 16384, templateId: 'node:22' }, // Modal: 1 core = 2 vCPUs, so 4 cores = 8 vCPUs
+  modal:        { cpu: 4, cpuLimit: 4, memoryMiB: 16384, templateId: 'node:22', runtime: 'vm' }, // Modal: 1 core = 2 vCPUs, so 4 cores = 8 vCPUs
   tenki:        { cpuCores: 8, memoryMb: 16384, diskSizeGb: 20 }, // default disk cannot hold the OpenCode install
   tensorlake:   { cpus: 8, memoryMb: 16000 },            // Tensorlake caps memory at 16000 MB (16384 is rejected with a 400)
   isorun:       { vcpus: 8, memMiB: 16384 },
