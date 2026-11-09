@@ -1,6 +1,8 @@
 export type AIGatewayWireFormat = 'openai' | 'anthropic' | 'responses' | 'gemini';
 
 export interface AIGatewayProviderConfig {
+  /** Included only in private daily benchmark runs. */
+  dailyOnly?: boolean;
   /** Provider name */
   name: string;
   /** Environment variables that must all be set to run this benchmark */
@@ -126,6 +128,8 @@ export interface AIGatewayBenchmarkResult {
 export type AIGatewayModelListFormat = 'openai' | 'openrouter' | 'anthropic' | 'pydantic';
 
 export interface AIGatewayModelIndexProviderConfig {
+  /** Included only in private daily benchmark runs. */
+  dailyOnly?: boolean;
   /** Provider name */
   name: string;
   /** Environment variables that must all be set to run this participant */

@@ -59,7 +59,23 @@ env:
   BENCHMARK_NAME: ${{ github.event.inputs.name || '' }}
 
 jobs:
+  public-providers:
+    runs-on: ubuntu-latest
+    outputs:
+      providers: ${{ steps.providers.outputs.providers }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - id: providers
+        run: echo "providers=$(pnpm exec tsx benchmarks/scripts/public-provider-matrix.ts benchmarks/browser/providers.ts browserProviders browserbase hyperbrowser kernel notte steel tilion browseruse)" >> "$GITHUB_OUTPUT"
+
   bench:
+    needs: public-providers
     name: Bench ${{ matrix.provider }}
     # Browser Use's leg runs next to its API (house EC2, us-east-2); the rest on Namespace.
     runs-on: ${{ matrix.provider == 'browseruse' && 'computesdk:computesdk:aws-us-east-2' || 'namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal' }}
@@ -68,15 +84,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        provider:
-          - browserbase
-          - hyperbrowser
-          - kernel
-          - notte
-          - steel
-          - tilion
-          - browseruse
-          # - anchorbrowser
+        provider: ${{ fromJSON(needs.public-providers.outputs.providers) }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

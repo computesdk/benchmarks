@@ -15,6 +15,7 @@ import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
+import { modelIndexProviders } from '../ai-gateway/model-index-providers.js';
 import { providers as sandboxProviders } from '../sandbox/providers.js';
 import { browserProviders } from '../browser/providers.js';
 import { throughputProviders } from '../browser/throughput-providers.js';
@@ -28,6 +29,7 @@ import { providers as aiGatewayKimiProviders } from '../ai-gateway/providers-kim
 type Cfg = { name: string; requiredEnvVars?: string[]; snapshotFork?: { requiredEnvVars?: string[] } };
 
 const modes: Record<string, Cfg[]> = {
+  'ai-gateway-model-index': modelIndexProviders as Cfg[],
   sandbox: sandboxProviders as Cfg[],
   browser: browserProviders as Cfg[],
   throughput: throughputProviders as Cfg[],

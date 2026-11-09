@@ -74,7 +74,23 @@ env:
   BENCHMARK_NAME: ${{ github.event.inputs.name || '' }}
 
 jobs:
+  public-providers:
+    runs-on: ubuntu-latest
+    outputs:
+      providers: ${{ steps.providers.outputs.providers }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - id: providers
+        run: echo "providers=$(pnpm exec tsx benchmarks/scripts/public-provider-matrix.ts benchmarks/storage/providers.ts storageProviders aws-s3 cloudflare-r2 tigris vercel-blob gcs azure-blob tensorlake archil neon mosaic)" >> "$GITHUB_OUTPUT"
+
   bench:
+    needs: public-providers
     name: Bench ${{ matrix.provider }}
     runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
     # runs-on: self-hosted
@@ -83,17 +99,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        provider:
-          - aws-s3
-          - cloudflare-r2
-          - tigris
-          - vercel-blob
-          - gcs
-          - azure-blob
-          - tensorlake
-          - archil
-          - neon
-          - mosaic
+        provider: ${{ fromJSON(needs.public-providers.outputs.providers) }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

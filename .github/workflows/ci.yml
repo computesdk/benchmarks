@@ -38,6 +38,9 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Test daily workflow defaults
+        run: node --test benchmarks/scripts/daily/oss-workflow-defaults.test.mjs
+
       - name: Test
         run: pnpm --filter @benchsdk/client run test
 

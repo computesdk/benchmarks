@@ -25,10 +25,13 @@ import { defineBenchmarkConfig, defineTask } from '@benchsdk/runner';
 import { drainLateCleanups, withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
 import { sandboxId } from '../src/util/sandbox-id.js';
-import { providers } from './providers.js';
+import { providers as allProviders } from './providers.js';
+import { selectProviders } from '../scripts/provider-selection.js';
 import type { ProviderConfig } from './types.js';
 import { writeSandboxLegacyResults } from './legacy-results.js';
 import type { SandboxInterface } from 'computesdk';
+
+const providers = selectProviders(allProviders);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

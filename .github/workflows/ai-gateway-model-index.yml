@@ -109,14 +109,6 @@ jobs:
         run: |
           . benchmarks/scripts/load-vault-secrets.sh "^($(jq -r '.["ai-gateway-model-index"] | to_entries[] | .value[]?' benchmarks/scripts/provider-vars.json | sort -u | paste -sd'|')|BENCHMARKS_PLATFORM_API_KEY)"
 
-          # GitHub Copilot only runs via the daily benchmarks-daily pipeline;
-          # exclude it from every trigger of this workflow.
-          unset GITHUB_COPILOT_API_KEY GITHUB_COPILOT_OAUTH_TOKEN
-          if [ "$PROVIDER" = "github-copilot" ]; then
-            echo "github-copilot only runs via the daily benchmarks-daily pipeline"
-            exit 1
-          fi
-
           provider_args=()
           if [ -n "$PROVIDER" ]; then
             provider_args=(--provider "$PROVIDER")

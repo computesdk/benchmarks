@@ -1,4 +1,6 @@
 export interface BrowserProviderConfig {
+  /** Included only in private daily benchmark runs. */
+  dailyOnly?: boolean;
   /** Provider name */
   name: string;
   /** Number of iterations (default: 25) */

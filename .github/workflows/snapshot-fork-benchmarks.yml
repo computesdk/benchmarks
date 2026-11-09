@@ -68,7 +68,23 @@ env:
   BENCHMARK_NAME: ${{ github.event.inputs.name || '' }}
 
 jobs:
+  public-providers:
+    runs-on: ubuntu-latest
+    outputs:
+      providers: ${{ steps.providers.outputs.providers }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - id: providers
+        run: echo "providers=$(pnpm exec tsx benchmarks/scripts/public-provider-matrix.ts benchmarks/storage/providers.ts storageProviders aws-s3 cloudflare-r2 tigris azure-blob tensorlake archil neon mosaic)" >> "$GITHUB_OUTPUT"
+
   snapshot-fork:
+    needs: public-providers
     name: Snapshot/Fork ${{ matrix.provider }}
     # One real snapshot+fork cycle per provider per iteration: each iteration
     # creates and tears down real buckets/objects, so iteration counts are kept
@@ -82,19 +98,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        provider:
-          - aws-s3
-          - cloudflare-r2
-          - tigris
-          - azure-blob
-          - tensorlake
-          - archil
-          - neon
-          - mosaic
-          # vercel-blob is disabled pending an adapter fix: its manifest-based
-          # snapshot/fork emulation is unreliable on Vercel Blob's eventually-
-          # consistent overwrites (stale reads + lost deletes). See providers.ts.
-          # - vercel-blob
+        provider: ${{ fromJSON(needs.public-providers.outputs.providers) }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

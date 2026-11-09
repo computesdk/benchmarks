@@ -68,6 +68,8 @@ export interface ThroughputBenchmarkResult {
 }
 
 export interface ThroughputProviderConfig {
+  /** Included only in private daily benchmark runs. */
+  dailyOnly?: boolean;
   name: string;
   iterations?: number;
   timeout?: number;

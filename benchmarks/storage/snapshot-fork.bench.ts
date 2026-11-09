@@ -16,11 +16,14 @@ import { defineBenchmarkConfig, defineTask, TaskError } from '@benchsdk/runner';
 import type { Storage } from '@storagesdk/core';
 import { withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
-import { storageProviders } from './providers.js';
+import { storageProviders as allProviders } from './providers.js';
+import { selectProviders } from '../scripts/provider-selection.js';
 import { writeSnapshotForkLegacyResults } from './snapshot-fork-legacy-results.js';
 import { DATASET_PRESETS } from './snapshot-fork-types.js';
 import type { DatasetPreset } from './snapshot-fork-types.js';
 import type { StorageProviderConfig } from './types.js';
+
+const storageProviders = selectProviders(allProviders);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

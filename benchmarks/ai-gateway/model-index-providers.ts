@@ -153,6 +153,7 @@ export const modelIndexProviders: AIGatewayModelIndexProviderConfig[] = [
   },
   {
     name: 'github-copilot',
+    dailyOnly: true,
     requiredEnvVars: [
       process.env.GITHUB_COPILOT_OAUTH_TOKEN
         ? 'GITHUB_COPILOT_OAUTH_TOKEN'

@@ -27,11 +27,14 @@ import { cloudRun } from '@computesdk/gcp/cloud-run';
 import { drainLateCleanups, withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
 import { sandboxId } from '../src/util/sandbox-id.js';
-import { providers } from './providers.js';
+import { providers as allProviders } from './providers.js';
+import { selectProviders } from '../scripts/provider-selection.js';
 import type { ProviderConfig } from './types.js';
 import { BENCH_SCRIPT_PATH } from './dax.js';
 import type { DaxTimingResult } from './dax.js';
 import { writeDaxLegacyResults } from './dax-legacy-results.js';
+
+const providers = selectProviders(allProviders);
 
 /** Raw build output kept alongside the timing so failures can be diagnosed from the logs. */
 interface DaxBuildOutput {

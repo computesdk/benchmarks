@@ -17,10 +17,13 @@ import { defineBenchmarkConfig, defineTask, TaskError, type BenchmarkRunOutcome 
 import type { Storage } from '@storagesdk/core';
 import { withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
-import { storageProviders } from './providers.js';
+import { storageProviders as allProviders } from './providers.js';
+import { selectProviders } from '../scripts/provider-selection.js';
 import { writeStorageLegacyResults } from './legacy-results.js';
 import { FILE_SIZE_BYTES } from './types.js';
 import type { StorageFileSize, StorageProviderConfig } from './types.js';
+
+const storageProviders = selectProviders(allProviders);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

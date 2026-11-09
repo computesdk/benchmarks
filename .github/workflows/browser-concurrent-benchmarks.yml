@@ -38,6 +38,21 @@ env:
   BENCHMARK_NAME: ${{ github.event.inputs.name || '' }}
 
 jobs:
+  public-providers:
+    runs-on: ubuntu-latest
+    outputs:
+      providers: ${{ steps.providers.outputs.providers }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - id: providers
+        run: echo "providers=$(pnpm exec tsx benchmarks/scripts/public-provider-matrix.ts benchmarks/browser/throughput-providers.ts throughputProviders browserbase browseruse hyperbrowser kernel notte steel tilion)" >> "$GITHUB_OUTPUT"
+
   setup:
     name: Resolve target pages
     runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
@@ -126,21 +141,14 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    needs: setup
+    needs: [setup, public-providers]
     timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
         # Only the provider is a matrix dimension. Concurrency levels run
         # sequentially inside the job, see the benchmark step for why.
-        provider:
-          - browserbase
-          - browseruse
-          - hyperbrowser
-          - kernel
-          - notte
-          - steel
-          - tilion
+        provider: ${{ fromJSON(needs.public-providers.outputs.providers) }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
