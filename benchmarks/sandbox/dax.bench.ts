@@ -190,6 +190,10 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // `timeout` is the same lifetime backstop as blaxel/novita: the sandbox must
   // outlive the 10-minute build deadline.
   promigence:   { image: 'node:22', tier: 'large', timeout: 900_000 },
+  // run.cloud defaults a sandbox to 0.125 vCPU / 128 MiB / 300s lifetime —
+  // far too small and short-lived for the build (its exec stream died ~8s in
+  // on every run). cpu = cores, memory = MiB, timeout → timeoutSeconds.
+  'run-cloud':  { cpu: 8, memory: 16384, timeout: 900_000 },
 };
 
 // Provider-factory overrides for settings the SDK reads only from provider
