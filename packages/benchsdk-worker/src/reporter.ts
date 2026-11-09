@@ -134,9 +134,19 @@ export class BenchmarkReporter {
     this.progress = { ...progress, total: progress.total ?? this.assignment.taskRange.count };
   }
 
-  recordResult(record: TaskResultRecord): void {
+  /**
+   * Queues a result. `flush: true` sends everything queued now, without
+   * waiting for a full batch, so a run killed later keeps this result.
+   */
+  recordResult(record: TaskResultRecord, options: { flush?: boolean } = {}): void {
     this.pending.push(record);
-    if (this.pending.length >= this.cfg.batchSize) void this.flush(false);
+    if (options.flush) void this.flush(false, true);
+    else if (this.pending.length >= this.cfg.batchSize) void this.flush(false);
+  }
+
+  /** True once results could not be sent (a flush failed or results are still queued after `finish`). */
+  get reportFailed(): boolean {
+    return this.flushFailed || this.pending.length > 0;
   }
 
   async heartbeat(input: BenchmarkReporterHeartbeatInput = {}): Promise<void> {
@@ -201,10 +211,10 @@ export class BenchmarkReporter {
     });
   }
 
-  flush(isFinal = false): Promise<void> {
+  flush(isFinal = false, partial = isFinal): Promise<void> {
     this.flushChain = this.flushChain.then(async () => {
       this.flushFailed = false;
-      while (this.pending.length >= this.cfg.batchSize || (isFinal && this.pending.length > 0)) {
+      while (this.pending.length >= this.cfg.batchSize || (partial && this.pending.length > 0)) {
         const batch = this.pending.slice(0, this.cfg.batchSize);
         try {
           await this.client.sendTaskResults({

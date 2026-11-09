@@ -237,6 +237,27 @@ async function downloadArtifactBody(
   return new TextDecoder().decode(buffer);
 }
 
+const DEFAULT_REQUEST_TIMEOUT_MS = 20_000;
+const DEFAULT_RETRY_DELAYS_MS = [1_000, 3_000];
+// 500 is left out: it is usually a deterministic server bug, and the platform
+// already retries its own dropped database connections.
+const RETRYABLE_STATUS = new Set([408, 429, 502, 503, 504]);
+// Worker lifecycle POSTs the platform treats as repeatable: events dedupe on
+// (attemptId, sequenceNumber); heartbeat/complete/fail set the same state again.
+const RETRY_SAFE_POST = /\/workers\/[^/]+\/(events|heartbeat|complete|fail)$/;
+
+function isRetrySafe(method: string, path: string): boolean {
+  if (method === 'GET' || method === 'PUT') return true;
+  return method === 'POST' && RETRY_SAFE_POST.test(path);
+}
+
+function describeFetchError(error: unknown, timeoutMs: number): string {
+  if (error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError')) {
+    return `timed out after ${timeoutMs}ms`;
+  }
+  return error instanceof Error ? error.message : String(error);
+}
+
 /** PUTs raw bytes to a presigned artifact upload URL. */
 async function uploadArtifactBody(
   doFetch: typeof fetch,
@@ -274,29 +295,57 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
     throw new Error('fetch is not available');
   }
   const doFetch = fetchImpl;
+  const requestTimeoutMs = config.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+  const retryDelaysMs = config.retryDelaysMs ?? DEFAULT_RETRY_DELAYS_MS;
 
   async function request<T>(method: string, path: string, body?: JsonObject): Promise<T> {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (authToken) headers.Authorization = `Bearer ${authToken}`;
     if (config.orgSlug) headers['X-Org-Slug'] = config.orgSlug;
     else if (config.orgId) headers['X-Organization-Id'] = config.orgId;
+    const retrySafe = isRetrySafe(method, path);
+    const payload = body === undefined ? undefined : JSON.stringify(body);
 
-    const response = await doFetch(`${baseUrl}${path}`, {
-      method,
-      headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
-    const text = await response.text();
+    for (let attempt = 0; ; attempt++) {
+      const retryDelayMs = retrySafe ? retryDelaysMs[attempt] : undefined;
+      let response: Response;
+      let text: string;
+      try {
+        response = await doFetch(`${baseUrl}${path}`, {
+          method,
+          headers,
+          body: payload,
+          signal: AbortSignal.timeout(requestTimeoutMs),
+        });
+        text = await response.text();
+      } catch (error) {
+        const reason = describeFetchError(error, requestTimeoutMs);
+        // fetch rejects with a TypeError on network failure; anything else
+        // (a custom fetch throwing) is not a transport problem worth retrying.
+        const transient = error instanceof TypeError || (error instanceof Error && error.name === 'TimeoutError');
+        if (retryDelayMs === undefined || !transient) {
+          throw new Error(`Benchmark API request ${method} ${path} failed: ${reason}`, { cause: error });
+        }
+        console.warn(`[benchsdk] ${method} ${path} failed (${reason}); retrying in ${retryDelayMs}ms`);
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+        continue;
+      }
 
-    if (!response.ok) {
-      throw new BenchmarkApiError(
-        `Benchmark API request failed: ${response.status} ${response.statusText}`,
-        response.status,
-        text,
-      );
+      if (!response.ok) {
+        if (retryDelayMs !== undefined && RETRYABLE_STATUS.has(response.status)) {
+          console.warn(`[benchsdk] ${method} ${path} returned ${response.status}; retrying in ${retryDelayMs}ms`);
+          await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+          continue;
+        }
+        throw new BenchmarkApiError(
+          `Benchmark API request failed: ${response.status} ${response.statusText}`,
+          response.status,
+          text,
+        );
+      }
+
+      return (text ? JSON.parse(text) : {}) as T;
     }
-
-    return (text ? JSON.parse(text) : {}) as T;
   }
 
   async function sendTaskResults(input: SendTaskResultsInput): Promise<TaskResultsResponse> {
