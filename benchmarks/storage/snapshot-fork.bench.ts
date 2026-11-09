@@ -258,8 +258,9 @@ export const task = defineTask<StorageProviderConfig>(async (ctx) => {
     if (forkFromLiveCreate && !forkFromLiveCreated) {
       lateForks.push(
         forkFromLiveCreate.then(async (f) => {
+          const base = f.fromSnapshot ?? (await storage!.forks.head(forkFromLiveName)).fromSnapshot;
           await storage!.forks.delete(forkFromLiveName);
-          if (f.fromSnapshot && f.fromSnapshot !== snapshotId) await storage!.snapshots.delete(f.fromSnapshot);
+          if (base && base !== snapshotId) await storage!.snapshots.delete(base);
         }),
       );
     }
