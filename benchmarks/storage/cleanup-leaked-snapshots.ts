@@ -70,6 +70,7 @@ const isBenchOwned = (s: SnapshotInfo) => s.name === undefined || BENCH_SNAPSHOT
 
 export async function cleanupLeakedSnapshots(opts: CleanupOptions): Promise<CleanupResult> {
   const log = opts.log ?? console.log;
+  if (!Number.isFinite(opts.minAgeMs) || opts.minAgeMs < 0) throw new Error(`minAgeMs must be >= 0, got ${opts.minAgeMs}`);
   const cutoff = Date.now() - opts.minAgeMs;
   const snapshots = await opts.storage.snapshots.list();
   const listed = new Map(snapshots.map((s) => [s.id, s]));
@@ -260,11 +261,14 @@ async function main() {
   const missing = p.requiredEnvVars.filter((v) => !process.env[v]);
   if (missing.length) throw new Error(`missing env: ${missing.join(', ')}`);
 
+  const minAgeMin = Number(process.env.MIN_AGE_MIN ?? 60);
+  if (!Number.isFinite(minAgeMin) || minAgeMin < 0) throw new Error(`MIN_AGE_MIN must be a number >= 0, got ${process.env.MIN_AGE_MIN}`);
+
   const result = await cleanupLeakedSnapshots({
     storage: p.createStorage(),
     kind,
     parent: p.bucket,
-    minAgeMs: Number(process.env.MIN_AGE_MIN ?? 60) * 60_000,
+    minAgeMs: minAgeMin * 60_000,
     delete: process.env.DELETE === '1',
   });
   if (result.failed.length) process.exitCode = 1;
