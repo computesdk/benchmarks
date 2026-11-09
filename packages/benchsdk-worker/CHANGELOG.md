@@ -1,5 +1,12 @@
 # @benchsdk/worker
 
+## 0.4.1
+
+### Patch Changes
+
+- Updated dependencies [f305333]
+  - @benchsdk/api@0.11.1
+
 ## 0.4.0
 
 ### Minor Changes
