@@ -138,6 +138,9 @@ export const task = defineTask<StorageProviderConfig>(async (ctx) => {
   let snapshotId: string | undefined;
   let forkFromSnapCreated = false;
   let forkFromLiveCreated = false;
+  // `forks.create()` without `fromSnapshot` auto-snapshots the parent, and
+  // `forks.delete()` leaves that snapshot behind, so teardown deletes it.
+  let forkFromLiveSnapshotId: string | undefined;
 
   try {
     const seedStart = performance.now();
@@ -165,11 +168,12 @@ export const task = defineTask<StorageProviderConfig>(async (ctx) => {
     forkFromSnapCreated = true;
 
     const forkLiveStart = performance.now();
-    await step('fork-from-live', () =>
+    const forkFromLive = await step<{ fromSnapshot?: string }>('fork-from-live', () =>
       withTimeout(storage!.forks.create({ name: forkFromLiveName }), timeout, 'Fork-from-live timed out'),
     );
     const forkFromLiveMs = performance.now() - forkLiveStart;
     forkFromLiveCreated = true;
+    forkFromLiveSnapshotId = forkFromLive.fromSnapshot;
 
     const readStart = performance.now();
     const bytes = await step<{ length: number }>('fork-first-read', () =>
@@ -229,7 +233,16 @@ export const task = defineTask<StorageProviderConfig>(async (ctx) => {
       await safeCleanup(`fork delete ${forkFromSnapName}`, () => storage!.forks.delete(forkFromSnapName));
     }
     if (forkFromLiveCreated) {
+      if (forkFromLiveSnapshotId === undefined) {
+        await safeCleanup(`fork head ${forkFromLiveName}`, async () => {
+          forkFromLiveSnapshotId = (await storage!.forks.head(forkFromLiveName)).fromSnapshot;
+        });
+      }
       await safeCleanup(`fork delete ${forkFromLiveName}`, () => storage!.forks.delete(forkFromLiveName));
+      if (forkFromLiveSnapshotId && forkFromLiveSnapshotId !== snapshotId) {
+        const autoSnapshotId = forkFromLiveSnapshotId;
+        await safeCleanup(`snapshot delete ${autoSnapshotId}`, () => storage!.snapshots.delete(autoSnapshotId));
+      }
     }
     if (snapshotId) {
       await safeCleanup(`snapshot delete ${snapshotId}`, () => storage!.snapshots.delete(snapshotId!));
