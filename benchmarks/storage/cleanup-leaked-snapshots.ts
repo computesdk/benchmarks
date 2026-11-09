@@ -124,6 +124,10 @@ export async function cleanupLeakedSnapshots(opts: CleanupOptions): Promise<Clea
   return result;
 }
 
+// `nextSnapshotId` ids end in `<Date.now()><12 random digits>`. Provider dates
+// aren't reliable (Neon reports a recent CreationDate for old buckets).
+const createdAtFromId = (id: string) => new Date(Number(id.slice(-25, -12)));
+
 /** Sibling containers / buckets named `<parent>-snapshot-<25 digits>`. */
 async function listSiblingSnapshots(storage: Storage, kind: Kind, parent: string): Promise<Candidate[]> {
   const prefix = `${parent}-snapshot-`;
@@ -132,7 +136,7 @@ async function listSiblingSnapshots(storage: Storage, kind: Kind, parent: string
   if (kind === 'azure') {
     const svc = storage.raw as BlobServiceClient;
     for await (const c of svc.listContainers({ prefix })) {
-      if (isSnapshot(c.name)) out.push({ id: c.name, createdAt: c.properties.lastModified });
+      if (isSnapshot(c.name)) out.push({ id: c.name, createdAt: createdAtFromId(c.name) });
     }
     return out;
   }
@@ -141,7 +145,7 @@ async function listSiblingSnapshots(storage: Storage, kind: Kind, parent: string
   do {
     const res = await client.send(new ListBucketsCommand({ Prefix: prefix, ...(token ? { ContinuationToken: token } : {}) }));
     for (const b of res.Buckets ?? []) {
-      if (b.Name && isSnapshot(b.Name)) out.push({ id: b.Name, createdAt: b.CreationDate ?? new Date(0) });
+      if (b.Name && isSnapshot(b.Name)) out.push({ id: b.Name, createdAt: createdAtFromId(b.Name) });
     }
     token = res.ContinuationToken;
   } while (token);
