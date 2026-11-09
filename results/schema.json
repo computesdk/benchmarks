@@ -26,12 +26,6 @@
       "description": "Benchmark configuration used for this run (iterations, concurrency, file sizes, models, etc.).",
       "additionalProperties": true
     },
-    "untested": {
-      "type": "array",
-      "description": "Providers that are listed but not benchmarked yet. Shown after the scored providers.",
-      "items": { "type": "string" },
-      "uniqueItems": true
-    },
     "results": {
       "type": "array",
       "description": "One entry per provider/mode combination tested.",

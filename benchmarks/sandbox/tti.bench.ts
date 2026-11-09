@@ -26,7 +26,6 @@ import { drainLateCleanups, withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
 import { sandboxId } from '../src/util/sandbox-id.js';
 import { providers } from './providers.js';
-import { UNTESTED_SANDBOX_PROVIDERS } from './untested.js';
 import type { ProviderConfig } from './types.js';
 import { writeSandboxLegacyResults } from './legacy-results.js';
 import type { SandboxInterface } from 'computesdk';
@@ -50,7 +49,6 @@ export const config = defineBenchmarkConfig({
       { key: 'destroy', label: 'Destroy sandbox' },
     ],
     overview: { defaultMetric: 'compositeScore', defaultLayout: 'ranking' },
-    untested: UNTESTED_SANDBOX_PROVIDERS,
   },
   scoring: {
     metrics: [

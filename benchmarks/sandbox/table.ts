@@ -114,11 +114,7 @@ function round(n: number): number {
 /**
  * Write results to a JSON file with clean formatting
  */
-export async function writeResultsJson(
-  results: BenchmarkResult[],
-  outPath: string,
-  untested?: string[],
-): Promise<void> {
+export async function writeResultsJson(results: BenchmarkResult[], outPath: string): Promise<void> {
   const fs = await import('fs');
   const os = await import('os');
 
@@ -170,7 +166,6 @@ export async function writeResultsJson(
       iterations: results[0]?.iterations.length || 0,
       timeoutMs: 120000,
     },
-    ...(untested && untested.length > 0 ? { untested } : {}),
     results: cleanResults,
   };
 
