@@ -43,23 +43,7 @@ env:
   BENCHMARK_NAME: ${{ github.event.inputs.name || '' }}
 
 jobs:
-  public-providers:
-    runs-on: ubuntu-latest
-    outputs:
-      providers: ${{ steps.providers.outputs.providers }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - id: providers
-        run: echo "providers=$(pnpm exec tsx benchmarks/scripts/public-provider-matrix.ts benchmarks/sandbox/providers.ts providers archil arker beam blaxel buddy cloud-run cloudflare codesandbox createos daytona e2b givemeanode hopx isorun modal microsandbox miosa mosaic namespace northflank run-cloud sandbox0 sail superserve tenki tensorlake upstash vercel)" >> "$GITHUB_OUTPUT"
-
   bench:
-    needs: public-providers
     name: Capabilities ${{ matrix.provider }}
     permissions:
       contents: read
@@ -72,7 +56,40 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        provider: ${{ fromJSON(needs.public-providers.outputs.providers) }}
+        provider:
+          - archil
+          - arker
+          - beam
+          - blaxel
+          - buddy
+          - cloud-run
+          - cloudflare
+          - codesandbox
+          - createos
+          - daytona
+          - e2b
+          # - ec2-firecrab  # pending @computesdk/ec2-firecrab publish + host/vault
+          - givemeanode
+          - hopx
+          - isorun
+          # - lightning
+          - modal
+          - microsandbox
+          - miosa
+          - mosaic
+          - namespace
+          - northflank
+          # - opencomputer  # parked — re-activate with the registry
+          # - runloop
+          - run-cloud
+          - sandbox0
+          - sail
+          # - sprites  # daily+stealth only
+          - superserve
+          - tenki
+          - tensorlake
+          - upstash
+          - vercel
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         if: env.SHOULD_RUN == 'true'

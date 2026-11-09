@@ -68,23 +68,7 @@ env:
   BENCHMARK_NAME: ${{ github.event.inputs.name || '' }}
 
 jobs:
-  public-providers:
-    runs-on: ubuntu-latest
-    outputs:
-      providers: ${{ steps.providers.outputs.providers }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - id: providers
-        run: echo "providers=$(pnpm exec tsx benchmarks/scripts/public-provider-matrix.ts benchmarks/sandbox/providers.ts providers agent37 archil arker beam blaxel buddy cloud-run cloudflare codesandbox createos daytona e2b freestyle givemeanode gravixlayer hopx isorun modal microsandbox miosa mosaic namespace northflank novita promigence run-cloud sail sandbox0 superserve tenki tensorlake upstash vercel)" >> "$GITHUB_OUTPUT"
-
   dax:
-    needs: public-providers
     name: Dax ${{ matrix.provider }}
     runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
     # runs-on: self-hosted
@@ -97,7 +81,45 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        provider: ${{ fromJSON(needs.public-providers.outputs.providers) }}
+        provider:
+          - agent37
+          - archil
+          - arker
+          - beam
+          - blaxel
+          - buddy
+          - cloud-run
+          - cloudflare
+          - codesandbox
+          - createos
+          - daytona
+          - e2b
+          # - ec2-firecrab  # pending @computesdk/ec2-firecrab publish + host/vault
+          - freestyle
+          - givemeanode
+          - gravixlayer
+          - hopx
+          - isorun
+          # - lightning
+          - modal
+          - microsandbox
+          - miosa
+          - mosaic
+          - namespace
+          - northflank
+          - novita
+          # - opencomputer  # parked — re-activate with the registry
+          - promigence
+          # - railway  # parked — kept out of weekly tti/dax
+          - run-cloud
+          - sail
+          - sandbox0
+          # - sprites  # parked — kept out of weekly tti/dax
+          - superserve
+          - tenki
+          - tensorlake
+          - upstash
+          - vercel
     steps:
       - uses: actions/checkout@v4
         if: env.SHOULD_RUN == 'true'
