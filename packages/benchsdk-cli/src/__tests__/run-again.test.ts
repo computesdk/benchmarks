@@ -134,6 +134,27 @@ describe('waitForRunAgain', () => {
         },
       }),
     ).rejects.toThrow('bench runs run-again-status my-bench run-again-1');
+    expect(getRunAgain).toHaveBeenCalledTimes(3);
+  });
+
+  it('polls once more at the deadline before timing out', async () => {
+    let now = 0;
+    const runIds: (string | null)[] = [null, 'run-5'];
+    const getRunAgain = vi.fn(async () => ({
+      runAgainId: 'run-again-1',
+      runId: runIds.shift() ?? null,
+    }));
+
+    await expect(
+      waitForRunAgain({ getRunAgain }, 'my-bench', 'run-again-1', {
+        timeoutMs: 5_000,
+        intervalMs: 5_000,
+        now: () => now,
+        sleep: async (ms) => {
+          now += ms;
+        },
+      }),
+    ).resolves.toBe('run-5');
     expect(getRunAgain).toHaveBeenCalledTimes(2);
   });
 });

@@ -666,7 +666,6 @@ export async function waitForRunAgain(
     const remainingMs = deadline - now();
     if (remainingMs <= 0) break;
     await sleep(Math.min(intervalMs, remainingMs));
-    if (now() >= deadline) break;
   }
 
   throw new Error(
