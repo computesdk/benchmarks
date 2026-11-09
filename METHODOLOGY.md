@@ -350,6 +350,8 @@ Providers or users who have questions about methodology or wish to dispute resul
 
 ## Private daily runs
 
+Daily sandbox and DAX legs use Archil persistent execution and map the vault's `ARCHIL_DISK_ID_SANDBOX` to `ARCHIL_DISK_ID`, matching the weekly workflows.
+
 `.github/workflows/daily-benchmarks.yml` runs at 09:00 UTC and supports category, family, provider and iteration overrides through workflow dispatch. It uses this repository's providers and weekly workflow defaults via `benchmarks/scripts/daily/`. Runs publish only to the platform under the `-daily` slugs; there is no daily result artifact, chart, result commit or public snapshot. This replaces the internal daily pipeline.
 
 Provider configs may declare `dailyOnly: true`. Daily discovery includes these providers, while benchmark participant selection excludes them unless `DAILY_BENCH_SLUG=daily`. This also applies to explicit public provider selections. GitHub Copilot's model index is daily-only. Vault manifests retain all providers regardless of this flag. Sandbox `manualOnly` providers remain excluded from daily discovery.

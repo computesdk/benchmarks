@@ -250,6 +250,9 @@ jobs:
               benchmarks/scripts/provider-vars.json
           fi | sort -u > /tmp/oss-vault-keys
           printf '%s\n' BENCHMARKS_PLATFORM_API_KEY >> /tmp/oss-vault-keys
+          if [ "${{ matrix.kind }}" = "sandbox" ] || [ "${{ matrix.kind }}" = "dax" ]; then
+            printf '%s\n' ARCHIL_DISK_ID_SANDBOX >> /tmp/oss-vault-keys
+          fi
           if [ "${{ matrix.kind }}" = "dax" ]; then
             printf '%s\n' BL_DAX_API_KEY BL_DAX_WORKSPACE GMN_API_HOST GMN_TOKEN >> /tmp/oss-vault-keys
           fi
@@ -274,6 +277,7 @@ jobs:
           FILE_SIZE: ${{ matrix.fileSize }}
           ITERATIONS: ${{ matrix.iterations }}
           DAX: ${{ matrix.kind == 'dax' && '1' || '' }}
+          ARCHIL_EXECUTION: ${{ (matrix.kind == 'sandbox' || matrix.kind == 'dax') && 'persistent' || '' }}
           THROUGHPUT_URLS: ${{ needs.throughput-pages.outputs.urls }}
           DAILY_BENCH_SLUG: 'daily'
           DAILY_BENCH_NAME: 'Daily'
@@ -284,6 +288,8 @@ jobs:
           BENCH_TRIGGER_REQUEST_ID: ${{ github.event.inputs.trigger_request_id || '' }}
         run: |
           . benchmarks/scripts/load-vault-secrets.sh "^($(paste -sd'|' /tmp/oss-vault-keys))="
+
+          if [ "$ARCHIL_EXECUTION" = "persistent" ] && [ -n "${ARCHIL_DISK_ID_SANDBOX:-}" ]; then export ARCHIL_DISK_ID="$ARCHIL_DISK_ID_SANDBOX"; fi
 
           RUNNER=(npx tsx packages/benchsdk-runner/dist/bin.js run)
           # Same deadline plumbing as the OSS snapshot-fork workflow: the
