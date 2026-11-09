@@ -318,10 +318,7 @@ jobs:
           # platform run unless told not to ingest.
           EXTRA_ARGS=()
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then EXTRA_ARGS+=(--no-ingest); fi
-          # Model-index legs emit provider 'all' for the full roster; a specific
-          # provider filter selects a single participant. Other kinds already
-          # pass --provider explicitly.
-          if [ "${{ matrix.kind }}" = "ai-gateway-model-index" ] && [ -n "$PROVIDER" ] && [ "$PROVIDER" != "all" ]; then EXTRA_ARGS+=(--provider "$PROVIDER"); fi
+          if { [ "${{ matrix.kind }}" = "ai-gateway" ] || [ "${{ matrix.kind }}" = "ai-gateway-model-index" ]; } && [ -n "$PROVIDER" ] && [ "$PROVIDER" != "all" ]; then EXTRA_ARGS+=(--provider "$PROVIDER"); fi
           # Matrix jobs for the same benchmark share one platform run. The
           # attempt number is included so re-runs do not rejoin completed runs.
           case "${{ matrix.kind }}" in

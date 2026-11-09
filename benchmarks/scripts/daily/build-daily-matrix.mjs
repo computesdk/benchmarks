@@ -149,7 +149,7 @@ if (selected('ai-gateway')) {
       include.push({
         kind: 'ai-gateway',
         family: family.family,
-        provider: 'all',
+        provider: providerFilter || 'all',
         iterations,
         benchScript: family.script,
         resultsDir: family.resultsDir,
