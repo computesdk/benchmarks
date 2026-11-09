@@ -14,6 +14,14 @@ export interface BenchmarkClientConfig {
   orgId?: string;
   /** Custom fetch implementation, mostly useful for tests. */
   fetch?: typeof fetch;
+  /** Per-attempt timeout for platform API requests, including reading the body. Defaults to 20000. */
+  requestTimeoutMs?: number;
+  /**
+   * Delays before each retry of a retry-safe request (GETs, PUTs, and the
+   * worker events/heartbeat/complete/fail POSTs) after a network error,
+   * timeout, or 408/429/502/503/504. Defaults to [1000, 3000]; [] disables retries.
+   */
+  retryDelaysMs?: number[];
 }
 
 export interface BenchmarkResource {

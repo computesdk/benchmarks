@@ -159,6 +159,9 @@ function runWithConcurrency<T>(fns: Array<() => Promise<T>>, limit: number): Pro
 }
 
 const ROUND_REPORTER_CONCURRENCY = 16;
+// Round mode sends a participant's queued results at least this often, and
+// right after its last round, so a run killed mid-way keeps what finished.
+const ROUND_FLUSH_INTERVAL_MS = 10_000;
 
 function getErrorCode(error: unknown): string {
   if (error instanceof Error && 'code' in error && typeof (error as { code: unknown }).code === 'string' && (error as { code: string }).code) {
@@ -1072,6 +1075,7 @@ async function runGroupedByRound<T extends BaseParticipant>(
   const logBuffers = new Map<string, LogBuffer>();
   const failed = new Map<string, boolean>();
   const recordsByParticipant = new Map<string, TaskResultRecord[]>();
+  const lastFlushAt = new Map<string, number>();
   // A single collector for the whole run: round mode interleaves every
   // participant in this one shared Node process, so per-participant CPU/memory
   // can't be isolated — a sample reflects the whole process, not one slice of
@@ -1161,7 +1165,10 @@ async function runGroupedByRound<T extends BaseParticipant>(
       );
       if (record.status !== 'success') failed.set(participant.name, true);
       onResult(record, { iterations: schedule.length, participant: participant.name });
-      reporter?.recordResult(record);
+      const final = i === schedule.length - 1;
+      const flush = final || Date.now() - (lastFlushAt.get(participant.name) ?? 0) >= ROUND_FLUSH_INTERVAL_MS;
+      if (flush) lastFlushAt.set(participant.name, Date.now());
+      reporter?.recordResult(record, { flush, final });
       const participantRecords = recordsByParticipant.get(participant.name)!;
       participantRecords.push(record);
       // Round mode drives the worker by hand, so nothing reports progress
@@ -1224,6 +1231,13 @@ async function runGroupedByRound<T extends BaseParticipant>(
 
   for (const participant of available) {
     console.log(`  ${participant.name}: done${failed.get(participant.name) ? ' (with errors)' : ''}.`);
+  }
+  const unreported = available.filter((p) => reporters.get(p.name)?.reportFailed);
+  if (unreported.length > 0) {
+    console.error(
+      `Could not report results to the platform for ${unreported.length} participant(s): ${unreported.map((p) => p.name).join(', ')}. ` +
+        'Their workers were marked failed; the [benchsdk] warnings above have the request errors.',
+    );
   }
 
   return available.map((p) => ({ participant: p.name, records: recordsByParticipant.get(p.name) ?? [] }));
