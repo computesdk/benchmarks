@@ -92,10 +92,18 @@ export async function cleanupLeakedSnapshots(opts: CleanupOptions): Promise<Clea
   }
   hits.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
+  // Manifest entries whose sibling is already gone (e.g. an earlier run was killed
+  // after deleting but before pruning the manifest).
+  const foundIds = new Set(found.map((c) => c.id));
+  const orphans = opts.kind === 'tensorlake' ? [] : [...listed.keys()].filter((id) =>
+    isSiblingSnapshotId(opts.parent, id) && !foundIds.has(id) && !forkBases.has(id) && !keep.has(id) &&
+    createdAtFromId(id).getTime() <= cutoff);
+
   log(`matched ${found.length} snapshot(s) of ${opts.parent} | to delete: ${hits.length} | skipped, under the age cutoff: ${skippedRecent} | kept (named or a fork's base): ${skippedKept}`);
   if (hits.length) {
     log(`oldest ${hits[0]!.createdAt.toISOString()} newest ${hits[hits.length - 1]!.createdAt.toISOString()} example ${hits[0]!.id}`);
   }
+  if (orphans.length) log(`manifest entries whose snapshot is already gone: ${orphans.length}`);
   const result: CleanupResult = { matched: found.length, skippedRecent, skippedKept, deleted: [], failed: [] };
   if (!opts.delete) {
     log('dry run, nothing deleted. Re-run with DELETE=1 to delete.');
@@ -118,7 +126,7 @@ export async function cleanupLeakedSnapshots(opts: CleanupOptions): Promise<Clea
   for (const f of result.failed.slice(0, 5)) log(`  ${f}`);
 
   if (opts.kind !== 'tensorlake') {
-    const stale = result.deleted.filter((id) => listed.has(id));
+    const stale = [...result.deleted.filter((id) => listed.has(id)), ...orphans];
     if (stale.length) await pruneManifest(opts.storage, opts.kind, opts.parent, new Set(stale), log);
   }
   return result;
@@ -129,9 +137,14 @@ export async function cleanupLeakedSnapshots(opts: CleanupOptions): Promise<Clea
 const createdAtFromId = (id: string) => new Date(Number(id.slice(-25, -12)));
 
 /** Sibling containers / buckets named `<parent>-snapshot-<25 digits>`. */
+function isSiblingSnapshotId(parent: string, name: string): boolean {
+  const prefix = `${parent}-snapshot-`;
+  return name.startsWith(prefix) && /^[0-9]{25}$/.test(name.slice(prefix.length));
+}
+
 async function listSiblingSnapshots(storage: Storage, kind: Kind, parent: string): Promise<Candidate[]> {
   const prefix = `${parent}-snapshot-`;
-  const isSnapshot = (name: string) => name.startsWith(prefix) && /^[0-9]{25}$/.test(name.slice(prefix.length));
+  const isSnapshot = (name: string) => isSiblingSnapshotId(parent, name);
   const out: Candidate[] = [];
   if (kind === 'azure') {
     const svc = storage.raw as BlobServiceClient;
