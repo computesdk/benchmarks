@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { Novita } from 'novita-sandbox';
 
-const NAME = 'node22-8cpu-16gb';
+const NAME = 'base-8cpu-16gb';
 
 async function main() {
   const apiKey = process.env.NOVITA_API_KEY;
