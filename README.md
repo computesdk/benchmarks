@@ -86,18 +86,18 @@ Our partners support our independent benchmarks.
 
 We benchmark the infrastructure that AI agents and developer platforms rely on:
 
-- **Sandboxes** — cold-start and concurrent **Time to Interactive (TTI)**: API request to first successful command inside a fresh sandbox.
+- **Sandboxes** — concurrent **Time to Interactive (TTI)**: API request to first successful command inside a fresh sandbox; **Dax**: a pinned OpenCode clone/install/typecheck workload.
 - **Object storage** — upload/download latency and throughput across providers and file sizes.
 - **Headless browsers** — session creation, navigation, and step throughput.
 - **AI gateways** — cold/warm connection latency and time to first token.
 
 ## Methodology
 
-Every benchmark uses the same open code against every provider, with fixed workloads and a fixed scoring ceiling. Tests run automatically on GitHub Actions, and every result is committed as JSON to this repo. Each metric includes min, max, median, P95, and P99; a composite score rewards both speed and reliability.
+Each suite uses a shared open workload across its participating providers, with provider-specific setup and resource mappings. Scored benchmarks declare **per-metric ceilings and weights**, not one universal ceiling: for example, sandbox TTI uses 10,000 ms and Dax uses 200,000 ms. Ceilings set the scoring scale; execution deadlines and workload checks decide pass/fail. Scored metrics report median, P95, and P99, and the weighted metric score is multiplied by the benchmark's success rate. Some probes do not declare composite scoring. Tests run on suite-specific schedules, and published results are committed as JSON to this repo.
 
 For full details on each suite, see:
 
-- [Sandbox TTI methodology →](./METHODOLOGY.md)
+- [Sandbox TTI, Dax, and per-suite scoring methodology →](./METHODOLOGY.md)
 - [Browser and throughput methodology →](./THROUGHPUT.md)
 - [AI gateway methodology →](./AI_GATEWAYS.md)
 
@@ -106,7 +106,7 @@ For full details on each suite, see:
 - 📖 **Open source** — All benchmark code is public
 - 📊 **Raw data** — Every result committed to repo as JSON
 - 🔁 **Reproducible** — Anyone can run the same tests
-- ⚙️ **Automated** — Daily at 5pm Pacific (00:00 UTC) via GitHub Actions on Namespace runners
+- ⚙️ **Automated** — Suite-specific workflows; sandbox TTI and Dax run weekly on Fridays at 13:00 and 13:30 UTC, respectively
 - 🛡️ **Independent** — Sponsors cannot influence results
 
 ## Latest Benchmarks
@@ -140,6 +140,13 @@ For full details on each suite, see:
 ### [DAX Sandbox Builds](#dax-sandbox-builds)
 
 ![DAX Sandbox Builds](./dax.svg)
+
+The [DAX resource configuration](./benchmarks/sandbox/dax.bench.ts) generally targets
+8 vCPUs and 16 GiB RAM. Modal uses the VM runtime with its default CPU request of
+0.125 physical cores and a burst limit of 8 physical cores (16 vCPU equivalent). Its 16 GiB memory
+request has no explicit memory limit, allowing memory bursting when host capacity
+is available. Modal [bills CPU and memory at the greater of request or actual usage](https://modal.com/docs/guide/sandbox-resources),
+including usage above the memory request.
 
 ### [AI Gateway - Anthropic](#ai-gateway---anthropic)
 
