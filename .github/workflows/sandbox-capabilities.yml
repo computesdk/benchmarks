@@ -139,6 +139,10 @@ jobs:
           ITERATIONS: ${{ github.event.inputs.iterations || '1' }}
           CONCURRENCY: ${{ github.event.inputs.concurrency || '1' }}
           PROVIDER: ${{ matrix.provider }}
+          # Sandbox family: dedicated VM per create() instead of shared-disk
+          # exec. Exec mode maps filesystem writes onto the shared disk mount,
+          # so the preflight script upload never reaches the container's /tmp.
+          ARCHIL_EXECUTION: persistent
         run: |
           COMMON_KEYS='BENCHMARKS_PLATFORM_API_KEY'
           case "$PROVIDER" in
