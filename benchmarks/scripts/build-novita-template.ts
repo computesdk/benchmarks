@@ -10,7 +10,7 @@ async function main() {
   }
 
   const sdk = new Novita({ apiKey });
-  const template = sdk.template.new().fromNodeImage('22');
+  const template = sdk.template.new().fromTemplate('base');
 
   try {
     await sdk.template.build(template, NAME, {
