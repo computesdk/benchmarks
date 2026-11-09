@@ -82,8 +82,8 @@ describe('handleRunsRunAgain validation', () => {
   });
 
   it('requires --wait for a timeout before resolving credentials', async () => {
-    vi.stubEnv('BENCHMARKS_PLATFORM_API_KEY', undefined);
-    vi.stubEnv('BENCHMARKS_PLATFORM_TOKEN', undefined);
+    vi.stubEnv('BENCHMARKS_PLATFORM_API_KEY', '');
+    vi.stubEnv('BENCHMARKS_PLATFORM_TOKEN', '');
 
     await expect(
       handleRunsRunAgain('my-bench', 'run-1', { timeout: 5 }, {}, {}),
@@ -91,8 +91,8 @@ describe('handleRunsRunAgain validation', () => {
   });
 
   it('rejects a non-positive timeout before resolving credentials', async () => {
-    vi.stubEnv('BENCHMARKS_PLATFORM_API_KEY', undefined);
-    vi.stubEnv('BENCHMARKS_PLATFORM_TOKEN', undefined);
+    vi.stubEnv('BENCHMARKS_PLATFORM_API_KEY', '');
+    vi.stubEnv('BENCHMARKS_PLATFORM_TOKEN', '');
 
     await expect(
       handleRunsRunAgain('my-bench', 'run-1', { wait: true, timeout: 0 }, {}, {}),
