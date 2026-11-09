@@ -1165,9 +1165,10 @@ async function runGroupedByRound<T extends BaseParticipant>(
       );
       if (record.status !== 'success') failed.set(participant.name, true);
       onResult(record, { iterations: schedule.length, participant: participant.name });
-      const flush = i === schedule.length - 1 || Date.now() - (lastFlushAt.get(participant.name) ?? 0) >= ROUND_FLUSH_INTERVAL_MS;
+      const final = i === schedule.length - 1;
+      const flush = final || Date.now() - (lastFlushAt.get(participant.name) ?? 0) >= ROUND_FLUSH_INTERVAL_MS;
       if (flush) lastFlushAt.set(participant.name, Date.now());
-      reporter?.recordResult(record, { flush });
+      reporter?.recordResult(record, { flush, final });
       const participantRecords = recordsByParticipant.get(participant.name)!;
       participantRecords.push(record);
       // Round mode drives the worker by hand, so nothing reports progress
