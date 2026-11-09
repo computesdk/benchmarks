@@ -14,6 +14,8 @@ import type {
   BenchmarkReliabilityInput,
   BenchmarkReliabilityRange,
   BenchmarkResource,
+  BenchmarkRunAgainRequest,
+  BenchmarkRunAgainStatus,
   BenchmarkRun,
   BenchmarkResultsOverview,
   BenchmarkResultsOverviewInput,
@@ -48,6 +50,7 @@ import type {
   TaskResultRecord,
   TaskResultsResponse,
   RunProgress,
+  RunAgainInput,
   UpdateBenchmarkInput,
   UpdateParticipantInput,
   UpdateRunInput,
@@ -408,6 +411,21 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
       return data.run;
     },
 
+    async runAgain(benchmarkSlug, runId, input?: RunAgainInput) {
+      return request<BenchmarkRunAgainRequest>(
+        'POST',
+        `/benchmarks/${encodePath(benchmarkSlug)}/runs/${encodePath(runId)}/run-again`,
+        (input ?? {}) as JsonObject,
+      );
+    },
+
+    async getRunAgain(benchmarkSlug, runAgainId) {
+      return request<BenchmarkRunAgainStatus>(
+        'GET',
+        `/benchmarks/${encodePath(benchmarkSlug)}/run-again/${encodePath(runAgainId)}`,
+      );
+    },
+
     async updateRun(benchmarkSlug, runId, input: UpdateRunInput) {
       const data = await request<{ run: BenchmarkRun }>(
         'PATCH',
@@ -695,4 +713,3 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
 
   return client;
 }
-

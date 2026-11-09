@@ -216,6 +216,21 @@ export interface CreateRunInput {
   ciRunId?: string;
 }
 
+export interface RunAgainInput {
+  requestId?: string;
+}
+
+export interface BenchmarkRunAgainRequest {
+  runAgainId: string;
+  actionRunId: string | null;
+  created: boolean;
+}
+
+export interface BenchmarkRunAgainStatus {
+  runAgainId: string;
+  runId: string | null;
+}
+
 export interface UpdateRunInput {
   status?: BenchmarkRunStatus;
   config?: JsonObject;
@@ -1082,6 +1097,12 @@ export interface BenchmarkClient {
   listRuns(benchmarkSlug: string, options?: ListRunsOptions): Promise<BenchmarkRunListResult>;
   listAllRuns(options?: ListAllRunsOptions): Promise<BenchmarkRunListItem[]>;
   getRun(benchmarkSlug: string, runId: string): Promise<BenchmarkRun>;
+  runAgain(
+    benchmarkSlug: string,
+    runId: string,
+    input?: RunAgainInput,
+  ): Promise<BenchmarkRunAgainRequest>;
+  getRunAgain(benchmarkSlug: string, runAgainId: string): Promise<BenchmarkRunAgainStatus>;
   updateRun(benchmarkSlug: string, runId: string, input: UpdateRunInput): Promise<BenchmarkRun>;
   upsertParticipant(
     benchmarkSlug: string,

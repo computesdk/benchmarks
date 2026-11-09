@@ -105,7 +105,13 @@ bench runs list my-benchmark
 bench runs list my-benchmark --participant e2b --since 7d
 bench runs list my-benchmark --day 2026-10-22 --tz America/Los_Angeles
 bench runs show my-benchmark <runId>
+bench runs run-again my-benchmark <runId> --wait
+bench runs run-again-status my-benchmark <runAgainId>
 ```
+
+Running a benchmark again always uses the latest code. To reproduce an exact
+commit, use `compute actions rerun`. Run again uses compute. Entitled
+organizations can request it once per benchmark per day.
 
 ### Results
 

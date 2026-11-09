@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { BenchmarkApiError } from '@benchsdk/api';
 import type {
+  BenchmarkClient,
   BenchmarkReliabilityDay,
   BenchmarkReliabilityRange,
   BenchmarkResultsOverview,
@@ -63,6 +64,10 @@ Commands:
                                      List benchmark runs (omit slug to list runs
                                      across every benchmark you can read)
   runs show <benchmark-slug> <runId> Show a single run
+  runs run-again <benchmark-slug> <runId> [--wait] [--timeout <seconds>]
+                                     Run the benchmark again on the latest code
+  runs run-again-status <benchmark-slug> <runAgainId>
+                                     Show run-again progress
   results <benchmark-slug> [--run <id>] [--format json|table]
              [--participant <list>] [--steps <list>|all]
              [--since <when>] [--until <when>] [--day YYYY-MM-DD]
@@ -185,13 +190,27 @@ const subcommandOptionSchema = {
   breakdown: { type: 'string' as const },
   as: { type: 'string' as const },
   ref: { type: 'string' as const },
+  wait: { type: 'boolean' as const },
+  timeout: { type: 'number' as const },
 };
+
+export const RUNS_SUBCOMMAND_OPTIONS = {
+  list: ['limit', 'offset', 'participant', 'since', 'until', 'day', 'tz', 'source-org'],
+  show: [],
+  'run-again': ['wait', 'timeout'],
+  'run-again-status': [],
+} as const;
+
+const runsSubcommandOptionUnion = [
+  ...RUNS_SUBCOMMAND_OPTIONS.list,
+  ...RUNS_SUBCOMMAND_OPTIONS['run-again'],
+];
 
 export function parseSubcommandOptions(
   args: string[],
   allowed?: readonly string[],
-): { options: Record<string, string | number>; positionals: string[] } {
-  const options: Record<string, string | number> = {};
+): { options: Record<string, string | number | boolean>; positionals: string[] } {
+  const options: Record<string, string | number | boolean> = {};
   const positionals: string[] = [];
   let i = 0;
   while (i < args.length) {
@@ -213,6 +232,15 @@ export function parseSubcommandOptions(
     // printing unfiltered results).
     if (allowed !== undefined && !allowed.includes(key)) {
       throw new Error(`Unknown option for this command: ${arg}`);
+    }
+
+    if (schema.type === 'boolean') {
+      if (valuePart !== undefined) {
+        throw new Error(`Option --${key} does not take a value`);
+      }
+      options[key] = true;
+      i += 1;
+      continue;
     }
 
     let rawValue: string;
@@ -237,6 +265,14 @@ export function parseSubcommandOptions(
   return { options, positionals };
 }
 
+function assertSubcommandOptions(
+  options: Record<string, string | number | boolean>,
+  allowed: readonly string[],
+): void {
+  const extra = Object.keys(options).find((key) => !allowed.includes(key));
+  if (extra) throw new Error(`Unknown option for this command: --${extra}`);
+}
+
 function commandHelp(command?: string): string {
   switch (command) {
     case 'auth':
@@ -258,7 +294,9 @@ Subcommands:
       return `Usage: bench runs list [benchmark-slug] [--limit N] [--offset N]
                     [--participant <list>] [--since <when>] [--until <when>]
                     [--day YYYY-MM-DD] [--tz <zone>] [--source-org <slug>]
-       bench runs show <benchmark-slug> <runId>`;
+       bench runs show <benchmark-slug> <runId>
+       bench runs run-again <benchmark-slug> <runId> [--wait] [--timeout <seconds>]
+       bench runs run-again-status <benchmark-slug> <runAgainId>`;
     case 'results':
       return `Usage: bench results <benchmark-slug> [--run <id>] [--format json|table]
                     [--participant <list>] [--steps <list>|all]
@@ -603,6 +641,91 @@ async function handleRunsShow(
   const { api } = await createApiClient(overrides);
   const run = await api.getRun(benchmarkSlug, runId);
   printData(run, outputOptions);
+}
+
+export async function waitForRunAgain(
+  api: Pick<BenchmarkClient, 'getRunAgain'>,
+  slug: string,
+  runAgainId: string,
+  opts: {
+    timeoutMs: number;
+    intervalMs?: number;
+    sleep?: (ms: number) => Promise<void>;
+    now?: () => number;
+  },
+): Promise<string> {
+  const intervalMs = opts.intervalMs ?? 5_000;
+  const sleep = opts.sleep ?? ((ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+  const now = opts.now ?? Date.now;
+  const deadline = now() + opts.timeoutMs;
+
+  while (true) {
+    const { runId } = await api.getRunAgain(slug, runAgainId);
+    if (runId !== null) return runId;
+
+    const remainingMs = deadline - now();
+    if (remainingMs <= 0) break;
+    await sleep(Math.min(intervalMs, remainingMs));
+    if (now() >= deadline) break;
+  }
+
+  throw new Error(
+    `Timed out after ${opts.timeoutMs / 1_000}s waiting for run again ${runAgainId}; check later with: bench runs run-again-status ${slug} ${runAgainId}`,
+  );
+}
+
+export async function handleRunsRunAgain(
+  benchmarkSlug: string,
+  runId: string,
+  options: { wait?: boolean; timeout?: number },
+  overrides: { baseUrl?: string; apiKey?: string; org?: string },
+  outputOptions: OutputOptions = {},
+): Promise<void> {
+  if (options.timeout !== undefined && !options.wait) {
+    throw new Error('--timeout requires --wait');
+  }
+  const timeoutSeconds = options.timeout ?? 900;
+  if (!Number.isFinite(timeoutSeconds) || timeoutSeconds <= 0) {
+    throw new Error('--timeout must be greater than 0');
+  }
+
+  const { api } = await createApiClient(overrides);
+  const result = await api.runAgain(benchmarkSlug, runId);
+  const jsonOutput = outputOptions.json || outputOptions.format === 'json';
+
+  if (!options.wait) {
+    printData(result, outputOptions);
+    if (!jsonOutput) {
+      console.log(
+        `Check progress: bench runs run-again-status ${benchmarkSlug} ${result.runAgainId}`,
+      );
+    }
+    return;
+  }
+
+  if (!jsonOutput) {
+    console.error(
+      `Run again ${result.runAgainId} requested; waiting for the benchmark run to report…`,
+    );
+  }
+  const reportedRunId = await waitForRunAgain(api, benchmarkSlug, result.runAgainId, {
+    timeoutMs: timeoutSeconds * 1_000,
+  });
+  printData({ ...result, runId: reportedRunId }, outputOptions);
+  if (!jsonOutput) {
+    console.log(`Show it: bench runs show ${benchmarkSlug} ${reportedRunId}`);
+  }
+}
+
+async function handleRunsRunAgainStatus(
+  benchmarkSlug: string,
+  runAgainId: string,
+  overrides: { baseUrl?: string; apiKey?: string; org?: string },
+  outputOptions: OutputOptions = {},
+): Promise<void> {
+  const { api } = await createApiClient(overrides);
+  const result = await api.getRunAgain(benchmarkSlug, runAgainId);
+  printData(result, outputOptions);
 }
 
 async function handleResults(
@@ -1208,29 +1331,56 @@ export async function run(argv: string[]): Promise<void> {
         const [sub, ...subRest] = rest;
         const { options } = parseSubcommandOptions(subRest, ['limit', 'offset']);
         if (sub === 'list') {
-          await handleBenchmarksList(overrides, options, outputOptions);
+          await handleBenchmarksList(
+            overrides,
+            options as Parameters<typeof handleBenchmarksList>[1],
+            outputOptions,
+          );
         } else {
           throw new Error(USAGE);
         }
         break;
       }
       case 'runs': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, [
-          'limit', 'offset', 'participant', 'since', 'until', 'day', 'tz', 'source-org',
-        ]);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(
+          rest,
+          runsSubcommandOptionUnion,
+        );
         const [sub, slug, runId] = subPositionals;
         if (sub === 'list') {
-          await handleRunsList(slug, options, overrides, outputOptions);
+          assertSubcommandOptions(options, RUNS_SUBCOMMAND_OPTIONS.list);
+          await handleRunsList(
+            slug,
+            options as Parameters<typeof handleRunsList>[1],
+            overrides,
+            outputOptions,
+          );
         } else if (sub === 'show') {
-          // `show` shares `runs`' option union for `list` — none of them
-          // apply to a single run, so accept none rather than silently
-          // ignoring e.g. --source-org on a shared slug.
-          const extra = Object.keys(options);
-          if (extra.length > 0) {
-            throw new Error(`Unknown option for this command: --${extra[0]}`);
-          }
+          assertSubcommandOptions(options, RUNS_SUBCOMMAND_OPTIONS.show);
           if (!slug || !runId) throw new Error('Usage: bench runs show <benchmark-slug> <runId>');
           await handleRunsShow(slug, runId, overrides, outputOptions);
+        } else if (sub === 'run-again') {
+          assertSubcommandOptions(options, RUNS_SUBCOMMAND_OPTIONS['run-again']);
+          if (!slug || !runId) {
+            throw new Error(
+              'Usage: bench runs run-again <benchmark-slug> <runId> [--wait] [--timeout <seconds>]',
+            );
+          }
+          await handleRunsRunAgain(
+            slug,
+            runId,
+            options as { wait?: boolean; timeout?: number },
+            overrides,
+            outputOptions,
+          );
+        } else if (sub === 'run-again-status') {
+          assertSubcommandOptions(options, RUNS_SUBCOMMAND_OPTIONS['run-again-status']);
+          if (!slug || !runId) {
+            throw new Error(
+              'Usage: bench runs run-again-status <benchmark-slug> <runAgainId>',
+            );
+          }
+          await handleRunsRunAgainStatus(slug, runId, overrides, outputOptions);
         } else {
           throw new Error(USAGE);
         }
@@ -1243,7 +1393,12 @@ export async function run(argv: string[]): Promise<void> {
         ]);
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench results <benchmark-slug>');
-        await handleResults(slug, options, overrides, outputOptions);
+        await handleResults(
+          slug,
+          options as Parameters<typeof handleResults>[1],
+          overrides,
+          outputOptions,
+        );
         break;
       }
       case 'reliability': {
@@ -1253,7 +1408,12 @@ export async function run(argv: string[]): Promise<void> {
         ]);
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench reliability <benchmark-slug>');
-        await handleReliability(slug, options, overrides, outputOptions);
+        await handleReliability(
+          slug,
+          options as Parameters<typeof handleReliability>[1],
+          overrides,
+          outputOptions,
+        );
         break;
       }
       case 'iterations': {
@@ -1262,7 +1422,12 @@ export async function run(argv: string[]): Promise<void> {
         ]);
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench iterations <benchmark-slug>');
-        await handleIterations(slug, options, overrides, outputOptions);
+        await handleIterations(
+          slug,
+          options as Parameters<typeof handleIterations>[1],
+          overrides,
+          outputOptions,
+        );
         break;
       }
       case 'artifacts': {
@@ -1283,14 +1448,24 @@ export async function run(argv: string[]): Promise<void> {
         ]);
         const [slug, runId] = subPositionals;
         if (!slug || !runId) throw new Error('Usage: bench logs <benchmark-slug> <runId>');
-        await handleLogs(slug, runId, options, overrides, outputOptions);
+        await handleLogs(
+          slug,
+          runId,
+          options as Parameters<typeof handleLogs>[2],
+          overrides,
+          outputOptions,
+        );
         break;
       }
       case 'export': {
         const { options, positionals: subPositionals } = parseSubcommandOptions(rest, ['run', 'out']);
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench export <benchmark-slug>');
-        await handleExport(slug, options, overrides);
+        await handleExport(
+          slug,
+          options as Parameters<typeof handleExport>[1],
+          overrides,
+        );
         break;
       }
       case 'fork': {
@@ -1299,7 +1474,12 @@ export async function run(argv: string[]): Promise<void> {
         ]);
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench fork <benchmark-slug>');
-        await handleFork(slug, options, overrides, outputOptions);
+        await handleFork(
+          slug,
+          options as Parameters<typeof handleFork>[1],
+          overrides,
+          outputOptions,
+        );
         break;
       }
       default:
@@ -1310,4 +1490,3 @@ export async function run(argv: string[]): Promise<void> {
     await printErrorAndExit(err, values.verbose);
   }
 }
-
