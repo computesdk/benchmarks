@@ -1,5 +1,12 @@
 # @benchsdk/cli
 
+## 0.9.2
+
+### Patch Changes
+
+- Updated dependencies [2c1e60e]
+  - @benchsdk/api@0.11.0
+
 ## 0.9.1
 
 ### Patch Changes
