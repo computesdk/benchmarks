@@ -1,5 +1,13 @@
 # @benchsdk/api
 
+## 0.11.1
+
+### Patch Changes
+
+- f305333: Add latest-code benchmark run-again API support and the `runs run-again` /
+  `runs run-again-status` CLI commands. Exact-commit reproduction remains in
+  `compute actions rerun`.
+
 ## 0.11.0
 
 ### Minor Changes
