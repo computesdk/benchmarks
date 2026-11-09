@@ -69,12 +69,25 @@ When installed with `@benchsdk/runner`, these are available through the `bench` 
 - `bench benchmarks list [--limit N] [--offset N]`
 - `bench runs list <slug> [--limit N] [--offset N] [--participant <list>] [--since <when>] [--until <when>] [--day YYYY-MM-DD] [--tz <zone>] [--source-org <slug>]`
 - `bench runs show <slug> <runId>`
+- `bench runs run-again <slug> <runId> [--wait] [--timeout <seconds>]`
+- `bench runs run-again-status <slug> <runAgainId>`
 - `bench results <slug> [--run <id>] [--format json|table] [--participant <list>] [--steps <list>|all] [--since <when>] [--until <when>] [--day YYYY-MM-DD] [--tz <zone>] [--source-org <slug>] [--limit N] [--offset N]`
 - `bench reliability <slug> [--from YYYY-MM-DD] [--to YYYY-MM-DD] [--bucket day|hour] [--tz <zone>] [--metrics <list>] [--breakdown <list>] [--source-org <slug>] [--format json|table]` — uptime range for a `type=reliability` benchmark; `--day YYYY-MM-DD --participant <slug>` for the per-slot day view
 - `bench artifacts list <slug> <runId> [--worker <id>]`
 - `bench export <slug> [--run <id>] [--out <dir>]`
 
 See the [`benchsdk-cli` skill](../../.agents/skills/benchsdk-cli/SKILL.md) for the full CLI reference, OAuth device-code flow, and CI/non-interactive use.
+
+### Run a benchmark again
+
+```bash
+bench runs run-again my-benchmark <runId> --wait
+bench runs run-again-status my-benchmark <runAgainId>
+```
+
+Running a benchmark again always uses the latest code. To reproduce an exact
+commit, use `compute actions rerun`. Run again uses compute. Entitled
+organizations can request it once per benchmark per day.
 
 ## License
 
