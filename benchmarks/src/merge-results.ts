@@ -637,7 +637,7 @@ async function mainBrowserThroughput() {
   const emptyStats = { median: 0, p95: 0, p99: 0 };
   const emptyPerActionType = () =>
     Object.fromEntries(ACTION_TYPES.map(t => [t, { ...emptyStats }])) as ThroughputBenchmarkResult['summary']['perActionType'];
-  for (const p of throughputProviders) {
+  for (const p of throughputProviders.filter(provider => !provider.dailyOnly)) {
     if (!seen.has(p.name)) {
       deduped.push({
         provider: p.name,

@@ -20,10 +20,13 @@ import { chromium, type Browser, type Page } from 'playwright-core';
 import { defineBenchmarkConfig, defineTask, TaskError } from '@benchsdk/runner';
 import type { JsonValue } from '@benchsdk/api';
 import { withTimeout } from '../src/util/timeout.js';
-import { throughputProviders } from './throughput-providers.js';
+import { throughputProviders as allProviders } from './throughput-providers.js';
+import { selectProviders } from '../scripts/provider-selection.js';
 import { writeThroughputLegacyResults } from './browser-throughput-legacy-results.js';
 import { ACTIONS_PER_LOOP, ACTIONS_PER_SESSION, LOOPS_PER_SESSION } from './throughput-types.js';
 import type { ActionResult, ThroughputProviderConfig } from './throughput-types.js';
+
+const throughputProviders = selectProviders(allProviders);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

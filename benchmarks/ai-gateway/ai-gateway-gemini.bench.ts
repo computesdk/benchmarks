@@ -15,9 +15,12 @@ import '../src/env.js';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineBenchmarkConfig, defineTask } from '@benchsdk/runner';
-import { providers } from './providers-gemini.js';
+import { providers as allProviders } from './providers-gemini.js';
+import { selectProviders } from '../scripts/provider-selection.js';
 import { writeAIGatewayLegacyResults } from './legacy-results.js';
 import { makeAIGatewayTask, resolveAIGatewayPhases } from './shared-task.js';
+
+const providers = selectProviders(allProviders);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

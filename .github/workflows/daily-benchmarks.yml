@@ -1,0 +1,362 @@
+name: Daily Benchmarks
+# computesdk:secrets=NSC_TOKEN
+# computesdk:secrets-env=declared
+
+on:
+  schedule:
+    - cron: '0 9 * * *' # Daily at 9am UTC (4am CDT)
+  workflow_dispatch:
+    inputs:
+      benchmark:
+        description: 'Benchmark category to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - sandbox
+          - dax
+          - storage
+          - snapshot-fork
+          - browser
+          - browser-throughput
+          - ai-gateway
+          - ai-gateway-model-index
+      family:
+        description: 'AI gateway family to run (only used with benchmark: ai-gateway)'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - anthropic
+          - openai
+          - gemini
+          - kimi
+      slug:
+        description: 'Optional platform benchmark slug override'
+        required: false
+        default: ''
+      name:
+        description: 'Optional platform benchmark name override'
+        required: false
+        default: ''
+      provider:
+        description: 'Provider to run (leave empty for all)'
+        required: false
+        default: ''
+      iterations:
+        description: 'Override OSS iteration defaults for a manual run'
+        required: false
+        default: ''
+      sandbox_iterations:
+        description: 'Sandbox TTI iterations'
+        required: false
+        default: ''
+      dax_iterations:
+        description: 'DAX iterations'
+        required: false
+        default: ''
+      storage_iterations:
+        description: 'Storage iterations'
+        required: false
+        default: ''
+      snapshot_fork_iterations:
+        description: 'Snapshot/fork iterations'
+        required: false
+        default: ''
+      browser_iterations:
+        description: 'Browser session iterations'
+        required: false
+        default: ''
+      browser_throughput_iterations:
+        description: 'Browser throughput iterations'
+        required: false
+        default: ''
+      ai_gateway_iterations:
+        description: 'AI gateway iterations'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Run without ingesting results'
+        required: false
+        default: false
+        type: boolean
+      trigger_source:
+        description: 'Recorded on platform runs as their trigger (e.g. platform-retrigger); leave empty for a plain manual run'
+        required: false
+        default: ''
+      trigger_requested_by:
+        description: 'Who asked for this run (e.g. the platform org slug); recorded alongside trigger_source'
+        required: false
+        default: ''
+      trigger_request_id:
+        description: 'Platform re-trigger request id; recorded so the platform can link this run back to the request'
+        required: false
+        default: ''
+
+concurrency:
+  group: daily-benchmarks
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  matrix:
+    name: Discover OSS providers
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe
+    outputs:
+      include: ${{ steps.matrix.outputs.include }}
+      throughput_iterations: ${{ steps.matrix.outputs.throughput_iterations }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Validate dispatch inputs
+        env:
+          SLUG: ${{ github.event.inputs.slug }}
+          NAME: ${{ github.event.inputs.name }}
+          BENCHMARK: ${{ github.event.inputs.benchmark }}
+        run: |
+          if [ -n "$SLUG" ] || [ -n "$NAME" ]; then
+            if [ "$BENCHMARK" = "all" ]; then
+              echo "error: 'slug' or 'name' cannot be used with 'benchmark: all'; choose a single category."
+              exit 1
+            fi
+          fi
+      - name: Install OSS dependencies
+        run: pnpm install --frozen-lockfile
+      - id: matrix
+        env:
+          PROVIDER_FILTER: ${{ github.event.inputs.provider || '' }}
+          BENCHMARK_FILTER: ${{ github.event.inputs.benchmark || 'all' }}
+          FAMILY_FILTER: ${{ github.event.inputs.family || 'all' }}
+          RUN_MODE: ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
+          ITERATIONS_OVERRIDE: ${{ github.event.inputs.iterations || '' }}
+          SANDBOX_ITERATIONS: ${{ github.event.inputs.sandbox_iterations || '' }}
+          DAX_ITERATIONS: ${{ github.event.inputs.dax_iterations || '' }}
+          STORAGE_ITERATIONS: ${{ github.event.inputs.storage_iterations || '' }}
+          SNAPSHOT_FORK_ITERATIONS: ${{ github.event.inputs.snapshot_fork_iterations || '' }}
+          BROWSER_ITERATIONS: ${{ github.event.inputs.browser_iterations || '' }}
+          BROWSER_THROUGHPUT_ITERATIONS: ${{ github.event.inputs.browser_throughput_iterations || '' }}
+          AI_GATEWAY_ITERATIONS: ${{ github.event.inputs.ai_gateway_iterations || '' }}
+        run: |
+          include="$(pnpm exec tsx benchmarks/scripts/daily/build-daily-matrix.mjs)"
+          echo "include=$include" >> "$GITHUB_OUTPUT"
+          throughput_iterations="$(node -e "const x=JSON.parse(process.argv[1]); console.log(x.include.find(i => i.kind === 'browser-throughput')?.iterations || 0)" "$include")"
+          echo "throughput_iterations=$throughput_iterations" >> "$GITHUB_OUTPUT"
+
+  throughput-pages:
+    name: Resolve throughput pages
+    needs: matrix
+    runs-on: ubuntu-latest
+    outputs:
+      urls: ${{ steps.pages.outputs.urls }}
+    steps:
+      - id: pages
+        run: |
+          count=${{ needs.matrix.outputs.throughput_iterations || '0' }}
+          if [ "$count" -eq 0 ]; then
+            echo 'urls<<URLS_EOF' >> "$GITHUB_OUTPUT"
+            echo 'URLS_EOF' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          urls=()
+          for i in $(seq 1 "$count"); do
+            url=$(curl -sL -A 'ComputeSDK-Benchmark' -o /dev/null -w '%{url_effective}' \
+              'https://en.wikipedia.org/wiki/Special:Random')
+            urls+=("${url:-https://en.wikipedia.org/wiki/Special:Random}")
+          done
+          {
+            echo "urls<<URLS_EOF"
+            printf '%s\n' "${urls[@]}"
+            echo "URLS_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+  benchmark:
+    name: ${{ matrix.kind }} / ${{ matrix.family || matrix.provider }}${{ matrix.fileSize && format(' / {0}', matrix.fileSize) || '' }}
+    needs: [matrix, throughput-pages]
+    if: needs.matrix.result == 'success'
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
+    timeout-minutes: ${{ matrix.timeout || 90 }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.matrix.outputs.include) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      # ComputeSDK runners get no GitHub OIDC token, so nscloud-setup's
+      # `nsc auth exchange-github-token` cannot work there. Pre-seed the
+      # workload token file it checks for when NSC_TOKEN is available;
+      # accepts either the raw bearer token or a full token JSON document.
+      # It also exports NSC_DOCKER_LOGIN/NSC_CONTAINER_REGISTRY so
+      # nscloud-setup skips `nsc docker login`, which this token is not
+      # granted for — these jobs only need vault access.
+      - name: Seed Namespace token file
+        run: |
+          if [ -n "${NSC_TOKEN:-}" ] && [ ! -f /var/run/nsc/token.json ]; then
+            mkdir -p /var/run/nsc
+            (
+              umask 077
+              if jq -e 'type == "object"' >/dev/null 2>&1 <<<"$NSC_TOKEN"; then
+                printf '%s\n' "$NSC_TOKEN" > /var/run/nsc/token.json
+              else
+                jq -n --arg token "$NSC_TOKEN" '{bearer_token: $token}' > /var/run/nsc/token.json
+              fi
+            )
+            chmod 600 /var/run/nsc/token.json
+            # The seeded token has no container-registry grant; tell
+            # nscloud-setup to skip `nsc docker login` for later steps.
+            echo "NSC_DOCKER_LOGIN=1" >> "$GITHUB_ENV"
+            echo "NSC_CONTAINER_REGISTRY=nscr.io" >> "$GITHUB_ENV"
+          fi
+      - uses: namespacelabs/nscloud-setup@v0
+      - name: Install OSS dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build workspace packages
+        run: pnpm -r --filter './packages/**' run build
+      - name: Clear stale OSS results
+        run: rm -rf results/
+      - name: Build vault key list from OSS provider manifest
+        run: |
+          case "${{ matrix.kind }}" in
+            dax) manifest_kind=sandbox ;;
+            browser-throughput) manifest_kind=throughput ;;
+            ai-gateway|ai-gateway-model-index) manifest_kind="${{ matrix.vaultKind }}" ;;
+            *) manifest_kind="${{ matrix.kind }}" ;;
+          esac
+
+          if [ "${{ matrix.provider }}" = "all" ]; then
+            jq -r --arg kind "$manifest_kind" \
+              '.[$kind] | to_entries[] | .value[]?' \
+              benchmarks/scripts/provider-vars.json
+          else
+            jq -r --arg kind "$manifest_kind" --arg provider "${{ matrix.provider }}" \
+              '.[$kind][$provider][]?' \
+              benchmarks/scripts/provider-vars.json
+          fi | sort -u > /tmp/oss-vault-keys
+          printf '%s\n' BENCHMARKS_PLATFORM_API_KEY >> /tmp/oss-vault-keys
+          if [ "${{ matrix.kind }}" = "sandbox" ] || [ "${{ matrix.kind }}" = "dax" ]; then
+            printf '%s\n' ARCHIL_DISK_ID_SANDBOX >> /tmp/oss-vault-keys
+          fi
+          if [ "${{ matrix.kind }}" = "dax" ]; then
+            printf '%s\n' BL_DAX_API_KEY BL_DAX_WORKSPACE GMN_API_HOST GMN_TOKEN >> /tmp/oss-vault-keys
+          fi
+      - name: Build E2B DAX template
+        if: matrix.kind == 'dax' && matrix.provider == 'e2b'
+        run: |
+          . benchmarks/scripts/load-vault-secrets.sh "^($(paste -sd'|' /tmp/oss-vault-keys))="
+          npx tsx benchmarks/scripts/build-e2b-template.ts
+      - name: Build Superserve DAX template
+        if: matrix.kind == 'dax' && matrix.provider == 'superserve'
+        run: |
+          . benchmarks/scripts/load-vault-secrets.sh "^($(paste -sd'|' /tmp/oss-vault-keys))="
+          npx tsx benchmarks/scripts/build-superserve-template.ts
+      - name: Resolve Northflank DAX plan
+        if: matrix.kind == 'dax' && matrix.provider == 'northflank'
+        run: |
+          . benchmarks/scripts/load-vault-secrets.sh "^($(paste -sd'|' /tmp/oss-vault-keys))="
+          npx tsx benchmarks/scripts/find-northflank-plan.ts
+      - name: Run benchmark
+        env:
+          PROVIDER: ${{ matrix.provider }}
+          FILE_SIZE: ${{ matrix.fileSize }}
+          ITERATIONS: ${{ matrix.iterations }}
+          DAX: ${{ matrix.kind == 'dax' && '1' || '' }}
+          ARCHIL_EXECUTION: ${{ (matrix.kind == 'sandbox' || matrix.kind == 'dax') && 'persistent' || '' }}
+          THROUGHPUT_URLS: ${{ needs.throughput-pages.outputs.urls }}
+          DAILY_BENCH_SLUG: 'daily'
+          DAILY_BENCH_NAME: 'Daily'
+          BENCHMARK_SLUG: ${{ github.event.inputs.slug }}${{ github.event.inputs.slug != '' && matrix.family && format('-{0}', matrix.family) || '' }}
+          BENCHMARK_NAME: ${{ github.event.inputs.name }}${{ github.event.inputs.name != '' && matrix.family && format(' {0}', matrix.family) || '' }}
+          BENCH_TRIGGER_SOURCE: ${{ github.event.inputs.trigger_source || '' }}
+          BENCH_TRIGGER_REQUESTED_BY: ${{ github.event.inputs.trigger_requested_by || '' }}
+          BENCH_TRIGGER_REQUEST_ID: ${{ github.event.inputs.trigger_request_id || '' }}
+        run: |
+          . benchmarks/scripts/load-vault-secrets.sh "^($(paste -sd'|' /tmp/oss-vault-keys))="
+
+          if [ "$ARCHIL_EXECUTION" = "persistent" ] && [ -n "${ARCHIL_DISK_ID_SANDBOX:-}" ]; then export ARCHIL_DISK_ID="$ARCHIL_DISK_ID_SANDBOX"; fi
+
+          RUNNER=(npx tsx packages/benchsdk-runner/dist/bin.js run)
+          # Same deadline plumbing as the OSS snapshot-fork workflow: the
+          # runner stops starting iterations --deadline-ms in, drains, and
+          # submits partial results instead of a dead leg burning to the
+          # job's timeout-minutes. The shell `timeout` is only the backstop
+          # for a real hang (its 124 marks the step failed, which is right
+          # then).
+          #
+          # The deadline clock starts when the runner does, but timeout-minutes
+          # counts from job start — so the margin covers the setup steps
+          # (~10m allowance), draining the in-flight iteration, and the
+          # result-submission tail (~5m). DRAIN_MIN is the slowest iteration
+          # a kind can still finish: dax phases are bounded at 10m each,
+          # model-index calls take seconds. The backstop stays 10m under the
+          # job cap so it fires before the job kill for any setup under 10m.
+          DRAIN_MIN=10
+          case "${{ matrix.kind }}" in
+            dax) DRAIN_MIN=15 ;;
+            ai-gateway-model-index) DRAIN_MIN=5 ;;
+          esac
+          JOB_TIMEOUT_MIN="${{ matrix.timeout || 90 }}"
+          DEADLINE_MS=$(( (JOB_TIMEOUT_MIN - DRAIN_MIN - 15) * 60000 ))
+          BACKSTOP_MIN=$(( JOB_TIMEOUT_MIN - 10 ))
+          # dry_run skips result commits but the runner would still report a
+          # platform run unless told not to ingest.
+          EXTRA_ARGS=()
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then EXTRA_ARGS+=(--no-ingest); fi
+          if { [ "${{ matrix.kind }}" = "ai-gateway" ] || [ "${{ matrix.kind }}" = "ai-gateway-model-index" ]; } && [ -n "$PROVIDER" ] && [ "$PROVIDER" != "all" ]; then EXTRA_ARGS+=(--provider "$PROVIDER"); fi
+          # Matrix jobs for the same benchmark share one platform run. The
+          # attempt number is included so re-runs do not rejoin completed runs.
+          case "${{ matrix.kind }}" in
+            sandbox)
+              RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+              timeout "${BACKSTOP_MIN}m" "${RUNNER[@]}" benchmarks/sandbox/tti.bench.ts --provider "$PROVIDER" --iterations "$ITERATIONS" --concurrency "${{ matrix.concurrency || '100' }}" --run-key "$RUN_KEY" --deadline-ms "$DEADLINE_MS" "${EXTRA_ARGS[@]}"
+              ;;
+            dax)
+              export LIGHTNING_INSTANCE_TYPE=cpu-8
+              export ARKER_PLATFORMS=graviton4
+              # If dedicated DAX Blaxel credentials are provisioned, route them to the
+              # standard names that providers.ts expects, so no provider fork is needed.
+              if [ -n "${BL_DAX_API_KEY:-}" ] && [ -n "${BL_DAX_WORKSPACE:-}" ]; then
+                export BL_API_KEY="$BL_DAX_API_KEY"
+                export BL_WORKSPACE="$BL_DAX_WORKSPACE"
+                unset BL_DAX_API_KEY BL_DAX_WORKSPACE
+              fi
+              RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+              timeout "${BACKSTOP_MIN}m" "${RUNNER[@]}" benchmarks/sandbox/dax.bench.ts --provider "$PROVIDER" --iterations "$ITERATIONS" --run-key "$RUN_KEY" --deadline-ms "$DEADLINE_MS" "${EXTRA_ARGS[@]}"
+              ;;
+            storage)
+              RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+              timeout "${BACKSTOP_MIN}m" "${RUNNER[@]}" benchmarks/storage/storage.bench.ts --provider "$PROVIDER" --file-size "$FILE_SIZE" --concurrency "${{ matrix.concurrency || '16' }}" --iterations "$ITERATIONS" --run-key "$RUN_KEY" --deadline-ms "$DEADLINE_MS" "${EXTRA_ARGS[@]}"
+              ;;
+            snapshot-fork)
+              RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+              timeout "${BACKSTOP_MIN}m" "${RUNNER[@]}" benchmarks/storage/snapshot-fork.bench.ts --provider "$PROVIDER" --dataset small --iterations "$ITERATIONS" --run-key "$RUN_KEY" --deadline-ms "$DEADLINE_MS" "${EXTRA_ARGS[@]}"
+              ;;
+            browser)
+              RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+              timeout "${BACKSTOP_MIN}m" "${RUNNER[@]}" benchmarks/browser/browser.bench.ts --provider "$PROVIDER" --iterations "$ITERATIONS" --run-key "$RUN_KEY" --deadline-ms "$DEADLINE_MS" "${EXTRA_ARGS[@]}"
+              ;;
+            browser-throughput)
+              RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+              timeout "${BACKSTOP_MIN}m" "${RUNNER[@]}" benchmarks/browser/browser-throughput.bench.ts --provider "$PROVIDER" --iterations "$ITERATIONS" --run-key "$RUN_KEY" --deadline-ms "$DEADLINE_MS" "${EXTRA_ARGS[@]}"
+              ;;
+            ai-gateway|ai-gateway-model-index)
+              RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+              timeout "${BACKSTOP_MIN}m" "${RUNNER[@]}" "${{ matrix.benchScript }}" --iterations "$ITERATIONS" --run-key "$RUN_KEY" --deadline-ms "$DEADLINE_MS" "${EXTRA_ARGS[@]}"
+              ;;
+          esac

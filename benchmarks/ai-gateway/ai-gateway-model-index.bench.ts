@@ -18,9 +18,12 @@ import { fileURLToPath } from 'node:url';
 import { defineBenchmarkConfig, defineTask } from '@benchsdk/runner';
 import type { BenchmarkRunOutcome } from '@benchsdk/runner';
 import type { JsonObject } from '@benchsdk/api';
-import { modelIndexProviders } from './model-index-providers.js';
+import { modelIndexProviders as allProviders } from './model-index-providers.js';
+import { selectProviders } from '../scripts/provider-selection.js';
 import { runModelIndexTask } from './model-index-task.js';
 import type { AIGatewayModelIndexProviderResult } from './types.js';
+
+const modelIndexProviders = selectProviders(allProviders);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

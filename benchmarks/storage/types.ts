@@ -13,6 +13,8 @@ export interface SnapshotForkOverride {
 }
 
 export interface StorageProviderConfig {
+  /** Included only in private daily benchmark runs. */
+  dailyOnly?: boolean;
   /** Provider name */
   name: string;
   /** Number of iterations (default: 100) */

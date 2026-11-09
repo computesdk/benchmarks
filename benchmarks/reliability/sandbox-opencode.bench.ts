@@ -4,8 +4,11 @@ import { defineBenchmarkConfig, defineTask, TaskError } from '@benchsdk/runner';
 import { drainLateCleanups, withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
 import { sandboxId } from '../src/util/sandbox-id.js';
-import { providers } from '../sandbox/providers.js';
+import { providers as allProviders } from '../sandbox/providers.js';
+import { selectProviders } from '../scripts/provider-selection.js';
 import type { ProviderConfig } from '../sandbox/types.js';
+
+const providers = selectProviders(allProviders);
 
 function preview(text: string | null | undefined, max = 2000): string | null {
   if (!text) return null;

@@ -13,9 +13,12 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { defineBenchmarkConfig, defineTask, TaskError } from '@benchsdk/runner';
 import { withTimeout } from '../src/util/timeout.js';
-import { browserProviders } from './providers.js';
+import { browserProviders as allProviders } from './providers.js';
+import { selectProviders } from '../scripts/provider-selection.js';
 import type { BrowserProviderConfig } from './types.js';
 import { writeBrowserLegacyResults } from './legacy-results.js';
+
+const browserProviders = selectProviders(allProviders);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
