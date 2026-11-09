@@ -120,8 +120,8 @@ export const config = defineBenchmarkConfig({
     }),
 });
 
-// Standardized resource sizing for fair comparison across providers.
-// Target: 8 vCPU, 16 GiB RAM.
+// Resource sizing and provider-specific exceptions.
+// Fixed-size target: 8 vCPU, 16 GiB RAM; provider exceptions are documented below.
 // Each provider uses different parameter names and units, so we map per-provider.
 // Providers not listed here don't support CPU/memory configuration at sandbox creation time.
 // Note: E2B sets CPU/memory at template build time, not at sandbox creation.
@@ -135,7 +135,11 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   agent37:      { cpu: 4, memory: 16384 },
   archil:       { vcpus: 8, memoryMiB: 16384 },
   arker:        { templateId: 'ubuntu-full-8' },           // 8 vCPU / 16 GiB golden
-  modal:        { cpu: 4, cpuLimit: 4, memoryMiB: 16384, templateId: 'node:22' }, // Modal: 1 core = 2 vCPUs, so 4 cores = 8 vCPUs
+  // Modal bills max(request, usage); 0.125 cores is its default minimum request.
+  // The JS SDK requires a CPU request when setting a limit. Burst up to 8 physical
+  // cores (16 vCPU equivalent). The 16 GiB memory request has no memoryLimitMiB,
+  // so memory can also burst when host capacity is available.
+  modal:        { cpu: 0.125, cpuLimit: 8, memoryMiB: 16384, templateId: 'node:22', runtime: 'vm' },
   tenki:        { cpuCores: 8, memoryMb: 16384, diskSizeGb: 20 }, // default disk cannot hold the OpenCode install
   tensorlake:   { cpus: 8, memoryMb: 16000 },            // Tensorlake caps memory at 16000 MB (16384 is rejected with a 400)
   isorun:       { vcpus: 8, memMiB: 16384 },

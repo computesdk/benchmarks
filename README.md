@@ -141,6 +141,13 @@ For full details on each suite, see:
 
 ![DAX Sandbox Builds](./dax.svg)
 
+The [DAX resource configuration](./benchmarks/sandbox/dax.bench.ts) generally targets
+8 vCPUs and 16 GiB RAM. Modal uses the VM runtime with its default CPU request of
+0.125 physical cores and a burst limit of 8 physical cores (16 vCPU equivalent). Its 16 GiB memory
+request has no explicit memory limit, allowing memory bursting when host capacity
+is available. Modal [bills CPU and memory at the greater of request or actual usage](https://modal.com/docs/guide/sandbox-resources),
+including usage above the memory request.
+
 ### [AI Gateway - Anthropic](#ai-gateway---anthropic)
 
 ![AI Gateway - Anthropic](./ai-gateway.svg)
