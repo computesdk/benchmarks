@@ -6,7 +6,7 @@
  *
  * Dry run by default; set DELETE=1 to delete. Snapshots younger than
  * MIN_AGE_MIN minutes (default 60) are skipped so an in-flight run is safe.
- * Only unnamed (auto) snapshots and the bench's own `snap-*` snapshots that no
+ * Only unnamed (auto) snapshots and the bench's own `snap-<ms>-<id>` snapshots that no
  * fork still uses are deleted; anything else is left alone.
  */
 import '../src/env.js';
@@ -64,7 +64,9 @@ export interface CleanupResult {
   failed: string[];
 }
 
-const isBenchOwned = (s: SnapshotInfo) => s.name === undefined || s.name.startsWith('snap-');
+// snapshot-fork.bench.ts names its own snapshots `snap-${Date.now()}-${randomId()}`.
+const BENCH_SNAPSHOT_NAME = /^snap-[0-9]{13}-[0-9a-z]{1,13}$/;
+const isBenchOwned = (s: SnapshotInfo) => s.name === undefined || BENCH_SNAPSHOT_NAME.test(s.name);
 
 export async function cleanupLeakedSnapshots(opts: CleanupOptions): Promise<CleanupResult> {
   const log = opts.log ?? console.log;
