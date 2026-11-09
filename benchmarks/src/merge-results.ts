@@ -37,6 +37,7 @@ import {
 } from '../browser/throughput-scoring.js';
 import { computeAIGatewayCompositeScores, sortAIGatewayByCompositeScore } from '../ai-gateway/scoring.js';
 import { printResultsTable, writeResultsJson } from '../sandbox/table.js';
+import { UNTESTED_SANDBOX_PROVIDERS } from '../sandbox/untested.js';
 import type { BenchmarkResult } from '../sandbox/types.js';
 import type { StorageBenchmarkResult } from '../storage/types.js';
 import type { SnapshotForkBenchmarkResult } from '../storage/snapshot-fork-types.js';
@@ -49,6 +50,11 @@ const ROOT = path.resolve(__dirname, '../..');
 const SANDBOX_WORKLOAD_DIRS = new Set([
   'sandbox-dax',
 ]);
+
+function untestedProviders(results: { provider: string }[]): string[] {
+  const tested = new Set(results.map((r) => r.provider));
+  return UNTESTED_SANDBOX_PROVIDERS.filter((provider) => !tested.has(provider));
+}
 
 const args = process.argv.slice(2);
 function getArgValue(flag: string): string | undefined {
@@ -178,7 +184,7 @@ async function main() {
     fs.mkdirSync(resultsDir, { recursive: true });
 
     const outPath = path.join(resultsDir, `${timestamp}.json`);
-    await writeResultsJson(deduped, outPath);
+    await writeResultsJson(deduped, outPath, untestedProviders(deduped));
 
     // Copy to latest.json
     const latestPath = path.join(resultsDir, 'latest.json');
@@ -219,10 +225,12 @@ async function main() {
     const resultsDir = path.resolve(ROOT, `results/${modeToDir(mode)}`);
     fs.mkdirSync(resultsDir, { recursive: true });
 
+    const untested = untestedProviders(deduped);
     const output = {
       version: '1.0',
       timestamp: new Date().toISOString(),
       config: { mode },
+      ...(untested.length > 0 ? { untested } : {}),
       results: deduped,
     };
 
