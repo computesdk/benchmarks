@@ -26,14 +26,17 @@ export function validateMethodology(spec: ScoringMethodology): void {
 export function validateMetricContract(metric: ScoringMetricContract, spec: ScoringMethodology): void {
   const transform = metric.transform;
   if (transform !== undefined && (spec.version !== 2 || transform === null ||
-    transform.kind !== 'reciprocal' || !Number.isFinite(transform.reference) || transform.reference <= 0)) {
+    transform.kind !== 'reciprocal' || !Number.isFinite(transform.reference) || transform.reference <= 0 ||
+    Object.keys(transform).some(key => !['kind', 'reference'].includes(key)))) {
     throw new Error('Unknown or invalid scoring transform; reciprocal requires v2 and a positive reference');
   }
   if (spec.version !== 2) return;
   if (!Number.isFinite(metric.ceiling) || metric.ceiling <= 0 ||
+    (metric.higherIsBetter !== undefined && typeof metric.higherIsBetter !== 'boolean') ||
     (metric.floor !== undefined && (!Number.isFinite(metric.floor) || metric.floor < 0 || metric.floor >= metric.ceiling)) ||
     (metric.trim !== undefined && (!Number.isFinite(metric.trim) || metric.trim < 0 || metric.trim >= 0.5)) ||
-    Object.values(metric.weights).some(w => !Number.isFinite(w) || w < 0)) {
+    Object.keys(metric.weights).some(key => !['median', 'p95', 'p99'].includes(key)) ||
+    [metric.weights.median, metric.weights.p95, metric.weights.p99].some(w => !Number.isFinite(w) || w < 0)) {
     throw new Error('Invalid v2 metric bounds, trim or weights');
   }
 }

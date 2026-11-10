@@ -33,4 +33,12 @@ describe('versioned continuous scoring', () => {
       expect(() => evaluate([], invalid as never)).toThrow();
     }
   });
+  it('rejects ambiguous v2 metric contracts', () => {
+    for (const patch of [
+      { higherIsBetter: 'yes' },
+      { weights: { median: 1, p95: 0, p99: 0, unknown: 1 } },
+      { transform: { kind: 'reciprocal', reference: 100, unknown: 1 } },
+    ]) expect(() => evaluate([], { ...config, metrics: [{ ...config.metrics[0], ...patch }] } as never)).toThrow();
+    expect(() => evaluate([], { ...config, metrics: [config.metrics[0], { ...config.metrics[0], weights: { median: 0, p95: 0, p99: 0 } }] })).toThrow();
+  });
 });

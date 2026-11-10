@@ -186,6 +186,9 @@ export class ScoringSpecError extends Error {
 export function validateScoringSpec(spec: ScoringSpec): void {
   try {
     validateMethodology(spec);
+    if (spec.version === 2 && new Set(spec.metrics.map(metric => metric.name)).size !== spec.metrics.length) {
+      throw new Error('Duplicate v2 scoring metric');
+    }
     for (const metric of spec.metrics) validateMetricContract(metric, spec);
   } catch (err) {
     throw new ScoringSpecError((err as Error).message);
@@ -194,7 +197,7 @@ export function validateScoringSpec(spec: ScoringSpec): void {
     (sum, m) => sum + m.weights.median + m.weights.p95 + m.weights.p99,
     0,
   );
-  if (!Number.isFinite(totalWeight) || Math.abs(totalWeight - 1) > WEIGHT_SUM_TOLERANCE) {
+  if ((spec.version === 2 && !Number.isFinite(totalWeight)) || Math.abs(totalWeight - 1) > WEIGHT_SUM_TOLERANCE) {
     const breakdown = spec.metrics
       .map((m) => `${m.name}=${(m.weights.median + m.weights.p95 + m.weights.p99).toFixed(3)}`)
       .join(', ');
@@ -236,7 +239,7 @@ function scoreGroup(
   unitByMetric: Map<string, string | undefined>,
 ): BenchmarkScoreResult {
   const successFilter = spec.success ?? ((r: TaskResultRecord) => r.status === 'success');
-  const passing = records.filter(successFilter);
+  const passing = records.filter(r => (spec.version !== 2 || r.status === 'success') && successFilter(r));
   const successRate = records.length === 0 ? 0 : passing.length / records.length;
   const skipped = records.length === 0;
 
@@ -329,6 +332,13 @@ export function scoringConfigToSpec(
   dimensions?: Record<string, unknown>,
   display?: { metrics?: { key: string; unit?: string }[] },
 ): ScoringSpec {
+  if (config.version === 2) {
+    const checkKeys = (value: object, allowed: string[]) => {
+      if (Object.keys(value).some(key => !allowed.includes(key))) throw new ScoringSpecError('Unknown v2 scoring field');
+    };
+    checkKeys(config, ['version', 'methodology', 'groupBy', 'success', 'metrics']);
+    for (const metric of config.metrics) checkKeys(metric, ['key', 'label', 'unit', 'ceiling', 'floor', 'higherIsBetter', 'weights', 'trim', 'transform']);
+  }
   const success = config.success;
   const unitByMetric = new Map(display?.metrics?.map((m) => [m.key, m.unit]));
   return {
