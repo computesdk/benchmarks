@@ -52,9 +52,8 @@ import type {
   ActivityOptions,
   BenchmarkActivity,
   ReliabilityCards,
-  RetriggerAccepted,
-  RetriggerRequestStatus,
-  RetriggerState,
+  RunAgainAccepted,
+  RunAgainState,
   RunArchiveResult,
   RunDayCursor,
   RunDayPage,
@@ -172,7 +171,6 @@ function feedFilterParams(filter: RunFeedFilter): Record<string, string | undefi
 
 function dayCursorParams(cursor: RunDayCursor | undefined): Record<string, string | undefined> {
   if (cursor === undefined) return {};
-  if (typeof cursor === 'string') return { cursor };
   return { cursorCreatedAt: cursor.createdAt, cursorId: cursor.id };
 }
 
@@ -469,27 +467,26 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
     },
 
     async setBenchmarkArchived(slug, archived) {
-      const data = await request<{ benchmark: BenchmarkResource & { archivedRunCount?: number }; archivedRunCount?: number }>(
+      // A repeat archive is a 409 `conflict`; `archivedRunCount` is absent when nothing moved.
+      const data = await request<{ benchmark: BenchmarkResource; archivedRunCount?: number }>(
         'PATCH',
         `/benchmarks/${encodePath(slug)}`,
         { status: archived ? 'archived' : 'active' },
       );
-      const { archivedRunCount: nestedCount, ...benchmark } = data.benchmark;
-      const archivedRunCount = data.archivedRunCount ?? nestedCount;
-      const result: BenchmarkArchiveResult = { benchmark };
-      if (typeof archivedRunCount === 'number') result.archivedRunCount = archivedRunCount;
+      const result: BenchmarkArchiveResult = { benchmark: data.benchmark };
+      if (typeof data.archivedRunCount === 'number') result.archivedRunCount = data.archivedRunCount;
       return result;
     },
 
     async archiveRuns(runIds, archived = true) {
-      const data = await request<{ archived?: number | boolean; count?: number }>(
+      // The wire reply is `{ archived: <count>, count }`: `archived` has always
+      // been the number of runs changed, and `count` repeats it.
+      const data = await request<{ archived?: number; count?: number }>(
         'POST',
         '/benchmarks/runs/archive',
         { runIds, archived },
       );
-      // The platform answers `{ archived: <count> }`; `{ archived, count }` is read too.
-      const count =
-        typeof data.count === 'number' ? data.count : typeof data.archived === 'number' ? data.archived : runIds.length;
+      const count = typeof data.count === 'number' ? data.count : typeof data.archived === 'number' ? data.archived : 0;
       const result: RunArchiveResult = { archived, count };
       return result;
     },
@@ -506,12 +503,16 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
     },
 
     async getRunFeed(options: RunFeedOptions = {}) {
+      if (options.limit !== undefined && options.runIds?.length) {
+        throw new Error('getRunFeed takes either limit or runIds, not both');
+      }
       return request<RunFeed>(
         'GET',
         `/benchmarks/runs/summary${queryString({
           ...feedFilterParams(options),
           limit: options.limit,
           runIds: csvParam(options.runIds),
+          stats: options.stats === false ? '0' : undefined,
         })}`,
       );
     },
@@ -554,21 +555,13 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
       );
     },
 
-    async retriggerBenchmark(slug, input: { requestId?: string } = {}) {
-      const body: JsonObject = {};
-      if (input.requestId !== undefined) body.requestId = input.requestId;
-      return request<RetriggerAccepted>('POST', `/benchmarks/${encodePath(slug)}/retrigger`, body);
+    async runBenchmarkAgain(slug) {
+      // The route takes no body.
+      return request<RunAgainAccepted>('POST', `/benchmarks/${encodePath(slug)}/run-again`);
     },
 
-    async getRetriggerState(slug) {
-      return request<RetriggerState>('GET', `/benchmarks/${encodePath(slug)}/retrigger`);
-    },
-
-    async getRetriggerRequest(slug, requestId) {
-      return request<RetriggerRequestStatus>(
-        'GET',
-        `/benchmarks/${encodePath(slug)}/retrigger/${encodePath(requestId)}`,
-      );
+    async getRunAgainState(slug) {
+      return request<RunAgainState>('GET', `/benchmarks/${encodePath(slug)}/run-again`);
     },
 
     async createRun(benchmarkSlug, input) {
@@ -580,7 +573,7 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
     },
 
     async listRuns(benchmarkSlug, options: ListRunsOptions = {}) {
-      const { sourceOrg, limit, offset, archived, includeMuted, ...filter } = options;
+      const { sourceOrg, limit, offset, archived, ...filter } = options;
       const data = await request<BenchmarkRunList>(
         'GET',
         `${benchmarkPath(benchmarkSlug, sourceOrg)}/runs${queryString({
@@ -588,7 +581,6 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
           offset,
           ...filterParams(filter),
           archived,
-          includeMuted: flagParam(includeMuted),
         })}`,
       );
       // The wire shape is { items, filter, upgrade } but callers iterate the
@@ -617,7 +609,7 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
           benchmarkSlug: options.benchmarkSlug,
           benchmarkSlugs: csvParam(options.benchmarkSlugs),
           archived: options.archived,
-          includeMuted: flagParam(options.includeMuted),
+          includeMuted: options.includeMuted === undefined ? undefined : options.includeMuted ? '1' : '0',
         })}`,
       );
       return data.items;

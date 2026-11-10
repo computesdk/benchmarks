@@ -24,7 +24,7 @@ export const GLOBAL_BOOLEAN_FLAGS = ['json', 'verbose', 'version', 'help'] as co
 const RESULT_FILTERS_SINCE = '0.8.0';
 // Management commands: the first @benchsdk/cli release after 0.9.3.
 const MANAGEMENT_SINCE = '0.9.4';
-// Org feed and daily retrigger commands ship in the same release.
+// Org feed and daily Run again commands ship in the same release.
 const FEED_SINCE = '0.9.4';
 
 export const COMMANDS: readonly BenchCommand[] = [
@@ -224,18 +224,18 @@ export const COMMANDS: readonly BenchCommand[] = [
     summary: 'Run counts per day for the organization or one benchmark (--days 1..90)',
   },
   {
-    path: ['retrigger'],
+    path: ['run-again'],
     args: ['<benchmark-slug>'],
     flags: ['wait', 'timeout', 'interval'],
     since: FEED_SINCE,
-    summary: "Retrigger today's run of a daily benchmark (needs a user login; --wait polls until the run starts)",
+    summary: 'Run a daily benchmark again, once per organization and UTC day (needs a user login; --wait polls until the run starts)',
   },
   {
-    path: ['retrigger', 'status'],
+    path: ['run-again', 'status'],
     args: ['<benchmark-slug>'],
     flags: ['request'],
     since: FEED_SINCE,
-    summary: "Today's retrigger availability and quota, or one request with --request",
+    summary: "Today's Run again availability and quota, or one request with --request <runAgainId>",
   },
   {
     path: ['iterations'],

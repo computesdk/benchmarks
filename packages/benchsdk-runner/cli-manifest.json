@@ -504,7 +504,7 @@
     },
     {
       "path": [
-        "retrigger"
+        "run-again"
       ],
       "args": [
         "<benchmark-slug>"
@@ -514,13 +514,13 @@
         "--timeout",
         "--interval"
       ],
-      "summary": "Retrigger today's run of a daily benchmark (needs a user login; --wait polls until the run starts)",
+      "summary": "Run a daily benchmark again, once per organization and UTC day (needs a user login; --wait polls until the run starts)",
       "since": "0.9.4",
       "package": "@benchsdk/cli"
     },
     {
       "path": [
-        "retrigger",
+        "run-again",
         "status"
       ],
       "args": [
@@ -529,7 +529,7 @@
       "flags": [
         "--request"
       ],
-      "summary": "Today's retrigger availability and quota, or one request with --request",
+      "summary": "Today's Run again availability and quota, or one request with --request <runAgainId>",
       "since": "0.9.4",
       "package": "@benchsdk/cli"
     },

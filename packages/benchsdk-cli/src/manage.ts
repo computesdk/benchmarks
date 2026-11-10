@@ -28,11 +28,13 @@ function adminHint(status: number, envelope: ApiErrorEnvelope | null): string | 
   return 'Changing benchmarks and archiving runs needs an organization owner or admin: sign in as one (`bench auth login`) or use an org API key (--api-key or BENCHMARKS_PLATFORM_API_KEY).';
 }
 
-async function adminWrite<T>(call: () => Promise<T>): Promise<T> {
+type HintPicker = (status: number, envelope: ApiErrorEnvelope | null) => string | undefined;
+
+async function adminWrite<T>(call: () => Promise<T>, extraHint?: HintPicker): Promise<T> {
   try {
     return await call();
   } catch (err) {
-    rethrowWithHint(err, adminHint);
+    rethrowWithHint(err, (status, envelope) => extraHint?.(status, envelope) ?? adminHint(status, envelope));
   }
 }
 
@@ -73,7 +75,12 @@ export async function handleBenchmarkArchive(
     await confirmWrite({ yes: optionFlag(options, 'yes'), action: `archive benchmark ${slug} and all of its runs` });
   }
   const { api } = await createApiClient(overrides);
-  const { benchmark, archivedRunCount } = await adminWrite(() => api.setBenchmarkArchived(slug, archived));
+  // PATCH answers a repeat archive with 409 `conflict` (a repeat restore is a no-op without archivedRunCount).
+  const alreadyArchived: HintPicker = (status, envelope) =>
+    archived && status === 409 && envelope?.code === 'conflict'
+      ? `${slug} is already archived; \`bench benchmarks restore ${slug}\` brings it back.`
+      : undefined;
+  const { benchmark, archivedRunCount } = await adminWrite(() => api.setBenchmarkArchived(slug, archived), alreadyArchived);
   if (isJsonOutput(output)) {
     printData({ ...benchmark, ...(archivedRunCount !== undefined ? { archivedRunCount } : {}) }, output);
     return;

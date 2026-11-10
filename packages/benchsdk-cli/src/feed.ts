@@ -1,4 +1,4 @@
-import type { RunDayCursor, RunFeedFilter, RunFeedItem } from '@benchsdk/api';
+import type { ReliabilityCard, RunDayCursor, RunFeedAnalytics, RunFeedFilter, RunFeedItem } from '@benchsdk/api';
 import { createApiClient } from './client.js';
 import { isJsonOutput, optionFlag, optionList, optionNumber, optionString, type SubcommandOptions } from './options.js';
 import { printData, type OutputOptions } from './output.js';
@@ -60,15 +60,21 @@ function durationLabel(run: RunFeedItem): string {
 }
 
 function feedRow(run: RunFeedItem): Record<string, unknown> {
+  const { done, errors, total } = run.progress ?? { done: 0, errors: 0, total: 0 };
   return {
-    benchmark: run.benchmarkSlug,
+    benchmark: run.benchmarkOwner === 'foreign' ? `~${run.benchmarkOwnerOrgSlug}/${run.benchmarkSlug}` : run.benchmarkSlug,
     run: run.runId,
     status: run.status,
-    started: run.startedAt ?? run.createdAt ?? '',
+    started: run.startedAt,
     duration: durationLabel(run),
-    ...(run.archivedAt ? { archived: run.archivedAt } : {}),
-    ...(run.muted ? { muted: true } : {}),
+    progress: run.statsPending ? '' : `${done}/${total}${errors ? ` (${errors} errors)` : ''}`,
+    ...(run.isArchived ? { archived: true } : {}),
+    ...(run.benchmarkMuted ? { muted: true } : {}),
   };
+}
+
+function analyticsNote(analytics: RunFeedAnalytics | undefined): void {
+  if (analytics === 'unavailable') console.log('Run stats unavailable (analytics: unavailable); progress is a placeholder.');
 }
 
 function printRuns(runs: readonly RunFeedItem[]): void {
@@ -91,7 +97,7 @@ export async function handleRunsFeed(options: SubcommandOptions, overrides: Over
     return;
   }
   printRuns(feed.runs);
-  if (feed.analytics !== 'ok') console.log(`Run stats unavailable (analytics: ${feed.analytics}).`);
+  analyticsNote(feed.analytics);
 }
 
 /** `bench runs days`: run counts per local day (`GET /benchmarks/runs/days`). */
@@ -108,12 +114,25 @@ export async function handleRunDays(options: SubcommandOptions, overrides: Overr
     console.log('No runs.');
     return;
   }
-  console.log(`Runs per day (${days.timeZone ?? timeZone})`);
+  console.log(`Runs per day (${days.timeZone})`);
   for (const { day, count } of days.days) console.log(`${day}  ${count}`);
 }
 
 function cursorLabel(cursor: RunDayCursor): string {
-  return typeof cursor === 'string' ? cursor : `${cursor.createdAt},${cursor.id}`;
+  return `${cursor.createdAt},${cursor.id}`;
+}
+
+/** `--cursor <createdAt>,<id>`: a page's `nextCursor` as `bench runs day` prints it. */
+function cursorOption(options: SubcommandOptions): RunDayCursor | undefined {
+  const value = optionString(options, 'cursor');
+  if (value === undefined) return undefined;
+  const comma = value.lastIndexOf(',');
+  const createdAt = value.slice(0, comma).trim();
+  const id = value.slice(comma + 1).trim();
+  if (comma < 0 || !createdAt || !id || Number.isNaN(Date.parse(createdAt))) {
+    throw new Error('--cursor takes <createdAt>,<id> as printed by the previous page (nextCursor.createdAt and nextCursor.id)');
+  }
+  return { createdAt, id };
 }
 
 /**
@@ -130,7 +149,7 @@ export async function handleRunsDay(
   if (!isCalendarDay(day)) {
     throw new Error(`Day must be a calendar date in YYYY-MM-DD form, got ${day}`);
   }
-  const query = { ...feedFilter(options), timeZone: localTimeZone(options), cursor: optionString(options, 'cursor') };
+  const query = { ...feedFilter(options), timeZone: localTimeZone(options), cursor: cursorOption(options) };
   const { api } = await createApiClient(overrides);
 
   if (optionFlag(options, 'all')) {
@@ -151,10 +170,28 @@ export async function handleRunsDay(
     return;
   }
   printRuns(page.runs);
-  if (page.nextCursor !== null && page.nextCursor !== undefined) {
-    const next = typeof page.nextCursor === 'string' ? ` or --cursor ${cursorLabel(page.nextCursor)}` : '';
-    console.log(`More runs on ${day}: pass --all${next}`);
+  analyticsNote(page.analytics);
+  if (page.nextCursor) {
+    console.log(`More runs on ${day}: pass --all or --cursor ${cursorLabel(page.nextCursor)}`);
   }
+}
+
+function percent(value: number | null): string {
+  return value === null ? '' : `${(value * 100).toFixed(2)}%`;
+}
+
+function cardRow({ benchmark, card }: ReliabilityCard): Record<string, unknown> {
+  const down = card.participants.filter((participant) => participant.status?.state === 'down').length;
+  return {
+    benchmark: benchmark.owner === 'foreign' ? `~${benchmark.ownerOrgSlug}/${benchmark.slug}` : benchmark.slug,
+    uptime: percent(card.uptime),
+    checks: card.counted,
+    failed: card.failed,
+    down: `${down}/${card.participants.length}`,
+    lastCheck: card.lastCheckAt ?? '',
+    ...(card.paused ? { paused: true } : {}),
+    ...(benchmark.muted ? { muted: true } : {}),
+  };
 }
 
 /** `bench reliability cards`: the dashboard's reliability cards (`GET /benchmarks/reliability-cards`). */
@@ -163,14 +200,16 @@ export async function handleReliabilityCards(
   overrides: Overrides,
   output: OutputOptions,
 ): Promise<void> {
+  const includeMuted = optionFlag(options, 'include-muted') || undefined;
   const { api } = await createApiClient(overrides);
-  const result = await api.getReliabilityCards({ includeMuted: optionFlag(options, 'include-muted') || undefined });
+  const result = await api.getReliabilityCards({ includeMuted });
   if (isJsonOutput(output)) {
     printData(result, output);
     return;
   }
-  printData(result.cards, output);
-  if (result.mutedCount > 0) {
+  if (result.cards.length === 0) console.log('No reliability benchmarks.');
+  else console.table(result.cards.map(cardRow));
+  if (result.mutedCount > 0 && !includeMuted) {
     console.log(`${result.mutedCount} muted reliability benchmark${result.mutedCount === 1 ? '' : 's'} hidden (--include-muted shows them)`);
   }
 }
@@ -188,5 +227,6 @@ export async function handleActivity(options: SubcommandOptions, overrides: Over
     printData(activity, output);
     return;
   }
-  printData(activity.series ?? activity, output);
+  console.log(`Runs per UTC day, last ${activity.days} days${activity.benchmarkSlug ? ` (${activity.benchmarkSlug})` : ''}`);
+  for (const { date, runs } of activity.series) console.log(`${date}  ${runs}`);
 }

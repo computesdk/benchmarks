@@ -111,6 +111,21 @@ describe('bench benchmarks archive', () => {
     expect(cli.requests).toHaveLength(0);
   });
 
+  it('a repeat archive exits 1 with the 409 conflict and a restore hint', async () => {
+    cli.routes['PATCH /benchmarks/alpha'] = () => ({
+      status: 409,
+      body: {
+        error: 'Benchmark is already archived',
+        code: 'conflict',
+        hint: 'The resource is already in this state; fetch it and decide whether to retry.',
+      },
+    });
+    const result = await cli.invoke(['benchmarks', 'archive', 'alpha', '-y']);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('409');
+    expect(result.stderr).toContain('Benchmark is already archived (code: conflict)');
+    expect(result.stderr).toContain('Hint: alpha is already archived; `bench benchmarks restore alpha` brings it back.');
+  });
   it('renders a member-login refusal with the API message and an admin hint', async () => {
     cli.useToken('member_token');
     cli.routes['PATCH /benchmarks/alpha'] = () => ({
@@ -139,6 +154,12 @@ describe('bench benchmarks restore', () => {
     expect(stdoutJson(result)).toMatchObject({ status: 'active', archivedRunCount: 3 });
   });
 
+  it('restoring a benchmark that was not archived prints no run count', async () => {
+    cli.routes['PATCH /benchmarks/alpha'] = () => ({ body: { benchmark: benchmark({ status: 'active' }) } });
+    const result = await cli.invoke(['benchmarks', 'restore', 'alpha']);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toBe('Restored benchmark alpha');
+  });
   it('does not take --yes', async () => {
     const result = await cli.invoke(['benchmarks', 'restore', 'alpha', '--yes']);
     expect(result.exitCode).toBe(1);
@@ -332,7 +353,7 @@ describe('bench runs archive / unarchive', () => {
   });
 
   it('archives with -y; the count comes from the platform answer', async () => {
-    cli.routes['POST /benchmarks/runs/archive'] = () => ({ body: { archived: 2 } });
+    cli.routes['POST /benchmarks/runs/archive'] = () => ({ body: { archived: 2, count: 2 } });
     const result = await cli.invoke(['runs', 'archive', RUN_1, RUN_2, '-y', '--json']);
     expect(result.exitCode).toBe(0);
     expect(cli.requests[0]).toMatchObject({
@@ -343,15 +364,15 @@ describe('bench runs archive / unarchive', () => {
     expect(stdoutJson(result)).toEqual({ archived: true, count: 2 });
   });
 
-  it('also reads a { archived, count } answer', async () => {
-    cli.routes['POST /benchmarks/runs/archive'] = () => ({ body: { archived: true, count: 2 } });
+  it('also reads an { archived: <count> } answer without count', async () => {
+    cli.routes['POST /benchmarks/runs/archive'] = () => ({ body: { archived: 2 } });
     const result = await cli.invoke(['runs', 'archive', RUN_1, RUN_2, '--yes']);
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toBe('Archived 2 runs');
   });
 
   it('unarchive sends archived:false', async () => {
-    cli.routes['POST /benchmarks/runs/archive'] = () => ({ body: { archived: 1 } });
+    cli.routes['POST /benchmarks/runs/archive'] = () => ({ body: { archived: 1, count: 1 } });
     const result = await cli.invoke(['runs', 'unarchive', RUN_1, '-y', '--json']);
     expect(result.exitCode).toBe(0);
     expect(cli.requests[0].body).toEqual({ runIds: [RUN_1], archived: false });
@@ -423,6 +444,19 @@ describe('bench runs list archive and mute filters', () => {
     expect(cli.requests[0].query.get('includeMuted')).toBe('1');
   });
 
+  it('keeps muted runs by default: no includeMuted is sent without the flag', async () => {
+    cli.routes['GET /benchmarks/runs'] = () => ({ body: { items: [item(RUN_1, null)] } });
+    const result = await cli.invoke(['runs', 'list', '--json']);
+    expect(result.exitCode).toBe(0);
+    expect(cli.requests[0].query.has('includeMuted')).toBe(false);
+  });
+
+  it('rejects --include-muted with a benchmark slug before sending', async () => {
+    const result = await cli.invoke(['runs', 'list', 'alpha', '--include-muted']);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('--include-muted applies to the cross-benchmark list');
+    expect(cli.requests).toHaveLength(0);
+  });
   it('fails loudly when --archived only comes back with unarchived runs', async () => {
     cli.routes['GET /benchmarks/runs'] = () => ({ body: { items: [item(RUN_1, null)] } });
     const result = await cli.invoke(['runs', 'list', '--archived', 'only', '--json']);

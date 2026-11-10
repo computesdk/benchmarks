@@ -40,6 +40,9 @@ export interface BenchmarkResource {
   type?: string;
   /** Set while the org has muted the benchmark (hidden from shared feeds). */
   mutedAt?: string | null;
+  confidential?: boolean;
+  /** Reliability benchmarks only: every pause window; `end` is null while a pause lasts. */
+  reliabilityPauses?: { start: string; end: string | null }[];
 }
 
 /** `GET /benchmarks?status=`: `active` (default), `archived`, or both. */
@@ -61,10 +64,14 @@ export interface BenchmarkArchiveResult {
   archivedRunCount?: number;
 }
 
-/** What `POST /benchmarks/runs/archive` changed. */
+/**
+ * What `POST /benchmarks/runs/archive` changed. The wire reply is
+ * `{ archived: <count>, count }`; the client reports the direction instead.
+ */
 export interface RunArchiveResult {
   /** `true` when the runs were archived, `false` when they were unarchived. */
   archived: boolean;
+  /** How many runs changed. */
   count: number;
 }
 
@@ -82,40 +89,55 @@ export interface BenchmarkPauseState {
 
 /** Filters shared by the org-wide run feed routes (`runs/summary`, `runs/days`, `runs/day/{day}`). */
 export interface RunFeedFilter {
-  /** Sent as `benchmarkSlugs=a,b`; `~source/slug` names an entitled foreign benchmark. */
+  /** Sent as `benchmarkSlugs=a,b`; `~org/slug` names one owner's benchmark. At most 50. */
   benchmarkSlugs?: string[];
+  /** Archived runs too (off by default). */
   includeArchived?: boolean;
+  /** Runs of muted benchmarks and reliability benchmarks too (off by default). */
   includeMuted?: boolean;
 }
 
 export interface RunFeedOptions extends RunFeedFilter {
-  /** 1..100; the platform defaults to 100. */
+  /** The newest 1..100 runs; the platform defaults to 100. Cannot be combined with `runIds`. */
   limit?: number;
-  /** Poll specific runs instead of the newest ones (cannot be combined with `limit`). */
+  /** Refresh these runs (at most 100) instead of reading the newest ones. Cannot be combined with `limit`. */
   runIds?: string[];
+  /** `false` skips the ClickHouse stats (sent as `stats=0`; `analytics` is then `skipped`). */
+  stats?: boolean;
 }
 
 /** One run in the org feed (`orgBenchmarkRunSummarySchema` on the platform). */
 export interface RunFeedItem {
   runId: string;
+  benchmarkId: string;
   benchmarkSlug: string;
-  benchmarkName?: string;
-  status: string;
-  archivedAt?: string | null;
-  muted?: boolean;
-  startedAt?: string | null;
-  completedAt?: string | null;
-  createdAt?: string;
-  /** Null when analytics are unavailable or (on day pages) never computed. */
-  stats?: JsonObject | null;
+  benchmarkName: string;
+  /** `foreign` for a benchmark another org owns (a subscribed feed). */
+  benchmarkOwner: 'own' | 'foreign';
+  benchmarkOwnerOrgId: string;
+  benchmarkOwnerOrgSlug: string;
+  label: string;
+  provider: string;
+  status: 'pending' | 'running' | 'finished' | string;
+  isArchived: boolean;
+  benchmarkMuted: boolean;
+  benchmarkConfidential: boolean;
+  canArchive: boolean;
+  startedAt: string;
+  completedAt: string | null;
+  progress: { done: number; inFlight: number; errors: number; total: number };
+  /** Set when analytics are unavailable: `progress` is then a placeholder. */
+  statsPending?: boolean;
   [key: string]: unknown;
 }
+
+/** How a feed answer's stats were read: `unavailable` when ClickHouse is down, `skipped` with `stats: false`. */
+export type RunFeedAnalytics = 'ok' | 'unavailable' | 'skipped';
 
 /** `GET /benchmarks/runs/summary`. */
 export interface RunFeed {
   runs: RunFeedItem[];
-  /** `unavailable` when ClickHouse could not be read; runs then carry `stats: null`. */
-  analytics: 'ok' | 'unavailable' | string;
+  analytics: RunFeedAnalytics;
 }
 
 export interface RunDaysOptions extends RunFeedFilter {
@@ -126,11 +148,14 @@ export interface RunDaysOptions extends RunFeedFilter {
 /** `GET /benchmarks/runs/days`. */
 export interface RunDays {
   days: { day: string; count: number }[];
-  timeZone?: string;
+  timeZone: string;
 }
 
-/** Day-page cursor: opaque on the org-wide route, `{createdAt, id}` on the per-benchmark ones. */
-export type RunDayCursor = string | { createdAt: string; id: string };
+/** Day-page cursor: the last row's `createdAt` and `id`, sent back as `cursorCreatedAt` and `cursorId`. */
+export interface RunDayCursor {
+  createdAt: string;
+  id: string;
+}
 
 export interface RunsForDayOptions extends RunDaysOptions {
   cursor?: RunDayCursor;
@@ -139,54 +164,86 @@ export interface RunsForDayOptions extends RunDaysOptions {
 /** `GET /benchmarks/runs/day/{day}`: one page (150 runs) of a local day. */
 export interface RunDayPage {
   day: string;
+  timeZone: string;
   runs: RunFeedItem[];
   nextCursor: RunDayCursor | null;
+  analytics: RunFeedAnalytics;
+}
+
+/** The live part of a reliability card: trailing-24 h uptime, status and check strip. */
+export interface ReliabilityCardData {
+  config: { intervalMs: number; graceMs: number; target: number | null };
+  generatedAt: string;
+  uptime: number | null;
+  counted: number;
+  failed: number;
+  paused: boolean;
+  scheduler: {
+    cells: { start: string; expected: number; fired: number; missed: number; pending: number; paused: number }[];
+  };
+  participants: {
+    slug: string;
+    provider: string | null;
+    status: { state: 'up' | 'down'; since: string | null; lastFailureAt: string | null; lastCheckAt: string } | null;
+    uptime: number | null;
+    counted: number;
+    failed: number;
+    cells: { start: string; passed: number; failed: number }[];
+  }[];
+  lastCheckAt: string | null;
+}
+
+export interface ReliabilityCard {
+  benchmark: {
+    id: string;
+    slug: string;
+    name: string;
+    ownerOrgSlug: string;
+    ownerOrgName: string;
+    owner: 'own' | 'foreign';
+    muted: boolean;
+  };
+  card: ReliabilityCardData;
 }
 
 /** `GET /benchmarks/reliability-cards`. */
 export interface ReliabilityCards {
-  cards: JsonObject[];
-  /** How many reliability benchmarks the mutes hid. */
+  cards: ReliabilityCard[];
+  /** Visible reliability benchmarks that are muted. */
   mutedCount: number;
 }
 
 export interface ActivityOptions {
   /** 1..90; the platform defaults to 30. */
   days?: number;
+  /** One benchmark (slug, or `~org/slug`); muted ones count here. */
   benchmarkSlug?: string;
 }
 
-/** `GET /benchmarks/activity`: run counts per day. */
+/** `GET /benchmarks/activity`: runs per UTC day over the last `days` days, zero-filled. */
 export interface BenchmarkActivity {
-  days?: number;
-  series?: { day: string; total: number; completed: number; failed: number; [key: string]: unknown }[];
-  [key: string]: unknown;
+  days: number;
+  benchmarkSlug: string | null;
+  series: { date: string; runs: number }[];
 }
 
-/** `POST /benchmarks/{slug}/retrigger` (202). */
-export interface RetriggerAccepted {
+/** `POST /benchmarks/{slug}/run-again` (202). */
+export interface RunAgainAccepted {
   benchmarkSlug: string;
   category: string;
-  requestId: string;
-  /** Path of the request-status route, e.g. `/api/v1/benchmarks/{slug}/retrigger/{requestId}`. */
+  runAgainId: string;
+  /** Path of the request-status route: `/api/v1/benchmarks/{slug}/run-again/{runAgainId}`. */
   statusUrl: string;
 }
 
-/** `GET /benchmarks/{slug}/retrigger`: whether a retrigger is possible today. */
-export interface RetriggerState {
+/** `GET /benchmarks/{slug}/run-again`: whether the org may run the benchmark again today. */
+export interface RunAgainState {
   benchmarkSlug: string;
-  category: string;
+  /** Null for a benchmark that is not a daily benchmark. */
+  category: string | null;
   available: boolean;
   disabledReason: string | null;
   quota: { day: string; used: number; limit: number; resetsAt: string };
-}
-
-/** `GET /benchmarks/{slug}/retrigger/{requestId}`. */
-export interface RetriggerRequestStatus {
-  requestId: string;
-  /** Set once the dispatched workflow created its run. */
-  runId: string | null;
-  status: 'pending' | 'linked' | string;
 }
 
 /**
@@ -250,7 +307,11 @@ export interface ListAllRunsOptions {
   /** Restrict the listing to these benchmarks (sent as `benchmarkSlugs=a,b`). */
   benchmarkSlugs?: string[];
   archived?: RunArchivedFilter;
-  /** Include runs of muted benchmarks. */
+  /**
+   * Runs of muted benchmarks are kept by default. `false` (sent as
+   * `includeMuted=0`) leaves them out the way the run feeds do, except for
+   * benchmarks named in `benchmarkSlug`/`benchmarkSlugs`; `true` sends `1`.
+   */
   includeMuted?: boolean;
 }
 
@@ -258,7 +319,6 @@ export interface ListRunsOptions extends BenchmarkRunFilterInput {
   limit?: number;
   offset?: number;
   archived?: RunArchivedFilter;
-  includeMuted?: boolean;
 }
 
 export interface BenchmarkRunList {
@@ -1281,12 +1341,17 @@ export interface BenchmarkClient {
   getReliabilityCards(options?: { includeMuted?: boolean }): Promise<ReliabilityCards>;
   /** GET /benchmarks/activity — run counts per day for the org (or one benchmark). */
   getActivity(options?: ActivityOptions): Promise<BenchmarkActivity>;
-  /** POST /benchmarks/{slug}/retrigger — needs a user credential; org API keys get 403. */
-  retriggerBenchmark(slug: string, input?: { requestId?: string }): Promise<RetriggerAccepted>;
-  /** GET /benchmarks/{slug}/retrigger — availability and today's quota. */
-  getRetriggerState(slug: string): Promise<RetriggerState>;
-  /** GET /benchmarks/{slug}/retrigger/{requestId} — whether the request has linked a run yet. */
-  getRetriggerRequest(slug: string, requestId: string): Promise<RetriggerRequestStatus>;
+  /**
+   * POST /benchmarks/{slug}/run-again — run a daily benchmark again (one request
+   * per org, benchmark and UTC day). Needs a user credential; org API keys get
+   * 403 `user_credential_required`.
+   */
+  runBenchmarkAgain(slug: string): Promise<RunAgainAccepted>;
+  /**
+   * GET /benchmarks/{slug}/run-again — availability and today's quota. Poll a
+   * request from `runBenchmarkAgain` with `getRunAgain`.
+   */
+  getRunAgainState(slug: string): Promise<RunAgainState>;
   createRun(benchmarkSlug: string, input: CreateRunInput): Promise<{
     run: BenchmarkRun;
     participants: BenchmarkParticipant[];

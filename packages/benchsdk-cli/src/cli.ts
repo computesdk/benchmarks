@@ -36,7 +36,7 @@ import {
   handleRunsDay,
   handleRunsFeed,
 } from './feed.js';
-import { handleRetrigger, handleRetriggerStatus } from './retrigger.js';
+import { handleRunAgain, handleRunAgainStatus } from './daily-run-again.js';
 
 let packageVersion: string | undefined;
 
@@ -106,7 +106,8 @@ Commands:
              [--limit N]             The org's newest runs across benchmarks
   runs days [feed filters] [--tz <zone>]
                                      Run counts per local day
-  runs day <YYYY-MM-DD> [feed filters] [--tz <zone>] [--all] [--cursor <c>]
+  runs day <YYYY-MM-DD> [feed filters] [--tz <zone>] [--all]
+             [--cursor <createdAt>,<id>]
                                      One day's runs (--all follows every page)
   runs archive|unarchive <runId...> [-y]
                                      Archive or unarchive up to 100 runs
@@ -130,11 +131,12 @@ Commands:
   reliability cards [--include-muted] The org's reliability cards
   activity [--days N] [--benchmark <slug>]
                                      Run counts per day (N from 1 to 90)
-  retrigger <benchmark-slug> [--wait] [--timeout <sec>] [--interval <sec>]
-                                     Retrigger today's run of a daily benchmark
-                                     (needs a user login; --wait exits 3 on timeout)
-  retrigger status <benchmark-slug> [--request <id>]
-                                     Retrigger availability and quota, or one request
+  run-again <benchmark-slug> [--wait] [--timeout <sec>] [--interval <sec>]
+                                     Run a daily benchmark again (once per org
+                                     and UTC day; needs a user login; --wait
+                                     exits 3 on timeout)
+  run-again status <benchmark-slug> [--request <runAgainId>]
+                                     Run again availability and quota, or one request
   iterations <benchmark-slug> --run <id> [--participant <slug>] [--steps <list>] [--format json|table]
                                      Show per-iteration step latencies
   artifacts list <benchmark-slug> <runId> [--worker <id>]
@@ -398,9 +400,12 @@ to reliability benchmarks only.`;
        bench runs feed [--benchmark <slug>]... [--include-archived] [--include-muted] [--limit N]
        bench runs days [--benchmark <slug>]... [--include-archived] [--include-muted] [--tz <zone>]
        bench runs day <YYYY-MM-DD> [--benchmark <slug>]... [--include-archived] [--include-muted]
-                    [--tz <zone>] [--all] [--cursor <cursor>]
+                    [--tz <zone>] [--all] [--cursor <createdAt>,<id>]
 
 Run lists leave out archived runs unless --archived include|only is given.
+The cross-benchmark list (no slug) keeps runs of muted benchmarks, as it
+always has; --include-muted only says so explicitly, and a single
+benchmark's list takes no mute flag.
 archive and unarchive take up to 100 run ids, ask first on a terminal, and
 need -y/--yes anywhere else.
 
@@ -408,7 +413,8 @@ feed, days and day read the organization-wide feed the dashboard shows:
 --benchmark (repeatable, or a comma list) narrows it, and archived runs and
 runs of muted benchmarks stay out unless --include-archived/--include-muted.
 --tz defaults to this machine's zone. day prints one page (150 runs) with
-its nextCursor; --all follows every page and prints one array of runs.`;
+its nextCursor ({createdAt, id}); pass it back as --cursor <createdAt>,<id>,
+or use --all to follow every page and print one array of runs.`;
     case 'results':
       return `Usage: bench results <benchmark-slug> [--run <id>] [--format json|table]
                     [--participant <list>] [--steps <list>|all]
@@ -429,14 +435,15 @@ muted ones stay out unless --include-muted.`;
 
 Run counts per day for the organization, or for one benchmark. --days takes
 1 to 90 (the platform defaults to 30).`;
-    case 'retrigger':
-      return `Usage: bench retrigger <benchmark-slug> [--wait] [--timeout <sec>] [--interval <sec>]
-       bench retrigger status <benchmark-slug> [--request <id>]
+    case 'run-again':
+      return `Usage: bench run-again <benchmark-slug> [--wait] [--timeout <sec>] [--interval <sec>]
+       bench run-again status <benchmark-slug> [--request <runAgainId>]
 
-retrigger queues today's run of a daily benchmark (one per organization per
-UTC day). It needs a user login (\`bench auth login\`); API keys cannot retrigger.
---wait polls the request every --interval seconds (default 5) until its run
-starts, and exits 3 if none has after --timeout seconds (default 600).
+run-again runs a daily benchmark again, the dashboard's Run again button (one
+request per organization, benchmark and UTC day). It needs a user login
+(\`bench auth login\`); org API keys cannot run a benchmark again.
+--wait polls the request every --interval seconds (default 5) until it
+reports its run, and exits 3 if none has after --timeout seconds (default 600).
 status shows today's availability and quota, or one request with --request.`;
     case 'iterations':
       return `Usage: bench iterations <benchmark-slug> --run <id> [--participant <slug>] [--steps <list>] [--format json|table]`;
@@ -730,10 +737,16 @@ export async function handleRunsList(
   outputOptions: OutputOptions = {},
 ): Promise<void> {
   const archived = optionChoice(options, 'archived', RUN_ARCHIVED_FILTERS);
+  // The cross-benchmark list keeps muted benchmarks' runs by default, so
+  // includeMuted=1 restates the default; a single benchmark's list has no
+  // mute filter at all.
   const includeMuted = optionFlag(options, 'include-muted') || undefined;
   const benchmarkSlugs = optionList(options, 'benchmark');
   if (benchmarkSlugs && benchmarkSlug) {
     throw new Error('Pass either a benchmark slug or --benchmark, not both');
+  }
+  if (includeMuted && benchmarkSlug) {
+    throw new Error('--include-muted applies to the cross-benchmark list (omit the benchmark slug)');
   }
   const { filter, flagsSent } = resolveResultFilter(options, { allowSteps: false });
   // Validate flag combinations before auth/API setup — a rejected command
@@ -766,7 +779,6 @@ export async function handleRunsList(
     limit: options.limit,
     offset: options.offset,
     archived,
-    includeMuted,
     // sourceOrg isn't a result filter (see resolveResultFilter) — send it
     // even when it's the only flag, on any platform version.
     ...(filter.sourceOrg ? { sourceOrg: filter.sourceOrg } : {}),
@@ -1592,14 +1604,14 @@ export async function run(argv: string[]): Promise<void> {
         await handleActivity(options, overrides, outputOptions);
         break;
       }
-      case 'retrigger': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, groupFlags('retrigger'));
+      case 'run-again': {
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, groupFlags('run-again'));
         if (subPositionals[0] === 'status') {
-          assertCommandFlags(['retrigger', 'status'], options);
-          await handleRetriggerStatus(subPositionals[1], options, overrides, outputOptions);
+          assertCommandFlags(['run-again', 'status'], options);
+          await handleRunAgainStatus(subPositionals[1], options, overrides, outputOptions);
         } else {
-          assertCommandFlags(['retrigger'], options);
-          await handleRetrigger(subPositionals[0], options, overrides, outputOptions);
+          assertCommandFlags(['run-again'], options);
+          await handleRunAgain(subPositionals[0], options, overrides, outputOptions);
         }
         break;
       }

@@ -62,7 +62,9 @@ export function formatApiError(err: BenchmarkApiError, verbose = false): string[
     lines.push(`${title}${detail}${envelope.code ? ` (code: ${envelope.code})` : ''}`);
     if (envelope.disabledReason) lines.push(`Reason: ${envelope.disabledReason}`);
     if (envelope.retryAt) lines.push(`Retry at: ${envelope.retryAt}`);
-    if (envelope.hint) lines.push(`Hint: ${envelope.hint}`);
+    // A command's own hint names this CLI's commands; the platform's is generic
+    // (e.g. it says `bench login` where this CLI has `bench auth login`).
+    if (envelope.hint && !cliHints.has(err)) lines.push(`Hint: ${envelope.hint}`);
     if (verbose && envelope.requestId) lines.push(`Request id: ${envelope.requestId}`);
     if (verbose) lines.push(err.body);
   } else if (err.body) {
