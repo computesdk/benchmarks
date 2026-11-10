@@ -40,6 +40,10 @@ const KINDS: Record<string, Kind> = {
 
 const CONCURRENCY = 8;
 const MAX_ATTEMPTS = 5;
+const PROGRESS_EVERY = 50;
+/** A hung S3 request otherwise stalls its worker forever (the SDK has no default timeout). */
+const REQUEST_TIMEOUT_MS = 60_000;
+const timeoutOpt = () => ({ abortSignal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
 
 interface Candidate {
   id: string;
@@ -116,9 +120,10 @@ export async function cleanupLeakedSnapshots(opts: CleanupOptions): Promise<Clea
       try {
         await withRetries(() => deleteSnapshot(opts.storage, opts.kind, id!));
         result.deleted.push(id);
-        if (result.deleted.length % 500 === 0) log(`deleted ${result.deleted.length}`);
+        if (result.deleted.length % PROGRESS_EVERY === 0) log(`deleted ${result.deleted.length}/${hits.length}`);
       } catch (err) {
         result.failed.push(`${id}: ${formatError(err)}`);
+        log(`failed ${id}: ${formatError(err)}`);
       }
     }
   }));
@@ -156,7 +161,7 @@ async function listSiblingSnapshots(storage: Storage, kind: Kind, parent: string
   const client = storage.raw as S3Client;
   let token: string | undefined;
   do {
-    const res = await client.send(new ListBucketsCommand({ Prefix: prefix, ...(token ? { ContinuationToken: token } : {}) }));
+    const res = await client.send(new ListBucketsCommand({ Prefix: prefix, ...(token ? { ContinuationToken: token } : {}) }), timeoutOpt());
     for (const b of res.Buckets ?? []) {
       if (b.Name && isSnapshot(b.Name)) out.push({ id: b.Name, createdAt: createdAtFromId(b.Name) });
     }
@@ -179,7 +184,7 @@ async function deleteSnapshot(storage: Storage, kind: Kind, id: string): Promise
   const client = storage.raw as S3Client;
   try {
     await emptyBucket(client, id);
-    await client.send(new DeleteBucketCommand({ Bucket: id }));
+    await client.send(new DeleteBucketCommand({ Bucket: id }), timeoutOpt());
   } catch (err) {
     if ((err as { name?: string })?.name !== 'NoSuchBucket') throw err;
   }
@@ -187,12 +192,13 @@ async function deleteSnapshot(storage: Storage, kind: Kind, id: string): Promise
 
 async function emptyBucket(client: S3Client, bucket: string): Promise<void> {
   let versioned = true;
+  let previous = '';
   for (;;) {
     let objects: { Key: string; VersionId?: string }[];
     let truncated: boolean;
     if (versioned) {
       try {
-        const res = await client.send(new ListObjectVersionsCommand({ Bucket: bucket }));
+        const res = await client.send(new ListObjectVersionsCommand({ Bucket: bucket }), timeoutOpt());
         objects = [...(res.Versions ?? []), ...(res.DeleteMarkers ?? [])]
           .filter((v) => v.Key)
           .map((v) => ({ Key: v.Key!, ...(v.VersionId ? { VersionId: v.VersionId } : {}) }));
@@ -204,12 +210,16 @@ async function emptyBucket(client: S3Client, bucket: string): Promise<void> {
         continue;
       }
     } else {
-      const res = await client.send(new ListObjectsV2Command({ Bucket: bucket }));
+      const res = await client.send(new ListObjectsV2Command({ Bucket: bucket }), timeoutOpt());
       objects = (res.Contents ?? []).filter((o) => o.Key).map((o) => ({ Key: o.Key! }));
       truncated = !!res.IsTruncated;
     }
     if (objects.length) {
-      const out = await client.send(new DeleteObjectsCommand({ Bucket: bucket, Delete: { Objects: objects, Quiet: true } }));
+      // Guards against a provider that accepts DeleteObjects but keeps listing the same keys.
+      const listing = objects.map((o) => `${o.Key}\0${o.VersionId ?? ''}`).join('\n');
+      if (listing === previous) throw new Error(`objects in ${bucket} are still listed after DeleteObjects`);
+      previous = listing;
+      const out = await client.send(new DeleteObjectsCommand({ Bucket: bucket, Delete: { Objects: objects, Quiet: true } }), timeoutOpt());
       if (out.Errors?.length) throw new Error(`DeleteObjects failed for ${out.Errors.length} key(s) in ${bucket}`);
     }
     if (!objects.length && !truncated) return;
