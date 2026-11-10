@@ -5,7 +5,8 @@
       "groupBy": "phase",
       "metrics": [
         {
-          "key": "resume10s",
+        "key": "resume10s",
+        "unit": "0-1",
           "ceiling": 1,
           "higherIsBetter": true,
           "weights": {
@@ -15,7 +16,8 @@
           }
         },
         {
-          "key": "resume30s",
+        "key": "resume30s",
+        "unit": "0-1",
           "ceiling": 1,
           "higherIsBetter": true,
           "weights": {
@@ -25,7 +27,8 @@
           }
         },
         {
-          "key": "resume60s",
+        "key": "resume60s",
+        "unit": "0-1",
           "ceiling": 1,
           "higherIsBetter": true,
           "weights": {
@@ -35,7 +38,8 @@
           }
         },
         {
-          "key": "resume300s",
+        "key": "resume300s",
+        "unit": "0-1",
           "ceiling": 1,
           "higherIsBetter": true,
           "weights": {
@@ -45,7 +49,8 @@
           }
         },
         {
-          "key": "reconnectMs",
+        "key": "reconnectMs",
+        "unit": "ms",
           "ceiling": 2000,
           "weights": {
             "median": 0.15,
@@ -164,32 +169,32 @@
           "successRate": 1,
           "compositeScore": 90,
           "metrics": {
-            "resume10s": {
-              "unit": "",
+          "resume10s": {
+            "unit": "0-1",
               "median": 1,
               "p95": 1,
               "p99": 1
             },
-            "resume30s": {
-              "unit": "",
+          "resume30s": {
+            "unit": "0-1",
               "median": 1,
               "p95": 1,
               "p99": 1
             },
-            "resume60s": {
-              "unit": "",
+          "resume60s": {
+            "unit": "0-1",
               "median": 1,
               "p95": 1,
               "p99": 1
             },
-            "resume300s": {
-              "unit": "",
+          "resume300s": {
+            "unit": "0-1",
               "median": 1,
               "p95": 1,
               "p99": 1
             },
-            "reconnectMs": {
-              "unit": "",
+          "reconnectMs": {
+            "unit": "ms",
               "median": 2000,
               "p95": 2000,
               "p99": 2000
@@ -203,14 +208,14 @@
           "successRate": 1,
           "compositeScore": 20,
           "metrics": {
-            "resume10s": {
-              "unit": "",
+          "resume10s": {
+            "unit": "0-1",
               "median": 1,
               "p95": 1,
               "p99": 1
             },
-            "reconnectMs": {
-              "unit": "",
+          "reconnectMs": {
+            "unit": "ms",
               "median": 2000,
               "p95": 2000,
               "p99": 2000
@@ -224,14 +229,14 @@
           "successRate": 1,
           "compositeScore": 25,
           "metrics": {
-            "resume30s": {
-              "unit": "",
+          "resume30s": {
+            "unit": "0-1",
               "median": 1,
               "p95": 1,
               "p99": 1
             },
-            "reconnectMs": {
-              "unit": "",
+          "reconnectMs": {
+            "unit": "ms",
               "median": 2000,
               "p95": 2000,
               "p99": 2000
@@ -245,14 +250,14 @@
           "successRate": 1,
           "compositeScore": 35,
           "metrics": {
-            "resume60s": {
-              "unit": "",
+          "resume60s": {
+            "unit": "0-1",
               "median": 1,
               "p95": 1,
               "p99": 1
             },
-            "reconnectMs": {
-              "unit": "",
+          "reconnectMs": {
+            "unit": "ms",
               "median": 2000,
               "p95": 2000,
               "p99": 2000
@@ -266,14 +271,14 @@
           "successRate": 1,
           "compositeScore": 40,
           "metrics": {
-            "resume300s": {
-              "unit": "",
+          "resume300s": {
+            "unit": "0-1",
               "median": 1,
               "p95": 1,
               "p99": 1
             },
-            "reconnectMs": {
-              "unit": "",
+          "reconnectMs": {
+            "unit": "ms",
               "median": 2000,
               "p95": 2000,
               "p99": 2000
@@ -301,8 +306,8 @@
           "successRate": 1,
           "compositeScore": 0,
           "metrics": {
-            "resume300s": {
-              "unit": "",
+          "resume300s": {
+            "unit": "0-1",
               "median": 0,
               "p95": 0,
               "p99": 0
@@ -316,8 +321,8 @@
           "successRate": 1,
           "compositeScore": 0,
           "metrics": {
-            "resume300s": {
-              "unit": "",
+          "resume300s": {
+            "unit": "0-1",
               "median": 0,
               "p95": 0,
               "p99": 0
@@ -353,14 +358,14 @@
           "successRate": 0.5,
           "compositeScore": 10,
           "metrics": {
-            "resume10s": {
-              "unit": "",
+          "resume10s": {
+            "unit": "0-1",
               "median": 1,
               "p95": 1,
               "p99": 1
             },
-            "reconnectMs": {
-              "unit": "",
+          "reconnectMs": {
+            "unit": "ms",
               "median": 2000,
               "p95": 2000,
               "p99": 2000
@@ -374,14 +379,14 @@
           "successRate": 1,
           "compositeScore": 20,
           "metrics": {
-            "resume10s": {
-              "unit": "",
+          "resume10s": {
+            "unit": "0-1",
               "median": 1,
               "p95": 1,
               "p99": 1
             },
-            "reconnectMs": {
-              "unit": "",
+          "reconnectMs": {
+            "unit": "ms",
               "median": 2000,
               "p95": 2000,
               "p99": 2000
