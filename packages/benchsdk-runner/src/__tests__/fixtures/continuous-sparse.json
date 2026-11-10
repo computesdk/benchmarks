@@ -1,0 +1,628 @@
+{
+  "configs": {
+    "idle": {
+      "precision": "full",
+      "groupBy": "phase",
+      "metrics": [
+        {
+          "key": "resume10s",
+          "ceiling": 1,
+          "higherIsBetter": true,
+          "weights": {
+            "median": 0.1,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        {
+          "key": "resume30s",
+          "ceiling": 1,
+          "higherIsBetter": true,
+          "weights": {
+            "median": 0.15,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        {
+          "key": "resume60s",
+          "ceiling": 1,
+          "higherIsBetter": true,
+          "weights": {
+            "median": 0.25,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        {
+          "key": "resume300s",
+          "ceiling": 1,
+          "higherIsBetter": true,
+          "weights": {
+            "median": 0.3,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        {
+          "key": "reconnectMs",
+          "ceiling": 2000,
+          "weights": {
+            "median": 0.15,
+            "p95": 0.05,
+            "p99": 0
+          },
+          "transform": {
+            "kind": "reciprocal",
+            "reference": 2000
+          }
+        }
+      ]
+    },
+    "concurrency": {
+      "precision": "full",
+      "metrics": [
+        {
+          "key": "c1Score",
+          "unit": "score",
+          "ceiling": 100,
+          "higherIsBetter": true,
+          "weights": {
+            "median": 0.05,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        {
+          "key": "c5Score",
+          "unit": "score",
+          "ceiling": 100,
+          "higherIsBetter": true,
+          "weights": {
+            "median": 0.1,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        {
+          "key": "c10Score",
+          "unit": "score",
+          "ceiling": 100,
+          "higherIsBetter": true,
+          "weights": {
+            "median": 0.15,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        {
+          "key": "c25Score",
+          "unit": "score",
+          "ceiling": 100,
+          "higherIsBetter": true,
+          "weights": {
+            "median": 0.3,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        {
+          "key": "c50Score",
+          "unit": "score",
+          "ceiling": 100,
+          "higherIsBetter": true,
+          "weights": {
+            "median": 0.4,
+            "p95": 0,
+            "p99": 0
+          }
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "id": "idle-all-gaps",
+      "config": "idle",
+      "records": [
+        {
+          "status": "success",
+          "data": {
+            "phase": "idle-10s",
+            "resume10s": 1,
+            "reconnectMs": 2000
+          }
+        },
+        {
+          "status": "success",
+          "data": {
+            "phase": "idle-30s",
+            "resume30s": 1,
+            "reconnectMs": 2000
+          }
+        },
+        {
+          "status": "success",
+          "data": {
+            "phase": "idle-60s",
+            "resume60s": 1,
+            "reconnectMs": 2000
+          }
+        },
+        {
+          "status": "success",
+          "data": {
+            "phase": "idle-300s",
+            "resume300s": 1,
+            "reconnectMs": 2000
+          }
+        }
+      ],
+      "rows": [
+        {
+          "dimensions": {},
+          "successRate": 1,
+          "compositeScore": 90,
+          "metrics": {
+            "resume10s": {
+              "unit": "",
+              "median": 1,
+              "p95": 1,
+              "p99": 1
+            },
+            "resume30s": {
+              "unit": "",
+              "median": 1,
+              "p95": 1,
+              "p99": 1
+            },
+            "resume60s": {
+              "unit": "",
+              "median": 1,
+              "p95": 1,
+              "p99": 1
+            },
+            "resume300s": {
+              "unit": "",
+              "median": 1,
+              "p95": 1,
+              "p99": 1
+            },
+            "reconnectMs": {
+              "unit": "",
+              "median": 2000,
+              "p95": 2000,
+              "p99": 2000
+            }
+          }
+        },
+        {
+          "dimensions": {
+            "phase": "idle-10s"
+          },
+          "successRate": 1,
+          "compositeScore": 20,
+          "metrics": {
+            "resume10s": {
+              "unit": "",
+              "median": 1,
+              "p95": 1,
+              "p99": 1
+            },
+            "reconnectMs": {
+              "unit": "",
+              "median": 2000,
+              "p95": 2000,
+              "p99": 2000
+            }
+          }
+        },
+        {
+          "dimensions": {
+            "phase": "idle-30s"
+          },
+          "successRate": 1,
+          "compositeScore": 25,
+          "metrics": {
+            "resume30s": {
+              "unit": "",
+              "median": 1,
+              "p95": 1,
+              "p99": 1
+            },
+            "reconnectMs": {
+              "unit": "",
+              "median": 2000,
+              "p95": 2000,
+              "p99": 2000
+            }
+          }
+        },
+        {
+          "dimensions": {
+            "phase": "idle-60s"
+          },
+          "successRate": 1,
+          "compositeScore": 35,
+          "metrics": {
+            "resume60s": {
+              "unit": "",
+              "median": 1,
+              "p95": 1,
+              "p99": 1
+            },
+            "reconnectMs": {
+              "unit": "",
+              "median": 2000,
+              "p95": 2000,
+              "p99": 2000
+            }
+          }
+        },
+        {
+          "dimensions": {
+            "phase": "idle-300s"
+          },
+          "successRate": 1,
+          "compositeScore": 40,
+          "metrics": {
+            "resume300s": {
+              "unit": "",
+              "median": 1,
+              "p95": 1,
+              "p99": 1
+            },
+            "reconnectMs": {
+              "unit": "",
+              "median": 2000,
+              "p95": 2000,
+              "p99": 2000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "idle-unsupported-no-reconnect",
+      "config": "idle",
+      "records": [
+        {
+          "status": "success",
+          "data": {
+            "phase": "idle-300s",
+            "resume300s": 0,
+            "resumeSupported": 0
+          }
+        }
+      ],
+      "rows": [
+        {
+          "dimensions": {},
+          "successRate": 1,
+          "compositeScore": 0,
+          "metrics": {
+            "resume300s": {
+              "unit": "",
+              "median": 0,
+              "p95": 0,
+              "p99": 0
+            }
+          }
+        },
+        {
+          "dimensions": {
+            "phase": "idle-300s"
+          },
+          "successRate": 1,
+          "compositeScore": 0,
+          "metrics": {
+            "resume300s": {
+              "unit": "",
+              "median": 0,
+              "p95": 0,
+              "p99": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "idle-mixed-status",
+      "config": "idle",
+      "records": [
+        {
+          "status": "success",
+          "data": {
+            "phase": "idle-10s",
+            "resume10s": 1,
+            "reconnectMs": 2000
+          }
+        },
+        {
+          "status": "error",
+          "data": {
+            "phase": "idle-30s",
+            "resume30s": 1,
+            "reconnectMs": 1
+          }
+        }
+      ],
+      "rows": [
+        {
+          "dimensions": {},
+          "successRate": 0.5,
+          "compositeScore": 10,
+          "metrics": {
+            "resume10s": {
+              "unit": "",
+              "median": 1,
+              "p95": 1,
+              "p99": 1
+            },
+            "reconnectMs": {
+              "unit": "",
+              "median": 2000,
+              "p95": 2000,
+              "p99": 2000
+            }
+          }
+        },
+        {
+          "dimensions": {
+            "phase": "idle-10s"
+          },
+          "successRate": 1,
+          "compositeScore": 20,
+          "metrics": {
+            "resume10s": {
+              "unit": "",
+              "median": 1,
+              "p95": 1,
+              "p99": 1
+            },
+            "reconnectMs": {
+              "unit": "",
+              "median": 2000,
+              "p95": 2000,
+              "p99": 2000
+            }
+          }
+        },
+        {
+          "dimensions": {
+            "phase": "idle-30s"
+          },
+          "successRate": 0,
+          "compositeScore": 0,
+          "metrics": {}
+        }
+      ]
+    },
+    {
+      "id": "concurrency-all-levels",
+      "config": "concurrency",
+      "records": [
+        {
+          "status": "success",
+          "data": {
+            "concurrencyLevel": 1,
+            "c1Score": 81.123456
+          }
+        },
+        {
+          "status": "success",
+          "data": {
+            "concurrencyLevel": 5,
+            "c5Score": 72.234567
+          }
+        },
+        {
+          "status": "success",
+          "data": {
+            "concurrencyLevel": 10,
+            "c10Score": 63.345678
+          }
+        },
+        {
+          "status": "success",
+          "data": {
+            "concurrencyLevel": 25,
+            "c25Score": 54.456789
+          }
+        },
+        {
+          "status": "success",
+          "data": {
+            "concurrencyLevel": 50,
+            "c50Score": 45.567891
+          }
+        }
+      ],
+      "rows": [
+        {
+          "dimensions": {},
+          "successRate": 1,
+          "compositeScore": 55.3456743,
+          "metrics": {
+            "c1Score": {
+              "unit": "score",
+              "median": 81.123456,
+              "p95": 81.123456,
+              "p99": 81.123456
+            },
+            "c5Score": {
+              "unit": "score",
+              "median": 72.234567,
+              "p95": 72.234567,
+              "p99": 72.234567
+            },
+            "c10Score": {
+              "unit": "score",
+              "median": 63.345678,
+              "p95": 63.345678,
+              "p99": 63.345678
+            },
+            "c25Score": {
+              "unit": "score",
+              "median": 54.456789,
+              "p95": 54.456789,
+              "p99": 54.456789
+            },
+            "c50Score": {
+              "unit": "score",
+              "median": 45.567891,
+              "p95": 45.567891,
+              "p99": 45.567891
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "concurrency-requested-subset",
+      "config": "concurrency",
+      "records": [
+        {
+          "status": "success",
+          "data": {
+            "concurrencyLevel": 1,
+            "c1Score": 81.123456
+          }
+        }
+      ],
+      "rows": [
+        {
+          "dimensions": {},
+          "successRate": 1,
+          "compositeScore": 4.056172800000001,
+          "metrics": {
+            "c1Score": {
+              "unit": "score",
+              "median": 81.123456,
+              "p95": 81.123456,
+              "p99": 81.123456
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "concurrency-failed-level",
+      "config": "concurrency",
+      "records": [
+        {
+          "status": "success",
+          "data": {
+            "concurrencyLevel": 1,
+            "c1Score": 81.123456
+          }
+        },
+        {
+          "status": "success",
+          "data": {
+            "concurrencyLevel": 5,
+            "c5Score": 72.234567
+          }
+        },
+        {
+          "status": "success",
+          "data": {
+            "concurrencyLevel": 10,
+            "c10Score": 63.345678
+          }
+        },
+        {
+          "status": "success",
+          "data": {
+            "concurrencyLevel": 25,
+            "c25Score": 54.456789
+          }
+        },
+        {
+          "status": "error",
+          "data": {
+            "concurrencyLevel": 50,
+            "c50Score": 99
+          }
+        }
+      ],
+      "rows": [
+        {
+          "dimensions": {},
+          "successRate": 0.8,
+          "compositeScore": 29.694814320000003,
+          "metrics": {
+            "c1Score": {
+              "unit": "score",
+              "median": 81.123456,
+              "p95": 81.123456,
+              "p99": 81.123456
+            },
+            "c5Score": {
+              "unit": "score",
+              "median": 72.234567,
+              "p95": 72.234567,
+              "p99": 72.234567
+            },
+            "c10Score": {
+              "unit": "score",
+              "median": 63.345678,
+              "p95": 63.345678,
+              "p99": 63.345678
+            },
+            "c25Score": {
+              "unit": "score",
+              "median": 54.456789,
+              "p95": 54.456789,
+              "p99": 54.456789
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "concurrency-all-failed",
+      "config": "concurrency",
+      "records": [
+        {
+          "status": "error",
+          "data": {
+            "concurrencyLevel": 1
+          }
+        },
+        {
+          "status": "error",
+          "data": {
+            "concurrencyLevel": 5
+          }
+        },
+        {
+          "status": "error",
+          "data": {
+            "concurrencyLevel": 10
+          }
+        },
+        {
+          "status": "error",
+          "data": {
+            "concurrencyLevel": 25
+          }
+        },
+        {
+          "status": "error",
+          "data": {
+            "concurrencyLevel": 50
+          }
+        }
+      ],
+      "rows": [
+        {
+          "dimensions": {},
+          "successRate": 0,
+          "compositeScore": 0,
+          "metrics": {}
+        }
+      ]
+    }
+  ]
+}

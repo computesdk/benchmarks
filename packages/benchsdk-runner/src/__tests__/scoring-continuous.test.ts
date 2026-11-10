@@ -3,6 +3,7 @@ import { score, scoringConfigToSpec, ScoringSpecError, type BenchmarkScoringConf
 import type { BenchmarkRunOutcome } from '../bench-config';
 import type { TaskResultRecord } from '@benchsdk/api';
 import fixtures from './fixtures/continuous-scoring.json';
+import sparse from './fixtures/continuous-sparse.json';
 
 const config = (): BenchmarkScoringConfig => ({
   precision: 'full',
@@ -13,6 +14,19 @@ const record = (data: Record<string, number | boolean>, status = 'success'): Tas
 const run = (cfg: BenchmarkScoringConfig, records: TaskResultRecord[]) => score(outcome(records), scoringConfigToSpec(cfg));
 
 describe('continuous scoring real runner path', () => {
+  it.each(sparse.cases)('$id preserves real idle/concurrency sparse metrics and fixed weights', f => {
+    const cfg = sparse.configs[f.config as keyof typeof sparse.configs] as unknown as BenchmarkScoringConfig;
+    const records = f.records.map((r, taskIndex) => ({ ...r, taskIndex })) as TaskResultRecord[];
+    const results = run(cfg, records);
+    expect(results).toHaveLength(f.rows.length);
+    for (const [i, expected] of f.rows.entries()) {
+      expect(results[i].dimensions).toEqual(expected.dimensions);
+      expect(results[i].successRate).toBe(expected.successRate);
+      expect(results[i].compositeScore).toBe(expected.compositeScore);
+      expect(Object.fromEntries(results[i].metrics.map(({ name, ...stats }) => [name, stats]))).toEqual(expected.metrics);
+    }
+  });
+
   it('preserves per-metric floating-point addition order at full precision', () => {
     const cfg = config();
     cfg.metrics[0].weights.median = .1;
@@ -65,16 +79,21 @@ describe('continuous scoring real runner path', () => {
     expect(results.map(r => r.dimensions)).toEqual([{}, { group: 1 }]);
   });
 
-  it.each([undefined, NaN, Infinity, -1])('rejects absent/nonfinite/negative required statistics: %s', x => {
+  it.each([undefined, NaN, Infinity])('keeps existing no-eligible-samples omission for %s', x => {
     const records = [record(x === undefined ? {} : { x })];
-    expect(() => run(config(), records)).toThrow(ScoringSpecError);
+    expect(run(config(), records)[0]).toMatchObject({ metrics: [], compositeScore: 0 });
   });
 
-  it('rejects a missing weighted metric instead of redistributing its weight', () => {
+  it('rejects negative/nonfinite required statistics on a metric that has samples', () => {
+    expect(() => run(config(), [record({ x: -1 })])).toThrow(ScoringSpecError);
+    expect(() => run(config(), [record({ x: 1e308 }), record({ x: 1e308 })])).toThrow(ScoringSpecError);
+  });
+
+  it('keeps an absent weighted metric at zero contribution without inventing a sample or redistributing weight', () => {
     const cfg = config();
     cfg.metrics[0].weights.median = .5;
     cfg.metrics.push({ key: 'missing', ceiling: 100, weights: { median: .5, p95: 0, p99: 0 } });
-    expect(() => run(cfg, [record({ x: 10 })])).toThrow(ScoringSpecError);
+    expect(run(cfg, [record({ x: 10 })])[0]).toMatchObject({ compositeScore: 25, metrics: [{ name: 'x' }] });
   });
 
   it('keeps all-failed as observed zero and no records skipped, even with missing samples', () => {

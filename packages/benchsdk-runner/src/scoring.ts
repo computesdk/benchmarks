@@ -285,12 +285,7 @@ function scoreGroup(
     const samples = collectSamples(metric, measured);
     // A metric with no data points should not contribute to the composite
     // score; otherwise an empty lower-is-better metric would be scored as 100.
-    if (samples.length === 0) {
-      if (continuous && successRate > 0 && Object.values(metric.weights).some(weight => weight > 0)) {
-        throw new ScoringSpecError(`Missing required scoring samples for ${metric.name}`);
-      }
-      continue;
-    }
+    if (samples.length === 0) continue;
     const { median, p95, p99 } = computeStats(samples, metric.trim ?? 0.05);
     const stats = { median, p95, p99 };
     if (continuous && successRate > 0) {

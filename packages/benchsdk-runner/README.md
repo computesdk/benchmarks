@@ -106,9 +106,11 @@ This is not a per-sample transform or an arbitrary nonlinear callback.
 
 Unknown precision, unknown/extra transform fields and invalid references throw
 `ScoringSpecError`. When either new field is used and success rate is positive,
-every positive-weight metric must have samples and finite, nonnegative required
-statistics. Missing weighted metrics do not silently contribute zero or shift
-weight to others. Zero-weight diagnostics need not have samples. All-failed is
+every present metric must have finite, nonnegative positive-weight statistics.
+A metric with no eligible samples is omitted as before and contributes zero;
+no measured timing zero is invented and its weight is not redistributed.
+This preserves sparse idle-resume groups and unrequested/failed concurrency
+levels. Zero-weight diagnostics need not have samples. All-failed is
 still observed zero; no-record rows remain skipped. Weight validation for the
 new fields rejects missing, nonfinite and negative components.
 
@@ -119,6 +121,9 @@ that would ignore new fields. No version registry, nullable client change,
 publication, historical rescore or workload is introduced here. The fixed
 `src/__tests__/fixtures/continuous-scoring.json` table is shared byte-for-byte
 with platform tests; it is synthetic offline evidence, not provider measurements.
+The byte-identical `continuous-sparse.json` fixtures also exercise the suite's
+actual idle/concurrency configurations, grouping, unsupported/no-latency cases,
+requested subsets and status-filtered failures.
 
 ## Platform data commands
 
