@@ -1103,15 +1103,17 @@ async function runGroupedByRound<T extends BaseParticipant>(
       // reads `targetConcurrency` as tasks-per-worker, so it must be the full
       // schedule length — otherwise only one task is planned and every record
       // past the first falls outside the worker's task range.
+      let planWorkersFailed = false;
+      let planWorkersError: unknown;
       try {
         await client.planWorkers(config.benchmarkSlug, runId, participant.name, {
           workerCount: 1,
           targetConcurrency: schedule.length,
         });
       } catch (error) {
-        workerPlanningFailed.add(participant.name);
-        console.warn(`  ${participant.name}: worker planning failed (${error instanceof Error ? error.message : String(error)}) — running without platform reporting.`);
-        return;
+        planWorkersFailed = true;
+        planWorkersError = error;
+        console.warn(`  ${participant.name}: worker planning failed (${planWorkersError instanceof Error ? planWorkersError.message : String(planWorkersError)}) — trying to claim a worker anyway.`);
       }
       let reporter: BenchmarkReporter | null = null;
       try {
@@ -1131,6 +1133,7 @@ async function runGroupedByRound<T extends BaseParticipant>(
         console.warn(`  ${participant.name}: reporter claim failed (${error instanceof Error ? error.message : String(error)}) — running without platform reporting.`);
       }
       if (!reporter) {
+        if (planWorkersFailed) workerPlanningFailed.add(participant.name);
         console.warn(`  ${participant.name}: could not claim a platform worker — running without platform reporting.`);
       }
       reporters.set(participant.name, reporter);
