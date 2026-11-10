@@ -40,6 +40,7 @@ import type {
 } from '@benchsdk/api';
 import type { BaseParticipant } from '@benchsdk/worker';
 import type { BenchmarkScoringConfig, HigherIsBetter, LowerIsBetter, ScoringSpec } from './scoring.js';
+import { scoringConfigToSpec, validateScoringSpec } from './scoring.js';
 
 /** How tasks are ordered across participants. */
 export type GroupBy = 'participant' | 'round';
@@ -739,6 +740,7 @@ function validateBenchmarkReliabilityConfig(
 }
 
 function validateBenchmarkScoringConfig(scoring: BenchmarkScoringConfig, display?: BenchmarkDisplayConfig): void {
+  validateScoringSpec(scoringConfigToSpec(scoring));
   if (!Array.isArray(scoring.metrics) || scoring.metrics.length === 0) {
     throw new Error('scoring.metrics must be a non-empty array');
   }

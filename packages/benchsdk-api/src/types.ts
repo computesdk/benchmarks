@@ -929,7 +929,7 @@ export interface BenchmarkRunSummaryResult {
   dimensions?: Record<string, unknown>;
   metrics: BenchmarkRunSummaryMetric[];
   scalars?: BenchmarkRunSummaryScalar[];
-  compositeScore: number;
+  compositeScore: number | null;
   successRate: number;
   scoringVersion?: string | null;
   skipped: boolean;

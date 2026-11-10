@@ -1,9 +1,11 @@
 import type { JsonObject, TaskResultRecord } from '@benchsdk/api';
 import type { BenchmarkRunOutcome } from './bench-config.js';
+import { validateMethodology, validateMetricContract, transformStatistic, type ScoringMethodology, type ScoringTransform } from './scoring-methodology.js';
 
 export type MetricValue = string | ((record: TaskResultRecord) => number | number[] | undefined);
 
 export interface MetricScoring {
+  transform?: ScoringTransform;
   name: string;
   value?: MetricValue;
   unit?: string;
@@ -21,6 +23,7 @@ export interface BenchmarkScoringWeights {
 }
 
 export interface BenchmarkScoringMetric {
+  transform?: ScoringTransform;
   key: string;
   label?: string;
   unit?: string;
@@ -43,7 +46,7 @@ export interface BenchmarkScoringSuccess {
 }
 
 /** Serializable scoring spec declared in a `*.bench.ts` file and uploaded to the platform. */
-export interface BenchmarkScoringConfig {
+export interface BenchmarkScoringConfig extends ScoringMethodology {
   /** Optional data key to group records by when computing summary rows (e.g. 'file_size'). */
   groupBy?: string;
   /** Extra conditions a record must meet to count as successful. Default: `status === 'success'`. */
@@ -51,7 +54,7 @@ export interface BenchmarkScoringConfig {
   metrics: BenchmarkScoringMetric[];
 }
 
-export interface ScoringSpec {
+export interface ScoringSpec extends ScoringMethodology {
   dimensions?: Record<string, unknown>;
   /** Optional data key that groups task records into separate summary rows. */
   groupBy?: string;
@@ -64,7 +67,7 @@ export interface BenchmarkScoreResult {
   dimensions: JsonObject;
   metrics: { name: string; unit: string; median: number; p95: number; p99: number }[];
   scalars?: { name: string; value: number; unit: string }[];
-  compositeScore: number;
+  compositeScore: number | null;
   successRate: number;
   scoringVersion?: string;
   skipped: boolean;
@@ -145,13 +148,7 @@ function collectSamples(metric: MetricScoring, records: TaskResultRecord[]): num
 }
 
 function scoreStat(stat: number, metric: MetricScoring): number {
-  if (metric.higherIsBetter) {
-    const floor = metric.floor ?? 0;
-    if (stat <= floor) return 0;
-    if (stat >= metric.ceiling) return 100;
-    return ((stat - floor) / (metric.ceiling - floor)) * 100;
-  }
-  return Math.max(0, 100 * (1 - stat / metric.ceiling));
+  return transformStatistic(stat, metric);
 }
 
 export const lowerIsBetter: LowerIsBetter = (name, opts) => ({
@@ -187,11 +184,17 @@ export class ScoringSpecError extends Error {
 // samples for a given participant is legitimately excluded there — a
 // per-run runtime fact, not an authoring mistake.
 export function validateScoringSpec(spec: ScoringSpec): void {
+  try {
+    validateMethodology(spec);
+    for (const metric of spec.metrics) validateMetricContract(metric, spec);
+  } catch (err) {
+    throw new ScoringSpecError((err as Error).message);
+  }
   const totalWeight = spec.metrics.reduce(
     (sum, m) => sum + m.weights.median + m.weights.p95 + m.weights.p99,
     0,
   );
-  if (Math.abs(totalWeight - 1) > WEIGHT_SUM_TOLERANCE) {
+  if (!Number.isFinite(totalWeight) || Math.abs(totalWeight - 1) > WEIGHT_SUM_TOLERANCE) {
     const breakdown = spec.metrics
       .map((m) => `${m.name}=${(m.weights.median + m.weights.p95 + m.weights.p99).toFixed(3)}`)
       .join(', ');
@@ -238,6 +241,7 @@ function scoreGroup(
   const skipped = records.length === 0;
 
   let metricScoresSum = 0;
+  let incomplete = false;
   const metrics: BenchmarkScoreResult['metrics'] = [];
 
   for (const metric of spec.metrics) {
@@ -248,7 +252,14 @@ function scoreGroup(
     // is exactly the case where they matter most. Errored records may carry
     // partial measurements from a run that died mid-lifecycle, so they stay
     // excluded; the success filter still gates successRate and composite.
-    const measured = records.filter((r) => r.status === 'success');
+    const measured = spec.version === 2 ? passing : records.filter((r) => r.status === 'success');
+    if (spec.version === 2 && Object.values(metric.weights).some(w => w > 0)) {
+      incomplete ||= measured.some(record => {
+        const raw = typeof metric.value === 'function' ? metric.value(record) : record.data?.[metric.value ?? metric.name];
+        const values = Array.isArray(raw) ? raw : [raw];
+        return values.length === 0 || values.some(v => !isFiniteNumber(v) || v < 0);
+      });
+    }
     const samples = collectSamples(metric, measured);
     // A metric with no data points should not contribute to the composite
     // score; otherwise an empty lower-is-better metric would be scored as 100.
@@ -267,7 +278,9 @@ function scoreGroup(
     metrics.push({ name: metric.name, unit, median, p95, p99 });
   }
 
-  const compositeScore = successRate === 0 ? 0 : Math.round(metricScoresSum * successRate * 100) / 100;
+  const compositeScore = spec.version === 2
+    ? (records.length === 0 ? null : successRate === 0 ? 0 : incomplete ? null : metricScoresSum * successRate)
+    : successRate === 0 ? 0 : Math.round(metricScoresSum * successRate * 100) / 100;
 
   const dimensions = toJsonObject({
     ...baseDimensions,
@@ -280,6 +293,7 @@ function scoreGroup(
     metrics,
     compositeScore,
     successRate,
+    ...(spec.version === 2 ? { scoringVersion: spec.methodology } : {}),
     skipped,
   };
 }
@@ -318,6 +332,8 @@ export function scoringConfigToSpec(
   const success = config.success;
   const unitByMetric = new Map(display?.metrics?.map((m) => [m.key, m.unit]));
   return {
+    ...(config.version !== undefined ? { version: config.version } : {}),
+    ...(config.methodology !== undefined ? { methodology: config.methodology } : {}),
     ...(dimensions ? { dimensions: toJsonObject(dimensions) } : {}),
     ...(config.groupBy ? { groupBy: config.groupBy } : {}),
     ...(success
@@ -336,6 +352,7 @@ export function scoringConfigToSpec(
       higherIsBetter: metric.higherIsBetter,
       weights: metric.weights,
       trim: metric.trim,
+      transform: metric.transform,
     })),
   };
 }
