@@ -12,6 +12,7 @@ export interface MetricScoring {
   higherIsBetter?: boolean;
   weights: { median: number; p95: number; p99: number };
   trim?: number;
+  transform?: { kind: 'reciprocal'; reference: number };
 }
 
 export interface BenchmarkScoringWeights {
@@ -29,6 +30,7 @@ export interface BenchmarkScoringMetric {
   higherIsBetter?: boolean;
   weights: BenchmarkScoringWeights;
   trim?: number;
+  transform?: MetricScoring['transform'];
 }
 
 /**
@@ -44,6 +46,7 @@ export interface BenchmarkScoringSuccess {
 
 /** Serializable scoring spec declared in a `*.bench.ts` file and uploaded to the platform. */
 export interface BenchmarkScoringConfig {
+  precision?: 'full';
   /** Optional data key to group records by when computing summary rows (e.g. 'file_size'). */
   groupBy?: string;
   /** Extra conditions a record must meet to count as successful. Default: `status === 'success'`. */
@@ -52,6 +55,7 @@ export interface BenchmarkScoringConfig {
 }
 
 export interface ScoringSpec {
+  precision?: 'full';
   dimensions?: Record<string, unknown>;
   /** Optional data key that groups task records into separate summary rows. */
   groupBy?: string;
@@ -79,6 +83,7 @@ export type LowerIsBetter = (
     value?: MetricValue;
     weights: { median: number; p95: number; p99: number };
     trim?: number;
+    transform?: MetricScoring['transform'];
   },
 ) => MetricScoring;
 
@@ -91,6 +96,7 @@ export type HigherIsBetter = (
     value?: MetricValue;
     weights: { median: number; p95: number; p99: number };
     trim?: number;
+    transform?: MetricScoring['transform'];
   },
 ) => MetricScoring;
 
@@ -145,6 +151,12 @@ function collectSamples(metric: MetricScoring, records: TaskResultRecord[]): num
 }
 
 function scoreStat(stat: number, metric: MetricScoring): number {
+  if (metric.transform) {
+    const reference = metric.transform.reference;
+    return metric.higherIsBetter
+      ? (stat === 0 ? 0 : 100 / (1 + reference / stat))
+      : 100 / (1 + stat / reference);
+  }
   if (metric.higherIsBetter) {
     const floor = metric.floor ?? 0;
     if (stat <= floor) return 0;
@@ -187,6 +199,26 @@ export class ScoringSpecError extends Error {
 // samples for a given participant is legitimately excluded there — a
 // per-run runtime fact, not an authoring mistake.
 export function validateScoringSpec(spec: ScoringSpec): void {
+  if (spec.precision !== undefined && spec.precision !== 'full') {
+    throw new ScoringSpecError('Unknown scoring precision');
+  }
+  const continuous = spec.precision === 'full' || spec.metrics.some(metric => metric.transform !== undefined);
+  for (const metric of spec.metrics) {
+    const transform = metric.transform;
+    if (transform !== undefined && (
+      transform === null || typeof transform !== 'object' || Array.isArray(transform) ||
+      transform.kind !== 'reciprocal' || !isFiniteNumber(transform.reference) || transform.reference <= 0 ||
+      Object.keys(transform).some(key => key !== 'kind' && key !== 'reference')
+    )) {
+      throw new ScoringSpecError(`Invalid transform for ${metric.name}`);
+    }
+    if (continuous && ['median', 'p95', 'p99'].some(key => {
+      const weight = metric.weights[key as keyof typeof metric.weights];
+      return !isFiniteNumber(weight) || weight < 0;
+    })) {
+      throw new ScoringSpecError(`Invalid scoring weights for ${metric.name}`);
+    }
+  }
   const totalWeight = spec.metrics.reduce(
     (sum, m) => sum + m.weights.median + m.weights.p95 + m.weights.p99,
     0,
@@ -236,6 +268,7 @@ function scoreGroup(
   const passing = records.filter(successFilter);
   const successRate = records.length === 0 ? 0 : passing.length / records.length;
   const skipped = records.length === 0;
+  const continuous = spec.precision === 'full' || spec.metrics.some(metric => metric.transform !== undefined);
 
   let metricScoresSum = 0;
   const metrics: BenchmarkScoreResult['metrics'] = [];
@@ -253,10 +286,25 @@ function scoreGroup(
     // A metric with no data points should not contribute to the composite
     // score; otherwise an empty lower-is-better metric would be scored as 100.
     if (samples.length === 0) {
+      if (continuous && successRate > 0 && Object.values(metric.weights).some(weight => weight > 0)) {
+        throw new ScoringSpecError(`Missing required scoring samples for ${metric.name}`);
+      }
       continue;
     }
     const { median, p95, p99 } = computeStats(samples, metric.trim ?? 0.05);
-    const metricScore =
+    const stats = { median, p95, p99 };
+    if (continuous && successRate > 0) {
+      for (const key of ['median', 'p95', 'p99'] as const) {
+        if (metric.weights[key] > 0 && (!isFiniteNumber(stats[key]) || stats[key] < 0)) {
+          throw new ScoringSpecError(`Invalid required scoring statistic ${metric.name}.${key}`);
+        }
+      }
+    }
+    const metricScore = continuous
+      ? (['median', 'p95', 'p99'] as const).reduce(
+        (sum, key) => sum + (metric.weights[key] > 0 ? metric.weights[key] * scoreStat(stats[key], metric) : 0), 0,
+      )
+      :
       metric.weights.median * scoreStat(median, metric) +
       metric.weights.p95 * scoreStat(p95, metric) +
       metric.weights.p99 * scoreStat(p99, metric);
@@ -267,7 +315,9 @@ function scoreGroup(
     metrics.push({ name: metric.name, unit, median, p95, p99 });
   }
 
-  const compositeScore = successRate === 0 ? 0 : Math.round(metricScoresSum * successRate * 100) / 100;
+  const rawComposite = successRate === 0 ? 0 : metricScoresSum * successRate;
+  if (continuous && !Number.isFinite(rawComposite)) throw new ScoringSpecError('Nonfinite composite score');
+  const compositeScore = spec.precision === 'full' ? rawComposite : Math.round(rawComposite * 100) / 100;
 
   const dimensions = toJsonObject({
     ...baseDimensions,
@@ -318,6 +368,7 @@ export function scoringConfigToSpec(
   const success = config.success;
   const unitByMetric = new Map(display?.metrics?.map((m) => [m.key, m.unit]));
   return {
+    ...(config.precision !== undefined ? { precision: config.precision } : {}),
     ...(dimensions ? { dimensions: toJsonObject(dimensions) } : {}),
     ...(config.groupBy ? { groupBy: config.groupBy } : {}),
     ...(success
@@ -336,6 +387,7 @@ export function scoringConfigToSpec(
       higherIsBetter: metric.higherIsBetter,
       weights: metric.weights,
       trim: metric.trim,
+      ...(metric.transform !== undefined ? { transform: metric.transform } : {}),
     })),
   };
 }
