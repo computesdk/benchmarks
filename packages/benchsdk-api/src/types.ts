@@ -80,6 +80,115 @@ export interface BenchmarkPauseState {
   pauses: { start: string; end: string | null }[];
 }
 
+/** Filters shared by the org-wide run feed routes (`runs/summary`, `runs/days`, `runs/day/{day}`). */
+export interface RunFeedFilter {
+  /** Sent as `benchmarkSlugs=a,b`; `~source/slug` names an entitled foreign benchmark. */
+  benchmarkSlugs?: string[];
+  includeArchived?: boolean;
+  includeMuted?: boolean;
+}
+
+export interface RunFeedOptions extends RunFeedFilter {
+  /** 1..100; the platform defaults to 100. */
+  limit?: number;
+  /** Poll specific runs instead of the newest ones (cannot be combined with `limit`). */
+  runIds?: string[];
+}
+
+/** One run in the org feed (`orgBenchmarkRunSummarySchema` on the platform). */
+export interface RunFeedItem {
+  runId: string;
+  benchmarkSlug: string;
+  benchmarkName?: string;
+  status: string;
+  archivedAt?: string | null;
+  muted?: boolean;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  createdAt?: string;
+  /** Null when analytics are unavailable or (on day pages) never computed. */
+  stats?: JsonObject | null;
+  [key: string]: unknown;
+}
+
+/** `GET /benchmarks/runs/summary`. */
+export interface RunFeed {
+  runs: RunFeedItem[];
+  /** `unavailable` when ClickHouse could not be read; runs then carry `stats: null`. */
+  analytics: 'ok' | 'unavailable' | string;
+}
+
+export interface RunDaysOptions extends RunFeedFilter {
+  /** IANA zone that buckets runs into days; the platform defaults to UTC. */
+  timeZone?: string;
+}
+
+/** `GET /benchmarks/runs/days`. */
+export interface RunDays {
+  days: { day: string; count: number }[];
+  timeZone?: string;
+}
+
+/** Day-page cursor: opaque on the org-wide route, `{createdAt, id}` on the per-benchmark ones. */
+export type RunDayCursor = string | { createdAt: string; id: string };
+
+export interface RunsForDayOptions extends RunDaysOptions {
+  cursor?: RunDayCursor;
+}
+
+/** `GET /benchmarks/runs/day/{day}`: one page (150 runs) of a local day. */
+export interface RunDayPage {
+  day: string;
+  runs: RunFeedItem[];
+  nextCursor: RunDayCursor | null;
+}
+
+/** `GET /benchmarks/reliability-cards`. */
+export interface ReliabilityCards {
+  cards: JsonObject[];
+  /** How many reliability benchmarks the mutes hid. */
+  mutedCount: number;
+}
+
+export interface ActivityOptions {
+  /** 1..90; the platform defaults to 30. */
+  days?: number;
+  benchmarkSlug?: string;
+}
+
+/** `GET /benchmarks/activity`: run counts per day. */
+export interface BenchmarkActivity {
+  days?: number;
+  series?: { day: string; total: number; completed: number; failed: number; [key: string]: unknown }[];
+  [key: string]: unknown;
+}
+
+/** `POST /benchmarks/{slug}/retrigger` (202). */
+export interface RetriggerAccepted {
+  benchmarkSlug: string;
+  category: string;
+  requestId: string;
+  /** Path of the request-status route, e.g. `/api/v1/benchmarks/{slug}/retrigger/{requestId}`. */
+  statusUrl: string;
+}
+
+/** `GET /benchmarks/{slug}/retrigger`: whether a retrigger is possible today. */
+export interface RetriggerState {
+  benchmarkSlug: string;
+  category: string;
+  available: boolean;
+  disabledReason: string | null;
+  quota: { day: string; used: number; limit: number; resetsAt: string };
+}
+
+/** `GET /benchmarks/{slug}/retrigger/{requestId}`. */
+export interface RetriggerRequestStatus {
+  requestId: string;
+  /** Set once the dispatched workflow created its run. */
+  runId: string | null;
+  status: 'pending' | 'linked' | string;
+}
+
 /**
  * Where a benchmark's `.bench.ts` lives, as attributed by the platform's
  * source registry. Returned on benchmark GETs so `bench fork` can seed a
@@ -1160,6 +1269,24 @@ export interface BenchmarkClient {
   pauseBenchmark(slug: string, input?: BenchmarkPauseInput): Promise<BenchmarkPauseState>;
   /** DELETE /benchmarks/{slug}/pause — resume a paused reliability benchmark. */
   resumeBenchmark(slug: string): Promise<BenchmarkPauseState>;
+  /** GET /benchmarks/runs/summary — the org's newest runs across benchmarks, with stats. */
+  getRunFeed(options?: RunFeedOptions): Promise<RunFeed>;
+  /** GET /benchmarks/runs/days — run counts per local day. */
+  listRunDays(options?: RunDaysOptions): Promise<RunDays>;
+  /** GET /benchmarks/runs/day/{day} — one page of a day's runs. */
+  listRunsForDay(day: string, options?: RunsForDayOptions): Promise<RunDayPage>;
+  /** Every page of a day, following `nextCursor` from `options.cursor` (or the first page). */
+  listAllRunsForDay(day: string, options?: RunsForDayOptions): AsyncGenerator<RunDayPage>;
+  /** GET /benchmarks/reliability-cards — the dashboard's reliability cards. */
+  getReliabilityCards(options?: { includeMuted?: boolean }): Promise<ReliabilityCards>;
+  /** GET /benchmarks/activity — run counts per day for the org (or one benchmark). */
+  getActivity(options?: ActivityOptions): Promise<BenchmarkActivity>;
+  /** POST /benchmarks/{slug}/retrigger — needs a user credential; org API keys get 403. */
+  retriggerBenchmark(slug: string, input?: { requestId?: string }): Promise<RetriggerAccepted>;
+  /** GET /benchmarks/{slug}/retrigger — availability and today's quota. */
+  getRetriggerState(slug: string): Promise<RetriggerState>;
+  /** GET /benchmarks/{slug}/retrigger/{requestId} — whether the request has linked a run yet. */
+  getRetriggerRequest(slug: string, requestId: string): Promise<RetriggerRequestStatus>;
   createRun(benchmarkSlug: string, input: CreateRunInput): Promise<{
     run: BenchmarkRun;
     participants: BenchmarkParticipant[];

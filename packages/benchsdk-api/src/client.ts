@@ -49,7 +49,21 @@ import type {
   ListAllRunsOptions,
   ListBenchmarksOptions,
   ListRunsOptions,
+  ActivityOptions,
+  BenchmarkActivity,
+  ReliabilityCards,
+  RetriggerAccepted,
+  RetriggerRequestStatus,
+  RetriggerState,
   RunArchiveResult,
+  RunDayCursor,
+  RunDayPage,
+  RunDays,
+  RunDaysOptions,
+  RunFeed,
+  RunFeedFilter,
+  RunFeedOptions,
+  RunsForDayOptions,
   SendTaskResultsInput,
   PlanWorkersInput,
   TaskResultRecord,
@@ -146,6 +160,20 @@ function flagParam(value: boolean | undefined): string | undefined {
 
 function csvParam(values: string[] | undefined): string | undefined {
   return values?.length ? values.join(',') : undefined;
+}
+
+function feedFilterParams(filter: RunFeedFilter): Record<string, string | undefined> {
+  return {
+    benchmarkSlugs: csvParam(filter.benchmarkSlugs),
+    includeArchived: flagParam(filter.includeArchived),
+    includeMuted: flagParam(filter.includeMuted),
+  };
+}
+
+function dayCursorParams(cursor: RunDayCursor | undefined): Record<string, string | undefined> {
+  if (cursor === undefined) return {};
+  if (typeof cursor === 'string') return { cursor };
+  return { cursorCreatedAt: cursor.createdAt, cursorId: cursor.id };
 }
 
 function iterationsExtraParams(input: BenchmarkRunIterationInput = {}): string {
@@ -364,6 +392,17 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
     }
   }
 
+  async function listRunsForDay(day: string, options: RunsForDayOptions = {}): Promise<RunDayPage> {
+    return request<RunDayPage>(
+      'GET',
+      `/benchmarks/runs/day/${encodePath(day)}${queryString({
+        ...feedFilterParams(options),
+        timeZone: options.timeZone,
+        ...dayCursorParams(options.cursor),
+      })}`,
+    );
+  }
+
   async function sendTaskResults(input: SendTaskResultsInput): Promise<TaskResultsResponse> {
     if (input.records.length === 0) {
       return {};
@@ -464,6 +503,72 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
 
     async resumeBenchmark(slug) {
       return request<BenchmarkPauseState>('DELETE', `/benchmarks/${encodePath(slug)}/pause`);
+    },
+
+    async getRunFeed(options: RunFeedOptions = {}) {
+      return request<RunFeed>(
+        'GET',
+        `/benchmarks/runs/summary${queryString({
+          ...feedFilterParams(options),
+          limit: options.limit,
+          runIds: csvParam(options.runIds),
+        })}`,
+      );
+    },
+
+    async listRunDays(options: RunDaysOptions = {}) {
+      return request<RunDays>(
+        'GET',
+        `/benchmarks/runs/days${queryString({ ...feedFilterParams(options), timeZone: options.timeZone })}`,
+      );
+    },
+
+    listRunsForDay,
+
+    async *listAllRunsForDay(day, options: RunsForDayOptions = {}) {
+      const seen = new Set<string>();
+      let cursor = options.cursor;
+      for (;;) {
+        const page = await listRunsForDay(day, { ...options, cursor });
+        yield page;
+        if (page.nextCursor === null || page.nextCursor === undefined) return;
+        const key = JSON.stringify(page.nextCursor);
+        // A cursor the platform already handed out would page forever.
+        if (seen.has(key)) throw new Error(`The platform repeated the day cursor ${key}; stopping`);
+        seen.add(key);
+        cursor = page.nextCursor;
+      }
+    },
+
+    async getReliabilityCards(options: { includeMuted?: boolean } = {}) {
+      return request<ReliabilityCards>(
+        'GET',
+        `/benchmarks/reliability-cards${queryString({ includeMuted: flagParam(options.includeMuted) })}`,
+      );
+    },
+
+    async getActivity(options: ActivityOptions = {}) {
+      return request<BenchmarkActivity>(
+        'GET',
+        `/benchmarks/activity${queryString({ days: options.days, benchmarkSlug: options.benchmarkSlug })}`,
+      );
+    },
+
+    async retriggerBenchmark(slug, input: { requestId?: string } = {}) {
+      const body: JsonObject = {};
+      if (input.requestId !== undefined) body.requestId = input.requestId;
+      return request<RetriggerAccepted>('POST', `/benchmarks/${encodePath(slug)}/retrigger`, body);
+    },
+
+    async getRetriggerState(slug) {
+      return request<RetriggerState>('GET', `/benchmarks/${encodePath(slug)}/retrigger`);
+    },
+
+    async getRetriggerRequest(slug, requestId) {
+      return request<RetriggerRequestStatus>(
+        'GET',
+        `/benchmarks/${encodePath(slug)}/retrigger/${encodePath(requestId)}`,
+      );
     },
 
     async createRun(benchmarkSlug, input) {
