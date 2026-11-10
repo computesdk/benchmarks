@@ -18,7 +18,7 @@ import { printData, type OutputOptions } from './output.js';
 import { getApiBaseUrl, getAuthBaseUrl, getPlatformBaseUrl } from './platform.js';
 import { findCommand, groupFlags, GLOBAL_BOOLEAN_FLAGS, GLOBAL_STRING_FLAGS } from './commands.js';
 import { ExitError, formatApiError } from './errors.js';
-import { optionChoice, optionFlag, type SubcommandOptions } from './options.js';
+import { optionChoice, optionFlag, optionList, type SubcommandOptions } from './options.js';
 import {
   RUN_ARCHIVED_FILTERS,
   handleBenchmarkArchive,
@@ -28,6 +28,15 @@ import {
   handleBenchmarksList,
   handleRunsArchive,
 } from './manage.js';
+import {
+  assertBenchmarkSlugsHonored,
+  handleActivity,
+  handleReliabilityCards,
+  handleRunDays,
+  handleRunsDay,
+  handleRunsFeed,
+} from './feed.js';
+import { handleRetrigger, handleRetriggerStatus } from './retrigger.js';
 
 let packageVersion: string | undefined;
 
@@ -85,6 +94,7 @@ Commands:
              [--participant <list>] [--since <when>] [--until <when>]
              [--day YYYY-MM-DD] [--tz <zone>] [--source-org <slug>]
              [--archived exclude|include|only] [--include-muted]
+             [--benchmark <slug>]...
                                      List benchmark runs (omit slug to list runs
                                      across every benchmark you can read)
   runs show <benchmark-slug> <runId> Show a single run
@@ -92,6 +102,12 @@ Commands:
                                      Run the benchmark again on the latest code
   runs run-again-status <benchmark-slug> <runAgainId>
                                      Show run-again progress
+  runs feed [--benchmark <slug>]... [--include-archived] [--include-muted]
+             [--limit N]             The org's newest runs across benchmarks
+  runs days [feed filters] [--tz <zone>]
+                                     Run counts per local day
+  runs day <YYYY-MM-DD> [feed filters] [--tz <zone>] [--all] [--cursor <c>]
+                                     One day's runs (--all follows every page)
   runs archive|unarchive <runId...> [-y]
                                      Archive or unarchive up to 100 runs
   results <benchmark-slug> [--run <id>] [--format json|table]
@@ -111,6 +127,14 @@ Commands:
              [--tz <zone>] [--source-org <slug>] [--format json|table]
                                      Per-slot view of one participant on one
                                      local day
+  reliability cards [--include-muted] The org's reliability cards
+  activity [--days N] [--benchmark <slug>]
+                                     Run counts per day (N from 1 to 90)
+  retrigger <benchmark-slug> [--wait] [--timeout <sec>] [--interval <sec>]
+                                     Retrigger today's run of a daily benchmark
+                                     (needs a user login; --wait exits 3 on timeout)
+  retrigger status <benchmark-slug> [--request <id>]
+                                     Retrigger availability and quota, or one request
   iterations <benchmark-slug> --run <id> [--participant <slug>] [--steps <list>] [--format json|table]
                                      Show per-iteration step latencies
   artifacts list <benchmark-slug> <runId> [--worker <id>]
@@ -234,6 +258,13 @@ const subcommandOptionSchema: Record<string, { type: OptionType }> = {
   end: { type: 'string' },
   archived: { type: 'string' },
   'include-muted': { type: 'boolean' },
+  'include-archived': { type: 'boolean' },
+  benchmark: { type: 'list' },
+  all: { type: 'boolean' },
+  cursor: { type: 'string' },
+  days: { type: 'number' },
+  interval: { type: 'number' },
+  request: { type: 'string' },
 };
 
 const SHORT_OPTIONS: Record<string, string> = { '-y': 'yes' };
@@ -358,15 +389,26 @@ to reliability benchmarks only.`;
                     [--participant <list>] [--since <when>] [--until <when>]
                     [--day YYYY-MM-DD] [--tz <zone>] [--source-org <slug>]
                     [--archived exclude|include|only] [--include-muted]
+                    [--benchmark <slug>]...
        bench runs show <benchmark-slug> <runId>
        bench runs run-again <benchmark-slug> <runId> [--wait] [--timeout <seconds>]
        bench runs run-again-status <benchmark-slug> <runAgainId>
        bench runs archive <runId...> [-y]
        bench runs unarchive <runId...> [-y]
+       bench runs feed [--benchmark <slug>]... [--include-archived] [--include-muted] [--limit N]
+       bench runs days [--benchmark <slug>]... [--include-archived] [--include-muted] [--tz <zone>]
+       bench runs day <YYYY-MM-DD> [--benchmark <slug>]... [--include-archived] [--include-muted]
+                    [--tz <zone>] [--all] [--cursor <cursor>]
 
 Run lists leave out archived runs unless --archived include|only is given.
 archive and unarchive take up to 100 run ids, ask first on a terminal, and
-need -y/--yes anywhere else.`;
+need -y/--yes anywhere else.
+
+feed, days and day read the organization-wide feed the dashboard shows:
+--benchmark (repeatable, or a comma list) narrows it, and archived runs and
+runs of muted benchmarks stay out unless --include-archived/--include-muted.
+--tz defaults to this machine's zone. day prints one page (150 runs) with
+its nextCursor; --all follows every page and prints one array of runs.`;
     case 'results':
       return `Usage: bench results <benchmark-slug> [--run <id>] [--format json|table]
                     [--participant <list>] [--steps <list>|all]
@@ -377,7 +419,25 @@ need -y/--yes anywhere else.`;
                     [--bucket day|hour] [--tz <zone>] [--metrics <list>]
                     [--breakdown <list>] [--source-org <slug>] [--format json|table]
        bench reliability <benchmark-slug> --day YYYY-MM-DD --participant <slug>
-                    [--tz <zone>] [--source-org <slug>] [--format json|table]`;
+                    [--tz <zone>] [--source-org <slug>] [--format json|table]
+       bench reliability cards [--include-muted]
+
+cards lists the organization's reliability benchmarks as the dashboard does;
+muted ones stay out unless --include-muted.`;
+    case 'activity':
+      return `Usage: bench activity [--days N] [--benchmark <slug>]
+
+Run counts per day for the organization, or for one benchmark. --days takes
+1 to 90 (the platform defaults to 30).`;
+    case 'retrigger':
+      return `Usage: bench retrigger <benchmark-slug> [--wait] [--timeout <sec>] [--interval <sec>]
+       bench retrigger status <benchmark-slug> [--request <id>]
+
+retrigger queues today's run of a daily benchmark (one per organization per
+UTC day). It needs a user login (\`bench auth login\`); API keys cannot retrigger.
+--wait polls the request every --interval seconds (default 5) until its run
+starts, and exits 3 if none has after --timeout seconds (default 600).
+status shows today's availability and quota, or one request with --request.`;
     case 'iterations':
       return `Usage: bench iterations <benchmark-slug> --run <id> [--participant <slug>] [--steps <list>] [--format json|table]`;
     case 'artifacts':
@@ -671,6 +731,10 @@ export async function handleRunsList(
 ): Promise<void> {
   const archived = optionChoice(options, 'archived', RUN_ARCHIVED_FILTERS);
   const includeMuted = optionFlag(options, 'include-muted') || undefined;
+  const benchmarkSlugs = optionList(options, 'benchmark');
+  if (benchmarkSlugs && benchmarkSlug) {
+    throw new Error('Pass either a benchmark slug or --benchmark, not both');
+  }
   const { filter, flagsSent } = resolveResultFilter(options, { allowSteps: false });
   // Validate flag combinations before auth/API setup — a rejected command
   // should not need credentials.
@@ -686,7 +750,14 @@ export async function handleRunsList(
   }
   const { api } = await createApiClient(overrides);
   if (!benchmarkSlug) {
-    const runs = await api.listAllRuns({ limit: options.limit, offset: options.offset, archived, includeMuted });
+    const runs = await api.listAllRuns({
+      limit: options.limit,
+      offset: options.offset,
+      benchmarkSlugs,
+      archived,
+      includeMuted,
+    });
+    assertBenchmarkSlugsHonored(runs, benchmarkSlugs);
     if (archived === 'only') assertArchivedOnly(runs);
     printData(runs, outputOptions);
     return;
@@ -1474,6 +1545,12 @@ export async function run(argv: string[]): Promise<void> {
             );
           }
           await handleRunsRunAgainStatus(slug, runId, overrides, outputOptions);
+        } else if (sub === 'feed') {
+          await handleRunsFeed(options, overrides, outputOptions);
+        } else if (sub === 'days') {
+          await handleRunDays(options, overrides, outputOptions);
+        } else if (sub === 'day') {
+          await handleRunsDay(slug, options, overrides, outputOptions);
         } else {
           await handleRunsArchive(subPositionals.slice(1), sub === 'archive', options, overrides, outputOptions);
         }
@@ -1492,7 +1569,14 @@ export async function run(argv: string[]): Promise<void> {
         break;
       }
       case 'reliability': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, flagsOf('reliability'));
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, groupFlags('reliability'));
+        // `cards` is the org-wide view; any other word is a benchmark slug.
+        if (subPositionals.length === 1 && subPositionals[0] === 'cards') {
+          assertCommandFlags(['reliability', 'cards'], options);
+          await handleReliabilityCards(options, overrides, outputOptions);
+          break;
+        }
+        assertCommandFlags(['reliability'], options);
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench reliability <benchmark-slug>');
         await handleReliability(
@@ -1501,6 +1585,22 @@ export async function run(argv: string[]): Promise<void> {
           overrides,
           outputOptions,
         );
+        break;
+      }
+      case 'activity': {
+        const { options } = parseSubcommandOptions(rest, flagsOf('activity'));
+        await handleActivity(options, overrides, outputOptions);
+        break;
+      }
+      case 'retrigger': {
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, groupFlags('retrigger'));
+        if (subPositionals[0] === 'status') {
+          assertCommandFlags(['retrigger', 'status'], options);
+          await handleRetriggerStatus(subPositionals[1], options, overrides, outputOptions);
+        } else {
+          assertCommandFlags(['retrigger'], options);
+          await handleRetrigger(subPositionals[0], options, overrides, outputOptions);
+        }
         break;
       }
       case 'iterations': {

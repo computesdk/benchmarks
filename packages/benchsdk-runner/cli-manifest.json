@@ -275,7 +275,8 @@
         "--tz",
         "--source-org",
         "--archived",
-        "--include-muted"
+        "--include-muted",
+        "--benchmark"
       ],
       "summary": "List benchmark runs (omit the slug to list runs across every benchmark you can read)",
       "since": "0.2.0",
@@ -287,8 +288,61 @@
         "--tz": "0.8.0",
         "--source-org": "0.8.0",
         "--archived": "0.9.4",
-        "--include-muted": "0.9.4"
+        "--include-muted": "0.9.4",
+        "--benchmark": "0.9.4"
       },
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "runs",
+        "feed"
+      ],
+      "args": [],
+      "flags": [
+        "--benchmark",
+        "--include-archived",
+        "--include-muted",
+        "--limit"
+      ],
+      "summary": "The organization's newest runs across benchmarks, with stats (the dashboard feed)",
+      "since": "0.9.4",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "runs",
+        "days"
+      ],
+      "args": [],
+      "flags": [
+        "--benchmark",
+        "--include-archived",
+        "--include-muted",
+        "--tz"
+      ],
+      "summary": "Run counts per local day across benchmarks",
+      "since": "0.9.4",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "runs",
+        "day"
+      ],
+      "args": [
+        "<day>"
+      ],
+      "flags": [
+        "--benchmark",
+        "--include-archived",
+        "--include-muted",
+        "--tz",
+        "--all",
+        "--cursor"
+      ],
+      "summary": "Runs of one local day across benchmarks (--all follows every page)",
+      "since": "0.9.4",
       "package": "@benchsdk/cli"
     },
     {
@@ -420,6 +474,63 @@
       ],
       "summary": "Reliability uptime view for a type=reliability benchmark, or one participant on one day with --day --participant",
       "since": "0.9.2",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "reliability",
+        "cards"
+      ],
+      "args": [],
+      "flags": [
+        "--include-muted"
+      ],
+      "summary": "The organization's reliability cards: uptime, last status and pause state per reliability benchmark",
+      "since": "0.9.4",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "activity"
+      ],
+      "args": [],
+      "flags": [
+        "--days",
+        "--benchmark"
+      ],
+      "summary": "Run counts per day for the organization or one benchmark (--days 1..90)",
+      "since": "0.9.4",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "retrigger"
+      ],
+      "args": [
+        "<benchmark-slug>"
+      ],
+      "flags": [
+        "--wait",
+        "--timeout",
+        "--interval"
+      ],
+      "summary": "Retrigger today's run of a daily benchmark (needs a user login; --wait polls until the run starts)",
+      "since": "0.9.4",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "retrigger",
+        "status"
+      ],
+      "args": [
+        "<benchmark-slug>"
+      ],
+      "flags": [
+        "--request"
+      ],
+      "summary": "Today's retrigger availability and quota, or one request with --request",
+      "since": "0.9.4",
       "package": "@benchsdk/cli"
     },
     {

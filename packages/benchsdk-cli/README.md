@@ -78,6 +78,14 @@ When installed with `@benchsdk/runner`, these are available through the `bench` 
 - `bench runs run-again <slug> <runId> [--wait] [--timeout <seconds>]`
 - `bench runs run-again-status <slug> <runAgainId>`
 - `bench runs archive <runId...> [-y]` / `bench runs unarchive <runId...> [-y]` — up to 100 run ids per call
+- `bench runs list --benchmark <slug> [--benchmark <slug>]...` — the cross-benchmark list narrowed to those benchmarks
+- `bench runs feed [--benchmark <slug>]... [--include-archived] [--include-muted] [--limit N]` — the org's newest runs across benchmarks, with stats
+- `bench runs days [--benchmark <slug>]... [--include-archived] [--include-muted] [--tz <zone>]` — run counts per local day
+- `bench runs day <YYYY-MM-DD> [--benchmark <slug>]... [--include-archived] [--include-muted] [--tz <zone>] [--all] [--cursor <cursor>]` — one day's runs
+- `bench reliability cards [--include-muted]` — the org's reliability cards
+- `bench activity [--days N] [--benchmark <slug>]` — run counts per day (N from 1 to 90)
+- `bench retrigger <slug> [--wait] [--timeout <sec>] [--interval <sec>]` — retrigger today's run of a daily benchmark
+- `bench retrigger status <slug> [--request <id>]` — retrigger availability and quota, or one request
 - `bench results <slug> [--run <id>] [--format json|table] [--participant <list>] [--steps <list>|all] [--since <when>] [--until <when>] [--day YYYY-MM-DD] [--tz <zone>] [--source-org <slug>] [--limit N] [--offset N]`
 - `bench reliability <slug> [--from YYYY-MM-DD] [--to YYYY-MM-DD] [--bucket day|hour] [--tz <zone>] [--metrics <list>] [--breakdown <list>] [--source-org <slug>] [--format json|table]` — uptime range for a `type=reliability` benchmark; `--day YYYY-MM-DD --participant <slug>` for the per-slot day view
 - `bench iterations <slug> --run <id> [--participant <slug>] [--steps <list>]`
@@ -106,6 +114,29 @@ bench benchmarks describe alpha --tagline "Cold starts" --description-file about
 Run lists leave archived runs out by default; `--archived include` adds them and `--archived only` shows nothing else (and exits 1 if the platform answers with unarchived runs, which means it does not support the filter). `--include-muted` adds runs of muted benchmarks to the cross-benchmark list.
 
 API errors print the HTTP status, the platform's `error`/`message`, its `code` and its `hint` when present, for example `Benchmark not found (code: not_found)`.
+
+### Org run feed
+
+`runs feed`, `runs days`, `runs day`, `reliability cards` and `activity` read the organization-wide views the dashboard shows (`GET /benchmarks/runs/summary`, `/runs/days`, `/runs/day/{day}`, `/reliability-cards`, `/activity`). With `--json` each prints the API body unchanged, except `runs day --all`, which follows every `nextCursor` and prints one array of runs:
+
+```sh
+bench runs feed --benchmark rel-1 --benchmark bench-1 --json   # {"runs": [...], "analytics": "ok"}
+bench runs days --tz UTC --json                                # {"days": [{"day", "count"}], "timeZone"}
+bench runs day 2026-11-01 --all --json | jq length             # every run of that day
+```
+
+- `--benchmark` is repeatable and takes comma lists; it is sent as `benchmarkSlugs=a,b`. If the platform answers with runs of other benchmarks (it does not support the filter yet), the command exits 1 instead of printing them.
+- Archived runs and runs of muted benchmarks stay out unless `--include-archived` / `--include-muted`.
+- `--tz` defaults to this machine's time zone.
+- `runs day` without `--all` prints one page (150 runs) and its `nextCursor`; pass that back with `--cursor`.
+
+### Daily retrigger
+
+`bench retrigger <slug>` queues today's run of a daily benchmark (one retrigger per organization per UTC day) and prints `{benchmarkSlug, category, requestId, statusUrl}`. It needs a user login: an org API key gets `403 user_credential_required`, which `bench` reports as "Retrigger needs a user login; run `bench auth login` (API keys cannot retrigger)". A used quota fails with `quota_exceeded` and the time it resets.
+
+`--wait` polls `GET /benchmarks/{slug}/retrigger/{requestId}` every `--interval` seconds (default 5) until the request links a run, then prints `Run <runId> started` (with `--json`, `{requestId, runId}`). If no run links within `--timeout` seconds (default 600) it exits **3**.
+
+`bench retrigger status <slug>` prints today's availability and quota (`{available, disabledReason, quota: {day, used, limit, resetsAt}}`); `--request <id>` prints one request (`{requestId, runId, status}`).
 
 See the [`benchsdk-cli` skill](../../.agents/skills/benchsdk-cli/SKILL.md) for the full CLI reference, OAuth device-code flow, and CI/non-interactive use.
 

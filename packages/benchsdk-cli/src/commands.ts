@@ -24,6 +24,8 @@ export const GLOBAL_BOOLEAN_FLAGS = ['json', 'verbose', 'version', 'help'] as co
 const RESULT_FILTERS_SINCE = '0.8.0';
 // Management commands: the first @benchsdk/cli release after 0.9.3.
 const MANAGEMENT_SINCE = '0.9.4';
+// Org feed and daily retrigger commands ship in the same release.
+const FEED_SINCE = '0.9.4';
 
 export const COMMANDS: readonly BenchCommand[] = [
   { path: ['auth', 'login'], args: [], flags: [], since: '0.2.0', summary: 'Authenticate with OAuth device flow' },
@@ -97,7 +99,19 @@ export const COMMANDS: readonly BenchCommand[] = [
   {
     path: ['runs', 'list'],
     args: ['[benchmark-slug]'],
-    flags: ['limit', 'offset', 'participant', 'since', 'until', 'day', 'tz', 'source-org', 'archived', 'include-muted'],
+    flags: [
+      'limit',
+      'offset',
+      'participant',
+      'since',
+      'until',
+      'day',
+      'tz',
+      'source-org',
+      'archived',
+      'include-muted',
+      'benchmark',
+    ],
     since: '0.2.0',
     flagsSince: {
       participant: RESULT_FILTERS_SINCE,
@@ -108,8 +122,30 @@ export const COMMANDS: readonly BenchCommand[] = [
       'source-org': RESULT_FILTERS_SINCE,
       archived: MANAGEMENT_SINCE,
       'include-muted': MANAGEMENT_SINCE,
+      benchmark: FEED_SINCE,
     },
     summary: 'List benchmark runs (omit the slug to list runs across every benchmark you can read)',
+  },
+  {
+    path: ['runs', 'feed'],
+    args: [],
+    flags: ['benchmark', 'include-archived', 'include-muted', 'limit'],
+    since: FEED_SINCE,
+    summary: "The organization's newest runs across benchmarks, with stats (the dashboard feed)",
+  },
+  {
+    path: ['runs', 'days'],
+    args: [],
+    flags: ['benchmark', 'include-archived', 'include-muted', 'tz'],
+    since: FEED_SINCE,
+    summary: 'Run counts per local day across benchmarks',
+  },
+  {
+    path: ['runs', 'day'],
+    args: ['<day>'],
+    flags: ['benchmark', 'include-archived', 'include-muted', 'tz', 'all', 'cursor'],
+    since: FEED_SINCE,
+    summary: 'Runs of one local day across benchmarks (--all follows every page)',
   },
   {
     path: ['runs', 'show'],
@@ -172,6 +208,34 @@ export const COMMANDS: readonly BenchCommand[] = [
     since: '0.9.2',
     summary:
       'Reliability uptime view for a type=reliability benchmark, or one participant on one day with --day --participant',
+  },
+  {
+    path: ['reliability', 'cards'],
+    args: [],
+    flags: ['include-muted'],
+    since: FEED_SINCE,
+    summary: "The organization's reliability cards: uptime, last status and pause state per reliability benchmark",
+  },
+  {
+    path: ['activity'],
+    args: [],
+    flags: ['days', 'benchmark'],
+    since: FEED_SINCE,
+    summary: 'Run counts per day for the organization or one benchmark (--days 1..90)',
+  },
+  {
+    path: ['retrigger'],
+    args: ['<benchmark-slug>'],
+    flags: ['wait', 'timeout', 'interval'],
+    since: FEED_SINCE,
+    summary: "Retrigger today's run of a daily benchmark (needs a user login; --wait polls until the run starts)",
+  },
+  {
+    path: ['retrigger', 'status'],
+    args: ['<benchmark-slug>'],
+    flags: ['request'],
+    since: FEED_SINCE,
+    summary: "Today's retrigger availability and quota, or one request with --request",
   },
   {
     path: ['iterations'],
