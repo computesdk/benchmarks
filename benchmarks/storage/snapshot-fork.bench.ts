@@ -13,8 +13,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import { defineBenchmarkConfig, defineTask, TaskError } from '@benchsdk/runner';
-import type { Storage } from '@storagesdk/core';
-import { withTimeout } from '../src/util/timeout.js';
+import type { SnapshotInfo, Storage } from '@storagesdk/core';
+import { drainLateCleanups, trackLateCleanup, withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
 import { storageProviders as allProviders } from './providers.js';
 import { selectProviders } from '../scripts/provider-selection.js';
@@ -107,6 +107,9 @@ const storageCache = new Map<string, Storage>();
 const payload = crypto.randomBytes(spec.objectSizeBytes);
 const datasetBytes = spec.objectCount * spec.objectSizeBytes;
 
+/** How long teardown waits for a timed-out create to finish so it can delete what it made. */
+const LATE_CREATE_WAIT_MS = 120_000;
+
 /**
  * One iteration: seed dataset -> snapshot -> fork(from snapshot) -> fork(from
  * live) -> read-back-from-fork (verify) -> teardown. Every created resource is
@@ -144,6 +147,11 @@ export const task = defineTask<StorageProviderConfig>(async (ctx) => {
   // `forks.create()` without `fromSnapshot` auto-snapshots the parent, and
   // `forks.delete()` leaves that snapshot behind, so teardown deletes it.
   let forkFromLiveSnapshotId: string | undefined;
+  // A timed-out create keeps running and can still finish; teardown waits on
+  // these to delete what they made.
+  let snapshotCreate: Promise<SnapshotInfo> | undefined;
+  let forkFromSnapCreate: Promise<unknown> | undefined;
+  let forkFromLiveCreate: Promise<{ fromSnapshot?: string }> | undefined;
 
   try {
     const seedStart = performance.now();
@@ -153,27 +161,26 @@ export const task = defineTask<StorageProviderConfig>(async (ctx) => {
     const seedMs = performance.now() - seedStart;
 
     const snapStart = performance.now();
-    const snapshot = await step<{ id: string }>('snapshot-create', () =>
-      withTimeout(storage!.snapshots.create({ name: snapshotName }), timeout, 'Snapshot create timed out'),
-    );
+    const snapshot = await step<{ id: string }>('snapshot-create', () => {
+      snapshotCreate = storage!.snapshots.create({ name: snapshotName });
+      return withTimeout(snapshotCreate, timeout, 'Snapshot create timed out');
+    });
     const snapshotCreateMs = performance.now() - snapStart;
     snapshotId = snapshot.id;
 
     const forkSnapStart = performance.now();
-    await step('fork-from-snapshot', () =>
-      withTimeout(
-        storage!.forks.create({ name: forkFromSnapName, fromSnapshot: snapshot.id }),
-        timeout,
-        'Fork-from-snapshot timed out',
-      ),
-    );
+    await step('fork-from-snapshot', () => {
+      forkFromSnapCreate = storage!.forks.create({ name: forkFromSnapName, fromSnapshot: snapshot.id });
+      return withTimeout(forkFromSnapCreate, timeout, 'Fork-from-snapshot timed out');
+    });
     const forkFromSnapshotMs = performance.now() - forkSnapStart;
     forkFromSnapCreated = true;
 
     const forkLiveStart = performance.now();
-    const forkFromLive = await step<{ fromSnapshot?: string }>('fork-from-live', () =>
-      withTimeout(storage!.forks.create({ name: forkFromLiveName }), timeout, 'Fork-from-live timed out'),
-    );
+    const forkFromLive = await step<{ fromSnapshot?: string }>('fork-from-live', () => {
+      forkFromLiveCreate = storage!.forks.create({ name: forkFromLiveName });
+      return withTimeout(forkFromLiveCreate, timeout, 'Fork-from-live timed out');
+    });
     const forkFromLiveMs = performance.now() - forkLiveStart;
     forkFromLiveCreated = true;
     forkFromLiveSnapshotId = forkFromLive.fromSnapshot;
@@ -247,9 +254,40 @@ export const task = defineTask<StorageProviderConfig>(async (ctx) => {
         await safeCleanup(`snapshot delete ${autoSnapshotId}`, () => storage!.snapshots.delete(autoSnapshotId));
       }
     }
-    if (snapshotId) {
+    const lateForks: Promise<unknown>[] = [];
+    if (forkFromSnapCreate && !forkFromSnapCreated) {
+      lateForks.push(forkFromSnapCreate.then(() => storage!.forks.delete(forkFromSnapName)));
+    }
+    if (forkFromLiveCreate && !forkFromLiveCreated) {
+      lateForks.push(
+        forkFromLiveCreate.then(async (f) => {
+          const base = f.fromSnapshot ?? (await storage!.forks.head(forkFromLiveName)).fromSnapshot;
+          await storage!.forks.delete(forkFromLiveName);
+          if (base && base !== snapshotId) await storage!.snapshots.delete(base);
+        }),
+      );
+    }
+    if (lateForks.length > 0 || (snapshotId === undefined && snapshotCreate)) {
+      // Delete the snapshot only after any late fork that copies from it settles.
+      const late = (async () => {
+        const forks = await Promise.allSettled(lateForks);
+        const id = snapshotId ?? (await snapshotCreate!).id;
+        await storage!.snapshots.delete(id);
+        const failed = forks.find((r) => r.status === 'rejected');
+        if (failed) throw failed.reason;
+      })();
+      log('waiting for timed-out creates to finish before teardown', { level: 'warn' });
+      // Drained by `beforeExit` if it outlasts the wait.
+      trackLateCleanup(() => late);
+      await Promise.race([
+        late.catch(() => {}),
+        new Promise((resolve) => setTimeout(resolve, LATE_CREATE_WAIT_MS).unref()),
+      ]);
+    } else if (snapshotId) {
       await safeCleanup(`snapshot delete ${snapshotId}`, () => storage!.snapshots.delete(snapshotId!));
     }
     await safeCleanup(`object delete ${prefix}*`, () => Promise.all(keys.map((k) => storage!.delete(k))));
   }
 });
+
+export const beforeExit = () => drainLateCleanups(LATE_CREATE_WAIT_MS);
