@@ -17,6 +17,17 @@ import { createApiClient, getMe, listOrganizations, setActiveOrganization } from
 import { printData, type OutputOptions } from './output.js';
 import { getApiBaseUrl, getAuthBaseUrl, getPlatformBaseUrl } from './platform.js';
 import { findCommand, groupFlags, GLOBAL_BOOLEAN_FLAGS, GLOBAL_STRING_FLAGS } from './commands.js';
+import { ExitError, formatApiError } from './errors.js';
+import { optionChoice, optionFlag, type SubcommandOptions } from './options.js';
+import {
+  RUN_ARCHIVED_FILTERS,
+  handleBenchmarkArchive,
+  handleBenchmarkDescribe,
+  handleBenchmarkMute,
+  handleBenchmarkPause,
+  handleBenchmarksList,
+  handleRunsArchive,
+} from './manage.js';
 
 let packageVersion: string | undefined;
 
@@ -57,11 +68,23 @@ Commands:
   auth status                        Show current user and active organization
   org list                           List organizations
   org use <slug>                     Set active organization
-  benchmarks list [--limit N] [--offset N]
+  benchmarks list [--limit N] [--offset N] [--status active|archived|all]
                                      List benchmarks
+  benchmarks archive <benchmark-slug> [-y]
+                                     Archive a benchmark and all of its runs
+  benchmarks restore <benchmark-slug>
+                                     Restore an archived benchmark
+  benchmarks describe <benchmark-slug> [--tagline <text>] [--description <text>]
+             [--description-file <path>] [--clear-tagline] [--clear-description]
+                                     Set or clear the tagline and description
+  benchmarks mute|unmute <benchmark-slug>
+                                     Mute or unmute a benchmark for the org
+  benchmarks pause <benchmark-slug> [--start <iso>] [--end <iso>]
+  benchmarks resume <benchmark-slug> Pause or resume a reliability benchmark
   runs list [benchmark-slug] [--limit N] [--offset N]
              [--participant <list>] [--since <when>] [--until <when>]
              [--day YYYY-MM-DD] [--tz <zone>] [--source-org <slug>]
+             [--archived exclude|include|only] [--include-muted]
                                      List benchmark runs (omit slug to list runs
                                      across every benchmark you can read)
   runs show <benchmark-slug> <runId> Show a single run
@@ -69,6 +92,8 @@ Commands:
                                      Run the benchmark again on the latest code
   runs run-again-status <benchmark-slug> <runAgainId>
                                      Show run-again progress
+  runs archive|unarchive <runId...> [-y]
+                                     Archive or unarchive up to 100 runs
   results <benchmark-slug> [--run <id>] [--format json|table]
              [--participant <list>] [--steps <list>|all]
              [--since <when>] [--until <when>] [--day YYYY-MM-DD]
@@ -109,6 +134,9 @@ Options:
   --verbose                          Include extra diagnostics on errors
   --version                          Show version
   --help                             Show this help
+
+Writes that hide data (benchmarks archive, runs archive|unarchive) ask for
+confirmation on a terminal; elsewhere they need -y/--yes or exit 1 unchanged.
 `;
 
 interface GlobalOptions {
@@ -170,7 +198,9 @@ export function parseGlobalArgs(argv: string[]): ParsedOptions {
   return { values, positionals };
 }
 
-const subcommandOptionSchema = {
+type OptionType = 'string' | 'number' | 'boolean' | 'list';
+
+const subcommandOptionSchema: Record<string, { type: OptionType }> = {
   limit: { type: 'number' as const },
   offset: { type: 'number' as const },
   run: { type: 'string' as const },
@@ -193,18 +223,38 @@ const subcommandOptionSchema = {
   ref: { type: 'string' as const },
   wait: { type: 'boolean' as const },
   timeout: { type: 'number' as const },
+  status: { type: 'string' },
+  yes: { type: 'boolean' },
+  tagline: { type: 'string' },
+  description: { type: 'string' },
+  'description-file': { type: 'string' },
+  'clear-tagline': { type: 'boolean' },
+  'clear-description': { type: 'boolean' },
+  start: { type: 'string' },
+  end: { type: 'string' },
+  archived: { type: 'string' },
+  'include-muted': { type: 'boolean' },
 };
+
+const SHORT_OPTIONS: Record<string, string> = { '-y': 'yes' };
+
+/** Whether `--name` takes a value (`false` for switches such as `--yes`). */
+export function flagTakesValue(name: string): boolean {
+  const schema = subcommandOptionSchema[name];
+  return schema !== undefined && schema.type !== 'boolean';
+}
 
 export function parseSubcommandOptions(
   args: string[],
   allowed?: readonly string[],
-): { options: Record<string, string | number | boolean>; positionals: string[] } {
-  const options: Record<string, string | number | boolean> = {};
+): { options: SubcommandOptions; positionals: string[] } {
+  const options: SubcommandOptions = {};
   const positionals: string[] = [];
   let i = 0;
   while (i < args.length) {
     const arg = args[i];
-    if (!arg.startsWith('--')) {
+    const shortKey = SHORT_OPTIONS[arg];
+    if (!arg.startsWith('--') && shortKey === undefined) {
       positionals.push(arg);
       i += 1;
       continue;
@@ -213,14 +263,14 @@ export function parseSubcommandOptions(
     const eqIndex = arg.indexOf('=');
     const namePart = eqIndex === -1 ? arg : arg.slice(0, eqIndex);
     const valuePart = eqIndex === -1 ? undefined : arg.slice(eqIndex + 1);
-    const key = namePart.slice(2);
-    const schema = subcommandOptionSchema[key as keyof typeof subcommandOptionSchema];
+    const key = shortKey ?? namePart.slice(2);
+    const schema = subcommandOptionSchema[key];
     if (!schema) throw new Error(`Unknown option: ${arg}`);
     // The schema is global — a flag another command understands would
     // otherwise be silently ignored here (e.g. `bench results --from`
     // printing unfiltered results).
     if (allowed !== undefined && !allowed.includes(key)) {
-      throw new Error(`Unknown option for this command: ${arg}`);
+      throw new Error(`Unknown option for this command: ${shortKey ? `--${key}` : arg}`);
     }
 
     if (schema.type === 'boolean') {
@@ -247,6 +297,12 @@ export function parseSubcommandOptions(
       const n = Number(rawValue);
       if (!Number.isFinite(n)) throw new Error(`Option --${key} must be a number`);
       options[key] = n;
+    } else if (schema.type === 'list') {
+      // Repeatable, and each occurrence may itself be a comma list.
+      const values = rawValue.split(',').map((s) => s.trim()).filter(Boolean);
+      if (values.length === 0) throw new Error(`Option --${key} needs at least one value`);
+      const existing = options[key];
+      options[key] = [...(Array.isArray(existing) ? existing : []), ...values];
     } else {
       options[key] = rawValue;
     }
@@ -254,12 +310,11 @@ export function parseSubcommandOptions(
   return { options, positionals };
 }
 
-function assertSubcommandOptions(
-  options: Record<string, string | number | boolean>,
-  allowed: readonly string[],
-): void {
+/** Rejects options parsed with a group's flag union that this subcommand does not take. */
+function assertCommandFlags(path: string[], options: SubcommandOptions): void {
+  const allowed = flagsOf(...path);
   const extra = Object.keys(options).find((key) => !allowed.includes(key));
-  if (extra) throw new Error(`Unknown option for this command: --${extra}`);
+  if (extra !== undefined) throw new Error(`Unknown option for this command: --${extra}`);
 }
 
 function flagsOf(...path: string[]): readonly string[] {
@@ -284,14 +339,34 @@ Subcommands:
   list       List organizations
   use <slug> Set active organization`;
     case 'benchmarks':
-      return `Usage: bench benchmarks list [--limit N] [--offset N]`;
+      return `Usage: bench benchmarks list [--limit N] [--offset N] [--status active|archived|all]
+       bench benchmarks archive <benchmark-slug> [-y]
+       bench benchmarks restore <benchmark-slug>
+       bench benchmarks describe <benchmark-slug> [--tagline <text>] [--description <text>]
+                    [--description-file <path>] [--clear-tagline] [--clear-description]
+       bench benchmarks mute <benchmark-slug>
+       bench benchmarks unmute <benchmark-slug>
+       bench benchmarks pause <benchmark-slug> [--start <iso>] [--end <iso>]
+       bench benchmarks resume <benchmark-slug>
+
+archive hides the benchmark and all of its runs; it asks first on a
+terminal and needs -y/--yes anywhere else. Management writes need an
+organization owner or admin (or an org API key). pause and resume apply
+to reliability benchmarks only.`;
     case 'runs':
       return `Usage: bench runs list [benchmark-slug] [--limit N] [--offset N]
                     [--participant <list>] [--since <when>] [--until <when>]
                     [--day YYYY-MM-DD] [--tz <zone>] [--source-org <slug>]
+                    [--archived exclude|include|only] [--include-muted]
        bench runs show <benchmark-slug> <runId>
        bench runs run-again <benchmark-slug> <runId> [--wait] [--timeout <seconds>]
-       bench runs run-again-status <benchmark-slug> <runAgainId>`;
+       bench runs run-again-status <benchmark-slug> <runAgainId>
+       bench runs archive <runId...> [-y]
+       bench runs unarchive <runId...> [-y]
+
+Run lists leave out archived runs unless --archived include|only is given.
+archive and unarchive take up to 100 run ids, ask first on a terminal, and
+need -y/--yes anywhere else.`;
     case 'results':
       return `Usage: bench results <benchmark-slug> [--run <id>] [--format json|table]
                     [--participant <list>] [--steps <list>|all]
@@ -319,11 +394,14 @@ Subcommands:
 }
 
 async function printErrorAndExit(err: unknown, verbose = false): Promise<never> {
+  if (err instanceof ExitError) {
+    if (err.message) console.error(err.message);
+    process.exit(err.exitCode);
+  }
   if (err instanceof BenchmarkApiError) {
     const insufficientScope =
       err.message.includes('insufficient_scope') || err.body?.includes('insufficient_scope');
-    console.error(`API error: ${err.message}`);
-    if (err.body) console.error(err.body);
+    for (const line of formatApiError(err, verbose)) console.error(line);
     if (insufficientScope) {
       console.error(
         'Your login does not cover this call — run `bench auth login` or `compute login` to sign in again.',
@@ -480,16 +558,6 @@ async function handleOrgUse(slug: string, overrides: { baseUrl?: string; apiKey?
   console.log(`Active organization set to ${result.organization.slug} (${result.organization.id})`);
 }
 
-async function handleBenchmarksList(
-  overrides: { baseUrl?: string; apiKey?: string; org?: string },
-  options: { limit?: number; offset?: number },
-  outputOptions: OutputOptions = {},
-): Promise<void> {
-  const { api } = await createApiClient(overrides);
-  const benchmarks = await api.listBenchmarks(options);
-  printData(benchmarks, outputOptions);
-}
-
 export interface ResultFilterOptions {
   participant?: string;
   steps?: string;
@@ -583,12 +651,26 @@ export function assertFilterEcho(filter: unknown): void {
   }
 }
 
+export type RunsListOptions = { limit?: number; offset?: number } & ResultFilterOptions & SubcommandOptions;
+
+// `--archived only` against a platform that predates the archive filter
+// would print active runs under an archived-looking command.
+function assertArchivedOnly(runs: readonly { archivedAt?: string | null }[]): void {
+  if (runs.some((run) => !run.archivedAt)) {
+    throw new Error(
+      '--archived only returned runs that are not archived — this platform does not support the archived filter yet',
+    );
+  }
+}
+
 export async function handleRunsList(
   benchmarkSlug: string | undefined,
-  options: { limit?: number; offset?: number } & ResultFilterOptions,
+  options: RunsListOptions,
   overrides: { baseUrl?: string; apiKey?: string; org?: string },
   outputOptions: OutputOptions = {},
 ): Promise<void> {
+  const archived = optionChoice(options, 'archived', RUN_ARCHIVED_FILTERS);
+  const includeMuted = optionFlag(options, 'include-muted') || undefined;
   const { filter, flagsSent } = resolveResultFilter(options, { allowSteps: false });
   // Validate flag combinations before auth/API setup — a rejected command
   // should not need credentials.
@@ -604,19 +686,23 @@ export async function handleRunsList(
   }
   const { api } = await createApiClient(overrides);
   if (!benchmarkSlug) {
-    const runs = await api.listAllRuns(options);
+    const runs = await api.listAllRuns({ limit: options.limit, offset: options.offset, archived, includeMuted });
+    if (archived === 'only') assertArchivedOnly(runs);
     printData(runs, outputOptions);
     return;
   }
   const result = await api.listRuns(benchmarkSlug, {
     limit: options.limit,
     offset: options.offset,
+    archived,
+    includeMuted,
     // sourceOrg isn't a result filter (see resolveResultFilter) — send it
     // even when it's the only flag, on any platform version.
     ...(filter.sourceOrg ? { sourceOrg: filter.sourceOrg } : {}),
     ...(flagsSent ? filter : {}),
   });
   if (flagsSent) assertFilterEcho(result.appliedFilter);
+  if (archived === 'only') assertArchivedOnly(result);
   if (outputOptions.json || outputOptions.format === 'json') {
     printData(
       { items: [...result], filter: result.appliedFilter ?? null, upgrade: result.upgrade ?? null },
@@ -1195,7 +1281,7 @@ async function handleExport(
 // unless --ref pins it.
 async function handleFork(
   slug: string,
-  options: Record<string, string | number>,
+  options: SubcommandOptions,
   overrides: { baseUrl?: string; apiKey?: string; org?: string },
   outputOptions: OutputOptions,
 ): Promise<void> {
@@ -1324,23 +1410,41 @@ export async function run(argv: string[]): Promise<void> {
       }
       case 'benchmarks': {
         const [sub, ...subRest] = rest;
-        const { options } = parseSubcommandOptions(subRest, groupFlags('benchmarks'));
-        if (sub === 'list') {
-          await handleBenchmarksList(
-            overrides,
-            options as Parameters<typeof handleBenchmarksList>[1],
-            outputOptions,
-          );
-        } else {
-          throw new Error(USAGE);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(subRest, groupFlags('benchmarks'));
+        if (!findCommand(['benchmarks', sub])) throw new Error(USAGE);
+        assertCommandFlags(['benchmarks', sub], options);
+        const [slug] = subPositionals;
+        switch (sub) {
+          case 'list':
+            await handleBenchmarksList(options, overrides, outputOptions);
+            break;
+          case 'archive':
+          case 'restore':
+            await handleBenchmarkArchive(slug, sub === 'archive', options, overrides, outputOptions);
+            break;
+          case 'describe':
+            await handleBenchmarkDescribe(slug, options, overrides, outputOptions);
+            break;
+          case 'mute':
+          case 'unmute':
+            await handleBenchmarkMute(slug, sub === 'mute', overrides, outputOptions);
+            break;
+          case 'pause':
+          case 'resume':
+            await handleBenchmarkPause(slug, sub === 'pause', options, overrides, outputOptions);
+            break;
         }
         break;
       }
       case 'runs': {
         const { options, positionals: subPositionals } = parseSubcommandOptions(rest, groupFlags('runs'));
         const [sub, slug, runId] = subPositionals;
+        if (!findCommand(['runs', sub])) throw new Error(USAGE);
+        // Options are parsed with the union of every `runs` subcommand's
+        // flags; one another subcommand takes must not be silently ignored
+        // (e.g. --source-org on `runs show` with a shared slug).
+        assertCommandFlags(['runs', sub], options);
         if (sub === 'list') {
-          assertSubcommandOptions(options, flagsOf('runs', 'list'));
           await handleRunsList(
             slug,
             options as Parameters<typeof handleRunsList>[1],
@@ -1348,11 +1452,9 @@ export async function run(argv: string[]): Promise<void> {
             outputOptions,
           );
         } else if (sub === 'show') {
-          assertSubcommandOptions(options, flagsOf('runs', 'show'));
           if (!slug || !runId) throw new Error('Usage: bench runs show <benchmark-slug> <runId>');
           await handleRunsShow(slug, runId, overrides, outputOptions);
         } else if (sub === 'run-again') {
-          assertSubcommandOptions(options, flagsOf('runs', 'run-again'));
           if (!slug || !runId) {
             throw new Error(
               'Usage: bench runs run-again <benchmark-slug> <runId> [--wait] [--timeout <seconds>]',
@@ -1366,7 +1468,6 @@ export async function run(argv: string[]): Promise<void> {
             outputOptions,
           );
         } else if (sub === 'run-again-status') {
-          assertSubcommandOptions(options, flagsOf('runs', 'run-again-status'));
           if (!slug || !runId) {
             throw new Error(
               'Usage: bench runs run-again-status <benchmark-slug> <runAgainId>',
@@ -1374,7 +1475,7 @@ export async function run(argv: string[]): Promise<void> {
           }
           await handleRunsRunAgainStatus(slug, runId, overrides, outputOptions);
         } else {
-          throw new Error(USAGE);
+          await handleRunsArchive(subPositionals.slice(1), sub === 'archive', options, overrides, outputOptions);
         }
         break;
       }

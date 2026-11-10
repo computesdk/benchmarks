@@ -22,6 +22,8 @@ export const GLOBAL_STRING_FLAGS = ['base-url', 'api-key', 'org', 'format'] as c
 export const GLOBAL_BOOLEAN_FLAGS = ['json', 'verbose', 'version', 'help'] as const;
 
 const RESULT_FILTERS_SINCE = '0.8.0';
+// Management commands: the first @benchsdk/cli release after 0.9.3.
+const MANAGEMENT_SINCE = '0.9.4';
 
 export const COMMANDS: readonly BenchCommand[] = [
   { path: ['auth', 'login'], args: [], flags: [], since: '0.2.0', summary: 'Authenticate with OAuth device flow' },
@@ -38,14 +40,64 @@ export const COMMANDS: readonly BenchCommand[] = [
   {
     path: ['benchmarks', 'list'],
     args: [],
-    flags: ['limit', 'offset'],
+    flags: ['limit', 'offset', 'status'],
     since: '0.2.0',
-    summary: 'List benchmarks',
+    flagsSince: { status: MANAGEMENT_SINCE },
+    summary: 'List benchmarks (--status active|archived|all; default active)',
+  },
+  {
+    path: ['benchmarks', 'archive'],
+    args: ['<benchmark-slug>'],
+    flags: ['yes'],
+    since: MANAGEMENT_SINCE,
+    summary: 'Archive a benchmark and all of its runs (asks first; -y to skip)',
+  },
+  {
+    path: ['benchmarks', 'restore'],
+    args: ['<benchmark-slug>'],
+    flags: [],
+    since: MANAGEMENT_SINCE,
+    summary: 'Restore an archived benchmark and its runs',
+  },
+  {
+    path: ['benchmarks', 'describe'],
+    args: ['<benchmark-slug>'],
+    flags: ['tagline', 'description', 'description-file', 'clear-tagline', 'clear-description'],
+    since: MANAGEMENT_SINCE,
+    summary: "Set or clear a benchmark's tagline and description",
+  },
+  {
+    path: ['benchmarks', 'mute'],
+    args: ['<benchmark-slug>'],
+    flags: [],
+    since: MANAGEMENT_SINCE,
+    summary: "Mute a benchmark for the organization (hides it from the org's run feed)",
+  },
+  {
+    path: ['benchmarks', 'unmute'],
+    args: ['<benchmark-slug>'],
+    flags: [],
+    since: MANAGEMENT_SINCE,
+    summary: 'Unmute a benchmark for the organization',
+  },
+  {
+    path: ['benchmarks', 'pause'],
+    args: ['<benchmark-slug>'],
+    flags: ['start', 'end'],
+    since: MANAGEMENT_SINCE,
+    summary: 'Pause a reliability benchmark (from --start, default now, until --end or resume)',
+  },
+  {
+    path: ['benchmarks', 'resume'],
+    args: ['<benchmark-slug>'],
+    flags: [],
+    since: MANAGEMENT_SINCE,
+    summary: 'Resume a paused reliability benchmark',
   },
   {
     path: ['runs', 'list'],
     args: ['[benchmark-slug]'],
-    flags: ['limit', 'offset', 'participant', 'since', 'until', 'day', 'tz', 'source-org'],
+    flags: ['limit', 'offset', 'participant', 'since', 'until', 'day', 'tz', 'source-org', 'archived', 'include-muted'],
     since: '0.2.0',
     flagsSince: {
       participant: RESULT_FILTERS_SINCE,
@@ -54,6 +106,8 @@ export const COMMANDS: readonly BenchCommand[] = [
       day: RESULT_FILTERS_SINCE,
       tz: RESULT_FILTERS_SINCE,
       'source-org': RESULT_FILTERS_SINCE,
+      archived: MANAGEMENT_SINCE,
+      'include-muted': MANAGEMENT_SINCE,
     },
     summary: 'List benchmark runs (omit the slug to list runs across every benchmark you can read)',
   },
@@ -77,6 +131,20 @@ export const COMMANDS: readonly BenchCommand[] = [
     flags: [],
     since: '0.9.3',
     summary: 'Show run-again progress: the run it reported, or null while pending',
+  },
+  {
+    path: ['runs', 'archive'],
+    args: ['<runId...>'],
+    flags: ['yes'],
+    since: MANAGEMENT_SINCE,
+    summary: 'Archive up to 100 runs (asks first; -y to skip)',
+  },
+  {
+    path: ['runs', 'unarchive'],
+    args: ['<runId...>'],
+    flags: ['yes'],
+    since: MANAGEMENT_SINCE,
+    summary: 'Unarchive up to 100 runs (asks first; -y to skip)',
   },
   {
     path: ['results'],

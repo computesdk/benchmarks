@@ -145,10 +145,116 @@
       "args": [],
       "flags": [
         "--limit",
-        "--offset"
+        "--offset",
+        "--status"
       ],
-      "summary": "List benchmarks",
+      "summary": "List benchmarks (--status active|archived|all; default active)",
       "since": "0.2.0",
+      "flagsSince": {
+        "--status": "0.9.4"
+      },
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "benchmarks",
+        "archive"
+      ],
+      "args": [
+        "<benchmark-slug>"
+      ],
+      "flags": [
+        "--yes"
+      ],
+      "summary": "Archive a benchmark and all of its runs (asks first; -y to skip)",
+      "since": "0.9.4",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "benchmarks",
+        "restore"
+      ],
+      "args": [
+        "<benchmark-slug>"
+      ],
+      "flags": [],
+      "summary": "Restore an archived benchmark and its runs",
+      "since": "0.9.4",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "benchmarks",
+        "describe"
+      ],
+      "args": [
+        "<benchmark-slug>"
+      ],
+      "flags": [
+        "--tagline",
+        "--description",
+        "--description-file",
+        "--clear-tagline",
+        "--clear-description"
+      ],
+      "summary": "Set or clear a benchmark's tagline and description",
+      "since": "0.9.4",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "benchmarks",
+        "mute"
+      ],
+      "args": [
+        "<benchmark-slug>"
+      ],
+      "flags": [],
+      "summary": "Mute a benchmark for the organization (hides it from the org's run feed)",
+      "since": "0.9.4",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "benchmarks",
+        "unmute"
+      ],
+      "args": [
+        "<benchmark-slug>"
+      ],
+      "flags": [],
+      "summary": "Unmute a benchmark for the organization",
+      "since": "0.9.4",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "benchmarks",
+        "pause"
+      ],
+      "args": [
+        "<benchmark-slug>"
+      ],
+      "flags": [
+        "--start",
+        "--end"
+      ],
+      "summary": "Pause a reliability benchmark (from --start, default now, until --end or resume)",
+      "since": "0.9.4",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "benchmarks",
+        "resume"
+      ],
+      "args": [
+        "<benchmark-slug>"
+      ],
+      "flags": [],
+      "summary": "Resume a paused reliability benchmark",
+      "since": "0.9.4",
       "package": "@benchsdk/cli"
     },
     {
@@ -167,7 +273,9 @@
         "--until",
         "--day",
         "--tz",
-        "--source-org"
+        "--source-org",
+        "--archived",
+        "--include-muted"
       ],
       "summary": "List benchmark runs (omit the slug to list runs across every benchmark you can read)",
       "since": "0.2.0",
@@ -177,7 +285,9 @@
         "--until": "0.8.0",
         "--day": "0.8.0",
         "--tz": "0.8.0",
-        "--source-org": "0.8.0"
+        "--source-org": "0.8.0",
+        "--archived": "0.9.4",
+        "--include-muted": "0.9.4"
       },
       "package": "@benchsdk/cli"
     },
@@ -224,6 +334,36 @@
       "flags": [],
       "summary": "Show run-again progress: the run it reported, or null while pending",
       "since": "0.9.3",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "runs",
+        "archive"
+      ],
+      "args": [
+        "<runId...>"
+      ],
+      "flags": [
+        "--yes"
+      ],
+      "summary": "Archive up to 100 runs (asks first; -y to skip)",
+      "since": "0.9.4",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "runs",
+        "unarchive"
+      ],
+      "args": [
+        "<runId...>"
+      ],
+      "flags": [
+        "--yes"
+      ],
+      "summary": "Unarchive up to 100 runs (asks first; -y to skip)",
+      "since": "0.9.4",
       "package": "@benchsdk/cli"
     },
     {

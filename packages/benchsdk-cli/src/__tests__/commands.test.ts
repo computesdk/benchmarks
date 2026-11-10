@@ -17,7 +17,7 @@ vi.mock('../client.js', async (importOriginal) => {
   };
 });
 
-import { run } from '../cli.js';
+import { run, flagTakesValue } from '../cli.js';
 import { COMMANDS, type BenchCommand } from '../commands.js';
 
 class ExitCalled extends Error {
@@ -71,10 +71,13 @@ const POSITIONAL_SAMPLES: Record<string, string> = {
   '[benchmark-slug]': 'demo-bench',
   '<runId>': 'run-1',
   '<runAgainId>': 'run-again-1',
+  '<runId...>': 'run-1',
   '<slug>': 'demo-org',
+  '<day>': '2026-11-01',
 };
 
-const FLAG_SAMPLES: Record<string, string> = {
+/** A sample value per flag; `null` marks a switch that takes no value. */
+const FLAG_SAMPLES: Record<string, string | null> = {
   limit: '5',
   offset: '0',
   'max-lines': '10',
@@ -95,10 +98,32 @@ const FLAG_SAMPLES: Record<string, string> = {
   breakdown: 'region',
   as: 'my-fork',
   ref: 'abc123',
-  // A switch: the empty sample lands as an extra positional the command ignores.
-  wait: '',
-  timeout: '60',
+  status: 'all',
+  yes: null,
+  tagline: 'A tagline',
+  description: 'A description',
+  'description-file': '/tmp/bench-cli-test-missing-description.md',
+  'clear-tagline': null,
+  'clear-description': null,
+  start: '2026-11-01T00:00:00Z',
+  end: '2026-11-02T00:00:00Z',
+  archived: 'include',
+  'include-muted': null,
+  'include-archived': null,
+  benchmark: 'demo-bench',
+  all: null,
+  cursor: '2026-11-01T00:00:00Z,run-1',
+  days: '7',
+  wait: null,
+  timeout: '1',
+  interval: '1',
+  request: 'req-1',
 };
+
+function flagArgs(flag: string): string[] {
+  const sample = FLAG_SAMPLES[flag];
+  return sample === null ? [`--${flag}`] : [`--${flag}`, sample];
+}
 
 function positionalsFor(command: BenchCommand): string[] {
   return command.args.map((arg) => {
@@ -127,6 +152,15 @@ describe('COMMANDS table', () => {
       }
     }
   });
+
+  it('has a sample for every flag, matching whether the flag takes a value', () => {
+    for (const command of COMMANDS) {
+      for (const flag of command.flags) {
+        expect(FLAG_SAMPLES, `add a sample value for --${flag}`).toHaveProperty([flag]);
+        expect(FLAG_SAMPLES[flag] !== null, `--${flag} takes a value`).toBe(flagTakesValue(flag));
+      }
+    }
+  });
 });
 
 describe.each(COMMANDS.map((command) => [label(command), command] as const))('bench %s', (_name, command) => {
@@ -140,7 +174,7 @@ describe.each(COMMANDS.map((command) => [label(command), command] as const))('be
 
   it('exits non-zero on a flag another command accepts', async () => {
     const foreign = Object.keys(FLAG_SAMPLES).find((flag) => !command.flags.includes(flag))!;
-    const result = await invoke([...command.path, ...positionalsFor(command), `--${foreign}`, FLAG_SAMPLES[foreign]]);
+    const result = await invoke([...command.path, ...positionalsFor(command), ...flagArgs(foreign)]);
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain(`Unknown option for this command: --${foreign}`);
     expect(result.stderr).not.toContain('API_REACHED');
@@ -153,9 +187,8 @@ describe.each(COMMANDS.map((command) => [label(command), command] as const))('be
   });
 
   it.each(command.flags.map((flag) => [flag]))('accepts --%s', async (flag) => {
-    const sample = FLAG_SAMPLES[flag];
-    expect(sample, `add a sample value for --${flag}`).toBeDefined();
-    const result = await invoke([...command.path, ...positionalsFor(command), `--${flag}`, sample]);
+    expect(FLAG_SAMPLES, `add a sample value for --${flag}`).toHaveProperty([flag]);
+    const result = await invoke([...command.path, ...positionalsFor(command), ...flagArgs(flag)]);
     // Reaching the API, or failing a flag-combination check, both mean the
     // flag itself was accepted.
     expect(result.exitCode).toBe(1);
