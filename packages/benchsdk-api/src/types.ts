@@ -34,6 +34,50 @@ export interface BenchmarkResource {
   organizationId?: string;
   /** Slug of the org that owns the benchmark — distinguishes subscribed feeds from your own. */
   organizationSlug?: string | null;
+  tagline?: string | null;
+  description?: string | null;
+  visibility?: string;
+  type?: string;
+  /** Set while the org has muted the benchmark (hidden from shared feeds). */
+  mutedAt?: string | null;
+}
+
+/** `GET /benchmarks?status=`: `active` (default), `archived`, or both. */
+export type BenchmarkListStatus = 'active' | 'archived' | 'all';
+
+export interface ListBenchmarksOptions {
+  limit?: number;
+  offset?: number;
+  status?: BenchmarkListStatus;
+}
+
+/** Which runs a run list returns by archive state; the platform defaults to `exclude`. */
+export type RunArchivedFilter = 'exclude' | 'include' | 'only';
+
+/** What archiving or restoring a benchmark answers. */
+export interface BenchmarkArchiveResult {
+  benchmark: BenchmarkResource;
+  /** How many of the benchmark's runs the change archived or restored, when the platform reports it. */
+  archivedRunCount?: number;
+}
+
+/** What `POST /benchmarks/runs/archive` changed. */
+export interface RunArchiveResult {
+  /** `true` when the runs were archived, `false` when they were unarchived. */
+  archived: boolean;
+  count: number;
+}
+
+export interface BenchmarkPauseInput {
+  /** ISO timestamp; the platform defaults to now. */
+  start?: string;
+  /** ISO timestamp; open-ended when omitted. */
+  end?: string;
+}
+
+export interface BenchmarkPauseState {
+  paused: boolean;
+  pauses: { start: string; end: string | null }[];
 }
 
 /**
@@ -94,11 +138,18 @@ export interface ListAllRunsOptions {
   offset?: number;
   /** Restrict the listing to a single benchmark slug. */
   benchmarkSlug?: string;
+  /** Restrict the listing to these benchmarks (sent as `benchmarkSlugs=a,b`). */
+  benchmarkSlugs?: string[];
+  archived?: RunArchivedFilter;
+  /** Include runs of muted benchmarks. */
+  includeMuted?: boolean;
 }
 
 export interface ListRunsOptions extends BenchmarkRunFilterInput {
   limit?: number;
   offset?: number;
+  archived?: RunArchivedFilter;
+  includeMuted?: boolean;
 }
 
 export interface BenchmarkRunList {
@@ -203,6 +254,11 @@ export interface UpdateBenchmarkInput {
   status?: string;
   config?: JsonObject;
   defaultRunConfig?: JsonObject;
+  /** `null` clears it. */
+  tagline?: string | null;
+  /** `null` clears it. */
+  description?: string | null;
+  muted?: boolean;
 }
 
 export interface CreateRunInput {
@@ -1095,7 +1151,15 @@ export interface BenchmarkClient {
     sourceOrg: string,
     slug: string,
   ): Promise<{ benchmark: BenchmarkResource; source: BenchmarkSourceDescriptor | null }>;
-  listBenchmarks(options?: { limit?: number; offset?: number }): Promise<BenchmarkResource[]>;
+  listBenchmarks(options?: ListBenchmarksOptions): Promise<BenchmarkResource[]>;
+  /** PATCH `{status: "archived" | "active"}`: archives (or restores) the benchmark and its runs. */
+  setBenchmarkArchived(slug: string, archived: boolean): Promise<BenchmarkArchiveResult>;
+  /** POST /benchmarks/runs/archive — archive (or unarchive) up to 100 of the org's runs. */
+  archiveRuns(runIds: string[], archived?: boolean): Promise<RunArchiveResult>;
+  /** POST /benchmarks/{slug}/pause — pause a reliability benchmark. */
+  pauseBenchmark(slug: string, input?: BenchmarkPauseInput): Promise<BenchmarkPauseState>;
+  /** DELETE /benchmarks/{slug}/pause — resume a paused reliability benchmark. */
+  resumeBenchmark(slug: string): Promise<BenchmarkPauseState>;
   createRun(benchmarkSlug: string, input: CreateRunInput): Promise<{
     run: BenchmarkRun;
     participants: BenchmarkParticipant[];

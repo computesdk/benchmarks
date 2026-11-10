@@ -1,7 +1,11 @@
 export { BenchmarkApiError, BenchmarkTaskSkippedError, createBenchmarkClient } from './client';
 export type {
+  BenchmarkArchiveResult,
   BenchmarkArtifactDownload,
   BenchmarkAssignment,
+  BenchmarkListStatus,
+  BenchmarkPauseInput,
+  BenchmarkPauseState,
   BenchmarkArtifact,
   BenchmarkClient,
   BenchmarkClientConfig,
@@ -45,7 +49,10 @@ export type {
   BenchmarkRunStepOverview,
   BenchmarkUpgradePayload,
   ListAllRunsOptions,
+  ListBenchmarksOptions,
   ListRunsOptions,
+  RunArchivedFilter,
+  RunArchiveResult,
   BenchmarkRunImports,
   BenchmarkRunAnalyticsSummary,
   BenchmarkRunImportsSummary,

@@ -3,6 +3,7 @@ import { promisify } from 'node:util';
 
 const gunzip = promisify(gunzipCallback);
 import type {
+  BenchmarkArchiveResult,
   BenchmarkArtifact,
   BenchmarkArtifactDownload,
   BenchmarkAssignment,
@@ -10,6 +11,8 @@ import type {
   BenchmarkClientConfig,
   BenchmarkParticipant,
   BenchmarkParticipantLogs,
+  BenchmarkPauseInput,
+  BenchmarkPauseState,
   BenchmarkReliabilityDay,
   BenchmarkReliabilityInput,
   BenchmarkReliabilityRange,
@@ -44,7 +47,9 @@ import type {
   BenchmarkRunListResult,
   BenchmarkRunResultsInput,
   ListAllRunsOptions,
+  ListBenchmarksOptions,
   ListRunsOptions,
+  RunArchiveResult,
   SendTaskResultsInput,
   PlanWorkersInput,
   TaskResultRecord,
@@ -133,6 +138,14 @@ function queryString(input: Record<string, number | string | undefined>): string
   }
   const value = params.toString();
   return value ? `?${value}` : '';
+}
+
+function flagParam(value: boolean | undefined): string | undefined {
+  return value ? '1' : undefined;
+}
+
+function csvParam(values: string[] | undefined): string | undefined {
+  return values?.length ? values.join(',') : undefined;
 }
 
 function iterationsExtraParams(input: BenchmarkRunIterationInput = {}): string {
@@ -408,12 +421,49 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
       return data.benchmark;
     },
 
-    async listBenchmarks(options: { limit?: number; offset?: number } = {}) {
+    async listBenchmarks(options: ListBenchmarksOptions = {}) {
       const data = await request<{ items?: BenchmarkResource[]; benchmarks?: BenchmarkResource[] }>(
         'GET',
-        `/benchmarks${queryString(options)}`,
+        `/benchmarks${queryString({ limit: options.limit, offset: options.offset, status: options.status })}`,
       );
       return data.items ?? data.benchmarks ?? [];
+    },
+
+    async setBenchmarkArchived(slug, archived) {
+      const data = await request<{ benchmark: BenchmarkResource & { archivedRunCount?: number }; archivedRunCount?: number }>(
+        'PATCH',
+        `/benchmarks/${encodePath(slug)}`,
+        { status: archived ? 'archived' : 'active' },
+      );
+      const { archivedRunCount: nestedCount, ...benchmark } = data.benchmark;
+      const archivedRunCount = data.archivedRunCount ?? nestedCount;
+      const result: BenchmarkArchiveResult = { benchmark };
+      if (typeof archivedRunCount === 'number') result.archivedRunCount = archivedRunCount;
+      return result;
+    },
+
+    async archiveRuns(runIds, archived = true) {
+      const data = await request<{ archived?: number | boolean; count?: number }>(
+        'POST',
+        '/benchmarks/runs/archive',
+        { runIds, archived },
+      );
+      // The platform answers `{ archived: <count> }`; `{ archived, count }` is read too.
+      const count =
+        typeof data.count === 'number' ? data.count : typeof data.archived === 'number' ? data.archived : runIds.length;
+      const result: RunArchiveResult = { archived, count };
+      return result;
+    },
+
+    async pauseBenchmark(slug, input: BenchmarkPauseInput = {}) {
+      const body: JsonObject = {};
+      if (input.start !== undefined) body.start = input.start;
+      if (input.end !== undefined) body.end = input.end;
+      return request<BenchmarkPauseState>('POST', `/benchmarks/${encodePath(slug)}/pause`, body);
+    },
+
+    async resumeBenchmark(slug) {
+      return request<BenchmarkPauseState>('DELETE', `/benchmarks/${encodePath(slug)}/pause`);
     },
 
     async createRun(benchmarkSlug, input) {
@@ -425,10 +475,16 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
     },
 
     async listRuns(benchmarkSlug, options: ListRunsOptions = {}) {
-      const { sourceOrg, limit, offset, ...filter } = options;
+      const { sourceOrg, limit, offset, archived, includeMuted, ...filter } = options;
       const data = await request<BenchmarkRunList>(
         'GET',
-        `${benchmarkPath(benchmarkSlug, sourceOrg)}/runs${queryString({ limit, offset, ...filterParams(filter) })}`,
+        `${benchmarkPath(benchmarkSlug, sourceOrg)}/runs${queryString({
+          limit,
+          offset,
+          ...filterParams(filter),
+          archived,
+          includeMuted: flagParam(includeMuted),
+        })}`,
       );
       // The wire shape is { items, filter, upgrade } but callers iterate the
       // result as an array — attach the envelope fields non-enumerably so
@@ -450,7 +506,14 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
     async listAllRuns(options: ListAllRunsOptions = {}) {
       const data = await request<{ items: BenchmarkRunListItem[] }>(
         'GET',
-        `/benchmarks/runs${queryString({ limit: options.limit, offset: options.offset, benchmarkSlug: options.benchmarkSlug })}`,
+        `/benchmarks/runs${queryString({
+          limit: options.limit,
+          offset: options.offset,
+          benchmarkSlug: options.benchmarkSlug,
+          benchmarkSlugs: csvParam(options.benchmarkSlugs),
+          archived: options.archived,
+          includeMuted: flagParam(options.includeMuted),
+        })}`,
       );
       return data.items;
     },
