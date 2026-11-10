@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { Novita } from 'novita-sandbox';
 
-const NAME = 'node22-8cpu-16gb';
+const NAME = 'base-8cpu-16gb';
 
 async function main() {
   const apiKey = process.env.NOVITA_API_KEY;
@@ -10,7 +10,7 @@ async function main() {
   }
 
   const sdk = new Novita({ apiKey });
-  const template = sdk.template.new().fromNodeImage('22');
+  const template = sdk.template.new().fromTemplate('base');
 
   try {
     await sdk.template.build(template, NAME, {
