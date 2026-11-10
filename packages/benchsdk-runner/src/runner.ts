@@ -1074,6 +1074,7 @@ async function runGroupedByRound<T extends BaseParticipant>(
   const reporters = new Map<string, BenchmarkReporter | null>();
   const logBuffers = new Map<string, LogBuffer>();
   const failed = new Map<string, boolean>();
+  const workerPlanningFailed = new Set<string>();
   const recordsByParticipant = new Map<string, TaskResultRecord[]>();
   const lastFlushAt = new Map<string, number>();
   // A single collector for the whole run: round mode interleaves every
@@ -1102,10 +1103,16 @@ async function runGroupedByRound<T extends BaseParticipant>(
       // reads `targetConcurrency` as tasks-per-worker, so it must be the full
       // schedule length — otherwise only one task is planned and every record
       // past the first falls outside the worker's task range.
-      await client.planWorkers(config.benchmarkSlug, runId, participant.name, {
-        workerCount: 1,
-        targetConcurrency: schedule.length,
-      });
+      try {
+        await client.planWorkers(config.benchmarkSlug, runId, participant.name, {
+          workerCount: 1,
+          targetConcurrency: schedule.length,
+        });
+      } catch (error) {
+        workerPlanningFailed.add(participant.name);
+        console.warn(`  ${participant.name}: worker planning failed (${error instanceof Error ? error.message : String(error)}) — running without platform reporting.`);
+        return;
+      }
       let reporter: BenchmarkReporter | null = null;
       try {
         reporter = await BenchmarkReporter.claim({
@@ -1232,11 +1239,11 @@ async function runGroupedByRound<T extends BaseParticipant>(
   for (const participant of available) {
     console.log(`  ${participant.name}: done${failed.get(participant.name) ? ' (with errors)' : ''}.`);
   }
-  const unreported = available.filter((p) => reporters.get(p.name)?.reportFailed);
+  const unreported = available.filter((p) => workerPlanningFailed.has(p.name) || reporters.get(p.name)?.reportFailed);
   if (unreported.length > 0) {
     console.error(
       `Could not report results to the platform for ${unreported.length} participant(s): ${unreported.map((p) => p.name).join(', ')}. ` +
-        'Their workers were marked failed; the [benchsdk] warnings above have the request errors.',
+        'Their results are missing from the platform; the [benchsdk] warnings above have the request errors.',
     );
   }
 
