@@ -48,6 +48,7 @@ import { resolveAuth, AuthError } from '@benchsdk/cli';
 import type { CliAuth } from '@benchsdk/cli';
 import type { BenchmarkConfig } from '../bench-config';
 import type { TaskResultRecord } from '@benchsdk/api';
+import { ScoringSpecError, type BenchmarkScoringConfig } from '../scoring';
 
 describe('parseCliArgs', () => {
   it('parses space-separated flags', () => {
@@ -341,6 +342,63 @@ describe('runBenchmark', () => {
     delete process.env.BENCHMARKS_TEST_ORG_SLUG;
     delete process.env.BENCHMARKS_TEST_ORG_ID;
     delete process.env.BENCHSDK_NO_INGEST;
+  });
+
+  describe.each([
+    { mode: 'ingested', argv: [] },
+    { mode: 'dry-run', argv: ['--dry-run'] },
+  ])('scoring setup ($mode)', ({ argv }) => {
+    it.each([
+      { name: 'zero reciprocal reference', transform: { kind: 'reciprocal', reference: 0 } },
+      { name: 'negative reciprocal reference', transform: { kind: 'reciprocal', reference: -1 } },
+      { name: 'nonfinite reciprocal reference', transform: { kind: 'reciprocal', reference: Infinity } },
+      { name: 'unknown transform kind', transform: { kind: 'linear', reference: 100 } },
+      { name: 'unknown precision', precision: 'rounded' },
+    ])('rejects $name before auth, clients or tasks', async ({ name: _name, ...settings }) => {
+      const { precision, ...metricSettings } = settings as { precision?: unknown; transform?: unknown };
+      const scoring = {
+        ...(precision !== undefined ? { precision } : {}),
+        metrics: [{ key: 'latencyMs', ceiling: 1000, weights: { median: 1, p95: 0, p99: 0 }, ...metricSettings }],
+      } as unknown as BenchmarkScoringConfig;
+      const task = vi.fn(defineTask(async () => ({})));
+      vi.mocked(resolveAuth).mockClear();
+      createBenchmarkClient.mockClear();
+
+      await expect(runBenchmark({
+        benchmarkSlug: 's', benchmarkName: 'n', participants: [participants[0]], scoring,
+      }, task, argv)).rejects.toThrow(ScoringSpecError);
+
+      expect(resolveAuth).not.toHaveBeenCalled();
+      expect(createBenchmarkClient).not.toHaveBeenCalled();
+      expect(fakeClient.upsertBenchmark).not.toHaveBeenCalled();
+      expect(fakeClient.createRun).not.toHaveBeenCalled();
+      expect(runWorker).not.toHaveBeenCalled();
+      expect(task).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      { name: 'legacy', score: 90, settings: {} },
+      { name: 'continuous', score: 50, settings: { transform: { kind: 'reciprocal' as const, reference: 100 } } },
+    ])('still executes valid $name scoring', async ({ name, score: expectedScore, settings }) => {
+      const scoring: BenchmarkScoringConfig = {
+        ...(name === 'continuous' ? { precision: 'full' as const } : {}),
+        metrics: [{
+          key: 'latencyMs', unit: 'ms', ceiling: 1000, weights: { median: 1, p95: 0, p99: 0 }, ...settings,
+        }],
+      };
+      const task = vi.fn(defineTask(async (ctx) => { ctx.measure({ latencyMs: 100 }); return {}; }));
+      const outcome = await runBenchmark({
+        benchmarkSlug: 's', benchmarkName: 'n', participants: [participants[0]], scoring,
+      }, task, argv);
+
+      expect(task).toHaveBeenCalledTimes(1);
+      expect(outcome.participants[0].records).toHaveLength(1);
+      if (argv.length === 0) {
+        expect(calls.submitRunSummary[0][2].results[0].compositeScore).toBe(expectedScore);
+      } else {
+        expect(fakeClient.submitRunSummary).not.toHaveBeenCalled();
+      }
+    });
   });
 
   it('drives upsert -> createRun -> planWorkers/runWorker per available participant', async () => {

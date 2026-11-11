@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { defineBenchmarkConfig, defineTask, TaskError } from '../bench-config';
 import type { BaseParticipant } from '@benchsdk/worker';
+import type { BenchmarkScoringConfig } from '../scoring';
 
 const participants: BaseParticipant[] = [{ name: 'e2b', requiredEnvVars: [] }];
 
@@ -21,6 +22,40 @@ describe('defineBenchmarkConfig', () => {
   it('allows the minimal shape (slug + name + participants)', () => {
     const config = defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants });
     expect(config.iterations).toBeUndefined();
+  });
+
+  it.each([
+    { transform: { kind: 'reciprocal', reference: 0 } },
+    { transform: { kind: 'reciprocal', reference: -1 } },
+    { transform: { kind: 'reciprocal', reference: Infinity } },
+    { transform: { kind: 'linear', reference: 100 } },
+  ])('rejects invalid scoring transform $transform at definition time', ({ transform }) => {
+    const scoring = {
+      metrics: [{ key: 'latencyMs', ceiling: 1000, weights: { median: 1, p95: 0, p99: 0 }, transform }],
+    } as unknown as BenchmarkScoringConfig;
+    expect(() => defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, scoring }))
+      .toThrow('Invalid transform');
+  });
+
+  it('rejects unknown scoring precision at definition time', () => {
+    const scoring = {
+      precision: 'rounded',
+      metrics: [{ key: 'latencyMs', ceiling: 1000, weights: { median: 1, p95: 0, p99: 0 } }],
+    } as unknown as BenchmarkScoringConfig;
+    expect(() => defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, scoring }))
+      .toThrow('Unknown scoring precision');
+  });
+
+  it('accepts valid continuous scoring at definition time', () => {
+    const scoring: BenchmarkScoringConfig = {
+      precision: 'full',
+      metrics: [{
+        key: 'latencyMs', ceiling: 1000, weights: { median: 1, p95: 0, p99: 0 },
+        transform: { kind: 'reciprocal', reference: 100 },
+      }],
+    };
+    expect(defineBenchmarkConfig({ benchmarkSlug: 's', benchmarkName: 'n', participants, scoring }).scoring)
+      .toBe(scoring);
   });
 
   it('carries an onComplete hook when provided', () => {

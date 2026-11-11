@@ -1,5 +1,12 @@
 # @benchsdk/client
 
+## 0.5.16
+
+### Patch Changes
+
+- Updated dependencies [8db5cb8]
+  - @benchsdk/runner@0.8.5
+
 ## 0.5.15
 
 ### Patch Changes
