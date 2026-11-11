@@ -6,6 +6,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "version-packages": "changeset version && pnpm --filter @benchsdk/runner run manifest",
+    "release": "pnpm --filter @benchsdk/runner run manifest --released && changeset publish",
     "bench": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --iterations 3 --concurrency 3",
     "bench:burst": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --iterations 3 --concurrency 3",
     "bench:sandbox:dax": "tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/dax.bench.ts",
