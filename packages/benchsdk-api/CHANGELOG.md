@@ -1,5 +1,42 @@
 # @benchsdk/api
 
+## 0.11.3
+
+### Patch Changes
+
+- ec00dd9: Add the org run feed and daily Run again to `bench`.
+
+  - `bench runs feed` (`GET /benchmarks/runs/summary` → `{runs, analytics}`), `bench runs days` (`GET /benchmarks/runs/days` → `{days, timeZone}`) and `bench runs day <YYYY-MM-DD>` (`GET /benchmarks/runs/day/{day}` → `{day, timeZone, runs, nextCursor, analytics}`) read the organization-wide run feed. They take `--benchmark` (repeatable or a comma list, sent as `benchmarkSlugs`), `--include-archived` and `--include-muted`; `runs feed` takes `--limit` (1 to 100), `runs days`/`runs day` take `--tz` (default: the local zone), and `runs day` takes `--cursor <createdAt>,<id>` (the page's `nextCursor`, sent as `cursorCreatedAt` and `cursorId`) and `--all`, which follows every page and prints one array of runs. The table marks runs from their `isArchived` and `benchmarkMuted` fields.
+  - `bench reliability cards [--include-muted]` (`GET /benchmarks/reliability-cards` → `{cards: [{benchmark, card}], mutedCount}`) prints one row per reliability benchmark, and `bench activity [--days N] [--benchmark <slug>]` (`GET /benchmarks/activity` → `{days, benchmarkSlug, series: [{date, runs}]}`) prints runs per UTC day.
+  - `bench runs list --benchmark <slug>...` narrows the cross-benchmark list (`benchmarkSlugs`). A platform that ignores the filter makes the command exit 1 instead of printing other benchmarks' runs.
+  - `bench run-again <slug>` (`POST /benchmarks/{slug}/run-again`, no body → 202 `{benchmarkSlug, category, runAgainId, statusUrl}`) runs a daily benchmark again, once per organization, benchmark and UTC day; `--wait` polls `GET /benchmarks/{slug}/run-again/{runAgainId}` (`{runAgainId, runId}`) every `--interval` seconds (default 5) and exits 3 if no run is reported within `--timeout` seconds (default 600). `bench run-again status <slug> [--request <runAgainId>]` shows availability and quota (`GET /benchmarks/{slug}/run-again`), or one request. An org API key's `user_credential_required` refusal prints a hint to sign in with `bench auth login` in place of the platform's hint; `owner_only`, `category_not_entitled`, `run_again_disabled` and `quota_exceeded` (with `retryAt`) refusals print their code and a next step.
+  - `@benchsdk/api` adds `getRunFeed` (`limit` or `runIds`, not both; `stats: false` sends `stats=0`), `listRunDays`, `listRunsForDay`, `listAllRunsForDay`, `getReliabilityCards`, `getActivity`, `runBenchmarkAgain` and `getRunAgainState`, with the `RunFeedItem`, `RunDayCursor`, `ReliabilityCard`, `BenchmarkActivity`, `RunAgainAccepted` and `RunAgainState` types. A daily Run again request is polled with the existing `getRunAgain`.
+  - `cli-manifest.json` lists the new commands with `since: 0.9.5`.
+
+- ec00dd9: Add benchmark and run management to `bench`.
+
+  - `bench benchmarks archive|restore <slug>` (`PATCH /benchmarks/{slug}` with `status`), `describe <slug>` (`--tagline`, `--description`, `--description-file`, `--clear-tagline`, `--clear-description`), `mute|unmute <slug>`, and `pause|resume <slug>` for reliability benchmarks (`POST|DELETE /benchmarks/{slug}/pause`, `--start`/`--end`).
+  - `bench runs archive|unarchive <runId...>` (`POST /benchmarks/runs/archive`, up to 100 ids; the platform replies `{archived: <count>, count}`) prints `{archived, count}`, with `archived` as the direction (`true` or `false`) and `count` the runs changed.
+  - `bench benchmarks list --status active|archived|all`; `bench runs list --archived exclude|include|only` and, on the cross-benchmark list only, `--include-muted` (muted benchmarks' runs are kept there by default, so it restates the default). `--archived only` exits 1 when the platform answers with unarchived runs.
+  - Archiving an already-archived benchmark exits 1 with the platform's `409 conflict` and a hint to restore it; `archivedRunCount` is printed only when the platform reports one.
+  - `benchmarks archive` and `runs archive|unarchive` ask for confirmation on a terminal; elsewhere they exit 1 without sending anything unless `-y`/`--yes` is passed.
+  - API errors now print the platform's `error`, `message`, `code` and `hint`; a member login refused a management write gets a hint that it needs an owner or admin (or an org API key).
+  - `@benchsdk/api` adds `setBenchmarkArchived`, `archiveRuns`, `pauseBenchmark`, `resumeBenchmark`, `status` on `listBenchmarks`, `archived` on `listRuns` and `listAllRuns`, `includeMuted` on `listAllRuns` (`false` sends `includeMuted=0` to leave muted benchmarks' runs out), and `tagline`/`description`/`muted` on `updateBenchmark`.
+  - Behavior change once the platform ships the archive filter: run lists leave archived runs out unless `--archived include|only` is given.
+  - `cli-manifest.json` lists the new commands and flags with `since: 0.9.5`.
+
+- ec00dd9: Add the run analytics reads the dashboard shows to `bench`.
+
+  - `bench runs show <slug> <runId>` prints the run and then its Overview (`GET /benchmarks/{slug}/runs/{runId}/overview` → `{run, generatedAt, progress, overall, customMetrics, dimension, ranking}`): progress, overall stats, custom metric medians and the participants ranked by `--rank-by` (`task`, `step:<name>` or a metric key) at `--stat min|median|p95|p99|max` within an optional `--dimension`. With `--json` the overview is the printed run's `overview` key; it is `null` when the platform has no overview route (404) or analytics are unavailable (503), unless an overview flag was passed, which makes those exit 1.
+  - `bench results <slug> --run <id> --timeline [--bucket-ms N]` (`GET …/results/timeline`) and `--tasks [--bucket-size N] [--failure-limit N]` (`GET …/results/tasks`) print a run's event rate and concurrency, or its per-task latency buckets and failures. Both need `--run` and take no other filter. A single `--run` also prints the custom metric medians the platform now returns as `customMetrics`.
+  - `bench iterations --type steps|tasks` (default `steps`) adds the per-task iterations; `--steps` applies to `--type steps` only.
+  - `bench workers <slug> <runId> [--participant <slug>]` (`GET …/runs/{runId}/workers` → `{run, items}`) lists the run's workers with progress and artifacts.
+  - `bench artifacts download <slug> <runId> <workerId> <artifactId> [--out <file>]` writes the artifact's bytes as stored to `--out` or stdout; a binary artifact refuses a terminal stdout, and `--json` needs `--out` (it prints `{path, bytes, artifact}`). `bench artifacts list` now rejects `--out`.
+  - `bench matrix <slug>` and `bench model-index <slug>` (`GET /benchmarks/{slug}/matrix`, `/model-index`, or the `~/{sourceOrg}/{slug}` form with `--source-org`) print a matrix index benchmark's dataset or a model index benchmark's results.
+  - `bench benchmarks list` takes the dashboard directory's `--sort name|owner|category|runs|lastRun`, `--order asc|desc` (needs `--sort`), `--group public|stealth|mine`, `--category` (repeatable or a comma list), `--owner <org-slug>` and `--q <text>`.
+  - `@benchsdk/api` adds `getRunOverview`, `listRunWorkers`, `downloadWorkerArtifactBytes` (raw bytes, never decompressed), `getBenchmarkMatrix` and `getModelIndex`, the directory options on `listBenchmarks`, the list-row fields on `BenchmarkResource` (`categoryName`, `runCount`, `latestRun`, `viewerMuted`, `effectiveConfidential`) and `customMetrics` on `BenchmarkRunResults`.
+  - `cli-manifest.json` lists the new commands and flags with `since: 0.9.5`.
+
 ## 0.11.2
 
 ### Patch Changes
