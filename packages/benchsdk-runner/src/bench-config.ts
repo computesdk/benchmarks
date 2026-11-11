@@ -40,6 +40,7 @@ import type {
 } from '@benchsdk/api';
 import type { BaseParticipant } from '@benchsdk/worker';
 import type { BenchmarkScoringConfig, HigherIsBetter, LowerIsBetter, ScoringSpec } from './scoring.js';
+import { scoringConfigToSpec, validateScoringSpec } from './scoring.js';
 
 /** How tasks are ordered across participants. */
 export type GroupBy = 'participant' | 'round';
@@ -808,6 +809,9 @@ function validateBenchmarkScoringConfig(scoring: BenchmarkScoringConfig, display
   }
   if (Math.abs(totalWeight - 1) > 0.01) {
     throw new Error(`scoring metric weights must sum to 1.0 (got ${totalWeight.toFixed(3)})`);
+  }
+  if (scoring.precision !== undefined || scoring.metrics.some((metric) => metric.transform !== undefined)) {
+    validateScoringSpec(scoringConfigToSpec(scoring));
   }
 }
 

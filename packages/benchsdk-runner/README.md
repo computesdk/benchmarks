@@ -74,6 +74,64 @@ Inside a task the context exposes three separate channels:
 - **`measure(data)`** — explicit metric channel. Called inside a `step()` it merges into that step's data; called at task top-level it merges into the task record. A task with no explicit steps is recorded as one implicit `'task'` step carrying its measurements.
 - **`log(message, metaOrOptions?)`** — human-readable narration to the run timeline. `metaOrOptions` can be a metadata JSON object or `{ level: 'debug' | 'info' | 'warn' | 'error', meta?: JsonObject }`.
 
+## Optional continuous scoring
+
+The existing `config.scoring` accepts two optional fields (also supported by
+`scoringConfigToSpec`, `score` and the `onScore` metric helpers):
+
+```ts
+scoring: {
+  precision: 'full',
+  metrics: [{
+    key: 'latencyMs',
+    ceiling: 2000,
+    transform: { kind: 'reciprocal', reference: 2000 },
+    weights: { median: 0.6, p95: 0.3, p99: 0.1 },
+  }],
+}
+```
+
+Absent flags preserve linear bounds and two-decimal final rounding.
+`precision: 'full'` retains the final composite double, including for linear
+metrics; a transform without full precision still rounds the final composite.
+This does not change display formatting or guarantee unique ranks.
+
+After the existing raw sample trimming and percentile computation, a reciprocal
+metric replaces its linear floor/ceiling calculation with `100 / (1 + x / R)`
+for lower-is-better, or `x === 0 ? 0 : 100 / (1 + R / x)` for higher-is-better.
+`R` is the positive finite reference; the ceiling stays in the spec for existing
+type compatibility. Raw percentile direction, completed-task samples, success
+gates, weights, grouping and measured zero retain their existing meanings.
+This is not a per-sample transform or an arbitrary nonlinear callback.
+
+Unknown precision, unknown/extra transform fields and invalid references throw
+`ScoringSpecError`. When either new field is used and success rate is positive,
+every present metric must have finite, nonnegative positive-weight statistics.
+A metric with no eligible samples is omitted as before and contributes zero;
+no measured timing zero is invented and its weight is not redistributed.
+This preserves sparse idle-resume groups and unrequested/failed concurrency
+levels. Zero-weight diagnostics need not have samples. All-failed is
+still observed zero; no-record rows remain skipped. Weight validation for the
+new fields rejects missing, nonfinite and negative components.
+
+For declarative `config.scoring`, `defineBenchmarkConfig` rejects invalid new
+fields as a `BenchmarkConfigError`. `runBenchmark` also validates these fields
+before authentication, client setup or task execution, including dry runs and
+configs supplied without `defineBenchmarkConfig`. Required sample/statistic
+validation still happens after measurements are collected; callback `onScore`
+specs are validated when scored.
+
+The existing summary upload saves the mathematical spec. Matching platform
+support is required so ingestion recomputes the same arithmetic; suite adoption
+requires a normal compatible package release and must fail fast on an old runner
+that would ignore new fields. No version registry, nullable client change,
+publication, historical rescore or workload is introduced here. The fixed
+`src/__tests__/fixtures/continuous-scoring.json` table is shared byte-for-byte
+with platform tests; it is synthetic offline evidence, not provider measurements.
+The byte-identical `continuous-sparse.json` fixtures also exercise the suite's
+actual idle/concurrency configurations, grouping, unsupported/no-latency cases,
+requested subsets and status-filtered failures.
+
 ## Platform data commands
 
 `bench` is a unified CLI. Besides `bench run`, it can authenticate and query the platform:
