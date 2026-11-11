@@ -188,6 +188,9 @@ importers:
       '@computesdk/tilion':
         specifier: ^0.1.18
         version: 0.1.18
+      '@computesdk/uno':
+        specifier: ^0.1.5
+        version: 0.1.5
       '@computesdk/upstash':
         specifier: ^0.3.28
         version: 0.3.28(zod@4.6.7)
@@ -878,6 +881,9 @@ packages:
   '@computesdk/provider@2.1.22':
     resolution: {integrity: sha512-MC5NGv8Y0Rwdla1mLHhuNSfVvvCt7o9S+c/GdzHf3Oe2fAjMicRUcb4SOf6D7S39PhdwhOiWoMbjpJohGxQbjg==}
 
+  '@computesdk/provider@2.1.23':
+    resolution: {integrity: sha512-6V6a6E+VGf33PTbvLIMleliZSI2QZIb5A5iLMfy3z6UEbWEViXUvb6mxBVQyd6CF7M9D9Ilgk7e+2HC25EOYCA==}
+
   '@computesdk/quilt@1.0.20':
     resolution: {integrity: sha512-fJJxQVac5Tkovn7poZAa17CvGHJGi61OMUSapf8FAKh2G/YOha6FaluUQJnbkeff3zXYw+WBG8vpJvPDDuwX6Q==}
     engines: {node: '>=22'}
@@ -918,6 +924,9 @@ packages:
 
   '@computesdk/tilion@0.1.18':
     resolution: {integrity: sha512-lsj+63BptY+/qFBQNrp6Fvum+L/XzFyRj0yhkAf2fdl1kXixHP8irM8s0pHYoTMJE0KTqV45ItCyMJecCecyFg==}
+
+  '@computesdk/uno@0.1.5':
+    resolution: {integrity: sha512-mzZ8+22xFEqxHseGSieV8Q1qQ5SFzKlHaSbdqlyY8qIJ5w4BvLk5uyz5FN5pbY7weI9RU0pA/t65Z0OMIx+aEg==}
 
   '@computesdk/upstash@0.3.28':
     resolution: {integrity: sha512-Gqj50eP/uxtpPfjFzkqJg3uKzZTUo9RcQwC2jYo3jfPoPN63FC/DO3MQllOX+OuoBsPgWCjbA/YpTgzQE97jfw==}
@@ -3235,6 +3244,9 @@ packages:
 
   computesdk@4.1.16:
     resolution: {integrity: sha512-/A8IEr/EyuzDAhVFzyE5am7mUQ07FPuwo1fB4dJdvBd2nUtsVzqmTRhBjgp15J6VkhwqQKqNa7wZIG31D5Fs/g==}
+
+  computesdk@4.1.17:
+    resolution: {integrity: sha512-0Ua3oOkmaOi6uc5P6pLgurz2qU8WUl39k+N6KjQlTYExv51MITwzWqzlOS/dCv5yPqJw5uaEQifoGPK+8KRH3Q==}
 
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
@@ -6876,6 +6888,12 @@ snapshots:
       computesdk: 4.1.16
       daemond: 0.1.8
 
+  '@computesdk/provider@2.1.23':
+    dependencies:
+      '@computesdk/cmd': 0.4.1
+      computesdk: 4.1.17
+      daemond: 0.1.8
+
   '@computesdk/quilt@1.0.20':
     dependencies:
       '@computesdk/provider': 2.1.22
@@ -6962,6 +6980,11 @@ snapshots:
     dependencies:
       '@computesdk/provider': 2.1.22
       computesdk: 4.1.16
+
+  '@computesdk/uno@0.1.5':
+    dependencies:
+      '@computesdk/provider': 2.1.23
+      computesdk: 4.1.17
 
   '@computesdk/upstash@0.3.28(zod@4.6.7)':
     dependencies:
@@ -9317,6 +9340,11 @@ snapshots:
       readable-stream: 4.8.0
 
   computesdk@4.1.16:
+    dependencies:
+      '@computesdk/cmd': 0.4.1
+      daemond: 0.1.8
+
+  computesdk@4.1.17:
     dependencies:
       '@computesdk/cmd': 0.4.1
       daemond: 0.1.8

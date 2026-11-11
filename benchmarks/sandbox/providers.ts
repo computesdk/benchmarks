@@ -37,6 +37,7 @@ import { sprites } from '@computesdk/sprites';
 import { superserve } from '@computesdk/superserve';
 import { tenki } from '@computesdk/tenki';
 import { tensorlake } from '@computesdk/tensorlake'
+import { uno } from '@computesdk/uno';
 import { upstash } from '@computesdk/upstash';
 import { vercel } from '@computesdk/vercel';
 import type { ProviderConfig } from './types.js';
@@ -347,6 +348,17 @@ export const providers: ProviderConfig[] = [
     name: 'tensorlake',
     requiredEnvVars: ['TENSORLAKE_API_KEY'],
     createCompute: () => tensorlake({ apiKey: process.env.TENSORLAKE_API_KEY! }),
+  },
+  {
+    // Full Linux microVMs. Machines land in the US High-end region (Ryzen 9950X);
+    // UNO_REGION=nl switches to the EU region. Sized for dax in dax.bench.ts.
+    name: 'uno',
+    requiredEnvVars: ['UNO_API_KEY'],
+    createCompute: () => uno({ apiKey: process.env.UNO_API_KEY!, region: process.env.UNO_REGION || 'us' }),
+    // Dax only for now: the benchmark account runs at most 3 machines at once,
+    // so keep it out of matrices derived from this list (benchmarks-daily
+    // TTI/burst). The dax workflow lists it explicitly.
+    manualOnly: true,
   },
   {
     name: 'upstash',
