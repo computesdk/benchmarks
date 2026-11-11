@@ -2,14 +2,14 @@
   "schemaVersion": 1,
   "bin": "bench",
   "package": "@benchsdk/runner",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "source": {
     "repo": "computesdk/benchmarks",
     "released": false
   },
   "cli": {
     "package": "@benchsdk/cli",
-    "version": "0.9.3"
+    "version": "0.9.4"
   },
   "globalFlags": [
     "--base-url",
@@ -151,7 +151,7 @@
       "summary": "List benchmarks (--status active|archived|all; default active)",
       "since": "0.2.0",
       "flagsSince": {
-        "--status": "0.9.4"
+        "--status": "0.9.5"
       },
       "package": "@benchsdk/cli"
     },
@@ -167,7 +167,7 @@
         "--yes"
       ],
       "summary": "Archive a benchmark and all of its runs (asks first; -y to skip)",
-      "since": "0.9.4",
+      "since": "0.9.5",
       "package": "@benchsdk/cli"
     },
     {
@@ -180,7 +180,7 @@
       ],
       "flags": [],
       "summary": "Restore an archived benchmark and its runs",
-      "since": "0.9.4",
+      "since": "0.9.5",
       "package": "@benchsdk/cli"
     },
     {
@@ -199,7 +199,7 @@
         "--clear-description"
       ],
       "summary": "Set or clear a benchmark's tagline and description",
-      "since": "0.9.4",
+      "since": "0.9.5",
       "package": "@benchsdk/cli"
     },
     {
@@ -212,7 +212,7 @@
       ],
       "flags": [],
       "summary": "Mute a benchmark for the organization (hides it from the org's run feed)",
-      "since": "0.9.4",
+      "since": "0.9.5",
       "package": "@benchsdk/cli"
     },
     {
@@ -225,7 +225,7 @@
       ],
       "flags": [],
       "summary": "Unmute a benchmark for the organization",
-      "since": "0.9.4",
+      "since": "0.9.5",
       "package": "@benchsdk/cli"
     },
     {
@@ -241,7 +241,7 @@
         "--end"
       ],
       "summary": "Pause a reliability benchmark (from --start, default now, until --end or resume)",
-      "since": "0.9.4",
+      "since": "0.9.5",
       "package": "@benchsdk/cli"
     },
     {
@@ -254,7 +254,7 @@
       ],
       "flags": [],
       "summary": "Resume a paused reliability benchmark",
-      "since": "0.9.4",
+      "since": "0.9.5",
       "package": "@benchsdk/cli"
     },
     {
@@ -287,9 +287,9 @@
         "--day": "0.8.0",
         "--tz": "0.8.0",
         "--source-org": "0.8.0",
-        "--archived": "0.9.4",
-        "--include-muted": "0.9.4",
-        "--benchmark": "0.9.4"
+        "--archived": "0.9.5",
+        "--include-muted": "0.9.5",
+        "--benchmark": "0.9.5"
       },
       "package": "@benchsdk/cli"
     },
@@ -306,7 +306,7 @@
         "--limit"
       ],
       "summary": "The organization's newest runs across benchmarks, with stats (the dashboard feed)",
-      "since": "0.9.4",
+      "since": "0.9.5",
       "package": "@benchsdk/cli"
     },
     {
@@ -322,7 +322,7 @@
         "--tz"
       ],
       "summary": "Run counts per local day across benchmarks",
-      "since": "0.9.4",
+      "since": "0.9.5",
       "package": "@benchsdk/cli"
     },
     {
@@ -342,7 +342,7 @@
         "--cursor"
       ],
       "summary": "Runs of one local day across benchmarks (--all follows every page)",
-      "since": "0.9.4",
+      "since": "0.9.5",
       "package": "@benchsdk/cli"
     },
     {
@@ -402,7 +402,7 @@
         "--yes"
       ],
       "summary": "Archive up to 100 runs (asks first; -y to skip)",
-      "since": "0.9.4",
+      "since": "0.9.5",
       "package": "@benchsdk/cli"
     },
     {
@@ -417,7 +417,7 @@
         "--yes"
       ],
       "summary": "Unarchive up to 100 runs (asks first; -y to skip)",
-      "since": "0.9.4",
+      "since": "0.9.5",
       "package": "@benchsdk/cli"
     },
     {
@@ -486,7 +486,7 @@
         "--include-muted"
       ],
       "summary": "The organization's reliability cards: uptime, last status and pause state per reliability benchmark",
-      "since": "0.9.4",
+      "since": "0.9.5",
       "package": "@benchsdk/cli"
     },
     {
@@ -499,7 +499,7 @@
         "--benchmark"
       ],
       "summary": "Run counts per day for the organization or one benchmark (--days 1..90)",
-      "since": "0.9.4",
+      "since": "0.9.5",
       "package": "@benchsdk/cli"
     },
     {
@@ -515,7 +515,7 @@
         "--interval"
       ],
       "summary": "Run a daily benchmark again, once per organization and UTC day (needs a user login; --wait polls until the run starts)",
-      "since": "0.9.4",
+      "since": "0.9.5",
       "package": "@benchsdk/cli"
     },
     {
@@ -530,7 +530,7 @@
         "--request"
       ],
       "summary": "Today's Run again availability and quota, or one request with --request <runAgainId>",
-      "since": "0.9.4",
+      "since": "0.9.5",
       "package": "@benchsdk/cli"
     },
     {

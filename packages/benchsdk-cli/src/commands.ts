@@ -22,10 +22,10 @@ export const GLOBAL_STRING_FLAGS = ['base-url', 'api-key', 'org', 'format'] as c
 export const GLOBAL_BOOLEAN_FLAGS = ['json', 'verbose', 'version', 'help'] as const;
 
 const RESULT_FILTERS_SINCE = '0.8.0';
-// Management commands: the first @benchsdk/cli release after 0.9.3.
-const MANAGEMENT_SINCE = '0.9.4';
+// Management commands: the first @benchsdk/cli release after 0.9.4.
+const MANAGEMENT_SINCE = '0.9.5';
 // Org feed and daily Run again commands ship in the same release.
-const FEED_SINCE = '0.9.4';
+const FEED_SINCE = '0.9.5';
 
 export const COMMANDS: readonly BenchCommand[] = [
   { path: ['auth', 'login'], args: [], flags: [], since: '0.2.0', summary: 'Authenticate with OAuth device flow' },
