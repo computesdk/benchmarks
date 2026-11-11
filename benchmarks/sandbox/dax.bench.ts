@@ -197,6 +197,9 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // far too small and short-lived for the build (its exec stream died ~8s in
   // on every run). cpu = cores, memory = MiB, timeout → timeoutSeconds.
   'run-cloud':  { cpu: 8, memory: 16384, timeout: 900_000 },
+  // Uno sizes at create() via vcpus/memoryMiB (adapter maps them to the box
+  // vcpu/ram_mb fields); the default 10 GB disk holds the build.
+  uno:          { vcpus: 8, memoryMiB: 16384 },
 };
 
 // Provider-factory overrides for settings the SDK reads only from provider
