@@ -335,7 +335,7 @@ export async function handleArtifactsDownload(
   options: SubcommandOptions,
   overrides: Overrides,
   output: OutputOptions,
-  stdout: { isTTY?: boolean; write(chunk: Uint8Array): unknown } = process.stdout,
+  stdout: { isTTY?: boolean; write(chunk: Uint8Array, callback: (error?: Error | null) => void): unknown } = process.stdout,
 ): Promise<void> {
   const [slug, runId, workerId, artifactId] = requireArgs(
     [args[0], args[1], args[2], args[3]],
@@ -354,6 +354,10 @@ export async function handleArtifactsDownload(
   if (stdout.isTTY && !isTextContentType(artifact.contentType)) {
     throw new Error(`Artifact ${artifactId} is ${artifact.contentType ?? 'of unknown type'}; pass --out <file> or pipe stdout`);
   }
-  stdout.write(bytes);
+  // The CLI exits as soon as the command returns: wait for the bytes to be
+  // handed off, or a pipe applying backpressure gets a truncated artifact.
+  await new Promise<void>((resolve, reject) => {
+    stdout.write(bytes, (error) => (error ? reject(error) : resolve()));
+  });
 }
 

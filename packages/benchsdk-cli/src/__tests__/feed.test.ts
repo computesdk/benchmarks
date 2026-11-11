@@ -134,6 +134,15 @@ describe('bench runs feed', () => {
     expect(result.exitCode).toBe(0);
     expect(cli.requests[0].query.get('benchmarkSlugs')).toBe('~computesdk/daily');
   });
+  it('refuses another owner\'s rows for a ~org/slug --benchmark', async () => {
+    cli.routes['GET /benchmarks/runs/summary'] = () => ({
+      body: { runs: [feedRun('r1', 'daily', { benchmarkOwner: 'foreign', benchmarkOwnerOrgSlug: 'acme' })], analytics: 'ok' },
+    });
+    const result = await cli.invoke(['runs', 'feed', '--benchmark', '~computesdk/daily', '--json']);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('~acme/daily');
+  });
+
   it('fails loudly when the platform ignores --benchmark', async () => {
     cli.routes['GET /benchmarks/runs/summary'] = () => ({
       body: { runs: [feedRun('r1', 'rel-1'), feedRun('r2', 'unrelated')], analytics: 'ok' },

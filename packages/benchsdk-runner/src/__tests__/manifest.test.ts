@@ -47,6 +47,14 @@ describe('bench __manifest', () => {
     );
   });
 
+  it('keeps the platform-only globals off the runner verbs, which take only their own flags', () => {
+    const { commands } = JSON.parse(benchManifest()) as { commands: ManifestCommand[] };
+    for (const verb of commands.filter((c) => c.package === '@benchsdk/runner')) {
+      expect(verb.flags, verb.path.join(' ')).not.toContain('--json');
+      expect(verb.flags, verb.path.join(' ')).not.toContain('--format');
+    }
+  });
+
   it('lists the runner verbs, then every @benchsdk/cli command with --flags and since', () => {
     const { commands } = JSON.parse(benchManifest()) as { commands: ManifestCommand[] };
     expect(commands.map((c) => c.path.join(' '))).toEqual([

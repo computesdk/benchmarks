@@ -326,10 +326,31 @@ describe('bench artifacts download', () => {
 
   it('writes to stdout without --out', async () => {
     artifact('text/plain');
-    const write = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const write = vi.spyOn(process.stdout, 'write').mockImplementation(((_chunk: unknown, done?: () => void) => {
+      done?.();
+      return true;
+    }) as typeof process.stdout.write);
     const result = await cli.invoke(['artifacts', 'download', 'alpha', RUN, 'w-1', 'a-1']);
     expect(result.exitCode).toBe(0);
-    expect(write).toHaveBeenCalledWith(bytes);
+    expect(write).toHaveBeenCalledWith(bytes, expect.any(Function));
+  });
+
+  it('waits for a backpressured stdout to take the bytes before returning', async () => {
+    artifact('text/plain');
+    let flush: (() => void) | undefined;
+    vi.spyOn(process.stdout, 'write').mockImplementation(((_chunk: unknown, done?: () => void) => {
+      flush = done;
+      return false;
+    }) as typeof process.stdout.write);
+    let finished = false;
+    const pending = cli.invoke(['artifacts', 'download', 'alpha', RUN, 'w-1', 'a-1']).then((result) => {
+      finished = true;
+      return result;
+    });
+    await vi.waitFor(() => expect(flush).toBeDefined());
+    expect(finished).toBe(false);
+    flush!();
+    expect((await pending).exitCode).toBe(0);
   });
 
   it('needs every id and --out with --json', async () => {

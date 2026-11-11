@@ -38,16 +38,35 @@ function integerOption(options: SubcommandOptions, key: string, min: number, max
  * benchmark; printing that under a filtered-looking command would mislead.
  */
 export function assertBenchmarkSlugsHonored(
-  runs: readonly { benchmarkSlug?: string }[],
+  runs: readonly { benchmarkSlug?: string; benchmarkOwnerOrgSlug?: string }[],
   requested: readonly string[] | undefined,
 ): void {
   if (!requested?.length) return;
-  // `~source/slug` names a foreign benchmark; rows carry the bare slug.
-  const wanted = new Set(requested.flatMap((slug) => [slug, slug.replace(/^~[^/]+\//, '')]));
-  const stray = runs.find((run) => run.benchmarkSlug !== undefined && !wanted.has(run.benchmarkSlug));
+  // `~source/slug` names a foreign benchmark by owner and slug; rows carry the
+  // bare slug, and feed rows also the benchmark's owner. A qualified selector
+  // only accepts that owner's rows where the row says who owns it; a row
+  // without the owner (the cross-benchmark run list) is checked by slug.
+  const bare = new Set<string>();
+  const owners = new Map<string, Set<string>>();
+  for (const selector of requested) {
+    const qualified = /^~([^/]+)\/(.+)$/.exec(selector);
+    if (!qualified) {
+      bare.add(selector);
+      continue;
+    }
+    const [, owner, slug] = qualified;
+    owners.set(slug, (owners.get(slug) ?? new Set()).add(owner));
+  }
+  const stray = runs.find((run) => {
+    if (run.benchmarkSlug === undefined || bare.has(run.benchmarkSlug)) return false;
+    const allowed = owners.get(run.benchmarkSlug);
+    if (!allowed) return true;
+    return run.benchmarkOwnerOrgSlug !== undefined && !allowed.has(run.benchmarkOwnerOrgSlug);
+  });
   if (stray) {
+    const name = stray.benchmarkOwnerOrgSlug ? `~${stray.benchmarkOwnerOrgSlug}/${stray.benchmarkSlug}` : stray.benchmarkSlug;
     throw new Error(
-      `--benchmark was not applied: the platform returned runs of ${stray.benchmarkSlug} — this platform does not support the benchmarkSlugs filter yet`,
+      `--benchmark was not applied: the platform returned runs of ${name} — this platform does not support the benchmarkSlugs filter yet`,
     );
   }
 }

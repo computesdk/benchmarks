@@ -23,6 +23,12 @@ export interface CliManifest {
   version: string;
   source: { repo: 'computesdk/benchmarks'; released: boolean };
   cli: { package: '@benchsdk/cli'; version: string };
+  /**
+   * Flags every `@benchsdk/cli` (platform) command accepts besides its own.
+   * The runner verbs (`run`, `check`; `package: '@benchsdk/runner'`) parse
+   * their argv before the platform CLI does and accept only the flags they
+   * list, so these don't apply to them.
+   */
   globalFlags: string[];
   commands: CliManifestCommand[];
 }
