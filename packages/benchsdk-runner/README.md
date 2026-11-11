@@ -159,7 +159,7 @@ pnpm --filter @benchsdk/cli run build
 pnpm --filter @benchsdk/runner run manifest
 ```
 
-`src/__tests__/manifest.test.ts` fails when the committed file differs from `bench __manifest`. The release workflow regenerates it after `changeset version` (`pnpm run version-packages`), so version bumps stay in sync.
+`src/__tests__/manifest.test.ts` fails when the committed file differs from `bench __manifest`. The committed file always has `source.released: false`; the release workflow's publish step (`pnpm run release`) regenerates it with `--released` just before `changeset publish` packs it, so the published package says `released: true`. The release workflow also regenerates it after `changeset version` (`pnpm run version-packages`), so version bumps stay in sync.
 
 ## Examples and full guide
 

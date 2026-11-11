@@ -65,7 +65,11 @@ jobs:
           # Regenerates packages/benchsdk-runner/cli-manifest.json after the
           # version bump so the release PR passes the manifest test.
           version: pnpm run version-packages
-          publish: pnpm changeset publish
+          # The committed manifest describes the repo (source.released: false,
+          # what the manifest test compares against); the copy packed into the
+          # published runner is regenerated with --released first, so npm
+          # consumers see the version they installed as released.
+          publish: pnpm run release
           title: "Version Packages"
           commit: "Version Packages"
         env:
