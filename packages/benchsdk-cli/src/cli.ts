@@ -37,6 +37,15 @@ import {
   handleRunsFeed,
 } from './feed.js';
 import { handleRunAgain, handleRunAgainStatus } from './daily-run-again.js';
+import {
+  handleArtifactsDownload,
+  handleMatrix,
+  handleModelIndex,
+  handleResultsView,
+  handleRunsShow,
+  handleWorkers,
+  printCustomMetrics,
+} from './analytics.js';
 
 let packageVersion: string | undefined;
 
@@ -78,6 +87,9 @@ Commands:
   org list                           List organizations
   org use <slug>                     Set active organization
   benchmarks list [--limit N] [--offset N] [--status active|archived|all]
+             [--sort name|owner|category|runs|lastRun] [--order asc|desc]
+             [--group public|stealth|mine] [--category <slug>]...
+             [--owner <org-slug>] [--q <text>]
                                      List benchmarks
   benchmarks archive <benchmark-slug> [-y]
                                      Archive a benchmark and all of its runs
@@ -97,7 +109,8 @@ Commands:
              [--benchmark <slug>]...
                                      List benchmark runs (omit slug to list runs
                                      across every benchmark you can read)
-  runs show <benchmark-slug> <runId> Show a single run
+  runs show <benchmark-slug> <runId> [--rank-by <option>] [--stat <stat>]
+             [--dimension <value>]   Show a run and its Overview ranking
   runs run-again <benchmark-slug> <runId> [--wait] [--timeout <seconds>]
                                      Run the benchmark again on the latest code
   runs run-again-status <benchmark-slug> <runAgainId>
@@ -118,6 +131,14 @@ Commands:
                                      Show benchmark or run results. --since/--until
                                      take YYYY-MM-DD, an ISO timestamp, or a
                                      relative 24h/7d/2w
+  results <benchmark-slug> --run <id> --timeline [--bucket-ms N]
+  results <benchmark-slug> --run <id> --tasks [--bucket-size N] [--failure-limit N]
+                                     A run's event rate and concurrency, or its
+                                     per-task latency buckets and failures
+  matrix <benchmark-slug> [--source-org <slug>]
+                                     A matrix index benchmark's newest dataset
+  model-index <benchmark-slug> [--source-org <slug>]
+                                     A model index benchmark's newest results
   reliability <benchmark-slug> [--from YYYY-MM-DD] [--to YYYY-MM-DD]
              [--bucket day|hour] [--tz <zone>] [--metrics <list>]
              [--breakdown <list>] [--source-org <slug>] [--format json|table]
@@ -137,10 +158,15 @@ Commands:
                                      exits 3 on timeout)
   run-again status <benchmark-slug> [--request <runAgainId>]
                                      Run again availability and quota, or one request
-  iterations <benchmark-slug> --run <id> [--participant <slug>] [--steps <list>] [--format json|table]
-                                     Show per-iteration step latencies
+  iterations <benchmark-slug> --run <id> [--type steps|tasks] [--participant <slug>]
+             [--steps <list>] [--format json|table]
+                                     Show per-iteration step (default) or task latencies
+  workers <benchmark-slug> <runId> [--participant <slug>]
+                                     List a run's workers, progress and artifacts
   artifacts list <benchmark-slug> <runId> [--worker <id>]
                                      List run artifacts
+  artifacts download <benchmark-slug> <runId> <workerId> <artifactId> [--out <file>]
+                                     Download a worker artifact (stdout without --out)
   logs <benchmark-slug> <runId> [--participant <slug>] [--worker <id>] [--max-lines N]
                                      Show participant worker logs (parsed, like
                                      the dashboard log view)
@@ -267,6 +293,21 @@ const subcommandOptionSchema: Record<string, { type: OptionType }> = {
   days: { type: 'number' },
   interval: { type: 'number' },
   request: { type: 'string' },
+  sort: { type: 'string' },
+  order: { type: 'string' },
+  group: { type: 'string' },
+  category: { type: 'list' },
+  owner: { type: 'string' },
+  q: { type: 'string' },
+  'rank-by': { type: 'string' },
+  stat: { type: 'string' },
+  dimension: { type: 'string' },
+  timeline: { type: 'boolean' },
+  'bucket-ms': { type: 'number' },
+  tasks: { type: 'boolean' },
+  'bucket-size': { type: 'number' },
+  'failure-limit': { type: 'number' },
+  type: { type: 'string' },
 };
 
 const SHORT_OPTIONS: Record<string, string> = { '-y': 'yes' };
@@ -373,6 +414,9 @@ Subcommands:
   use <slug> Set active organization`;
     case 'benchmarks':
       return `Usage: bench benchmarks list [--limit N] [--offset N] [--status active|archived|all]
+                    [--sort name|owner|category|runs|lastRun] [--order asc|desc]
+                    [--group public|stealth|mine] [--category <slug>]...
+                    [--owner <org-slug>] [--q <text>]
        bench benchmarks archive <benchmark-slug> [-y]
        bench benchmarks restore <benchmark-slug>
        bench benchmarks describe <benchmark-slug> [--tagline <text>] [--description <text>]
@@ -385,14 +429,20 @@ Subcommands:
 archive hides the benchmark and all of its runs; it asks first on a
 terminal and needs -y/--yes anywhere else. Management writes need an
 organization owner or admin (or an org API key). pause and resume apply
-to reliability benchmarks only.`;
+to reliability benchmarks only.
+
+list sorts and filters like the dashboard directory: --sort without --order
+uses asc for name, owner and category and desc for runs and lastRun; --group
+is a directory group card; --category is repeatable or a comma list; --q
+searches the name, category name and owning org's name.`;
     case 'runs':
       return `Usage: bench runs list [benchmark-slug] [--limit N] [--offset N]
                     [--participant <list>] [--since <when>] [--until <when>]
                     [--day YYYY-MM-DD] [--tz <zone>] [--source-org <slug>]
                     [--archived exclude|include|only] [--include-muted]
                     [--benchmark <slug>]...
-       bench runs show <benchmark-slug> <runId>
+       bench runs show <benchmark-slug> <runId> [--rank-by <option>]
+                    [--stat min|median|p95|p99|max] [--dimension <value>]
        bench runs run-again <benchmark-slug> <runId> [--wait] [--timeout <seconds>]
        bench runs run-again-status <benchmark-slug> <runAgainId>
        bench runs archive <runId...> [-y]
@@ -414,12 +464,26 @@ feed, days and day read the organization-wide feed the dashboard shows:
 runs of muted benchmarks stay out unless --include-archived/--include-muted.
 --tz defaults to this machine's zone. day prints one page (150 runs) with
 its nextCursor ({createdAt, id}); pass it back as --cursor <createdAt>,<id>,
-or use --all to follow every page and print one array of runs.`;
+or use --all to follow every page and print one array of runs.
+
+show prints the run and then its Overview, as the dashboard shows it:
+progress, overall stats, custom metrics and the participants ranked by
+--rank-by (task, step:<name> or a metric key; the default is the dashboard's
+choice) at --stat (default median), optionally within one --dimension value.
+With --json the overview is the run's "overview" key (null when the platform
+has no overview or analytics are unavailable).`;
     case 'results':
       return `Usage: bench results <benchmark-slug> [--run <id>] [--format json|table]
                     [--participant <list>] [--steps <list>|all]
                     [--since <when>] [--until <when>] [--day YYYY-MM-DD]
-                    [--tz <zone>] [--source-org <slug>] [--limit N] [--offset N]`;
+                    [--tz <zone>] [--source-org <slug>] [--limit N] [--offset N]
+       bench results <benchmark-slug> --run <id> --timeline [--bucket-ms N]
+       bench results <benchmark-slug> --run <id> --tasks [--bucket-size N] [--failure-limit N]
+
+A single --run also prints each custom metric's median, run-wide and per
+participant. --timeline prints the run's event rate per time bucket and its
+worker concurrency samples; --tasks prints latency per task-index bucket and
+the failed tasks. Both need --run and take no other filter.`;
     case 'reliability':
       return `Usage: bench reliability <benchmark-slug> [--from YYYY-MM-DD] [--to YYYY-MM-DD]
                     [--bucket day|hour] [--tz <zone>] [--metrics <list>]
@@ -446,9 +510,33 @@ request per organization, benchmark and UTC day). It needs a user login
 reports its run, and exits 3 if none has after --timeout seconds (default 600).
 status shows today's availability and quota, or one request with --request.`;
     case 'iterations':
-      return `Usage: bench iterations <benchmark-slug> --run <id> [--participant <slug>] [--steps <list>] [--format json|table]`;
+      return `Usage: bench iterations <benchmark-slug> --run <id> [--type steps|tasks] [--participant <slug>]
+                    [--steps <list>] [--format json|table]
+
+--type steps (the default) lists every step of every task; --type tasks lists
+one row per task. --steps narrows --type steps only.`;
+    case 'workers':
+      return `Usage: bench workers <benchmark-slug> <runId> [--participant <slug>]
+
+Every worker of the run, as the dashboard's Workers page lists them: task
+range, progress, status and artifacts (ids for bench artifacts download).`;
+    case 'matrix':
+      return `Usage: bench matrix <benchmark-slug> [--source-org <slug>]
+
+A matrix index benchmark's newest dataset: one row per matrix row, one column
+per participant. --json prints the spec and the full dataset.`;
+    case 'model-index':
+      return `Usage: bench model-index <benchmark-slug> [--source-org <slug>]
+
+A model index benchmark's newest results: one row per model. --json prints
+the full matrix with every gateway cell.`;
     case 'artifacts':
-      return `Usage: bench artifacts list <benchmark-slug> <runId> [--worker <id>]`;
+      return `Usage: bench artifacts list <benchmark-slug> <runId> [--worker <id>]
+       bench artifacts download <benchmark-slug> <runId> <workerId> <artifactId> [--out <file>]
+
+download writes the artifact's bytes as stored (a gzip log stays gzip) to
+--out, or to stdout; a binary artifact needs --out or a pipe when stdout is a
+terminal. With --json and --out it prints {path, bytes, artifact}.`;
     case 'logs':
       return `Usage: bench logs <benchmark-slug> <runId> [--participant <slug>] [--worker <id>] [--max-lines N]`;
     case 'export':
@@ -796,17 +884,6 @@ export async function handleRunsList(
   }
 }
 
-async function handleRunsShow(
-  benchmarkSlug: string,
-  runId: string,
-  overrides: { baseUrl?: string; apiKey?: string; org?: string },
-  outputOptions: OutputOptions = {},
-): Promise<void> {
-  const { api } = await createApiClient(overrides);
-  const run = await api.getRun(benchmarkSlug, runId);
-  printData(run, outputOptions);
-}
-
 export async function waitForRunAgain(
   api: Pick<BenchmarkClient, 'getRunAgain'>,
   slug: string,
@@ -1021,6 +1098,7 @@ function printResultsTables(
       console.log('Steps:');
       console.table(steps.map(stepTableRow));
     }
+    printCustomMetrics(runResults.customMetrics);
     return;
   }
 
@@ -1239,12 +1317,33 @@ function printReliability(result: BenchmarkReliabilityRange | BenchmarkReliabili
 
 async function handleIterations(
   benchmarkSlug: string,
-  options: { run?: string; participant?: string; steps?: string },
+  options: { run?: string; participant?: string; steps?: string; type?: string },
   overrides: { baseUrl?: string; apiKey?: string; org?: string },
   outputOptions: OutputOptions = {},
 ): Promise<void> {
   if (!options.run) {
-    throw new Error('Usage: bench iterations <benchmark-slug> --run <id> [--participant <slug>] [--steps <list>]');
+    throw new Error(
+      'Usage: bench iterations <benchmark-slug> --run <id> [--type steps|tasks] [--participant <slug>] [--steps <list>]',
+    );
+  }
+  const type = optionChoice(options as SubcommandOptions, 'type', ['steps', 'tasks'] as const) ?? 'steps';
+  if (type === 'tasks') {
+    if (options.steps !== undefined) throw new Error('--steps applies to --type steps only');
+    const { api } = await createApiClient(overrides);
+    const { tasks } = await api.getRunTaskIterations(benchmarkSlug, options.run, { participant: options.participant });
+    printData(
+      tasks.map((row) => ({
+        participantSlug: row.participantSlug,
+        taskIndex: row.taskIndex,
+        status: row.status,
+        latencyMs: row.latencyMs,
+        startedAt: row.startedAt,
+        completedAt: row.completedAt,
+        ...row.data,
+      })),
+      outputOptions,
+    );
+    return;
   }
   const { api } = await createApiClient(overrides);
   const steps = options.steps
@@ -1536,7 +1635,7 @@ export async function run(argv: string[]): Promise<void> {
           );
         } else if (sub === 'show') {
           if (!slug || !runId) throw new Error('Usage: bench runs show <benchmark-slug> <runId>');
-          await handleRunsShow(slug, runId, overrides, outputOptions);
+          await handleRunsShow(slug, runId, options, overrides, outputOptions);
         } else if (sub === 'run-again') {
           if (!slug || !runId) {
             throw new Error(
@@ -1572,6 +1671,7 @@ export async function run(argv: string[]): Promise<void> {
         const { options, positionals: subPositionals } = parseSubcommandOptions(rest, flagsOf('results'));
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench results <benchmark-slug>');
+        if (await handleResultsView(slug, options, overrides, outputOptions)) break;
         await handleResults(
           slug,
           options as Parameters<typeof handleResults>[1],
@@ -1630,13 +1730,30 @@ export async function run(argv: string[]): Promise<void> {
       case 'artifacts': {
         const [sub, ...subRest] = rest;
         const { options, positionals: subPositionals } = parseSubcommandOptions(subRest, groupFlags('artifacts'));
+        if (!findCommand(['artifacts', sub])) throw new Error(USAGE);
+        assertCommandFlags(['artifacts', sub], options);
         if (sub === 'list') {
           const [slug, runId] = subPositionals;
           if (!slug || !runId) throw new Error('Usage: bench artifacts list <benchmark-slug> <runId>');
           await handleArtifactsList(slug, runId, options.worker as string | undefined, overrides, outputOptions);
         } else {
-          throw new Error(USAGE);
+          await handleArtifactsDownload(subPositionals, options, overrides, outputOptions);
         }
+        break;
+      }
+      case 'workers': {
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, flagsOf('workers'));
+        await handleWorkers(subPositionals[0], subPositionals[1], options, overrides, outputOptions);
+        break;
+      }
+      case 'matrix': {
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, flagsOf('matrix'));
+        await handleMatrix(subPositionals[0], options, overrides, outputOptions);
+        break;
+      }
+      case 'model-index': {
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, flagsOf('model-index'));
+        await handleModelIndex(subPositionals[0], options, overrides, outputOptions);
         break;
       }
       case 'logs': {

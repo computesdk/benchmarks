@@ -1,5 +1,11 @@
 import { readFile } from 'node:fs/promises';
-import type { BenchmarkListStatus, RunArchivedFilter, UpdateBenchmarkInput } from '@benchsdk/api';
+import type {
+  BenchmarkListGroup,
+  BenchmarkListSort,
+  BenchmarkListStatus,
+  RunArchivedFilter,
+  UpdateBenchmarkInput,
+} from '@benchsdk/api';
 import { createApiClient } from './client.js';
 import { confirmWrite } from './confirm.js';
 import { rethrowWithHint, type ApiErrorEnvelope } from './errors.js';
@@ -7,6 +13,7 @@ import {
   isJsonOutput,
   optionChoice,
   optionFlag,
+  optionList,
   optionNumber,
   optionString,
   type SubcommandOptions,
@@ -16,6 +23,8 @@ import { printData, type OutputOptions } from './output.js';
 type Overrides = { baseUrl?: string; apiKey?: string; org?: string };
 
 export const BENCHMARK_LIST_STATUSES: readonly BenchmarkListStatus[] = ['active', 'archived', 'all'];
+export const BENCHMARK_LIST_SORTS: readonly BenchmarkListSort[] = ['name', 'owner', 'category', 'runs', 'lastRun'];
+export const BENCHMARK_LIST_GROUPS: readonly BenchmarkListGroup[] = ['public', 'stealth', 'mine'];
 export const RUN_ARCHIVED_FILTERS: readonly RunArchivedFilter[] = ['exclude', 'include', 'only'];
 const MAX_ARCHIVE_RUN_IDS = 100;
 
@@ -53,11 +62,21 @@ export async function handleBenchmarksList(
   output: OutputOptions,
 ): Promise<void> {
   const status = optionChoice(options, 'status', BENCHMARK_LIST_STATUSES);
+  const sort = optionChoice(options, 'sort', BENCHMARK_LIST_SORTS);
+  const order = optionChoice(options, 'order', ['asc', 'desc'] as const);
+  if (order && !sort) throw new Error('--order needs --sort');
+  const group = optionChoice(options, 'group', BENCHMARK_LIST_GROUPS);
   const { api } = await createApiClient(overrides);
   const benchmarks = await api.listBenchmarks({
     limit: optionNumber(options, 'limit'),
     offset: optionNumber(options, 'offset'),
     status,
+    sort,
+    order,
+    group,
+    category: optionList(options, 'category'),
+    owner: optionString(options, 'owner'),
+    q: optionString(options, 'q'),
   });
   printData(benchmarks, output);
 }

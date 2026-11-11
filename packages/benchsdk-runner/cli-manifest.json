@@ -146,12 +146,24 @@
       "flags": [
         "--limit",
         "--offset",
-        "--status"
+        "--status",
+        "--sort",
+        "--order",
+        "--group",
+        "--category",
+        "--owner",
+        "--q"
       ],
-      "summary": "List benchmarks (--status active|archived|all; default active)",
+      "summary": "List benchmarks (--status active|archived|all; default active), sorted and filtered like the dashboard directory",
       "since": "0.2.0",
       "flagsSince": {
-        "--status": "0.9.5"
+        "--status": "0.9.5",
+        "--sort": "0.9.5",
+        "--order": "0.9.5",
+        "--group": "0.9.5",
+        "--category": "0.9.5",
+        "--owner": "0.9.5",
+        "--q": "0.9.5"
       },
       "package": "@benchsdk/cli"
     },
@@ -354,9 +366,18 @@
         "<benchmark-slug>",
         "<runId>"
       ],
-      "flags": [],
-      "summary": "Show a single run",
+      "flags": [
+        "--rank-by",
+        "--stat",
+        "--dimension"
+      ],
+      "summary": "Show a single run and its Overview: progress, overall stats and the participant ranking",
       "since": "0.2.0",
+      "flagsSince": {
+        "--rank-by": "0.9.5",
+        "--stat": "0.9.5",
+        "--dimension": "0.9.5"
+      },
       "package": "@benchsdk/cli"
     },
     {
@@ -437,11 +458,21 @@
         "--tz",
         "--source-org",
         "--limit",
-        "--offset"
+        "--offset",
+        "--timeline",
+        "--bucket-ms",
+        "--tasks",
+        "--bucket-size",
+        "--failure-limit"
       ],
-      "summary": "Show benchmark or run results",
+      "summary": "Show benchmark or run results (--run --timeline: event rate and concurrency; --run --tasks: per-task buckets)",
       "since": "0.2.0",
       "flagsSince": {
+        "--timeline": "0.9.5",
+        "--bucket-ms": "0.9.5",
+        "--tasks": "0.9.5",
+        "--bucket-size": "0.9.5",
+        "--failure-limit": "0.9.5",
         "--participant": "0.8.0",
         "--steps": "0.8.0",
         "--since": "0.8.0",
@@ -452,6 +483,34 @@
         "--limit": "0.8.0",
         "--offset": "0.8.0"
       },
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "matrix"
+      ],
+      "args": [
+        "<benchmark-slug>"
+      ],
+      "flags": [
+        "--source-org"
+      ],
+      "summary": "A matrix index benchmark's newest dataset",
+      "since": "0.9.5",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "model-index"
+      ],
+      "args": [
+        "<benchmark-slug>"
+      ],
+      "flags": [
+        "--source-org"
+      ],
+      "summary": "A model index benchmark's newest results",
+      "since": "0.9.5",
       "package": "@benchsdk/cli"
     },
     {
@@ -543,10 +602,29 @@
       "flags": [
         "--run",
         "--participant",
-        "--steps"
+        "--steps",
+        "--type"
       ],
-      "summary": "Show per-iteration step latencies",
+      "summary": "Show per-iteration latencies (--type steps, the default, or tasks)",
       "since": "0.3.0",
+      "flagsSince": {
+        "--type": "0.9.5"
+      },
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "workers"
+      ],
+      "args": [
+        "<benchmark-slug>",
+        "<runId>"
+      ],
+      "flags": [
+        "--participant"
+      ],
+      "summary": "List a run's workers with their progress and artifacts",
+      "since": "0.9.5",
       "package": "@benchsdk/cli"
     },
     {
@@ -563,6 +641,24 @@
       ],
       "summary": "List run artifacts",
       "since": "0.2.0",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "artifacts",
+        "download"
+      ],
+      "args": [
+        "<benchmark-slug>",
+        "<runId>",
+        "<workerId>",
+        "<artifactId>"
+      ],
+      "flags": [
+        "--out"
+      ],
+      "summary": "Download a worker artifact's bytes to --out <file> or stdout",
+      "since": "0.9.5",
       "package": "@benchsdk/cli"
     },
     {
