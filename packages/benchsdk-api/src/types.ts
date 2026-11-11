@@ -43,15 +43,41 @@ export interface BenchmarkResource {
   confidential?: boolean;
   /** Reliability benchmarks only: every pause window; `end` is null while a pause lasts. */
   reliabilityPauses?: { start: string; end: string | null }[];
+  /** List rows (platforms with the directory columns): the category's display name. */
+  categoryName?: string | null;
+  /** List rows: how many runs the caller can see. */
+  runCount?: number;
+  /** List rows: the newest visible run, or null when never run. */
+  latestRun?: { id: string; status: string; createdAt: string; startedAt: string | null } | null;
+  /** List rows: whether the caller (or its org) muted the benchmark. */
+  viewerMuted?: boolean;
+  /** List rows: confidential, or when unset whether the category is not public. */
+  effectiveConfidential?: boolean;
 }
 
 /** `GET /benchmarks?status=`: `active` (default), `archived`, or both. */
 export type BenchmarkListStatus = 'active' | 'archived' | 'all';
 
+/** The dashboard directory's sortable columns (`GET /benchmarks?sort=`). */
+export type BenchmarkListSort = 'name' | 'owner' | 'category' | 'runs' | 'lastRun';
+/** The directory's group cards: the public category, any other category, or the caller's own. */
+export type BenchmarkListGroup = 'public' | 'stealth' | 'mine';
+
 export interface ListBenchmarksOptions {
   limit?: number;
   offset?: number;
   status?: BenchmarkListStatus;
+  /** Sort like the directory; without it, newest benchmark first. */
+  sort?: BenchmarkListSort;
+  /** With `sort`; defaults to asc for name/owner/category, desc for runs/lastRun. */
+  order?: 'asc' | 'desc';
+  group?: BenchmarkListGroup;
+  /** Category slugs (at most 50). */
+  category?: string[];
+  /** The owning org's slug. */
+  owner?: string;
+  /** Case-insensitive search over name, category name and owning org name. */
+  q?: string;
 }
 
 /** Which runs a run list returns by archive state; the platform defaults to `exclude`. */
@@ -787,6 +813,15 @@ export interface BenchmarkRunResults {
   steps: BenchmarkStepResultSummary[];
   /** Echoed when `participant` was sent — absent on platforms that predate it. */
   filter?: { participants?: string[] };
+  /**
+   * Each custom metric's median: `overall` is run-wide even under a
+   * participant filter; `participants` narrows to it. Absent on platforms
+   * that predate it.
+   */
+  customMetrics?: {
+    overall: Record<string, number | null>;
+    participants: { participantSlug: string; metrics: Record<string, number | null> }[];
+  };
 }
 
 export interface BenchmarkRunResultsInput {
@@ -1311,6 +1346,120 @@ export interface BenchmarkReliabilityDay {
   generatedAt: string;
 }
 
+export type BenchmarkRankStat = 'min' | 'median' | 'p95' | 'p99' | 'max';
+
+export interface BenchmarkRunOverviewInput {
+  /** `task`, `step:<name>`, or a metric key: one of `ranking.options`. Defaults to the dashboard's choice. */
+  rankBy?: string;
+  stat?: BenchmarkRankStat;
+  /** Rank one dimension group (one of `dimension.values`). */
+  dimension?: string;
+}
+
+export interface BenchmarkRunOverviewParticipant {
+  rank: number;
+  participantSlug: string;
+  provider: string;
+  displayName: string | null;
+  dimension: string | null;
+  /** The ranked value: rankBy at stat. */
+  value: number | null;
+  status: string;
+  taskCount: number;
+  successCount: number;
+  errorCount: number;
+  otherCount: number;
+  successRate: number;
+  latencyMs: BenchmarkResultLatencySummary;
+  compositeScore: number | null;
+  customMetrics: Record<string, number | null>;
+}
+
+/** `GET …/runs/{runId}/overview`: the run detail page's Overview. */
+export interface BenchmarkRunOverview {
+  run: { id: string; benchmarkSlug: string; label: string; status: string; startedAt: string; completedAt: string | null };
+  generatedAt: string;
+  progress: { done: number; inFlight: number; errors: number; total: number };
+  overall: BenchmarkResultSummary;
+  customMetrics: Record<string, number | null>;
+  dimension: { key: string; label: string; values: string[] } | null;
+  ranking: {
+    rankBy: { value: string; type: 'task' | 'step' | 'metric'; label: string; direction: 'higher-better' | 'lower-better'; stat: BenchmarkRankStat };
+    defaultRankBy: string;
+    dimension: string | null;
+    options: { type: 'task' | 'step' | 'metric'; value: string; key?: string; label: string; direction?: 'higher-better' | 'lower-better' }[];
+    participants: BenchmarkRunOverviewParticipant[];
+  };
+}
+
+/** One worker of `GET …/runs/{runId}/workers`, as the Workers page lists it. */
+export interface BenchmarkRunWorkerSummary {
+  workerIndex: number;
+  workerId: string;
+  participantSlug: string;
+  displayName: string;
+  provider: string;
+  color: string;
+  status: string;
+  taskIndexStart: number;
+  taskIndexEnd: number;
+  progressDone: number;
+  progressInFlight: number;
+  progressErrors: number;
+  progressTotal: number;
+  artifacts: { id: string; kind: string; name: string | null; contentType: string | null; createdAt: string }[];
+}
+
+/** One cell of a matrix index dataset: `state: 'missing'` has no value. */
+export interface BenchmarkMatrixCell {
+  value?: number;
+  detail?: string;
+  state: 'data' | 'missing';
+}
+
+/** `GET /benchmarks/{slug}/matrix`: a matrix index benchmark's newest dataset. */
+export interface BenchmarkMatrix {
+  benchmark: { id: string; slug: string; name: string; tagline: string | null; description: string | null };
+  run: { id: string; name: string | null; startedAt: string; completedAt: string | null };
+  generatedAt: string;
+  upgrade?: BenchmarkUpgradePayload | null;
+  spec: {
+    cell: { unit: string; decimals: number; direction: 'higher-better' | 'lower-better' };
+    highlight: 'best-in-row' | 'none';
+  };
+  dataset: {
+    version: 1;
+    rows: { key: string; label: string }[];
+    participants: { key: string; label: string }[];
+    /** Row key, then participant key. */
+    cells: Record<string, Record<string, BenchmarkMatrixCell>>;
+    cards?: Record<string, JsonObject>;
+  };
+}
+
+/** `GET /benchmarks/{slug}/model-index`: a model-matrix index benchmark's newest results. */
+export interface BenchmarkModelIndex {
+  benchmark: { id: string; slug: string; name: string };
+  run: { id: string; startedAt: string; completedAt: string | null };
+  generatedAt: string;
+  upgrade?: BenchmarkUpgradePayload | null;
+  matrix: {
+    timestamp: string;
+    gateways: JsonObject[];
+    rows: {
+      key: string;
+      name: string;
+      author: string;
+      context?: number;
+      maxOutput?: number;
+      gatewayCount: number;
+      minInput?: number;
+      minOutput?: number;
+      cells: Record<string, JsonObject>;
+    }[];
+    authors: { slug: string; label: string; count: number }[];
+  };
+}
 export interface BenchmarkClient {
   upsertBenchmark(slug: string, input: UpsertBenchmarkInput): Promise<BenchmarkResource>;
   updateBenchmark(slug: string, input: UpdateBenchmarkInput): Promise<BenchmarkResource>;
@@ -1504,6 +1653,25 @@ export interface BenchmarkClient {
     input?: BenchmarkRunIterationInput,
   ): Promise<BenchmarkRunStepIterations>;
   getRunImports(benchmarkSlug: string, runId: string): Promise<BenchmarkRunImports>;
+  /** GET …/runs/{runId}/overview — the run's stats and participant ranking, as the dashboard Overview shows them. */
+  getRunOverview(benchmarkSlug: string, runId: string, input?: BenchmarkRunOverviewInput): Promise<BenchmarkRunOverview>;
+  /** GET …/runs/{runId}/workers — every worker of the run with its progress and artifacts. */
+  listRunWorkers(
+    benchmarkSlug: string,
+    runId: string,
+    options?: { participant?: string },
+  ): Promise<BenchmarkRunWorkerSummary[]>;
+  /** A worker artifact's raw bytes (never decompressed or decoded), with its metadata. */
+  downloadWorkerArtifactBytes(
+    benchmarkSlug: string,
+    runId: string,
+    workerId: string,
+    artifactId: string,
+  ): Promise<{ artifact: BenchmarkArtifact; bytes: Uint8Array }>;
+  /** GET /benchmarks/{slug}/matrix (or ~/{sourceOrg}/{slug}/matrix). */
+  getBenchmarkMatrix(benchmarkSlug: string, options?: { sourceOrg?: string }): Promise<BenchmarkMatrix>;
+  /** GET /benchmarks/{slug}/model-index (or ~/{sourceOrg}/{slug}/model-index). */
+  getModelIndex(benchmarkSlug: string, options?: { sourceOrg?: string }): Promise<BenchmarkModelIndex>;
   /**
    * GET .../reliability — resolves to `BenchmarkReliabilityDay` when `day` +
    * `participant` are passed, otherwise `BenchmarkReliabilityRange`. Both

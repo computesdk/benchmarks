@@ -74,6 +74,8 @@ const POSITIONAL_SAMPLES: Record<string, string> = {
   '<runId...>': 'run-1',
   '<slug>': 'demo-org',
   '<day>': '2026-11-01',
+  '<workerId>': 'worker-1',
+  '<artifactId>': 'artifact-1',
 };
 
 /** A sample value per flag; `null` marks a switch that takes no value. */
@@ -118,6 +120,21 @@ const FLAG_SAMPLES: Record<string, string | null> = {
   timeout: '1',
   interval: '1',
   request: 'req-1',
+  sort: 'name',
+  order: 'asc',
+  group: 'public',
+  category: 'sandbox',
+  owner: 'acme',
+  q: 'cold',
+  'rank-by': 'task',
+  stat: 'median',
+  dimension: 'us-east',
+  timeline: null,
+  'bucket-ms': '1000',
+  tasks: null,
+  'bucket-size': '10',
+  'failure-limit': '5',
+  type: 'tasks',
 };
 
 function flagArgs(flag: string): string[] {

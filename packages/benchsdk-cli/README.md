@@ -67,14 +67,14 @@ When installed with `@benchsdk/runner`, these are available through the `bench` 
 - `bench auth status`
 - `bench org list`
 - `bench org use <slug>`
-- `bench benchmarks list [--limit N] [--offset N] [--status active|archived|all]` (default `active`)
+- `bench benchmarks list [--limit N] [--offset N] [--status active|archived|all] [--sort name|owner|category|runs|lastRun] [--order asc|desc] [--group public|stealth|mine] [--category <slug>]... [--owner <org-slug>] [--q <text>]` (default `active`, newest first) — sorted and filtered like the dashboard directory
 - `bench benchmarks archive <slug> [-y]` — archive a benchmark and all of its runs
 - `bench benchmarks restore <slug>` — restore an archived benchmark and its runs
 - `bench benchmarks describe <slug> [--tagline <text>] [--description <text>] [--description-file <path>] [--clear-tagline] [--clear-description]`
 - `bench benchmarks mute <slug>` / `bench benchmarks unmute <slug>` — the org mute that hides a benchmark from the org run feed
 - `bench benchmarks pause <slug> [--start <iso>] [--end <iso>]` / `bench benchmarks resume <slug>` — reliability benchmarks only
 - `bench runs list [slug] [--limit N] [--offset N] [--participant <list>] [--since <when>] [--until <when>] [--day YYYY-MM-DD] [--tz <zone>] [--source-org <slug>] [--archived exclude|include|only] [--include-muted]` (`--include-muted` only without a slug)
-- `bench runs show <slug> <runId>`
+- `bench runs show <slug> <runId> [--rank-by <option>] [--stat min|median|p95|p99|max] [--dimension <value>]` — the run and its Overview ranking (`overview` in `--json`; `null` when unavailable)
 - `bench runs run-again <slug> <runId> [--wait] [--timeout <seconds>]`
 - `bench runs run-again-status <slug> <runAgainId>`
 - `bench runs archive <runId...> [-y]` / `bench runs unarchive <runId...> [-y]` — up to 100 run ids per call
@@ -86,10 +86,14 @@ When installed with `@benchsdk/runner`, these are available through the `bench` 
 - `bench activity [--days N] [--benchmark <slug>]` — run counts per day (N from 1 to 90)
 - `bench run-again <slug> [--wait] [--timeout <sec>] [--interval <sec>]` — run a daily benchmark again (once per organization and UTC day; needs a user login)
 - `bench run-again status <slug> [--request <runAgainId>]` — Run again availability and quota, or one request
-- `bench results <slug> [--run <id>] [--format json|table] [--participant <list>] [--steps <list>|all] [--since <when>] [--until <when>] [--day YYYY-MM-DD] [--tz <zone>] [--source-org <slug>] [--limit N] [--offset N]`
+- `bench results <slug> [--run <id>] [--format json|table] [--participant <list>] [--steps <list>|all] [--since <when>] [--until <when>] [--day YYYY-MM-DD] [--tz <zone>] [--source-org <slug>] [--limit N] [--offset N]` (a single `--run` also prints custom metric medians)
+- `bench results <slug> --run <id> --timeline [--bucket-ms N]` / `--tasks [--bucket-size N] [--failure-limit N]` — a run's event rate and concurrency, or its per-task latency buckets and failures
+- `bench matrix <slug> [--source-org <slug>]` / `bench model-index <slug> [--source-org <slug>]` — a matrix or model index benchmark's newest dataset
 - `bench reliability <slug> [--from YYYY-MM-DD] [--to YYYY-MM-DD] [--bucket day|hour] [--tz <zone>] [--metrics <list>] [--breakdown <list>] [--source-org <slug>] [--format json|table]` — uptime range for a `type=reliability` benchmark; `--day YYYY-MM-DD --participant <slug>` for the per-slot day view
-- `bench iterations <slug> --run <id> [--participant <slug>] [--steps <list>]`
+- `bench iterations <slug> --run <id> [--type steps|tasks] [--participant <slug>] [--steps <list>]`
+- `bench workers <slug> <runId> [--participant <slug>]` — the run's workers with progress and artifact ids
 - `bench artifacts list <slug> <runId> [--worker <id>]`
+- `bench artifacts download <slug> <runId> <workerId> <artifactId> [--out <file>]` — the artifact's stored bytes (gzip stays gzip) to a file or stdout
 - `bench logs <slug> <runId> [--participant <slug>] [--worker <id>] [--max-lines N]`
 - `bench export <slug> [--run <id>] [--out <dir>]`
 - `bench fork <slug> [--as <new-slug>] [--source-org <slug>] [--ref <sha>]`

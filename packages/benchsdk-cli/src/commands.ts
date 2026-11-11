@@ -26,6 +26,8 @@ const RESULT_FILTERS_SINCE = '0.8.0';
 const MANAGEMENT_SINCE = '0.9.5';
 // Org feed and daily Run again commands ship in the same release.
 const FEED_SINCE = '0.9.5';
+// Run analytics reads (overview, timeline, tasks, workers, matrices, artifact download) ship in the same release.
+const ANALYTICS_SINCE = '0.9.5';
 
 export const COMMANDS: readonly BenchCommand[] = [
   { path: ['auth', 'login'], args: [], flags: [], since: '0.2.0', summary: 'Authenticate with OAuth device flow' },
@@ -42,10 +44,19 @@ export const COMMANDS: readonly BenchCommand[] = [
   {
     path: ['benchmarks', 'list'],
     args: [],
-    flags: ['limit', 'offset', 'status'],
+    flags: ['limit', 'offset', 'status', 'sort', 'order', 'group', 'category', 'owner', 'q'],
     since: '0.2.0',
-    flagsSince: { status: MANAGEMENT_SINCE },
-    summary: 'List benchmarks (--status active|archived|all; default active)',
+    flagsSince: {
+      status: MANAGEMENT_SINCE,
+      sort: ANALYTICS_SINCE,
+      order: ANALYTICS_SINCE,
+      group: ANALYTICS_SINCE,
+      category: ANALYTICS_SINCE,
+      owner: ANALYTICS_SINCE,
+      q: ANALYTICS_SINCE,
+    },
+    summary:
+      'List benchmarks (--status active|archived|all; default active), sorted and filtered like the dashboard directory',
   },
   {
     path: ['benchmarks', 'archive'],
@@ -150,9 +161,10 @@ export const COMMANDS: readonly BenchCommand[] = [
   {
     path: ['runs', 'show'],
     args: ['<benchmark-slug>', '<runId>'],
-    flags: [],
+    flags: ['rank-by', 'stat', 'dimension'],
     since: '0.2.0',
-    summary: 'Show a single run',
+    flagsSince: { 'rank-by': ANALYTICS_SINCE, stat: ANALYTICS_SINCE, dimension: ANALYTICS_SINCE },
+    summary: 'Show a single run and its Overview: progress, overall stats and the participant ranking',
   },
   {
     path: ['runs', 'run-again'],
@@ -185,9 +197,30 @@ export const COMMANDS: readonly BenchCommand[] = [
   {
     path: ['results'],
     args: ['<benchmark-slug>'],
-    flags: ['run', 'participant', 'steps', 'since', 'until', 'day', 'tz', 'source-org', 'limit', 'offset'],
+    flags: [
+      'run',
+      'participant',
+      'steps',
+      'since',
+      'until',
+      'day',
+      'tz',
+      'source-org',
+      'limit',
+      'offset',
+      'timeline',
+      'bucket-ms',
+      'tasks',
+      'bucket-size',
+      'failure-limit',
+    ],
     since: '0.2.0',
     flagsSince: {
+      timeline: ANALYTICS_SINCE,
+      'bucket-ms': ANALYTICS_SINCE,
+      tasks: ANALYTICS_SINCE,
+      'bucket-size': ANALYTICS_SINCE,
+      'failure-limit': ANALYTICS_SINCE,
       participant: RESULT_FILTERS_SINCE,
       steps: RESULT_FILTERS_SINCE,
       since: RESULT_FILTERS_SINCE,
@@ -198,7 +231,21 @@ export const COMMANDS: readonly BenchCommand[] = [
       limit: RESULT_FILTERS_SINCE,
       offset: RESULT_FILTERS_SINCE,
     },
-    summary: 'Show benchmark or run results',
+    summary: 'Show benchmark or run results (--run --timeline: event rate and concurrency; --run --tasks: per-task buckets)',
+  },
+  {
+    path: ['matrix'],
+    args: ['<benchmark-slug>'],
+    flags: ['source-org'],
+    since: ANALYTICS_SINCE,
+    summary: "A matrix index benchmark's newest dataset",
+  },
+  {
+    path: ['model-index'],
+    args: ['<benchmark-slug>'],
+    flags: ['source-org'],
+    since: ANALYTICS_SINCE,
+    summary: "A model index benchmark's newest results",
   },
   {
     path: ['reliability'],
@@ -240,9 +287,17 @@ export const COMMANDS: readonly BenchCommand[] = [
   {
     path: ['iterations'],
     args: ['<benchmark-slug>'],
-    flags: ['run', 'participant', 'steps'],
+    flags: ['run', 'participant', 'steps', 'type'],
     since: '0.3.0',
-    summary: 'Show per-iteration step latencies',
+    flagsSince: { type: ANALYTICS_SINCE },
+    summary: 'Show per-iteration latencies (--type steps, the default, or tasks)',
+  },
+  {
+    path: ['workers'],
+    args: ['<benchmark-slug>', '<runId>'],
+    flags: ['participant'],
+    since: ANALYTICS_SINCE,
+    summary: "List a run's workers with their progress and artifacts",
   },
   {
     path: ['artifacts', 'list'],
@@ -250,6 +305,13 @@ export const COMMANDS: readonly BenchCommand[] = [
     flags: ['worker'],
     since: '0.2.0',
     summary: 'List run artifacts',
+  },
+  {
+    path: ['artifacts', 'download'],
+    args: ['<benchmark-slug>', '<runId>', '<workerId>', '<artifactId>'],
+    flags: ['out'],
+    since: ANALYTICS_SINCE,
+    summary: "Download a worker artifact's bytes to --out <file> or stdout",
   },
   {
     path: ['logs'],
