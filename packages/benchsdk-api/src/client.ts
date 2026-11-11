@@ -32,7 +32,12 @@ import type {
   BenchmarkRunTimeline,
   BenchmarkRunTimelineInput,
   BenchmarkRunIterationInput,
+  BenchmarkMatrix,
+  BenchmarkModelIndex,
+  BenchmarkRunOverview,
+  BenchmarkRunOverviewInput,
   BenchmarkRunWorker,
+  BenchmarkRunWorkerSummary,
   BenchmarkWorkerAttempt,
   CreateWorkerArtifactInput,
   CreateWorkerArtifactResponse,
@@ -465,7 +470,17 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
     async listBenchmarks(options: ListBenchmarksOptions = {}) {
       const data = await request<{ items?: BenchmarkResource[]; benchmarks?: BenchmarkResource[] }>(
         'GET',
-        `/benchmarks${queryString({ limit: options.limit, offset: options.offset, status: options.status })}`,
+        `/benchmarks${queryString({
+          limit: options.limit,
+          offset: options.offset,
+          status: options.status,
+          sort: options.sort,
+          order: options.order,
+          group: options.group,
+          category: csvParam(options.category),
+          owner: options.owner,
+          q: options.q,
+        })}`,
       );
       return data.items ?? data.benchmarks ?? [];
     },
@@ -913,6 +928,43 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
         'GET',
         `/benchmarks/${encodePath(benchmarkSlug)}/runs/${encodePath(runId)}/results/imports`,
       );
+    },
+
+    async getRunOverview(benchmarkSlug, runId, input: BenchmarkRunOverviewInput = {}) {
+      return request<BenchmarkRunOverview>(
+        'GET',
+        `/benchmarks/${encodePath(benchmarkSlug)}/runs/${encodePath(runId)}/overview${queryString({
+          rankBy: input.rankBy,
+          stat: input.stat,
+          dimension: input.dimension,
+        })}`,
+      );
+    },
+
+    async listRunWorkers(benchmarkSlug, runId, options: { participant?: string } = {}) {
+      const data = await request<{ items: BenchmarkRunWorkerSummary[] }>(
+        'GET',
+        `/benchmarks/${encodePath(benchmarkSlug)}/runs/${encodePath(runId)}/workers${queryString({ participant: options.participant })}`,
+      );
+      return data.items;
+    },
+
+    async downloadWorkerArtifactBytes(benchmarkSlug, runId, workerId, artifactId) {
+      const { artifact, downloadUrl } = await client.getWorkerArtifact(benchmarkSlug, runId, workerId, artifactId);
+      const response = await doFetch(downloadUrl);
+      if (!response.ok) {
+        const errorBody = await response.text().catch(() => '');
+        throw new BenchmarkApiError(`Artifact download failed with ${response.status}`, response.status, errorBody);
+      }
+      return { artifact, bytes: new Uint8Array(await response.arrayBuffer()) };
+    },
+
+    async getBenchmarkMatrix(benchmarkSlug, options: { sourceOrg?: string } = {}) {
+      return request<BenchmarkMatrix>('GET', `${benchmarkPath(benchmarkSlug, options.sourceOrg)}/matrix`);
+    },
+
+    async getModelIndex(benchmarkSlug, options: { sourceOrg?: string } = {}) {
+      return request<BenchmarkModelIndex>('GET', `${benchmarkPath(benchmarkSlug, options.sourceOrg)}/model-index`);
     },
 
     async submitRunSummary(benchmarkSlug, runId, input) {
