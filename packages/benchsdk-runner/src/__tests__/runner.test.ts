@@ -1004,6 +1004,85 @@ describe('runBenchmark', () => {
     expect(calls.planWorkers[0][3]).toMatchObject({ workerCount: 1, targetConcurrency: 2 });
   });
 
+  it('groupBy round: continues without reporting when planning and claim both fail', async () => {
+    const reported: TaskResultRecord[] = [];
+    fakeClient.planWorkers.mockImplementation(async (_slug: string, _runId: string, participant: string) => {
+      calls.planWorkers.push([_slug, _runId, participant]);
+      if (participant === 'modal') throw new Error('plan request failed');
+      return [];
+    });
+    reporterClaim.mockImplementation(async (cfg: any) => {
+      if (cfg.participantSlug === 'modal') throw new Error('claim request failed');
+      return {
+        taskIndexStart: 0,
+        recordResult: (record: TaskResultRecord) => reported.push(record),
+        uploadArtifact: async () => ({}),
+        setProgress: () => {},
+        heartbeat: async () => {},
+        finish: async () => {},
+      };
+    });
+
+    const task = vi.fn(async () => ({ data: { ok: true } }));
+    const outcome = await runBenchmark(
+      { benchmarkSlug: 'sandbox-tti-local', benchmarkName: 'Sandbox TTI', iterations: 1, groupBy: 'round', participants },
+      defineTask(task),
+      [],
+    );
+
+    expect(outcome.participants.map((participant) => participant.participant)).toEqual(['e2b', 'modal']);
+    expect(outcome.participants.every((participant) => participant.records.length === 1)).toBe(true);
+    expect(task).toHaveBeenCalledTimes(2);
+    expect(reporterClaim).toHaveBeenCalledTimes(2);
+    expect(reporterClaim.mock.calls.map(([cfg]) => cfg.participantSlug).sort()).toEqual(['e2b', 'modal']);
+    expect(reported).toHaveLength(1);
+    expect(vi.mocked(console.error)).toHaveBeenCalledWith(
+      expect.stringContaining('Could not report results to the platform for 1 participant(s): modal'),
+    );
+    expect(vi.mocked(console.warn)).toHaveBeenCalledWith(
+      expect.stringContaining('modal: worker planning failed (plan request failed) — trying to claim a worker anyway'),
+    );
+    expect(vi.mocked(console.warn)).toHaveBeenCalledWith(
+      expect.stringContaining('modal: reporter claim failed (claim request failed)'),
+    );
+  });
+
+  it('groupBy round: reports results when the worker claim succeeds after planning fails', async () => {
+    const reported: Record<string, TaskResultRecord[]> = { e2b: [], modal: [] };
+    fakeClient.planWorkers.mockImplementation(async (_slug: string, _runId: string, participant: string) => {
+      calls.planWorkers.push([_slug, _runId, participant]);
+      if (participant === 'modal') throw new Error('plan request failed');
+      return [];
+    });
+    reporterClaim.mockImplementation(async (cfg: any) => ({
+      taskIndexStart: 0,
+      recordResult: (record: TaskResultRecord) => reported[cfg.participantSlug].push(record),
+      uploadArtifact: async () => ({}),
+      setProgress: () => {},
+      heartbeat: async () => {},
+      finish: async () => {},
+    }));
+
+    const task = vi.fn(async () => ({ data: { ok: true } }));
+    const outcome = await runBenchmark(
+      { benchmarkSlug: 'sandbox-tti-local', benchmarkName: 'Sandbox TTI', iterations: 1, groupBy: 'round', participants },
+      defineTask(task),
+      [],
+    );
+
+    expect(outcome.participants.every((participant) => participant.records.length === 1)).toBe(true);
+    expect(task).toHaveBeenCalledTimes(2);
+    expect(reporterClaim).toHaveBeenCalledTimes(2);
+    expect(reported.e2b).toHaveLength(1);
+    expect(reported.modal).toHaveLength(1);
+    expect(vi.mocked(console.error)).not.toHaveBeenCalledWith(
+      expect.stringContaining('Could not report results to the platform for'),
+    );
+    expect(vi.mocked(console.warn)).toHaveBeenCalledWith(
+      expect.stringContaining('modal: worker planning failed (plan request failed) — trying to claim a worker anyway'),
+    );
+  });
+
   it('groupBy round: reporter claims overlap across participants', async () => {
     const claimDelayMs = 40;
     const claimParticipants = Array.from({ length: 6 }, (_, i) => ({

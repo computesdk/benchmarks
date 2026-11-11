@@ -287,10 +287,14 @@ const RETRYABLE_STATUS = new Set([408, 429, 502, 503, 504]);
 // Worker lifecycle POSTs the platform treats as repeatable: events dedupe on
 // (attemptId, sequenceNumber); heartbeat/complete/fail set the same state again.
 const RETRY_SAFE_POST = /\/workers\/[^/]+\/(events|heartbeat|complete|fail)$/;
+const PLAN_WORKERS_POST = /\/benchmarks\/[^/]+\/runs\/[^/]+\/participants\/[^/]+\/workers$/;
+const CREATE_RUN_POST = /\/benchmarks\/[^/]+\/runs$/;
 
-function isRetrySafe(method: string, path: string): boolean {
+function isRetrySafe(method: string, path: string, body?: JsonObject): boolean {
   if (method === 'GET' || method === 'PUT') return true;
-  return method === 'POST' && RETRY_SAFE_POST.test(path);
+  if (method !== 'POST') return false;
+  if (RETRY_SAFE_POST.test(path) || PLAN_WORKERS_POST.test(path)) return true;
+  return CREATE_RUN_POST.test(path) && typeof body?.runKey === 'string' && body.runKey.trim().length > 0;
 }
 
 function describeFetchError(error: unknown, timeoutMs: number): string {
@@ -345,7 +349,7 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
     if (authToken) headers.Authorization = `Bearer ${authToken}`;
     if (config.orgSlug) headers['X-Org-Slug'] = config.orgSlug;
     else if (config.orgId) headers['X-Organization-Id'] = config.orgId;
-    const retrySafe = isRetrySafe(method, path);
+    const retrySafe = isRetrySafe(method, path, body);
     const payload = body === undefined ? undefined : JSON.stringify(body);
 
     for (let attempt = 0; ; attempt++) {
