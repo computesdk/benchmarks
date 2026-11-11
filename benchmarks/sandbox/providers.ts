@@ -352,13 +352,11 @@ export const providers: ProviderConfig[] = [
   {
     // Full Linux microVMs. Machines land in the US High-end region (Ryzen 9950X);
     // UNO_REGION=nl switches to the EU region. Sized for dax in dax.bench.ts.
+    // Parked in the weekly TTI matrix only (the account runs at most ~3 machines
+    // at once); it still runs the derived daily TTI/burst legs and weekly dax.
     name: 'uno',
     requiredEnvVars: ['UNO_API_KEY'],
     createCompute: () => uno({ apiKey: process.env.UNO_API_KEY!, region: process.env.UNO_REGION || 'us' }),
-    // Dax only for now: the benchmark account runs at most 3 machines at once,
-    // so keep it out of matrices derived from this list (benchmarks-daily
-    // TTI/burst). The dax workflow lists it explicitly.
-    manualOnly: true,
   },
   {
     name: 'upstash',
