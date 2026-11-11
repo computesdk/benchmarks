@@ -44,6 +44,9 @@ jobs:
       - name: Test
         run: pnpm --filter @benchsdk/client run test
 
+      - name: Test @benchsdk/cli
+        run: pnpm --filter @benchsdk/cli run test
+
       - name: Test @benchsdk/runner
         run: pnpm --filter @benchsdk/runner run test
 

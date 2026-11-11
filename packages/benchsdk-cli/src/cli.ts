@@ -16,10 +16,40 @@ import { loadCredentials, saveCredentials, clearCredentials, loadConfig } from '
 import { createApiClient, getMe, listOrganizations, setActiveOrganization } from './client.js';
 import { printData, type OutputOptions } from './output.js';
 import { getApiBaseUrl, getAuthBaseUrl, getPlatformBaseUrl } from './platform.js';
+import { findCommand, groupFlags, GLOBAL_BOOLEAN_FLAGS, GLOBAL_STRING_FLAGS } from './commands.js';
+import { ExitError, formatApiError } from './errors.js';
+import { optionChoice, optionFlag, optionList, type SubcommandOptions } from './options.js';
+import {
+  RUN_ARCHIVED_FILTERS,
+  handleBenchmarkArchive,
+  handleBenchmarkDescribe,
+  handleBenchmarkMute,
+  handleBenchmarkPause,
+  handleBenchmarksList,
+  handleRunsArchive,
+} from './manage.js';
+import {
+  assertBenchmarkSlugsHonored,
+  handleActivity,
+  handleReliabilityCards,
+  handleRunDays,
+  handleRunsDay,
+  handleRunsFeed,
+} from './feed.js';
+import { handleRunAgain, handleRunAgainStatus } from './daily-run-again.js';
+import {
+  handleArtifactsDownload,
+  handleMatrix,
+  handleModelIndex,
+  handleResultsView,
+  handleRunsShow,
+  handleWorkers,
+  printCustomMetrics,
+} from './analytics.js';
 
 let packageVersion: string | undefined;
 
-async function getVersion(): Promise<string> {
+export async function getVersion(): Promise<string> {
   if (packageVersion) return packageVersion;
 
   const candidates: string[] = [];
@@ -56,18 +86,44 @@ Commands:
   auth status                        Show current user and active organization
   org list                           List organizations
   org use <slug>                     Set active organization
-  benchmarks list [--limit N] [--offset N]
+  benchmarks list [--limit N] [--offset N] [--status active|archived|all]
+             [--sort name|owner|category|runs|lastRun] [--order asc|desc]
+             [--group public|stealth|mine] [--category <slug>]...
+             [--owner <org-slug>] [--q <text>]
                                      List benchmarks
+  benchmarks archive <benchmark-slug> [-y]
+                                     Archive a benchmark and all of its runs
+  benchmarks restore <benchmark-slug>
+                                     Restore an archived benchmark
+  benchmarks describe <benchmark-slug> [--tagline <text>] [--description <text>]
+             [--description-file <path>] [--clear-tagline] [--clear-description]
+                                     Set or clear the tagline and description
+  benchmarks mute|unmute <benchmark-slug>
+                                     Mute or unmute a benchmark for the org
+  benchmarks pause <benchmark-slug> [--start <iso>] [--end <iso>]
+  benchmarks resume <benchmark-slug> Pause or resume a reliability benchmark
   runs list [benchmark-slug] [--limit N] [--offset N]
              [--participant <list>] [--since <when>] [--until <when>]
              [--day YYYY-MM-DD] [--tz <zone>] [--source-org <slug>]
+             [--archived exclude|include|only] [--include-muted]
+             [--benchmark <slug>]...
                                      List benchmark runs (omit slug to list runs
                                      across every benchmark you can read)
-  runs show <benchmark-slug> <runId> Show a single run
+  runs show <benchmark-slug> <runId> [--rank-by <option>] [--stat <stat>]
+             [--dimension <value>]   Show a run and its Overview ranking
   runs run-again <benchmark-slug> <runId> [--wait] [--timeout <seconds>]
                                      Run the benchmark again on the latest code
   runs run-again-status <benchmark-slug> <runAgainId>
                                      Show run-again progress
+  runs feed [--benchmark <slug>]... [--include-archived] [--include-muted]
+             [--limit N]             The org's newest runs across benchmarks
+  runs days [feed filters] [--tz <zone>]
+                                     Run counts per local day
+  runs day <YYYY-MM-DD> [feed filters] [--tz <zone>] [--all]
+             [--cursor <createdAt>,<id>]
+                                     One day's runs (--all follows every page)
+  runs archive|unarchive <runId...> [-y]
+                                     Archive or unarchive up to 100 runs
   results <benchmark-slug> [--run <id>] [--format json|table]
              [--participant <list>] [--steps <list>|all]
              [--since <when>] [--until <when>] [--day YYYY-MM-DD]
@@ -75,6 +131,14 @@ Commands:
                                      Show benchmark or run results. --since/--until
                                      take YYYY-MM-DD, an ISO timestamp, or a
                                      relative 24h/7d/2w
+  results <benchmark-slug> --run <id> --timeline [--bucket-ms N]
+  results <benchmark-slug> --run <id> --tasks [--bucket-size N] [--failure-limit N]
+                                     A run's event rate and concurrency, or its
+                                     per-task latency buckets and failures
+  matrix <benchmark-slug> [--source-org <slug>]
+                                     A matrix index benchmark's newest dataset
+  model-index <benchmark-slug> [--source-org <slug>]
+                                     A model index benchmark's newest results
   reliability <benchmark-slug> [--from YYYY-MM-DD] [--to YYYY-MM-DD]
              [--bucket day|hour] [--tz <zone>] [--metrics <list>]
              [--breakdown <list>] [--source-org <slug>] [--format json|table]
@@ -85,10 +149,24 @@ Commands:
              [--tz <zone>] [--source-org <slug>] [--format json|table]
                                      Per-slot view of one participant on one
                                      local day
-  iterations <benchmark-slug> --run <id> [--participant <slug>] [--steps <list>] [--format json|table]
-                                     Show per-iteration step latencies
+  reliability cards [--include-muted] The org's reliability cards
+  activity [--days N] [--benchmark <slug>]
+                                     Run counts per day (N from 1 to 90)
+  run-again <benchmark-slug> [--wait] [--timeout <sec>] [--interval <sec>]
+                                     Run a daily benchmark again (once per org
+                                     and UTC day; needs a user login; --wait
+                                     exits 3 on timeout)
+  run-again status <benchmark-slug> [--request <runAgainId>]
+                                     Run again availability and quota, or one request
+  iterations <benchmark-slug> --run <id> [--type steps|tasks] [--participant <slug>]
+             [--steps <list>] [--format json|table]
+                                     Show per-iteration step (default) or task latencies
+  workers <benchmark-slug> <runId> [--participant <slug>]
+                                     List a run's workers, progress and artifacts
   artifacts list <benchmark-slug> <runId> [--worker <id>]
                                      List run artifacts
+  artifacts download <benchmark-slug> <runId> <workerId> <artifactId> [--out <file>]
+                                     Download a worker artifact (stdout without --out)
   logs <benchmark-slug> <runId> [--participant <slug>] [--worker <id>] [--max-lines N]
                                      Show participant worker logs (parsed, like
                                      the dashboard log view)
@@ -108,6 +186,9 @@ Options:
   --verbose                          Include extra diagnostics on errors
   --version                          Show version
   --help                             Show this help
+
+Writes that hide data (benchmarks archive, runs archive|unarchive) ask for
+confirmation on a terminal; elsewhere they need -y/--yes or exit 1 unchanged.
 `;
 
 interface GlobalOptions {
@@ -129,8 +210,8 @@ interface ParsedOptions {
 export function parseGlobalArgs(argv: string[]): ParsedOptions {
   const values: GlobalOptions = {};
   const positionals: string[] = [];
-  const stringGlobals = new Set(['base-url', 'api-key', 'org', 'format']);
-  const booleanGlobals = new Set(['json', 'verbose', 'version', 'help']);
+  const stringGlobals = new Set<string>(GLOBAL_STRING_FLAGS);
+  const booleanGlobals = new Set<string>(GLOBAL_BOOLEAN_FLAGS);
 
   let i = 0;
   while (i < argv.length) {
@@ -169,7 +250,9 @@ export function parseGlobalArgs(argv: string[]): ParsedOptions {
   return { values, positionals };
 }
 
-const subcommandOptionSchema = {
+type OptionType = 'string' | 'number' | 'boolean' | 'list';
+
+const subcommandOptionSchema: Record<string, { type: OptionType }> = {
   limit: { type: 'number' as const },
   offset: { type: 'number' as const },
   run: { type: 'string' as const },
@@ -192,30 +275,60 @@ const subcommandOptionSchema = {
   ref: { type: 'string' as const },
   wait: { type: 'boolean' as const },
   timeout: { type: 'number' as const },
+  status: { type: 'string' },
+  yes: { type: 'boolean' },
+  tagline: { type: 'string' },
+  description: { type: 'string' },
+  'description-file': { type: 'string' },
+  'clear-tagline': { type: 'boolean' },
+  'clear-description': { type: 'boolean' },
+  start: { type: 'string' },
+  end: { type: 'string' },
+  archived: { type: 'string' },
+  'include-muted': { type: 'boolean' },
+  'include-archived': { type: 'boolean' },
+  benchmark: { type: 'list' },
+  all: { type: 'boolean' },
+  cursor: { type: 'string' },
+  days: { type: 'number' },
+  interval: { type: 'number' },
+  request: { type: 'string' },
+  sort: { type: 'string' },
+  order: { type: 'string' },
+  group: { type: 'string' },
+  category: { type: 'list' },
+  owner: { type: 'string' },
+  q: { type: 'string' },
+  'rank-by': { type: 'string' },
+  stat: { type: 'string' },
+  dimension: { type: 'string' },
+  timeline: { type: 'boolean' },
+  'bucket-ms': { type: 'number' },
+  tasks: { type: 'boolean' },
+  'bucket-size': { type: 'number' },
+  'failure-limit': { type: 'number' },
+  type: { type: 'string' },
 };
 
-export const RUNS_SUBCOMMAND_OPTIONS = {
-  list: ['limit', 'offset', 'participant', 'since', 'until', 'day', 'tz', 'source-org'],
-  show: [],
-  'run-again': ['wait', 'timeout'],
-  'run-again-status': [],
-} as const;
+const SHORT_OPTIONS: Record<string, string> = { '-y': 'yes' };
 
-const runsSubcommandOptionUnion = [
-  ...RUNS_SUBCOMMAND_OPTIONS.list,
-  ...RUNS_SUBCOMMAND_OPTIONS['run-again'],
-];
+/** Whether `--name` takes a value (`false` for switches such as `--yes`). */
+export function flagTakesValue(name: string): boolean {
+  const schema = subcommandOptionSchema[name];
+  return schema !== undefined && schema.type !== 'boolean';
+}
 
 export function parseSubcommandOptions(
   args: string[],
   allowed?: readonly string[],
-): { options: Record<string, string | number | boolean>; positionals: string[] } {
-  const options: Record<string, string | number | boolean> = {};
+): { options: SubcommandOptions; positionals: string[] } {
+  const options: SubcommandOptions = {};
   const positionals: string[] = [];
   let i = 0;
   while (i < args.length) {
     const arg = args[i];
-    if (!arg.startsWith('--')) {
+    const shortKey = SHORT_OPTIONS[arg];
+    if (!arg.startsWith('--') && shortKey === undefined) {
       positionals.push(arg);
       i += 1;
       continue;
@@ -224,14 +337,14 @@ export function parseSubcommandOptions(
     const eqIndex = arg.indexOf('=');
     const namePart = eqIndex === -1 ? arg : arg.slice(0, eqIndex);
     const valuePart = eqIndex === -1 ? undefined : arg.slice(eqIndex + 1);
-    const key = namePart.slice(2);
-    const schema = subcommandOptionSchema[key as keyof typeof subcommandOptionSchema];
+    const key = shortKey ?? namePart.slice(2);
+    const schema = subcommandOptionSchema[key];
     if (!schema) throw new Error(`Unknown option: ${arg}`);
     // The schema is global — a flag another command understands would
     // otherwise be silently ignored here (e.g. `bench results --from`
     // printing unfiltered results).
     if (allowed !== undefined && !allowed.includes(key)) {
-      throw new Error(`Unknown option for this command: ${arg}`);
+      throw new Error(`Unknown option for this command: ${shortKey ? `--${key}` : arg}`);
     }
 
     if (schema.type === 'boolean') {
@@ -258,6 +371,12 @@ export function parseSubcommandOptions(
       const n = Number(rawValue);
       if (!Number.isFinite(n)) throw new Error(`Option --${key} must be a number`);
       options[key] = n;
+    } else if (schema.type === 'list') {
+      // Repeatable, and each occurrence may itself be a comma list.
+      const values = rawValue.split(',').map((s) => s.trim()).filter(Boolean);
+      if (values.length === 0) throw new Error(`Option --${key} needs at least one value`);
+      const existing = options[key];
+      options[key] = [...(Array.isArray(existing) ? existing : []), ...values];
     } else {
       options[key] = rawValue;
     }
@@ -265,12 +384,17 @@ export function parseSubcommandOptions(
   return { options, positionals };
 }
 
-function assertSubcommandOptions(
-  options: Record<string, string | number | boolean>,
-  allowed: readonly string[],
-): void {
+/** Rejects options parsed with a group's flag union that this subcommand does not take. */
+function assertCommandFlags(path: string[], options: SubcommandOptions): void {
+  const allowed = flagsOf(...path);
   const extra = Object.keys(options).find((key) => !allowed.includes(key));
-  if (extra) throw new Error(`Unknown option for this command: --${extra}`);
+  if (extra !== undefined) throw new Error(`Unknown option for this command: --${extra}`);
+}
+
+function flagsOf(...path: string[]): readonly string[] {
+  const command = findCommand(path);
+  if (!command) throw new Error(`bench ${path.join(' ')} is missing from COMMANDS`);
+  return command.flags;
 }
 
 function commandHelp(command?: string): string {
@@ -289,29 +413,130 @@ Subcommands:
   list       List organizations
   use <slug> Set active organization`;
     case 'benchmarks':
-      return `Usage: bench benchmarks list [--limit N] [--offset N]`;
+      return `Usage: bench benchmarks list [--limit N] [--offset N] [--status active|archived|all]
+                    [--sort name|owner|category|runs|lastRun] [--order asc|desc]
+                    [--group public|stealth|mine] [--category <slug>]...
+                    [--owner <org-slug>] [--q <text>]
+       bench benchmarks archive <benchmark-slug> [-y]
+       bench benchmarks restore <benchmark-slug>
+       bench benchmarks describe <benchmark-slug> [--tagline <text>] [--description <text>]
+                    [--description-file <path>] [--clear-tagline] [--clear-description]
+       bench benchmarks mute <benchmark-slug>
+       bench benchmarks unmute <benchmark-slug>
+       bench benchmarks pause <benchmark-slug> [--start <iso>] [--end <iso>]
+       bench benchmarks resume <benchmark-slug>
+
+archive hides the benchmark and all of its runs; it asks first on a
+terminal and needs -y/--yes anywhere else. Management writes need an
+organization owner or admin (or an org API key). pause and resume apply
+to reliability benchmarks only.
+
+list sorts and filters like the dashboard directory: --sort without --order
+uses asc for name, owner and category and desc for runs and lastRun; --group
+is a directory group card; --category is repeatable or a comma list; --q
+searches the name, category name and owning org's name.`;
     case 'runs':
       return `Usage: bench runs list [benchmark-slug] [--limit N] [--offset N]
                     [--participant <list>] [--since <when>] [--until <when>]
                     [--day YYYY-MM-DD] [--tz <zone>] [--source-org <slug>]
-       bench runs show <benchmark-slug> <runId>
+                    [--archived exclude|include|only] [--include-muted]
+                    [--benchmark <slug>]...
+       bench runs show <benchmark-slug> <runId> [--rank-by <option>]
+                    [--stat min|median|p95|p99|max] [--dimension <value>]
        bench runs run-again <benchmark-slug> <runId> [--wait] [--timeout <seconds>]
-       bench runs run-again-status <benchmark-slug> <runAgainId>`;
+       bench runs run-again-status <benchmark-slug> <runAgainId>
+       bench runs archive <runId...> [-y]
+       bench runs unarchive <runId...> [-y]
+       bench runs feed [--benchmark <slug>]... [--include-archived] [--include-muted] [--limit N]
+       bench runs days [--benchmark <slug>]... [--include-archived] [--include-muted] [--tz <zone>]
+       bench runs day <YYYY-MM-DD> [--benchmark <slug>]... [--include-archived] [--include-muted]
+                    [--tz <zone>] [--all] [--cursor <createdAt>,<id>]
+
+Run lists leave out archived runs unless --archived include|only is given.
+The cross-benchmark list (no slug) keeps runs of muted benchmarks, as it
+always has; --include-muted only says so explicitly, and a single
+benchmark's list takes no mute flag.
+archive and unarchive take up to 100 run ids, ask first on a terminal, and
+need -y/--yes anywhere else.
+
+feed, days and day read the organization-wide feed the dashboard shows:
+--benchmark (repeatable, or a comma list) narrows it, and archived runs and
+runs of muted benchmarks stay out unless --include-archived/--include-muted.
+--tz defaults to this machine's zone. day prints one page (150 runs) with
+its nextCursor ({createdAt, id}); pass it back as --cursor <createdAt>,<id>,
+or use --all to follow every page and print one array of runs.
+
+show prints the run and then its Overview, as the dashboard shows it:
+progress, overall stats, custom metrics and the participants ranked by
+--rank-by (task, step:<name> or a metric key; the default is the dashboard's
+choice) at --stat (default median), optionally within one --dimension value.
+With --json the overview is the run's "overview" key (null when the platform
+has no overview or analytics are unavailable).`;
     case 'results':
       return `Usage: bench results <benchmark-slug> [--run <id>] [--format json|table]
                     [--participant <list>] [--steps <list>|all]
                     [--since <when>] [--until <when>] [--day YYYY-MM-DD]
-                    [--tz <zone>] [--source-org <slug>] [--limit N] [--offset N]`;
+                    [--tz <zone>] [--source-org <slug>] [--limit N] [--offset N]
+       bench results <benchmark-slug> --run <id> --timeline [--bucket-ms N]
+       bench results <benchmark-slug> --run <id> --tasks [--bucket-size N] [--failure-limit N]
+
+A single --run also prints each custom metric's median, run-wide and per
+participant. --timeline prints the run's event rate per time bucket and its
+worker concurrency samples; --tasks prints latency per task-index bucket and
+the failed tasks. Both need --run and take no other filter.`;
     case 'reliability':
       return `Usage: bench reliability <benchmark-slug> [--from YYYY-MM-DD] [--to YYYY-MM-DD]
                     [--bucket day|hour] [--tz <zone>] [--metrics <list>]
                     [--breakdown <list>] [--source-org <slug>] [--format json|table]
        bench reliability <benchmark-slug> --day YYYY-MM-DD --participant <slug>
-                    [--tz <zone>] [--source-org <slug>] [--format json|table]`;
+                    [--tz <zone>] [--source-org <slug>] [--format json|table]
+       bench reliability cards [--include-muted]
+
+cards lists the organization's reliability benchmarks as the dashboard does;
+muted ones stay out unless --include-muted.`;
+    case 'activity':
+      return `Usage: bench activity [--days N] [--benchmark <slug>]
+
+Run counts per day for the organization, or for one benchmark. --days takes
+1 to 90 (the platform defaults to 30).`;
+    case 'run-again':
+      return `Usage: bench run-again <benchmark-slug> [--wait] [--timeout <sec>] [--interval <sec>]
+       bench run-again status <benchmark-slug> [--request <runAgainId>]
+
+run-again runs a daily benchmark again, the dashboard's Run again button (one
+request per organization, benchmark and UTC day). It needs a user login
+(\`bench auth login\`); org API keys cannot run a benchmark again.
+--wait polls the request every --interval seconds (default 5) until it
+reports its run, and exits 3 if none has after --timeout seconds (default 600).
+status shows today's availability and quota, or one request with --request.`;
     case 'iterations':
-      return `Usage: bench iterations <benchmark-slug> --run <id> [--participant <slug>] [--steps <list>] [--format json|table]`;
+      return `Usage: bench iterations <benchmark-slug> --run <id> [--type steps|tasks] [--participant <slug>]
+                    [--steps <list>] [--format json|table]
+
+--type steps (the default) lists every step of every task; --type tasks lists
+one row per task. --steps narrows --type steps only.`;
+    case 'workers':
+      return `Usage: bench workers <benchmark-slug> <runId> [--participant <slug>]
+
+Every worker of the run, as the dashboard's Workers page lists them: task
+range, progress, status and artifacts (ids for bench artifacts download).`;
+    case 'matrix':
+      return `Usage: bench matrix <benchmark-slug> [--source-org <slug>]
+
+A matrix index benchmark's newest dataset: one row per matrix row, one column
+per participant. --json prints the spec and the full dataset.`;
+    case 'model-index':
+      return `Usage: bench model-index <benchmark-slug> [--source-org <slug>]
+
+A model index benchmark's newest results: one row per model. --json prints
+the full matrix with every gateway cell.`;
     case 'artifacts':
-      return `Usage: bench artifacts list <benchmark-slug> <runId> [--worker <id>]`;
+      return `Usage: bench artifacts list <benchmark-slug> <runId> [--worker <id>]
+       bench artifacts download <benchmark-slug> <runId> <workerId> <artifactId> [--out <file>]
+
+download writes the artifact's bytes as stored (a gzip log stays gzip) to
+--out, or to stdout; a binary artifact needs --out or a pipe when stdout is a
+terminal. With --json and --out it prints {path, bytes, artifact}.`;
     case 'logs':
       return `Usage: bench logs <benchmark-slug> <runId> [--participant <slug>] [--worker <id>] [--max-lines N]`;
     case 'export':
@@ -324,11 +549,14 @@ Subcommands:
 }
 
 async function printErrorAndExit(err: unknown, verbose = false): Promise<never> {
+  if (err instanceof ExitError) {
+    if (err.message) console.error(err.message);
+    process.exit(err.exitCode);
+  }
   if (err instanceof BenchmarkApiError) {
     const insufficientScope =
       err.message.includes('insufficient_scope') || err.body?.includes('insufficient_scope');
-    console.error(`API error: ${err.message}`);
-    if (err.body) console.error(err.body);
+    for (const line of formatApiError(err, verbose)) console.error(line);
     if (insufficientScope) {
       console.error(
         'Your login does not cover this call — run `bench auth login` or `compute login` to sign in again.',
@@ -356,8 +584,8 @@ async function printErrorAndExit(err: unknown, verbose = false): Promise<never> 
 export const BENCH_OAUTH_CLIENT_ID = 'benchsdk-cli';
 export const BENCH_OAUTH_SCOPE =
   'actions:read actions:write benchmarks:read benchmarks:write billing:read ' +
-  'market:read market:write org:read org:admin sandboxes:read sandboxes:write ' +
-  'vault:read vault:write offline_access';
+  'market:read market:write org:read org:admin providers:read providers:write ' +
+  'sandboxes:read sandboxes:write vault:read vault:write offline_access';
 
 export interface OAuthLoginOptions {
   baseUrl?: string;
@@ -485,16 +713,6 @@ async function handleOrgUse(slug: string, overrides: { baseUrl?: string; apiKey?
   console.log(`Active organization set to ${result.organization.slug} (${result.organization.id})`);
 }
 
-async function handleBenchmarksList(
-  overrides: { baseUrl?: string; apiKey?: string; org?: string },
-  options: { limit?: number; offset?: number },
-  outputOptions: OutputOptions = {},
-): Promise<void> {
-  const { api } = await createApiClient(overrides);
-  const benchmarks = await api.listBenchmarks(options);
-  printData(benchmarks, outputOptions);
-}
-
 export interface ResultFilterOptions {
   participant?: string;
   steps?: string;
@@ -588,12 +806,36 @@ export function assertFilterEcho(filter: unknown): void {
   }
 }
 
+export type RunsListOptions = { limit?: number; offset?: number } & ResultFilterOptions & SubcommandOptions;
+
+// `--archived only` against a platform that predates the archive filter
+// would print active runs under an archived-looking command.
+function assertArchivedOnly(runs: readonly { archivedAt?: string | null }[]): void {
+  if (runs.some((run) => !run.archivedAt)) {
+    throw new Error(
+      '--archived only returned runs that are not archived — this platform does not support the archived filter yet',
+    );
+  }
+}
+
 export async function handleRunsList(
   benchmarkSlug: string | undefined,
-  options: { limit?: number; offset?: number } & ResultFilterOptions,
+  options: RunsListOptions,
   overrides: { baseUrl?: string; apiKey?: string; org?: string },
   outputOptions: OutputOptions = {},
 ): Promise<void> {
+  const archived = optionChoice(options, 'archived', RUN_ARCHIVED_FILTERS);
+  // The cross-benchmark list keeps muted benchmarks' runs by default, so
+  // includeMuted=1 restates the default; a single benchmark's list has no
+  // mute filter at all.
+  const includeMuted = optionFlag(options, 'include-muted') || undefined;
+  const benchmarkSlugs = optionList(options, 'benchmark');
+  if (benchmarkSlugs && benchmarkSlug) {
+    throw new Error('Pass either a benchmark slug or --benchmark, not both');
+  }
+  if (includeMuted && benchmarkSlug) {
+    throw new Error('--include-muted applies to the cross-benchmark list (omit the benchmark slug)');
+  }
   const { filter, flagsSent } = resolveResultFilter(options, { allowSteps: false });
   // Validate flag combinations before auth/API setup — a rejected command
   // should not need credentials.
@@ -609,19 +851,29 @@ export async function handleRunsList(
   }
   const { api } = await createApiClient(overrides);
   if (!benchmarkSlug) {
-    const runs = await api.listAllRuns(options);
+    const runs = await api.listAllRuns({
+      limit: options.limit,
+      offset: options.offset,
+      benchmarkSlugs,
+      archived,
+      includeMuted,
+    });
+    assertBenchmarkSlugsHonored(runs, benchmarkSlugs);
+    if (archived === 'only') assertArchivedOnly(runs);
     printData(runs, outputOptions);
     return;
   }
   const result = await api.listRuns(benchmarkSlug, {
     limit: options.limit,
     offset: options.offset,
+    archived,
     // sourceOrg isn't a result filter (see resolveResultFilter) — send it
     // even when it's the only flag, on any platform version.
     ...(filter.sourceOrg ? { sourceOrg: filter.sourceOrg } : {}),
     ...(flagsSent ? filter : {}),
   });
   if (flagsSent) assertFilterEcho(result.appliedFilter);
+  if (archived === 'only') assertArchivedOnly(result);
   if (outputOptions.json || outputOptions.format === 'json') {
     printData(
       { items: [...result], filter: result.appliedFilter ?? null, upgrade: result.upgrade ?? null },
@@ -630,17 +882,6 @@ export async function handleRunsList(
   } else {
     printData(result, outputOptions);
   }
-}
-
-async function handleRunsShow(
-  benchmarkSlug: string,
-  runId: string,
-  overrides: { baseUrl?: string; apiKey?: string; org?: string },
-  outputOptions: OutputOptions = {},
-): Promise<void> {
-  const { api } = await createApiClient(overrides);
-  const run = await api.getRun(benchmarkSlug, runId);
-  printData(run, outputOptions);
 }
 
 export async function waitForRunAgain(
@@ -857,6 +1098,7 @@ function printResultsTables(
       console.log('Steps:');
       console.table(steps.map(stepTableRow));
     }
+    printCustomMetrics(runResults.customMetrics);
     return;
   }
 
@@ -1075,12 +1317,33 @@ function printReliability(result: BenchmarkReliabilityRange | BenchmarkReliabili
 
 async function handleIterations(
   benchmarkSlug: string,
-  options: { run?: string; participant?: string; steps?: string },
+  options: { run?: string; participant?: string; steps?: string; type?: string },
   overrides: { baseUrl?: string; apiKey?: string; org?: string },
   outputOptions: OutputOptions = {},
 ): Promise<void> {
   if (!options.run) {
-    throw new Error('Usage: bench iterations <benchmark-slug> --run <id> [--participant <slug>] [--steps <list>]');
+    throw new Error(
+      'Usage: bench iterations <benchmark-slug> --run <id> [--type steps|tasks] [--participant <slug>] [--steps <list>]',
+    );
+  }
+  const type = optionChoice(options as SubcommandOptions, 'type', ['steps', 'tasks'] as const) ?? 'steps';
+  if (type === 'tasks') {
+    if (options.steps !== undefined) throw new Error('--steps applies to --type steps only');
+    const { api } = await createApiClient(overrides);
+    const { tasks } = await api.getRunTaskIterations(benchmarkSlug, options.run, { participant: options.participant });
+    printData(
+      tasks.map((row) => ({
+        participantSlug: row.participantSlug,
+        taskIndex: row.taskIndex,
+        status: row.status,
+        latencyMs: row.latencyMs,
+        startedAt: row.startedAt,
+        completedAt: row.completedAt,
+        ...row.data,
+      })),
+      outputOptions,
+    );
+    return;
   }
   const { api } = await createApiClient(overrides);
   const steps = options.steps
@@ -1200,7 +1463,7 @@ async function handleExport(
 // unless --ref pins it.
 async function handleFork(
   slug: string,
-  options: Record<string, string | number>,
+  options: SubcommandOptions,
   overrides: { baseUrl?: string; apiKey?: string; org?: string },
   outputOptions: OutputOptions,
 ): Promise<void> {
@@ -1301,6 +1564,7 @@ export async function run(argv: string[]): Promise<void> {
     switch (command) {
       case 'auth': {
         const [sub, ...subRest] = rest;
+        parseSubcommandOptions(subRest, groupFlags('auth'));
         if (sub === 'login') {
           await oauthLogin({ baseUrl: overrides.baseUrl, verbose: values.verbose });
         } else if (sub === 'logout') {
@@ -1314,7 +1578,7 @@ export async function run(argv: string[]): Promise<void> {
       }
       case 'org': {
         const [sub, ...subRest] = rest;
-        const { positionals: subPositionals } = parseSubcommandOptions(subRest, []);
+        const { positionals: subPositionals } = parseSubcommandOptions(subRest, groupFlags('org'));
         if (sub === 'list') {
           await handleOrgList(overrides, outputOptions);
         } else if (sub === 'use') {
@@ -1328,26 +1592,41 @@ export async function run(argv: string[]): Promise<void> {
       }
       case 'benchmarks': {
         const [sub, ...subRest] = rest;
-        const { options } = parseSubcommandOptions(subRest, ['limit', 'offset']);
-        if (sub === 'list') {
-          await handleBenchmarksList(
-            overrides,
-            options as Parameters<typeof handleBenchmarksList>[1],
-            outputOptions,
-          );
-        } else {
-          throw new Error(USAGE);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(subRest, groupFlags('benchmarks'));
+        if (!findCommand(['benchmarks', sub])) throw new Error(USAGE);
+        assertCommandFlags(['benchmarks', sub], options);
+        const [slug] = subPositionals;
+        switch (sub) {
+          case 'list':
+            await handleBenchmarksList(options, overrides, outputOptions);
+            break;
+          case 'archive':
+          case 'restore':
+            await handleBenchmarkArchive(slug, sub === 'archive', options, overrides, outputOptions);
+            break;
+          case 'describe':
+            await handleBenchmarkDescribe(slug, options, overrides, outputOptions);
+            break;
+          case 'mute':
+          case 'unmute':
+            await handleBenchmarkMute(slug, sub === 'mute', overrides, outputOptions);
+            break;
+          case 'pause':
+          case 'resume':
+            await handleBenchmarkPause(slug, sub === 'pause', options, overrides, outputOptions);
+            break;
         }
         break;
       }
       case 'runs': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(
-          rest,
-          runsSubcommandOptionUnion,
-        );
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, groupFlags('runs'));
         const [sub, slug, runId] = subPositionals;
+        if (!findCommand(['runs', sub])) throw new Error(USAGE);
+        // Options are parsed with the union of every `runs` subcommand's
+        // flags; one another subcommand takes must not be silently ignored
+        // (e.g. --source-org on `runs show` with a shared slug).
+        assertCommandFlags(['runs', sub], options);
         if (sub === 'list') {
-          assertSubcommandOptions(options, RUNS_SUBCOMMAND_OPTIONS.list);
           await handleRunsList(
             slug,
             options as Parameters<typeof handleRunsList>[1],
@@ -1355,11 +1634,9 @@ export async function run(argv: string[]): Promise<void> {
             outputOptions,
           );
         } else if (sub === 'show') {
-          assertSubcommandOptions(options, RUNS_SUBCOMMAND_OPTIONS.show);
           if (!slug || !runId) throw new Error('Usage: bench runs show <benchmark-slug> <runId>');
-          await handleRunsShow(slug, runId, overrides, outputOptions);
+          await handleRunsShow(slug, runId, options, overrides, outputOptions);
         } else if (sub === 'run-again') {
-          assertSubcommandOptions(options, RUNS_SUBCOMMAND_OPTIONS['run-again']);
           if (!slug || !runId) {
             throw new Error(
               'Usage: bench runs run-again <benchmark-slug> <runId> [--wait] [--timeout <seconds>]',
@@ -1373,25 +1650,28 @@ export async function run(argv: string[]): Promise<void> {
             outputOptions,
           );
         } else if (sub === 'run-again-status') {
-          assertSubcommandOptions(options, RUNS_SUBCOMMAND_OPTIONS['run-again-status']);
           if (!slug || !runId) {
             throw new Error(
               'Usage: bench runs run-again-status <benchmark-slug> <runAgainId>',
             );
           }
           await handleRunsRunAgainStatus(slug, runId, overrides, outputOptions);
+        } else if (sub === 'feed') {
+          await handleRunsFeed(options, overrides, outputOptions);
+        } else if (sub === 'days') {
+          await handleRunDays(options, overrides, outputOptions);
+        } else if (sub === 'day') {
+          await handleRunsDay(slug, options, overrides, outputOptions);
         } else {
-          throw new Error(USAGE);
+          await handleRunsArchive(subPositionals.slice(1), sub === 'archive', options, overrides, outputOptions);
         }
         break;
       }
       case 'results': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, [
-          'run', 'participant', 'steps', 'since', 'until', 'day', 'tz', 'source-org',
-          'limit', 'offset',
-        ]);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, flagsOf('results'));
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench results <benchmark-slug>');
+        if (await handleResultsView(slug, options, overrides, outputOptions)) break;
         await handleResults(
           slug,
           options as Parameters<typeof handleResults>[1],
@@ -1401,10 +1681,14 @@ export async function run(argv: string[]): Promise<void> {
         break;
       }
       case 'reliability': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, [
-          'day', 'participant', 'from', 'to', 'bucket', 'tz', 'metrics', 'breakdown',
-          'source-org',
-        ]);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, groupFlags('reliability'));
+        // `cards` is the org-wide view; any other word is a benchmark slug.
+        if (subPositionals.length === 1 && subPositionals[0] === 'cards') {
+          assertCommandFlags(['reliability', 'cards'], options);
+          await handleReliabilityCards(options, overrides, outputOptions);
+          break;
+        }
+        assertCommandFlags(['reliability'], options);
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench reliability <benchmark-slug>');
         await handleReliability(
@@ -1415,10 +1699,24 @@ export async function run(argv: string[]): Promise<void> {
         );
         break;
       }
+      case 'activity': {
+        const { options } = parseSubcommandOptions(rest, flagsOf('activity'));
+        await handleActivity(options, overrides, outputOptions);
+        break;
+      }
+      case 'run-again': {
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, groupFlags('run-again'));
+        if (subPositionals[0] === 'status') {
+          assertCommandFlags(['run-again', 'status'], options);
+          await handleRunAgainStatus(subPositionals[1], options, overrides, outputOptions);
+        } else {
+          assertCommandFlags(['run-again'], options);
+          await handleRunAgain(subPositionals[0], options, overrides, outputOptions);
+        }
+        break;
+      }
       case 'iterations': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, [
-          'run', 'participant', 'steps',
-        ]);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, flagsOf('iterations'));
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench iterations <benchmark-slug>');
         await handleIterations(
@@ -1431,20 +1729,35 @@ export async function run(argv: string[]): Promise<void> {
       }
       case 'artifacts': {
         const [sub, ...subRest] = rest;
-        const { options, positionals: subPositionals } = parseSubcommandOptions(subRest, ['worker']);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(subRest, groupFlags('artifacts'));
+        if (!findCommand(['artifacts', sub])) throw new Error(USAGE);
+        assertCommandFlags(['artifacts', sub], options);
         if (sub === 'list') {
           const [slug, runId] = subPositionals;
           if (!slug || !runId) throw new Error('Usage: bench artifacts list <benchmark-slug> <runId>');
           await handleArtifactsList(slug, runId, options.worker as string | undefined, overrides, outputOptions);
         } else {
-          throw new Error(USAGE);
+          await handleArtifactsDownload(subPositionals, options, overrides, outputOptions);
         }
         break;
       }
+      case 'workers': {
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, flagsOf('workers'));
+        await handleWorkers(subPositionals[0], subPositionals[1], options, overrides, outputOptions);
+        break;
+      }
+      case 'matrix': {
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, flagsOf('matrix'));
+        await handleMatrix(subPositionals[0], options, overrides, outputOptions);
+        break;
+      }
+      case 'model-index': {
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, flagsOf('model-index'));
+        await handleModelIndex(subPositionals[0], options, overrides, outputOptions);
+        break;
+      }
       case 'logs': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, [
-          'participant', 'worker', 'max-lines',
-        ]);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, flagsOf('logs'));
         const [slug, runId] = subPositionals;
         if (!slug || !runId) throw new Error('Usage: bench logs <benchmark-slug> <runId>');
         await handleLogs(
@@ -1457,7 +1770,7 @@ export async function run(argv: string[]): Promise<void> {
         break;
       }
       case 'export': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, ['run', 'out']);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, flagsOf('export'));
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench export <benchmark-slug>');
         await handleExport(
@@ -1468,9 +1781,7 @@ export async function run(argv: string[]): Promise<void> {
         break;
       }
       case 'fork': {
-        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, [
-          'as', 'source-org', 'ref',
-        ]);
+        const { options, positionals: subPositionals } = parseSubcommandOptions(rest, flagsOf('fork'));
         const [slug] = subPositionals;
         if (!slug) throw new Error('Benchmark slug required: bench fork <benchmark-slug>');
         await handleFork(

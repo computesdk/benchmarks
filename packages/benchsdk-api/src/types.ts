@@ -34,6 +34,242 @@ export interface BenchmarkResource {
   organizationId?: string;
   /** Slug of the org that owns the benchmark — distinguishes subscribed feeds from your own. */
   organizationSlug?: string | null;
+  tagline?: string | null;
+  description?: string | null;
+  visibility?: string;
+  type?: string;
+  /** Set while the org has muted the benchmark (hidden from shared feeds). */
+  mutedAt?: string | null;
+  confidential?: boolean;
+  /** Reliability benchmarks only: every pause window; `end` is null while a pause lasts. */
+  reliabilityPauses?: { start: string; end: string | null }[];
+  /** List rows (platforms with the directory columns): the category's display name. */
+  categoryName?: string | null;
+  /** List rows: how many runs the caller can see. */
+  runCount?: number;
+  /** List rows: the newest visible run, or null when never run. */
+  latestRun?: { id: string; status: string; createdAt: string; startedAt: string | null } | null;
+  /** List rows: whether the caller (or its org) muted the benchmark. */
+  viewerMuted?: boolean;
+  /** List rows: confidential, or when unset whether the category is not public. */
+  effectiveConfidential?: boolean;
+}
+
+/** `GET /benchmarks?status=`: `active` (default), `archived`, or both. */
+export type BenchmarkListStatus = 'active' | 'archived' | 'all';
+
+/** The dashboard directory's sortable columns (`GET /benchmarks?sort=`). */
+export type BenchmarkListSort = 'name' | 'owner' | 'category' | 'runs' | 'lastRun';
+/** The directory's group cards: the public category, any other category, or the caller's own. */
+export type BenchmarkListGroup = 'public' | 'stealth' | 'mine';
+
+export interface ListBenchmarksOptions {
+  limit?: number;
+  offset?: number;
+  status?: BenchmarkListStatus;
+  /** Sort like the directory; without it, newest benchmark first. */
+  sort?: BenchmarkListSort;
+  /** With `sort`; defaults to asc for name/owner/category, desc for runs/lastRun. */
+  order?: 'asc' | 'desc';
+  group?: BenchmarkListGroup;
+  /** Category slugs (at most 50). */
+  category?: string[];
+  /** The owning org's slug. */
+  owner?: string;
+  /** Case-insensitive search over name, category name and owning org name. */
+  q?: string;
+}
+
+/** Which runs a run list returns by archive state; the platform defaults to `exclude`. */
+export type RunArchivedFilter = 'exclude' | 'include' | 'only';
+
+/** What archiving or restoring a benchmark answers. */
+export interface BenchmarkArchiveResult {
+  benchmark: BenchmarkResource;
+  /** How many of the benchmark's runs the change archived or restored, when the platform reports it. */
+  archivedRunCount?: number;
+}
+
+/**
+ * What `POST /benchmarks/runs/archive` changed. The wire reply is
+ * `{ archived: <count>, count }`; the client reports the direction instead.
+ */
+export interface RunArchiveResult {
+  /** `true` when the runs were archived, `false` when they were unarchived. */
+  archived: boolean;
+  /** How many runs changed. */
+  count: number;
+}
+
+export interface BenchmarkPauseInput {
+  /** ISO timestamp; the platform defaults to now. */
+  start?: string;
+  /** ISO timestamp; open-ended when omitted. */
+  end?: string;
+}
+
+export interface BenchmarkPauseState {
+  paused: boolean;
+  pauses: { start: string; end: string | null }[];
+}
+
+/** Filters shared by the org-wide run feed routes (`runs/summary`, `runs/days`, `runs/day/{day}`). */
+export interface RunFeedFilter {
+  /** Sent as `benchmarkSlugs=a,b`; `~org/slug` names one owner's benchmark. At most 50. */
+  benchmarkSlugs?: string[];
+  /** Archived runs too (off by default). */
+  includeArchived?: boolean;
+  /** Runs of muted benchmarks and reliability benchmarks too (off by default). */
+  includeMuted?: boolean;
+}
+
+export interface RunFeedOptions extends RunFeedFilter {
+  /** The newest 1..100 runs; the platform defaults to 100. Cannot be combined with `runIds`. */
+  limit?: number;
+  /** Refresh these runs (at most 100) instead of reading the newest ones. Cannot be combined with `limit`. */
+  runIds?: string[];
+  /** `false` skips the ClickHouse stats (sent as `stats=0`; `analytics` is then `skipped`). */
+  stats?: boolean;
+}
+
+/** One run in the org feed (`orgBenchmarkRunSummarySchema` on the platform). */
+export interface RunFeedItem {
+  runId: string;
+  benchmarkId: string;
+  benchmarkSlug: string;
+  benchmarkName: string;
+  /** `foreign` for a benchmark another org owns (a subscribed feed). */
+  benchmarkOwner: 'own' | 'foreign';
+  benchmarkOwnerOrgId: string;
+  benchmarkOwnerOrgSlug: string;
+  label: string;
+  provider: string;
+  status: 'pending' | 'running' | 'finished' | string;
+  isArchived: boolean;
+  benchmarkMuted: boolean;
+  benchmarkConfidential: boolean;
+  canArchive: boolean;
+  startedAt: string;
+  completedAt: string | null;
+  progress: { done: number; inFlight: number; errors: number; total: number };
+  /** Set when analytics are unavailable: `progress` is then a placeholder. */
+  statsPending?: boolean;
+  [key: string]: unknown;
+}
+
+/** How a feed answer's stats were read: `unavailable` when ClickHouse is down, `skipped` with `stats: false`. */
+export type RunFeedAnalytics = 'ok' | 'unavailable' | 'skipped';
+
+/** `GET /benchmarks/runs/summary`. */
+export interface RunFeed {
+  runs: RunFeedItem[];
+  analytics: RunFeedAnalytics;
+}
+
+export interface RunDaysOptions extends RunFeedFilter {
+  /** IANA zone that buckets runs into days; the platform defaults to UTC. */
+  timeZone?: string;
+}
+
+/** `GET /benchmarks/runs/days`. */
+export interface RunDays {
+  days: { day: string; count: number }[];
+  timeZone: string;
+}
+
+/** Day-page cursor: the last row's `createdAt` and `id`, sent back as `cursorCreatedAt` and `cursorId`. */
+export interface RunDayCursor {
+  createdAt: string;
+  id: string;
+}
+
+export interface RunsForDayOptions extends RunDaysOptions {
+  cursor?: RunDayCursor;
+}
+
+/** `GET /benchmarks/runs/day/{day}`: one page (150 runs) of a local day. */
+export interface RunDayPage {
+  day: string;
+  timeZone: string;
+  runs: RunFeedItem[];
+  nextCursor: RunDayCursor | null;
+  analytics: RunFeedAnalytics;
+}
+
+/** The live part of a reliability card: trailing-24 h uptime, status and check strip. */
+export interface ReliabilityCardData {
+  config: { intervalMs: number; graceMs: number; target: number | null };
+  generatedAt: string;
+  uptime: number | null;
+  counted: number;
+  failed: number;
+  paused: boolean;
+  scheduler: {
+    cells: { start: string; expected: number; fired: number; missed: number; pending: number; paused: number }[];
+  };
+  participants: {
+    slug: string;
+    provider: string | null;
+    status: { state: 'up' | 'down'; since: string | null; lastFailureAt: string | null; lastCheckAt: string } | null;
+    uptime: number | null;
+    counted: number;
+    failed: number;
+    cells: { start: string; passed: number; failed: number }[];
+  }[];
+  lastCheckAt: string | null;
+}
+
+export interface ReliabilityCard {
+  benchmark: {
+    id: string;
+    slug: string;
+    name: string;
+    ownerOrgSlug: string;
+    ownerOrgName: string;
+    owner: 'own' | 'foreign';
+    muted: boolean;
+  };
+  card: ReliabilityCardData;
+}
+
+/** `GET /benchmarks/reliability-cards`. */
+export interface ReliabilityCards {
+  cards: ReliabilityCard[];
+  /** Visible reliability benchmarks that are muted. */
+  mutedCount: number;
+}
+
+export interface ActivityOptions {
+  /** 1..90; the platform defaults to 30. */
+  days?: number;
+  /** One benchmark (slug, or `~org/slug`); muted ones count here. */
+  benchmarkSlug?: string;
+}
+
+/** `GET /benchmarks/activity`: runs per UTC day over the last `days` days, zero-filled. */
+export interface BenchmarkActivity {
+  days: number;
+  benchmarkSlug: string | null;
+  series: { date: string; runs: number }[];
+}
+
+/** `POST /benchmarks/{slug}/run-again` (202). */
+export interface RunAgainAccepted {
+  benchmarkSlug: string;
+  category: string;
+  runAgainId: string;
+  /** Path of the request-status route: `/api/v1/benchmarks/{slug}/run-again/{runAgainId}`. */
+  statusUrl: string;
+}
+
+/** `GET /benchmarks/{slug}/run-again`: whether the org may run the benchmark again today. */
+export interface RunAgainState {
+  benchmarkSlug: string;
+  /** Null for a benchmark that is not a daily benchmark. */
+  category: string | null;
+  available: boolean;
+  disabledReason: string | null;
+  quota: { day: string; used: number; limit: number; resetsAt: string };
 }
 
 /**
@@ -94,11 +330,21 @@ export interface ListAllRunsOptions {
   offset?: number;
   /** Restrict the listing to a single benchmark slug. */
   benchmarkSlug?: string;
+  /** Restrict the listing to these benchmarks (sent as `benchmarkSlugs=a,b`). */
+  benchmarkSlugs?: string[];
+  archived?: RunArchivedFilter;
+  /**
+   * Runs of muted benchmarks are kept by default. `false` (sent as
+   * `includeMuted=0`) leaves them out the way the run feeds do, except for
+   * benchmarks named in `benchmarkSlug`/`benchmarkSlugs`; `true` sends `1`.
+   */
+  includeMuted?: boolean;
 }
 
 export interface ListRunsOptions extends BenchmarkRunFilterInput {
   limit?: number;
   offset?: number;
+  archived?: RunArchivedFilter;
 }
 
 export interface BenchmarkRunList {
@@ -203,6 +449,11 @@ export interface UpdateBenchmarkInput {
   status?: string;
   config?: JsonObject;
   defaultRunConfig?: JsonObject;
+  /** `null` clears it. */
+  tagline?: string | null;
+  /** `null` clears it. */
+  description?: string | null;
+  muted?: boolean;
 }
 
 export interface CreateRunInput {
@@ -562,6 +813,15 @@ export interface BenchmarkRunResults {
   steps: BenchmarkStepResultSummary[];
   /** Echoed when `participant` was sent — absent on platforms that predate it. */
   filter?: { participants?: string[] };
+  /**
+   * Each custom metric's median: `overall` is run-wide even under a
+   * participant filter; `participants` narrows to it. Absent on platforms
+   * that predate it.
+   */
+  customMetrics?: {
+    overall: Record<string, number | null>;
+    participants: { participantSlug: string; metrics: Record<string, number | null> }[];
+  };
 }
 
 export interface BenchmarkRunResultsInput {
@@ -1086,6 +1346,120 @@ export interface BenchmarkReliabilityDay {
   generatedAt: string;
 }
 
+export type BenchmarkRankStat = 'min' | 'median' | 'p95' | 'p99' | 'max';
+
+export interface BenchmarkRunOverviewInput {
+  /** `task`, `step:<name>`, or a metric key: one of `ranking.options`. Defaults to the dashboard's choice. */
+  rankBy?: string;
+  stat?: BenchmarkRankStat;
+  /** Rank one dimension group (one of `dimension.values`). */
+  dimension?: string;
+}
+
+export interface BenchmarkRunOverviewParticipant {
+  rank: number;
+  participantSlug: string;
+  provider: string;
+  displayName: string | null;
+  dimension: string | null;
+  /** The ranked value: rankBy at stat. */
+  value: number | null;
+  status: string;
+  taskCount: number;
+  successCount: number;
+  errorCount: number;
+  otherCount: number;
+  successRate: number;
+  latencyMs: BenchmarkResultLatencySummary;
+  compositeScore: number | null;
+  customMetrics: Record<string, number | null>;
+}
+
+/** `GET …/runs/{runId}/overview`: the run detail page's Overview. */
+export interface BenchmarkRunOverview {
+  run: { id: string; benchmarkSlug: string; label: string; status: string; startedAt: string; completedAt: string | null };
+  generatedAt: string;
+  progress: { done: number; inFlight: number; errors: number; total: number };
+  overall: BenchmarkResultSummary;
+  customMetrics: Record<string, number | null>;
+  dimension: { key: string; label: string; values: string[] } | null;
+  ranking: {
+    rankBy: { value: string; type: 'task' | 'step' | 'metric'; label: string; direction: 'higher-better' | 'lower-better'; stat: BenchmarkRankStat };
+    defaultRankBy: string;
+    dimension: string | null;
+    options: { type: 'task' | 'step' | 'metric'; value: string; key?: string; label: string; direction?: 'higher-better' | 'lower-better' }[];
+    participants: BenchmarkRunOverviewParticipant[];
+  };
+}
+
+/** One worker of `GET …/runs/{runId}/workers`, as the Workers page lists it. */
+export interface BenchmarkRunWorkerSummary {
+  workerIndex: number;
+  workerId: string;
+  participantSlug: string;
+  displayName: string;
+  provider: string;
+  color: string;
+  status: string;
+  taskIndexStart: number;
+  taskIndexEnd: number;
+  progressDone: number;
+  progressInFlight: number;
+  progressErrors: number;
+  progressTotal: number;
+  artifacts: { id: string; kind: string; name: string | null; contentType: string | null; createdAt: string }[];
+}
+
+/** One cell of a matrix index dataset: `state: 'missing'` has no value. */
+export interface BenchmarkMatrixCell {
+  value?: number;
+  detail?: string;
+  state: 'data' | 'missing';
+}
+
+/** `GET /benchmarks/{slug}/matrix`: a matrix index benchmark's newest dataset. */
+export interface BenchmarkMatrix {
+  benchmark: { id: string; slug: string; name: string; tagline: string | null; description: string | null };
+  run: { id: string; name: string | null; startedAt: string; completedAt: string | null };
+  generatedAt: string;
+  upgrade?: BenchmarkUpgradePayload | null;
+  spec: {
+    cell: { unit: string; decimals: number; direction: 'higher-better' | 'lower-better' };
+    highlight: 'best-in-row' | 'none';
+  };
+  dataset: {
+    version: 1;
+    rows: { key: string; label: string }[];
+    participants: { key: string; label: string }[];
+    /** Row key, then participant key. */
+    cells: Record<string, Record<string, BenchmarkMatrixCell>>;
+    cards?: Record<string, JsonObject>;
+  };
+}
+
+/** `GET /benchmarks/{slug}/model-index`: a model-matrix index benchmark's newest results. */
+export interface BenchmarkModelIndex {
+  benchmark: { id: string; slug: string; name: string };
+  run: { id: string; startedAt: string; completedAt: string | null };
+  generatedAt: string;
+  upgrade?: BenchmarkUpgradePayload | null;
+  matrix: {
+    timestamp: string;
+    gateways: JsonObject[];
+    rows: {
+      key: string;
+      name: string;
+      author: string;
+      context?: number;
+      maxOutput?: number;
+      gatewayCount: number;
+      minInput?: number;
+      minOutput?: number;
+      cells: Record<string, JsonObject>;
+    }[];
+    authors: { slug: string; label: string; count: number }[];
+  };
+}
 export interface BenchmarkClient {
   upsertBenchmark(slug: string, input: UpsertBenchmarkInput): Promise<BenchmarkResource>;
   updateBenchmark(slug: string, input: UpdateBenchmarkInput): Promise<BenchmarkResource>;
@@ -1095,7 +1469,38 @@ export interface BenchmarkClient {
     sourceOrg: string,
     slug: string,
   ): Promise<{ benchmark: BenchmarkResource; source: BenchmarkSourceDescriptor | null }>;
-  listBenchmarks(options?: { limit?: number; offset?: number }): Promise<BenchmarkResource[]>;
+  listBenchmarks(options?: ListBenchmarksOptions): Promise<BenchmarkResource[]>;
+  /** PATCH `{status: "archived" | "active"}`: archives (or restores) the benchmark and its runs. */
+  setBenchmarkArchived(slug: string, archived: boolean): Promise<BenchmarkArchiveResult>;
+  /** POST /benchmarks/runs/archive — archive (or unarchive) up to 100 of the org's runs. */
+  archiveRuns(runIds: string[], archived?: boolean): Promise<RunArchiveResult>;
+  /** POST /benchmarks/{slug}/pause — pause a reliability benchmark. */
+  pauseBenchmark(slug: string, input?: BenchmarkPauseInput): Promise<BenchmarkPauseState>;
+  /** DELETE /benchmarks/{slug}/pause — resume a paused reliability benchmark. */
+  resumeBenchmark(slug: string): Promise<BenchmarkPauseState>;
+  /** GET /benchmarks/runs/summary — the org's newest runs across benchmarks, with stats. */
+  getRunFeed(options?: RunFeedOptions): Promise<RunFeed>;
+  /** GET /benchmarks/runs/days — run counts per local day. */
+  listRunDays(options?: RunDaysOptions): Promise<RunDays>;
+  /** GET /benchmarks/runs/day/{day} — one page of a day's runs. */
+  listRunsForDay(day: string, options?: RunsForDayOptions): Promise<RunDayPage>;
+  /** Every page of a day, following `nextCursor` from `options.cursor` (or the first page). */
+  listAllRunsForDay(day: string, options?: RunsForDayOptions): AsyncGenerator<RunDayPage>;
+  /** GET /benchmarks/reliability-cards — the dashboard's reliability cards. */
+  getReliabilityCards(options?: { includeMuted?: boolean }): Promise<ReliabilityCards>;
+  /** GET /benchmarks/activity — run counts per day for the org (or one benchmark). */
+  getActivity(options?: ActivityOptions): Promise<BenchmarkActivity>;
+  /**
+   * POST /benchmarks/{slug}/run-again — run a daily benchmark again (one request
+   * per org, benchmark and UTC day). Needs a user credential; org API keys get
+   * 403 `user_credential_required`.
+   */
+  runBenchmarkAgain(slug: string): Promise<RunAgainAccepted>;
+  /**
+   * GET /benchmarks/{slug}/run-again — availability and today's quota. Poll a
+   * request from `runBenchmarkAgain` with `getRunAgain`.
+   */
+  getRunAgainState(slug: string): Promise<RunAgainState>;
   createRun(benchmarkSlug: string, input: CreateRunInput): Promise<{
     run: BenchmarkRun;
     participants: BenchmarkParticipant[];
@@ -1248,6 +1653,25 @@ export interface BenchmarkClient {
     input?: BenchmarkRunIterationInput,
   ): Promise<BenchmarkRunStepIterations>;
   getRunImports(benchmarkSlug: string, runId: string): Promise<BenchmarkRunImports>;
+  /** GET …/runs/{runId}/overview — the run's stats and participant ranking, as the dashboard Overview shows them. */
+  getRunOverview(benchmarkSlug: string, runId: string, input?: BenchmarkRunOverviewInput): Promise<BenchmarkRunOverview>;
+  /** GET …/runs/{runId}/workers — every worker of the run with its progress and artifacts. */
+  listRunWorkers(
+    benchmarkSlug: string,
+    runId: string,
+    options?: { participant?: string },
+  ): Promise<BenchmarkRunWorkerSummary[]>;
+  /** A worker artifact's raw bytes (never decompressed or decoded), with its metadata. */
+  downloadWorkerArtifactBytes(
+    benchmarkSlug: string,
+    runId: string,
+    workerId: string,
+    artifactId: string,
+  ): Promise<{ artifact: BenchmarkArtifact; bytes: Uint8Array }>;
+  /** GET /benchmarks/{slug}/matrix (or ~/{sourceOrg}/{slug}/matrix). */
+  getBenchmarkMatrix(benchmarkSlug: string, options?: { sourceOrg?: string }): Promise<BenchmarkMatrix>;
+  /** GET /benchmarks/{slug}/model-index (or ~/{sourceOrg}/{slug}/model-index). */
+  getModelIndex(benchmarkSlug: string, options?: { sourceOrg?: string }): Promise<BenchmarkModelIndex>;
   /**
    * GET .../reliability — resolves to `BenchmarkReliabilityDay` when `day` +
    * `participant` are passed, otherwise `BenchmarkReliabilityRange`. Both

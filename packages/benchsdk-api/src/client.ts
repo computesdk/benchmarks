@@ -3,6 +3,7 @@ import { promisify } from 'node:util';
 
 const gunzip = promisify(gunzipCallback);
 import type {
+  BenchmarkArchiveResult,
   BenchmarkArtifact,
   BenchmarkArtifactDownload,
   BenchmarkAssignment,
@@ -10,6 +11,8 @@ import type {
   BenchmarkClientConfig,
   BenchmarkParticipant,
   BenchmarkParticipantLogs,
+  BenchmarkPauseInput,
+  BenchmarkPauseState,
   BenchmarkReliabilityDay,
   BenchmarkReliabilityInput,
   BenchmarkReliabilityRange,
@@ -29,7 +32,12 @@ import type {
   BenchmarkRunTimeline,
   BenchmarkRunTimelineInput,
   BenchmarkRunIterationInput,
+  BenchmarkMatrix,
+  BenchmarkModelIndex,
+  BenchmarkRunOverview,
+  BenchmarkRunOverviewInput,
   BenchmarkRunWorker,
+  BenchmarkRunWorkerSummary,
   BenchmarkWorkerAttempt,
   CreateWorkerArtifactInput,
   CreateWorkerArtifactResponse,
@@ -44,7 +52,22 @@ import type {
   BenchmarkRunListResult,
   BenchmarkRunResultsInput,
   ListAllRunsOptions,
+  ListBenchmarksOptions,
   ListRunsOptions,
+  ActivityOptions,
+  BenchmarkActivity,
+  ReliabilityCards,
+  RunAgainAccepted,
+  RunAgainState,
+  RunArchiveResult,
+  RunDayCursor,
+  RunDayPage,
+  RunDays,
+  RunDaysOptions,
+  RunFeed,
+  RunFeedFilter,
+  RunFeedOptions,
+  RunsForDayOptions,
   SendTaskResultsInput,
   PlanWorkersInput,
   TaskResultRecord,
@@ -133,6 +156,27 @@ function queryString(input: Record<string, number | string | undefined>): string
   }
   const value = params.toString();
   return value ? `?${value}` : '';
+}
+
+function flagParam(value: boolean | undefined): string | undefined {
+  return value ? '1' : undefined;
+}
+
+function csvParam(values: string[] | undefined): string | undefined {
+  return values?.length ? values.join(',') : undefined;
+}
+
+function feedFilterParams(filter: RunFeedFilter): Record<string, string | undefined> {
+  return {
+    benchmarkSlugs: csvParam(filter.benchmarkSlugs),
+    includeArchived: flagParam(filter.includeArchived),
+    includeMuted: flagParam(filter.includeMuted),
+  };
+}
+
+function dayCursorParams(cursor: RunDayCursor | undefined): Record<string, string | undefined> {
+  if (cursor === undefined) return {};
+  return { cursorCreatedAt: cursor.createdAt, cursorId: cursor.id };
 }
 
 function iterationsExtraParams(input: BenchmarkRunIterationInput = {}): string {
@@ -355,6 +399,17 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
     }
   }
 
+  async function listRunsForDay(day: string, options: RunsForDayOptions = {}): Promise<RunDayPage> {
+    return request<RunDayPage>(
+      'GET',
+      `/benchmarks/runs/day/${encodePath(day)}${queryString({
+        ...feedFilterParams(options),
+        timeZone: options.timeZone,
+        ...dayCursorParams(options.cursor),
+      })}`,
+    );
+  }
+
   async function sendTaskResults(input: SendTaskResultsInput): Promise<TaskResultsResponse> {
     if (input.records.length === 0) {
       return {};
@@ -412,12 +467,120 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
       return data.benchmark;
     },
 
-    async listBenchmarks(options: { limit?: number; offset?: number } = {}) {
+    async listBenchmarks(options: ListBenchmarksOptions = {}) {
       const data = await request<{ items?: BenchmarkResource[]; benchmarks?: BenchmarkResource[] }>(
         'GET',
-        `/benchmarks${queryString(options)}`,
+        `/benchmarks${queryString({
+          limit: options.limit,
+          offset: options.offset,
+          status: options.status,
+          sort: options.sort,
+          order: options.order,
+          group: options.group,
+          category: csvParam(options.category),
+          owner: options.owner,
+          q: options.q,
+        })}`,
       );
       return data.items ?? data.benchmarks ?? [];
+    },
+
+    async setBenchmarkArchived(slug, archived) {
+      // A repeat archive is a 409 `conflict`; `archivedRunCount` is absent when nothing moved.
+      const data = await request<{ benchmark: BenchmarkResource; archivedRunCount?: number }>(
+        'PATCH',
+        `/benchmarks/${encodePath(slug)}`,
+        { status: archived ? 'archived' : 'active' },
+      );
+      const result: BenchmarkArchiveResult = { benchmark: data.benchmark };
+      if (typeof data.archivedRunCount === 'number') result.archivedRunCount = data.archivedRunCount;
+      return result;
+    },
+
+    async archiveRuns(runIds, archived = true) {
+      // The wire reply is `{ archived: <count>, count }`: `archived` has always
+      // been the number of runs changed, and `count` repeats it.
+      const data = await request<{ archived?: number; count?: number }>(
+        'POST',
+        '/benchmarks/runs/archive',
+        { runIds, archived },
+      );
+      const count = typeof data.count === 'number' ? data.count : typeof data.archived === 'number' ? data.archived : 0;
+      const result: RunArchiveResult = { archived, count };
+      return result;
+    },
+
+    async pauseBenchmark(slug, input: BenchmarkPauseInput = {}) {
+      const body: JsonObject = {};
+      if (input.start !== undefined) body.start = input.start;
+      if (input.end !== undefined) body.end = input.end;
+      return request<BenchmarkPauseState>('POST', `/benchmarks/${encodePath(slug)}/pause`, body);
+    },
+
+    async resumeBenchmark(slug) {
+      return request<BenchmarkPauseState>('DELETE', `/benchmarks/${encodePath(slug)}/pause`);
+    },
+
+    async getRunFeed(options: RunFeedOptions = {}) {
+      if (options.limit !== undefined && options.runIds?.length) {
+        throw new Error('getRunFeed takes either limit or runIds, not both');
+      }
+      return request<RunFeed>(
+        'GET',
+        `/benchmarks/runs/summary${queryString({
+          ...feedFilterParams(options),
+          limit: options.limit,
+          runIds: csvParam(options.runIds),
+          stats: options.stats === false ? '0' : undefined,
+        })}`,
+      );
+    },
+
+    async listRunDays(options: RunDaysOptions = {}) {
+      return request<RunDays>(
+        'GET',
+        `/benchmarks/runs/days${queryString({ ...feedFilterParams(options), timeZone: options.timeZone })}`,
+      );
+    },
+
+    listRunsForDay,
+
+    async *listAllRunsForDay(day, options: RunsForDayOptions = {}) {
+      const seen = new Set<string>();
+      let cursor = options.cursor;
+      for (;;) {
+        const page = await listRunsForDay(day, { ...options, cursor });
+        yield page;
+        if (page.nextCursor === null || page.nextCursor === undefined) return;
+        const key = JSON.stringify(page.nextCursor);
+        // A cursor the platform already handed out would page forever.
+        if (seen.has(key)) throw new Error(`The platform repeated the day cursor ${key}; stopping`);
+        seen.add(key);
+        cursor = page.nextCursor;
+      }
+    },
+
+    async getReliabilityCards(options: { includeMuted?: boolean } = {}) {
+      return request<ReliabilityCards>(
+        'GET',
+        `/benchmarks/reliability-cards${queryString({ includeMuted: flagParam(options.includeMuted) })}`,
+      );
+    },
+
+    async getActivity(options: ActivityOptions = {}) {
+      return request<BenchmarkActivity>(
+        'GET',
+        `/benchmarks/activity${queryString({ days: options.days, benchmarkSlug: options.benchmarkSlug })}`,
+      );
+    },
+
+    async runBenchmarkAgain(slug) {
+      // The route takes no body.
+      return request<RunAgainAccepted>('POST', `/benchmarks/${encodePath(slug)}/run-again`);
+    },
+
+    async getRunAgainState(slug) {
+      return request<RunAgainState>('GET', `/benchmarks/${encodePath(slug)}/run-again`);
     },
 
     async createRun(benchmarkSlug, input) {
@@ -429,10 +592,15 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
     },
 
     async listRuns(benchmarkSlug, options: ListRunsOptions = {}) {
-      const { sourceOrg, limit, offset, ...filter } = options;
+      const { sourceOrg, limit, offset, archived, ...filter } = options;
       const data = await request<BenchmarkRunList>(
         'GET',
-        `${benchmarkPath(benchmarkSlug, sourceOrg)}/runs${queryString({ limit, offset, ...filterParams(filter) })}`,
+        `${benchmarkPath(benchmarkSlug, sourceOrg)}/runs${queryString({
+          limit,
+          offset,
+          ...filterParams(filter),
+          archived,
+        })}`,
       );
       // The wire shape is { items, filter, upgrade } but callers iterate the
       // result as an array — attach the envelope fields non-enumerably so
@@ -454,7 +622,14 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
     async listAllRuns(options: ListAllRunsOptions = {}) {
       const data = await request<{ items: BenchmarkRunListItem[] }>(
         'GET',
-        `/benchmarks/runs${queryString({ limit: options.limit, offset: options.offset, benchmarkSlug: options.benchmarkSlug })}`,
+        `/benchmarks/runs${queryString({
+          limit: options.limit,
+          offset: options.offset,
+          benchmarkSlug: options.benchmarkSlug,
+          benchmarkSlugs: csvParam(options.benchmarkSlugs),
+          archived: options.archived,
+          includeMuted: options.includeMuted === undefined ? undefined : options.includeMuted ? '1' : '0',
+        })}`,
       );
       return data.items;
     },
@@ -753,6 +928,43 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
         'GET',
         `/benchmarks/${encodePath(benchmarkSlug)}/runs/${encodePath(runId)}/results/imports`,
       );
+    },
+
+    async getRunOverview(benchmarkSlug, runId, input: BenchmarkRunOverviewInput = {}) {
+      return request<BenchmarkRunOverview>(
+        'GET',
+        `/benchmarks/${encodePath(benchmarkSlug)}/runs/${encodePath(runId)}/overview${queryString({
+          rankBy: input.rankBy,
+          stat: input.stat,
+          dimension: input.dimension,
+        })}`,
+      );
+    },
+
+    async listRunWorkers(benchmarkSlug, runId, options: { participant?: string } = {}) {
+      const data = await request<{ items: BenchmarkRunWorkerSummary[] }>(
+        'GET',
+        `/benchmarks/${encodePath(benchmarkSlug)}/runs/${encodePath(runId)}/workers${queryString({ participant: options.participant })}`,
+      );
+      return data.items;
+    },
+
+    async downloadWorkerArtifactBytes(benchmarkSlug, runId, workerId, artifactId) {
+      const { artifact, downloadUrl } = await client.getWorkerArtifact(benchmarkSlug, runId, workerId, artifactId);
+      const response = await doFetch(downloadUrl);
+      if (!response.ok) {
+        const errorBody = await response.text().catch(() => '');
+        throw new BenchmarkApiError(`Artifact download failed with ${response.status}`, response.status, errorBody);
+      }
+      return { artifact, bytes: new Uint8Array(await response.arrayBuffer()) };
+    },
+
+    async getBenchmarkMatrix(benchmarkSlug, options: { sourceOrg?: string } = {}) {
+      return request<BenchmarkMatrix>('GET', `${benchmarkPath(benchmarkSlug, options.sourceOrg)}/matrix`);
+    },
+
+    async getModelIndex(benchmarkSlug, options: { sourceOrg?: string } = {}) {
+      return request<BenchmarkModelIndex>('GET', `${benchmarkPath(benchmarkSlug, options.sourceOrg)}/model-index`);
     },
 
     async submitRunSummary(benchmarkSlug, runId, input) {

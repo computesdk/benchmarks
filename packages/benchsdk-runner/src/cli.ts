@@ -24,6 +24,7 @@ import { createBenchmarkClient, type BenchmarkClient } from '@benchsdk/api';
 import { filterParticipantsByEnv, selectParticipants } from '@benchsdk/worker';
 import { parseCliArgs, resolveShape, runBenchmark } from './runner.js';
 import { NoAvailableParticipantsError } from './no-available-participants.js';
+import { printCliManifest } from './manifest.js';
 import { validateBenchmarkConfig, BenchmarkConfigError, type BenchmarkConfig as TypedBenchmarkConfig } from './bench-config.js';
 import { scoringConfigToSpec, validateScoringSpec, lowerIsBetter, higherIsBetter } from './scoring.js';
 import type { BaseParticipant } from '@benchsdk/worker';
@@ -267,6 +268,8 @@ export async function run(argv: string[]): Promise<void> {
       await runBenchmarkFile(argv);
     } else if (command === 'check') {
       await runCheck(argv);
+    } else if (command === '__manifest') {
+      await printCliManifest(rest);
     } else {
       return runPlatformCli(argv);
     }
