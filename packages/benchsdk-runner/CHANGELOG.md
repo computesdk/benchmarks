@@ -1,5 +1,15 @@
 # @benchsdk/runner
 
+## 0.8.4
+
+### Patch Changes
+
+- a09bd64: Retry worker planning and keyed run creation safely. In round mode, keep running participants without platform reporting when worker planning fails.
+- Updated dependencies [a09bd64]
+  - @benchsdk/api@0.11.2
+  - @benchsdk/cli@0.9.4
+  - @benchsdk/worker@0.4.2
+
 ## 0.8.3
 
 ### Patch Changes
