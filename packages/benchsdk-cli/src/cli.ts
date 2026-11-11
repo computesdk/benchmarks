@@ -584,8 +584,8 @@ async function printErrorAndExit(err: unknown, verbose = false): Promise<never> 
 export const BENCH_OAUTH_CLIENT_ID = 'benchsdk-cli';
 export const BENCH_OAUTH_SCOPE =
   'actions:read actions:write benchmarks:read benchmarks:write billing:read ' +
-  'market:read market:write org:read org:admin sandboxes:read sandboxes:write ' +
-  'vault:read vault:write offline_access';
+  'market:read market:write org:read org:admin providers:read providers:write ' +
+  'sandboxes:read sandboxes:write vault:read vault:write offline_access';
 
 export interface OAuthLoginOptions {
   baseUrl?: string;
