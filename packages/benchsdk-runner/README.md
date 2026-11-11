@@ -114,6 +114,13 @@ levels. Zero-weight diagnostics need not have samples. All-failed is
 still observed zero; no-record rows remain skipped. Weight validation for the
 new fields rejects missing, nonfinite and negative components.
 
+For declarative `config.scoring`, `defineBenchmarkConfig` rejects invalid new
+fields as a `BenchmarkConfigError`. `runBenchmark` also validates these fields
+before authentication, client setup or task execution, including dry runs and
+configs supplied without `defineBenchmarkConfig`. Required sample/statistic
+validation still happens after measurements are collected; callback `onScore`
+specs are validated when scored.
+
 The existing summary upload saves the mathematical spec. Matching platform
 support is required so ingestion recomputes the same arithmetic; suite adoption
 requires a normal compatible package release and must fail fast on an old runner

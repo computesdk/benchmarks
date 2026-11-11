@@ -28,7 +28,7 @@ import {
 } from '@benchsdk/worker';
 import type { BenchmarkSystemMetricsCollector, BenchmarkSystemMetricsSample } from '@benchsdk/worker';
 import { NoAvailableParticipantsError } from './no-available-participants.js';
-import { higherIsBetter, lowerIsBetter, score, ScoringSpecError, scoringConfigToSpec } from './scoring.js';
+import { higherIsBetter, lowerIsBetter, score, ScoringSpecError, scoringConfigToSpec, validateScoringSpec } from './scoring.js';
 import type {
   BenchmarkClient,
   BenchmarkLogOptions,
@@ -673,6 +673,12 @@ export async function runBenchmark<T extends BaseParticipant>(
   const shaped = applyShape(fileConfig, resolveShape(fileConfig, args.shape));
   const config = applyIdentityOverrides(shaped, args);
   const resolved = mergeConfig(config, args);
+
+  if (config.scoring && (
+    config.scoring.precision !== undefined || config.scoring.metrics.some((metric) => metric.transform !== undefined)
+  )) {
+    validateScoringSpec(scoringConfigToSpec(config.scoring));
+  }
 
   let baseUrl = '';
   let apiKey = '';
