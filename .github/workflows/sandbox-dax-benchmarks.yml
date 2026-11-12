@@ -87,6 +87,7 @@ jobs:
           - arker
           - beam
           - blaxel
+          - briq
           - buddy
           - cloud-run
           - cloudflare
@@ -212,6 +213,12 @@ jobs:
           # shared allowlist above.
           if [ "${{ matrix.provider }}" = "uno" ]; then
             . benchmarks/scripts/load-vault-secrets.sh '^(UNO_API_KEY)'
+          fi
+
+          # briq's credential is loaded only in its own leg, not through the
+          # shared allowlist above.
+          if [ "${{ matrix.provider }}" = "briq" ]; then
+            . benchmarks/scripts/load-vault-secrets.sh '^(BRIQ_API_KEY)'
           fi
 
           # OpenComputer is kept in the daily runs but excluded from the weekly run.

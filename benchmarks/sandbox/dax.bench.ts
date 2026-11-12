@@ -161,6 +161,8 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
       },
     ],
   },
+  // Briq's xl sizeClass is its 8 vCPU / 16 GiB shape.
+  briq:         { sizeClass: 'xl' },
   beam:         { cpu: 8, memory: 16384 },                   // cpu = cores, memory = MiB
   cloudflare:   { vcpu: 8, memoryMib: 16384, diskMb: 20000, image: 'builder' },
   codesandbox:  { vmTier: VMTier.Small },                  // Small = 8 CPU, 16 GiB

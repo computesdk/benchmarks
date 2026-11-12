@@ -3,6 +3,7 @@ import { archil } from '@computesdk/archil';
 import { arker } from '@computesdk/arker';
 import { beam } from '@computesdk/beam';
 import { blaxel } from '@computesdk/blaxel';
+import { briq } from '@computesdk/briq';
 import { buddy } from '@computesdk/buddy';
 import { codesandbox } from '@computesdk/codesandbox';
 import { cloudRun } from '@computesdk/gcp/cloud-run';
@@ -99,6 +100,11 @@ export const providers: ProviderConfig[] = [
     name: 'blaxel',
     requiredEnvVars: ['BL_API_KEY', 'BL_WORKSPACE'],
     createCompute: () => blaxel({ apiKey: process.env.BL_API_KEY!, workspace: process.env.BL_WORKSPACE!, region: 'us-was-1' }),
+  },
+  {
+    name: 'briq',
+    requiredEnvVars: ['BRIQ_API_KEY'],
+    createCompute: () => briq({ apiKey: process.env.BRIQ_API_KEY! }),
   },
   {
     name: 'buddy',
