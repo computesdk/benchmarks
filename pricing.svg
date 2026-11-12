@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="682" viewBox="0 0 1200 682">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="726" viewBox="0 0 1200 726">
   <defs>
     <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#f6f8fa;stop-opacity:1" />
@@ -30,7 +30,7 @@
   </style>
 
   <!-- Background -->
-  <rect class="bg" width="1200" height="682"/>
+  <rect class="bg" width="1200" height="726"/>
 
   <!-- Logo (black square with white C) -->
   <g transform="translate(24, 24)">
@@ -54,92 +54,101 @@
   <text class="table-header" x="740" y="162">Value Score</text>
   <text class="table-header" x="920" y="162">Confidence</text>
 
-  <!-- blaxel -->
-  <text class="row provider" x="40" y="208">Blaxel</text>
-  <text class="row cost fast" x="200" y="208">~$0.0088</text>
-  <text class="row" x="380" y="208">96.3 (99/100)</text>
-  <text class="row" x="580" y="208">Active CPU</text>
-  <text class="row value fast" x="740" y="208">96.0</text>
+  <!-- agent37 -->
+  <text class="row provider" x="40" y="208">Agent37</text>
+  <text class="row cost fast" x="200" y="208">$0.0060</text>
+  <text class="row" x="380" y="208">-- (null)</text>
+  <text class="row" x="580" y="208">Per-minute</text>
+  <text class="row value status" x="740" y="208">--</text>
   <text class="row confidence-exact" x="920" y="208">exact</text>
   <line class="divider" x1="24" y1="222" x2="1176" y2="222"/>
 
-  <!-- cloudflare -->
-  <text class="row provider" x="40" y="252">Cloudflare</text>
-  <text class="row cost fast" x="200" y="252">~$0.0252</text>
-  <text class="row" x="380" y="252">75.1 (100/100)</text>
+  <!-- blaxel -->
+  <text class="row provider" x="40" y="252">Blaxel</text>
+  <text class="row cost fast" x="200" y="252">~$0.0088</text>
+  <text class="row" x="380" y="252">96.3 (99/100)</text>
   <text class="row" x="580" y="252">Active CPU</text>
-  <text class="row value fast" x="740" y="252">81.0</text>
+  <text class="row value fast" x="740" y="252">96.0</text>
   <text class="row confidence-exact" x="920" y="252">exact</text>
   <line class="divider" x1="24" y1="266" x2="1176" y2="266"/>
 
-  <!-- vercel -->
-  <text class="row provider" x="40" y="296">Vercel</text>
-  <text class="row cost fast" x="200" y="296">~$0.0340</text>
-  <text class="row" x="380" y="296">93.7 (100/100)</text>
+  <!-- cloudflare -->
+  <text class="row provider" x="40" y="296">Cloudflare</text>
+  <text class="row cost fast" x="200" y="296">~$0.0252</text>
+  <text class="row" x="380" y="296">75.1 (100/100)</text>
   <text class="row" x="580" y="296">Active CPU</text>
-  <text class="row value fast" x="740" y="296">88.2</text>
+  <text class="row value fast" x="740" y="296">81.0</text>
   <text class="row confidence-exact" x="920" y="296">exact</text>
   <line class="divider" x1="24" y1="310" x2="1176" y2="310"/>
 
-  <!-- modal -->
-  <text class="row provider" x="40" y="340">Modal</text>
-  <text class="row cost fast" x="200" y="340">~$0.0661</text>
-  <text class="row" x="380" y="340">94.2 (100/100)</text>
+  <!-- vercel -->
+  <text class="row provider" x="40" y="340">Vercel</text>
+  <text class="row cost fast" x="200" y="340">~$0.0340</text>
+  <text class="row" x="380" y="340">93.7 (100/100)</text>
   <text class="row" x="580" y="340">Active CPU</text>
-  <text class="row value fast" x="740" y="340">79.4</text>
+  <text class="row value fast" x="740" y="340">88.2</text>
   <text class="row confidence-exact" x="920" y="340">exact</text>
   <line class="divider" x1="24" y1="354" x2="1176" y2="354"/>
 
-  <!-- codesandbox -->
-  <text class="row provider" x="40" y="384">Codesandbox</text>
-  <text class="row cost fast" x="200" y="384">$0.0743</text>
-  <text class="row" x="380" y="384">75.2 (100/100)</text>
-  <text class="row" x="580" y="384">Credits</text>
-  <text class="row value fast" x="740" y="384">68.8</text>
-  <text class="row confidence-estimated" x="920" y="384">estimated</text>
+  <!-- modal -->
+  <text class="row provider" x="40" y="384">Modal</text>
+  <text class="row cost fast" x="200" y="384">~$0.0661</text>
+  <text class="row" x="380" y="384">94.2 (100/100)</text>
+  <text class="row" x="580" y="384">Active CPU</text>
+  <text class="row value fast" x="740" y="384">79.4</text>
+  <text class="row confidence-exact" x="920" y="384">exact</text>
   <line class="divider" x1="24" y1="398" x2="1176" y2="398"/>
 
-  <!-- e2b -->
-  <text class="row provider" x="40" y="428">E2B</text>
-  <text class="row cost fast" x="200" y="428">$0.0828</text>
-  <text class="row" x="380" y="428">92.8 (100/100)</text>
-  <text class="row" x="580" y="428">Per-second</text>
-  <text class="row value fast" x="740" y="428">73.8</text>
-  <text class="row confidence-exact" x="920" y="428">exact</text>
+  <!-- codesandbox -->
+  <text class="row provider" x="40" y="428">Codesandbox</text>
+  <text class="row cost fast" x="200" y="428">$0.0743</text>
+  <text class="row" x="380" y="428">75.2 (100/100)</text>
+  <text class="row" x="580" y="428">Credits</text>
+  <text class="row value fast" x="740" y="428">68.8</text>
+  <text class="row confidence-estimated" x="920" y="428">estimated</text>
   <line class="divider" x1="24" y1="442" x2="1176" y2="442"/>
 
-  <!-- hopx -->
-  <text class="row provider" x="40" y="472">Hopx</text>
+  <!-- e2b -->
+  <text class="row provider" x="40" y="472">E2B</text>
   <text class="row cost fast" x="200" y="472">$0.0828</text>
-  <text class="row" x="380" y="472">0.0 (0/100)</text>
+  <text class="row" x="380" y="472">92.8 (100/100)</text>
   <text class="row" x="580" y="472">Per-second</text>
-  <text class="row value status" x="740" y="472">--</text>
+  <text class="row value fast" x="740" y="472">73.8</text>
   <text class="row confidence-exact" x="920" y="472">exact</text>
   <line class="divider" x1="24" y1="486" x2="1176" y2="486"/>
 
-  <!-- daytona -->
-  <text class="row provider" x="40" y="516">Daytona</text>
+  <!-- hopx -->
+  <text class="row provider" x="40" y="516">Hopx</text>
   <text class="row cost fast" x="200" y="516">$0.0828</text>
-  <text class="row" x="380" y="516">54.1 (100/100)</text>
+  <text class="row" x="380" y="516">0.0 (0/100)</text>
   <text class="row" x="580" y="516">Per-second</text>
-  <text class="row value medium" x="740" y="516">56.3</text>
+  <text class="row value status" x="740" y="516">--</text>
   <text class="row confidence-exact" x="920" y="516">exact</text>
   <line class="divider" x1="24" y1="530" x2="1176" y2="530"/>
 
-  <!-- runloop -->
-  <text class="row provider" x="40" y="560">Runloop</text>
-  <text class="row cost slow" x="200" y="560">$0.1584</text>
-  <text class="row" x="380" y="560">95.0 (100/100)</text>
+  <!-- daytona -->
+  <text class="row provider" x="40" y="560">Daytona</text>
+  <text class="row cost fast" x="200" y="560">$0.0828</text>
+  <text class="row" x="380" y="560">54.1 (100/100)</text>
   <text class="row" x="580" y="560">Per-second</text>
-  <text class="row value medium" x="740" y="560">44.4</text>
+  <text class="row value medium" x="740" y="560">56.3</text>
   <text class="row confidence-exact" x="920" y="560">exact</text>
+  <line class="divider" x1="24" y1="574" x2="1176" y2="574"/>
+
+  <!-- runloop -->
+  <text class="row provider" x="40" y="604">Runloop</text>
+  <text class="row cost slow" x="200" y="604">$0.1584</text>
+  <text class="row" x="380" y="604">95.0 (100/100)</text>
+  <text class="row" x="580" y="604">Per-second</text>
+  <text class="row value medium" x="740" y="604">44.4</text>
+  <text class="row confidence-exact" x="920" y="604">exact</text>
 
   <!-- Timestamp -->
-  <text class="timestamp" x="1176" y="644" text-anchor="end">Last updated: Jun 29, 2026</text>
+  <text class="timestamp" x="1176" y="688" text-anchor="end">Last updated: Jun 29, 2026</text>
 
   <!-- Footnotes -->
-  <text class="timestamp" x="24" y="644">Eff. Cost = effective cost for 1 vCPU + 2 GB RAM / hr. Active-CPU providers (~) estimated at 10% utilization. Value Score = sqrt(benchmark x cost efficiency).</text>
-  <text class="timestamp" x="24" y="658">Active-CPU billing (Vercel, Cloudflare, Blaxel): CPU charged only during execution, memory always wall-clock. Wall-clock providers: full rate shown.</text>
-  <text class="timestamp" x="24" y="672">Confidence: exact = official pricing page, estimated = back-calculated from bundled tier.</text>
+  <text class="timestamp" x="24" y="688">Eff. Cost = effective cost for 1 vCPU + 2 GB RAM / hr. Active-CPU providers (~) estimated at 10% utilization. Value Score = sqrt(benchmark x cost efficiency).</text>
+  <text class="timestamp" x="24" y="702">Active-CPU billing (Vercel, Cloudflare, Blaxel): CPU charged only during execution, memory always wall-clock. Wall-clock providers: full rate shown.</text>
+  <text class="timestamp" x="24" y="716">Confidence: exact = official pricing page, estimated = back-calculated from bundled tier.</text>
 
 </svg>
