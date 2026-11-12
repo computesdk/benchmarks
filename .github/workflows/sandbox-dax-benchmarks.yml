@@ -216,9 +216,11 @@ jobs:
           fi
 
           # briq's credential is loaded only in its own leg, not through the
-          # shared allowlist above.
+          # shared allowlist above. BENCHMARKS_PLATFORM_API_KEY keeps the
+          # filter non-empty while BRIQ_API_KEY is unprovisioned, so the
+          # benchmark env-gates briq as skipped instead of failing this step.
           if [ "${{ matrix.provider }}" = "briq" ]; then
-            . benchmarks/scripts/load-vault-secrets.sh '^(BRIQ_API_KEY)'
+            . benchmarks/scripts/load-vault-secrets.sh '^(BRIQ_API_KEY|BENCHMARKS_PLATFORM_API_KEY)'
           fi
 
           # OpenComputer is kept in the daily runs but excluded from the weekly run.
