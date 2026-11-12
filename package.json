@@ -80,6 +80,7 @@
     "generate-dax-svg": "tsx benchmarks/sandbox/generate-dax-svg.ts",
     "generate-storage-svg": "tsx benchmarks/storage/generate-svg.ts",
     "generate-snapshot-fork-svg": "tsx benchmarks/storage/generate-snapshot-fork-svg.ts",
+    "cleanup:leaked-snapshots": "tsx benchmarks/storage/cleanup-leaked-snapshots.ts",
     "generate-browser-svg": "tsx benchmarks/browser/generate-svg.ts",
     "generate-browser-throughput-svg": "tsx benchmarks/browser/generate-throughput-svg.ts",
     "generate-pricing-svg": "tsx benchmarks/sandbox/generate-pricing-svg.ts",
