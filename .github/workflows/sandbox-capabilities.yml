@@ -70,7 +70,7 @@ jobs:
           - e2b
           # - ec2-firecrab  # pending @computesdk/ec2-firecrab publish + host/vault
           - givemeanode
-          - hopx
+          # - hopx  # parked — not benchmarked yet
           - isorun
           # - lightning
           - modal
@@ -78,7 +78,7 @@ jobs:
           - miosa
           - mosaic
           - namespace
-          - northflank
+          # - northflank  # parked — not benchmarked yet
           # - opencomputer  # parked — re-activate with the registry
           # - runloop
           - run-cloud
