@@ -18,6 +18,7 @@ import { givemeanode } from '@computesdk/givemeanode';
 import { gravixlayer } from '@computesdk/gravixlayer';
 import { hopx } from '@computesdk/hopx';
 import { isorun } from '@computesdk/isorun';
+import { kosa8 } from '@computesdk/kosa8';
 // import { lelantos } from '@computesdk/lelantos';
 // import { lightning } from '@computesdk/lightning';
 import { modal } from '@computesdk/modal';
@@ -214,6 +215,11 @@ export const providers: ProviderConfig[] = [
     requiredEnvVars: ['ISORUN_API_KEY'],
     createCompute: () => isorun({ apiKey: process.env.ISORUN_API_KEY! }),
     sandboxOptions: { image: 'node:22' },
+  },
+  {
+    name: 'kosa8',
+    requiredEnvVars: ['KOSA8_API_KEY'],
+    createCompute: () => kosa8({ apiKey: process.env.KOSA8_API_KEY! }),
   },
   // {
   //   name: 'lelantos',
