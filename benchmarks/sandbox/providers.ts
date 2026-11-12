@@ -123,6 +123,11 @@ export const providers: ProviderConfig[] = [
   {
     name: 'cloudflare',
     requiredEnvVars: ['CLOUDFLARE_SANDBOX_URL', 'SANDBOX_API_KEY'],
+    // The bridge Worker's `default` image is debian:trixie-slim without node;
+    // `builder` (node:24-trixie-slim) is the node-bearing declared image. The
+    // TTI readiness probe (`node -v`) fails exit 127 on `default` — seen as
+    // cloudflare compositeScore 0s in sandbox-tti-daily from 2026-11-07 on.
+    sandboxOptions: { image: 'builder' },
     createCompute: () => cloudflare({ sandboxUrl: process.env.CLOUDFLARE_SANDBOX_URL!, sandboxApiKey: process.env.SANDBOX_API_KEY! }),
   },
   {
