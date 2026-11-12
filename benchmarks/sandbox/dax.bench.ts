@@ -195,10 +195,6 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // `timeout` is the same lifetime backstop as blaxel/novita: the sandbox must
   // outlive the 10-minute build deadline.
   promigence:   { image: 'node:22', tier: 'large', timeout: 900_000 },
-  // run.cloud defaults a sandbox to 0.125 vCPU / 128 MiB / 300s lifetime —
-  // far too small and short-lived for the build (its exec stream died ~8s in
-  // on every run). cpu = cores, memory = MiB, timeout → timeoutSeconds.
-  'run-cloud':  { cpu: 8, memory: 16384, timeout: 900_000 },
   // Uno sizes at create() via vcpus/memoryMiB (adapter maps them to the box
   // vcpu/ram_mb fields); the default 10 GB disk holds the build.
   uno:          { vcpus: 8, memoryMiB: 16384 },

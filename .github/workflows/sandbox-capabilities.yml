@@ -81,7 +81,6 @@ jobs:
           # - northflank  # parked — not benchmarked yet
           # - opencomputer  # parked — re-activate with the registry
           # - runloop
-          - run-cloud
           - sandbox0
           - sail
           # - sprites  # daily+stealth only
@@ -163,7 +162,6 @@ jobs:
             namespace) PROVIDER_KEYS='NSC_TOKEN' ;;
             northflank) PROVIDER_KEYS='NORTHFLANK_TOKEN|NORTHFLANK_PROJECT_ID' ;;
             runloop) PROVIDER_KEYS='RUNLOOP_API_KEY' ;;
-            run-cloud) PROVIDER_KEYS='RUN_CLOUD_API_KEY' ;;
             sandbox0) PROVIDER_KEYS='SANDBOX0_TOKEN' ;;
             sail) PROVIDER_KEYS='SAIL_API_KEY' ;;
             superserve) PROVIDER_KEYS='SUPERSERVE_API_KEY' ;;

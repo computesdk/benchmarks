@@ -31,7 +31,6 @@ import { novita } from '@computesdk/novita';
 import { promigence } from '@computesdk/promigence';
 // import { quilt } from '@computesdk/quilt';
 import { railway } from '@computesdk/railway';
-import { runCloud } from '@computesdk/run-cloud';
 import { sandbox0 } from '@computesdk/sandbox0';
 import { sail } from '@computesdk/sail';
 import { sprites } from '@computesdk/sprites';
@@ -312,12 +311,6 @@ export const providers: ProviderConfig[] = [
     name: 'railway',
     requiredEnvVars: ['RAILWAY_API_TOKEN', 'RAILWAY_ENVIRONMENT_ID'],
     createCompute: () => railway({ token: process.env.RAILWAY_API_TOKEN!, environmentId: process.env.RAILWAY_ENVIRONMENT_ID! }),
-  },
-  {
-    name: 'run-cloud',
-    requiredEnvVars: ['RUN_CLOUD_API_KEY'],
-    createCompute: () => runCloud({ apiKey: process.env.RUN_CLOUD_API_KEY! }),
-    sandboxOptions: { templateId: 'runcloud/agent-base' },
   },
   {
     name: 'sandbox0',
