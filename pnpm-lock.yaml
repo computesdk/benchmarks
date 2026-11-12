@@ -59,6 +59,9 @@ importers:
       '@computesdk/blaxel':
         specifier: ^1.6.41
         version: 1.6.41(@hey-api/openapi-ts@0.99.0(magicast@0.3.5)(typescript@5.9.3))(bare-buffer@3.7.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      '@computesdk/briq':
+        specifier: ^1.0.1
+        version: 1.0.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@computesdk/browserbase':
         specifier: ^0.3.28
         version: 0.3.28
@@ -647,6 +650,10 @@ packages:
   '@borewit/text-codec@0.2.3':
     resolution: {integrity: sha512-49CycTz1aAZmvFcwkeFyhud1HUmRIB5Tabf7ALV+VA4Iu85MTfz2cUwzPagMFAdVBvrWdkCxG67I30tUwwpKsw==}
 
+  '@briq-cloud/sdk@0.1.2':
+    resolution: {integrity: sha512-t9opzVTALWVKADZzMWB9Mep3yhB1efedpfbXwzvVex2WFeBHY00e2hSfn1N7fhC9OzuuizBYBy3CG3jCftXcfA==}
+    engines: {node: '>=22.6'}
+
   '@browserbasehq/sdk@2.25.0':
     resolution: {integrity: sha512-4sP0wBLS1GlTcCBzJlo8VuQzOULHCSdVtK8scbzVbtFlLy6+H/Rmxwx4sXF21ckY0VM8en1yBqmZLF5z+gzXEQ==}
 
@@ -770,6 +777,10 @@ packages:
 
   '@computesdk/blaxel@1.6.41':
     resolution: {integrity: sha512-APhsbNjS+PF25x7buEo6OeSTIHyq+kWmVEc8KFrJLsdRSUm9IBUQdQSzPipTtaOU8fd8MH5A7QLdIAV2KHxsdA==}
+
+  '@computesdk/briq@1.0.1':
+    resolution: {integrity: sha512-Dx4/3T/B7MzlIilKZ3j2Qy5eljoZbgZEmYqVJk22UNUFhoo9khH1Awgjv+x7PQyqFrv4ZYwAkbB40dtLfjXBNg==}
+    engines: {node: '>=22.6'}
 
   '@computesdk/browserbase@0.3.28':
     resolution: {integrity: sha512-A/wr3RqJPvItfSQEkfAcSI/YTg0QIjevpTxuiPODKEOZRnfwfvJUZfO6wFKFBSoUPzqo5X4jFzJnNCYhQvzqFQ==}
@@ -6367,6 +6378,13 @@ snapshots:
 
   '@borewit/text-codec@0.2.3': {}
 
+  '@briq-cloud/sdk@0.1.2(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
+    dependencies:
+      ws: 8.22.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   '@browserbasehq/sdk@2.25.0':
     dependencies:
       '@types/node': 18.19.130
@@ -6643,6 +6661,16 @@ snapshots:
       - debug
       - react-native-b4a
       - supports-color
+      - utf-8-validate
+
+  '@computesdk/briq@1.0.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
+    dependencies:
+      '@briq-cloud/sdk': 0.1.2(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      '@computesdk/provider': 2.1.23
+      computesdk: 4.1.17
+      daemond: 0.1.8
+    transitivePeerDependencies:
+      - bufferutil
       - utf-8-validate
 
   '@computesdk/browserbase@0.3.28':
