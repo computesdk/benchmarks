@@ -146,8 +146,6 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   tenki:        { cpuCores: 8, memoryMb: 16384, diskSizeGb: 20 }, // default disk cannot hold the OpenCode install
   tensorlake:   { cpus: 8, memoryMb: 16000 },            // Tensorlake caps memory at 16000 MB (16384 is rejected with a 400)
   isorun:       { vcpus: 8, memMiB: 16384 },
-  // kosa8 sizes sandboxes by template; node-8x16 is its 8 vCPU / 16 GiB node:22 template.
-  kosa8:        { templateId: 'node-8x16' },
   runloop:      { launch_parameters: { resource_size_request: 'CUSTOM_SIZE', custom_cpu_cores: 8, custom_gb_memory: 16 } },
   upstash:      { size: 'large' },                          // large = 8 cores, 16 GB
   vercel:       { resources: { vcpus: 8 } },               // no memory control
@@ -200,10 +198,11 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // Uno sizes at create() via vcpus/memoryMiB (adapter maps them to the box
   // vcpu/ram_mb fields); the default 10 GB disk holds the build.
   uno:          { vcpus: 8, memoryMiB: 16384 },
-  // kosa8's size and image come from its org template — the adapter rejects
-  // cpu/memory create options; timeout is the same server-side TTL backstop
-  // as blaxel/novita (the sandbox must outlive the 10-min build deadline).
-  kosa8:        { timeout: 900_000 },
+  // kosa8 sizes sandboxes by template (the adapter rejects cpu/memory create
+  // options); node-8x16 is its 8 vCPU / 16 GiB node:22 template. timeout is
+  // the same server-side TTL backstop as blaxel/novita (the sandbox must
+  // outlive the 10-min build deadline).
+  kosa8:        { templateId: 'node-8x16', timeout: 900_000 },
 };
 
 // Provider-factory overrides for settings the SDK reads only from provider
