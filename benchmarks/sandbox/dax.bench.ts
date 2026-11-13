@@ -146,6 +146,8 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   tenki:        { cpuCores: 8, memoryMb: 16384, diskSizeGb: 20 }, // default disk cannot hold the OpenCode install
   tensorlake:   { cpus: 8, memoryMb: 16000 },            // Tensorlake caps memory at 16000 MB (16384 is rejected with a 400)
   isorun:       { vcpus: 8, memMiB: 16384 },
+  // kosa8 sizes sandboxes by template; node-8x16 is its 8 vCPU / 16 GiB node:22 template.
+  kosa8:        { templateId: 'node-8x16' },
   runloop:      { launch_parameters: { resource_size_request: 'CUSTOM_SIZE', custom_cpu_cores: 8, custom_gb_memory: 16 } },
   upstash:      { size: 'large' },                          // large = 8 cores, 16 GB
   vercel:       { resources: { vcpus: 8 } },               // no memory control
