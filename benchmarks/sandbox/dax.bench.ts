@@ -198,10 +198,11 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // Uno sizes at create() via vcpus/memoryMiB (adapter maps them to the box
   // vcpu/ram_mb fields); the default 10 GB disk holds the build.
   uno:          { vcpus: 8, memoryMiB: 16384 },
-  // kosa8's size and image come from its org template — the adapter rejects
-  // cpu/memory create options; timeout is the same server-side TTL backstop
-  // as blaxel/novita (the sandbox must outlive the 10-min build deadline).
-  kosa8:        { timeout: 900_000 },
+  // kosa8 sizes sandboxes by template (the adapter rejects cpu/memory create
+  // options); node-8x16 is its 8 vCPU / 16 GiB node:22 template. timeout is
+  // the same server-side TTL backstop as blaxel/novita (the sandbox must
+  // outlive the 10-min build deadline).
+  kosa8:        { templateId: 'node-8x16', timeout: 900_000 },
 };
 
 // Provider-factory overrides for settings the SDK reads only from provider
