@@ -128,8 +128,11 @@ export const providers: ProviderConfig[] = [
   {
     name: 'codesandbox',
     requiredEnvVars: ['CSB_API_KEY'],
-    createCompute: () => codesandbox({ apiKey: process.env.CSB_API_KEY! }),
-    destroyTimeoutMs: 1_000,
+    // CSB_TEMPLATE_ID (optional vault var) pins a custom csb template — e.g. a
+    // node22+bun image so dax skips the bun_download leg. Per-task
+    // sandboxOptions templateId still overrides it.
+    createCompute: () => codesandbox({ apiKey: process.env.CSB_API_KEY!, templateId: process.env.CSB_TEMPLATE_ID }),
+    destroyTimeoutMs: 30_000,
   },
   // {
   //   name: 'collimate',
