@@ -202,6 +202,9 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // cpu/memory create options; timeout is the same server-side TTL backstop
   // as blaxel/novita (the sandbox must outlive the 10-min build deadline).
   kosa8:        { timeout: 900_000 },
+  // Railway sizes via `resources` on create(); matches the 8 vCPU / 16 GiB
+  // DAX shape used in the stealth suite.
+  railway:      { resources: { cpu: 8, memoryGB: 16 } },
 };
 
 // Provider-factory overrides for settings the SDK reads only from provider
