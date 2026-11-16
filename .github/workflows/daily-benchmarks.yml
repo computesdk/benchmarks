@@ -260,16 +260,19 @@ jobs:
         if: matrix.kind == 'dax' && matrix.provider == 'e2b'
         run: |
           . benchmarks/scripts/load-vault-secrets.sh "^($(paste -sd'|' /tmp/oss-vault-keys))="
+          . benchmarks/scripts/apply-provider-test-env.sh
           npx tsx benchmarks/scripts/build-e2b-template.ts
       - name: Build Superserve DAX template
         if: matrix.kind == 'dax' && matrix.provider == 'superserve'
         run: |
           . benchmarks/scripts/load-vault-secrets.sh "^($(paste -sd'|' /tmp/oss-vault-keys))="
+          . benchmarks/scripts/apply-provider-test-env.sh
           npx tsx benchmarks/scripts/build-superserve-template.ts
       - name: Resolve Northflank DAX plan
         if: matrix.kind == 'dax' && matrix.provider == 'northflank'
         run: |
           . benchmarks/scripts/load-vault-secrets.sh "^($(paste -sd'|' /tmp/oss-vault-keys))="
+          . benchmarks/scripts/apply-provider-test-env.sh
           npx tsx benchmarks/scripts/find-northflank-plan.ts
       - name: Run benchmark
         env:
@@ -288,6 +291,7 @@ jobs:
           BENCH_TRIGGER_REQUEST_ID: ${{ github.event.inputs.trigger_request_id || '' }}
         run: |
           . benchmarks/scripts/load-vault-secrets.sh "^($(paste -sd'|' /tmp/oss-vault-keys))="
+          . benchmarks/scripts/apply-provider-test-env.sh
 
           if [ "$ARCHIL_EXECUTION" = "persistent" ] && [ -n "${ARCHIL_DISK_ID_SANDBOX:-}" ]; then export ARCHIL_DISK_ID="$ARCHIL_DISK_ID_SANDBOX"; fi
 

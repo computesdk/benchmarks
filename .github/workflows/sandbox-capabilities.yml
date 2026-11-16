@@ -177,6 +177,7 @@ jobs:
             KEYS="^(${COMMON_KEYS})="
           fi
           . benchmarks/scripts/load-vault-secrets.sh "$KEYS"
+          . benchmarks/scripts/apply-provider-test-env.sh
           if [ -n "${ARCHIL_DISK_ID_CAPABILITY:-}" ]; then export ARCHIL_DISK_ID="$ARCHIL_DISK_ID_CAPABILITY"; fi
 
           RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
