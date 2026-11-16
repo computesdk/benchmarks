@@ -182,7 +182,6 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // Sandbox0 exposes only memory. Override the 128 MiB TTI size;
   // getSandboxOptionsWithResources preserves hardTtl from providers.ts.
   sandbox0:     { memory: 16384 },
-  sail:         { size: 'l' },
   // Novita sizes via templates (E2B-style), so dax runs on the base-8cpu-16gb
   // template built in the workflow pre-step (same pattern as superserve/e2b).
   // The provider's default sandbox lifetime (300s) is below the 10-min build
