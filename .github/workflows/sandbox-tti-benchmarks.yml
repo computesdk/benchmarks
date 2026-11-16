@@ -128,6 +128,7 @@ jobs:
           - sandbox0
           # - sprites  # parked — kept out of weekly tti/dax
           - superserve
+          - tangle
           - tenki
           - tensorlake
           # - uno  # parked — dax only for now (3-machine account cap)
@@ -237,6 +238,12 @@ jobs:
           # shared allowlist above.
           if [ "${{ matrix.provider }}" = "kosa8" ]; then
             . benchmarks/scripts/load-vault-secrets.sh '^(KOSA8_API_KEY)'
+          fi
+
+          # tangle's credential is loaded only in its own leg, not through the
+          # shared allowlist above.
+          if [ "${{ matrix.provider }}" = "tangle" ]; then
+            . benchmarks/scripts/load-vault-secrets.sh '^(TANGLE_API_KEY)'
           fi
 
           # OpenComputer is kept in the daily runs but excluded from the weekly run.

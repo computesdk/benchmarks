@@ -36,6 +36,7 @@ import { sandbox0 } from '@computesdk/sandbox0';
 import { sail } from '@computesdk/sail';
 import { sprites } from '@computesdk/sprites';
 import { superserve } from '@computesdk/superserve';
+import { tangle } from '@computesdk/tangle';
 import { tenki } from '@computesdk/tenki';
 import { tensorlake } from '@computesdk/tensorlake'
 import { uno } from '@computesdk/uno';
@@ -343,6 +344,11 @@ export const providers: ProviderConfig[] = [
     createCompute: () => superserve({ apiKey: process.env.SUPERSERVE_API_KEY! }),
     // Default template (superserve/base) has no Node; the `node -v` readiness probe needs it.
     sandboxOptions: { templateId: 'superserve/node-22' },
+  },
+  {
+    name: 'tangle',
+    requiredEnvVars: ['TANGLE_API_KEY'],
+    createCompute: () => tangle({ apiKey: process.env.TANGLE_API_KEY! }),
   },
   {
     name: 'tenki',
