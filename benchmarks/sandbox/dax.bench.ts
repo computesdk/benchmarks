@@ -202,6 +202,8 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // cpu/memory create options; timeout is the same server-side TTL backstop
   // as blaxel/novita (the sandbox must outlive the 10-min build deadline).
   kosa8:        { timeout: 900_000 },
+  // Tangle sizes at create() via cpu (cores) / memory (MB).
+  tangle:       { cpu: 8, memory: 16384 },
 };
 
 // Provider-factory overrides for settings the SDK reads only from provider
