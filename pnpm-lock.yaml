@@ -59,6 +59,9 @@ importers:
       '@computesdk/blaxel':
         specifier: ^1.6.43
         version: 1.6.43(@hey-api/openapi-ts@0.99.0(magicast@0.3.5)(typescript@5.9.3))(bare-buffer@3.7.2)(bufferutil@4.2.0)(utf-8-validate@6.0.6)
+      '@computesdk/boat':
+        specifier: ^1.0.2
+        version: 1.0.2
       '@computesdk/briq':
         specifier: ^1.0.1
         version: 1.0.1(bufferutil@4.2.0)(utf-8-validate@6.0.6)
@@ -647,6 +650,9 @@ packages:
     resolution: {integrity: sha512-8oN0wYQxzWriPXu8EnMwKXo4LHjBNVdse9B8u9zotplbsts9YUrqBrIG6WYlNBDswvkwzVk222GVM622fEzRxQ==}
     engines: {node: '>=18'}
 
+  '@boatdev/sdk@1.13.0':
+    resolution: {integrity: sha512-wSmCyFLDL0QTCLF5NfQR4JTdTccFIvlqBBtCMDLPk61hLj48ZPEH/0nF91j4aiMLBkr+kvmkedfqkyFuokn5dw==}
+
   '@borewit/text-codec@0.2.3':
     resolution: {integrity: sha512-49CycTz1aAZmvFcwkeFyhud1HUmRIB5Tabf7ALV+VA4Iu85MTfz2cUwzPagMFAdVBvrWdkCxG67I30tUwwpKsw==}
 
@@ -778,6 +784,10 @@ packages:
   '@computesdk/blaxel@1.6.43':
     resolution: {integrity: sha512-47qIiWbMC/Xo6kW/zbq+0Oo7m5Ezfy/JspPUHUJOrr8LxAZb6HuL6P7J7hSRLDKAP2DpnZOhfZWsBnh3flG9LQ==}
 
+  '@computesdk/boat@1.0.2':
+    resolution: {integrity: sha512-9z1a+EVYzhMVv+/gbsWaIBkUtX4wLzviCEz/ngrQCsCydMKH1P4sZD+JDH5IN0Cbf83dsixaeEhfUP1tsbf8RA==}
+    engines: {node: '>=20'}
+
   '@computesdk/briq@1.0.1':
     resolution: {integrity: sha512-Dx4/3T/B7MzlIilKZ3j2Qy5eljoZbgZEmYqVJk22UNUFhoo9khH1Awgjv+x7PQyqFrv4ZYwAkbB40dtLfjXBNg==}
     engines: {node: '>=22.6'}
@@ -897,6 +907,9 @@ packages:
 
   '@computesdk/provider@2.1.23':
     resolution: {integrity: sha512-6V6a6E+VGf33PTbvLIMleliZSI2QZIb5A5iLMfy3z6UEbWEViXUvb6mxBVQyd6CF7M9D9Ilgk7e+2HC25EOYCA==}
+
+  '@computesdk/provider@2.1.24':
+    resolution: {integrity: sha512-zQ+CmMEkfnhCgnI5BLlQAxQH088DEc9/97wmHELxYMzPDGoFwQppYrKn/lpsd3zUoZtTBRB1+74sSsAcjTwVuA==}
 
   '@computesdk/quilt@1.0.21':
     resolution: {integrity: sha512-UtGOMxngREyDXI0HQdUgpU9Pti9FfY/N0atpDZAkKC7i450egBCc5yZ+uhS4LXACjA0fIWlSmj0cFnwCIVVtyQ==}
@@ -3255,6 +3268,9 @@ packages:
   computesdk@4.1.17:
     resolution: {integrity: sha512-0Ua3oOkmaOi6uc5P6pLgurz2qU8WUl39k+N6KjQlTYExv51MITwzWqzlOS/dCv5yPqJw5uaEQifoGPK+8KRH3Q==}
 
+  computesdk@4.1.18:
+    resolution: {integrity: sha512-rOitYGTlGo9dYiVctR9/LrN6YEg2tH1hTqdxgok1KVEyWqoaw9rIJLmMLf1DvHkdzpoWTwjxMGdf4bw2qw8n5w==}
+
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
@@ -3318,6 +3334,11 @@ packages:
   daemond@0.1.8:
     resolution: {integrity: sha512-hGk0lzT55g1vijr0Erfsb9m2cszofQnhmQFF88fv4xjJx9UKrGXIzrssad+D1iCk8TgRv4T50SapGQ+/9/T8Qg==}
     engines: {node: '>=18.0.0'}
+    os: [linux, darwin]
+
+  daemond@0.1.9:
+    resolution: {integrity: sha512-yNnvVVkAEQvvUgG7ow0jZlgzcmaWnQo6amRT7byr2UMHfzGJhO/nA4ZVszWR48B2d0Z6K3z4iW7fYHa/TDIiQw==}
+    engines: {node: '>=22.0.0'}
     os: [linux, darwin]
 
   date-fns@4.4.0:
@@ -6393,6 +6414,8 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  '@boatdev/sdk@1.13.0': {}
+
   '@borewit/text-codec@0.2.3': {}
 
   '@briq-cloud/sdk@0.1.2(bufferutil@4.2.0)(utf-8-validate@6.0.6)':
@@ -6680,6 +6703,12 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  '@computesdk/boat@1.0.2':
+    dependencies:
+      '@boatdev/sdk': 1.13.0
+      '@computesdk/provider': 2.1.24
+      computesdk: 4.1.18
+
   '@computesdk/briq@1.0.1(bufferutil@4.2.0)(utf-8-validate@6.0.6)':
     dependencies:
       '@briq-cloud/sdk': 0.1.2(bufferutil@4.2.0)(utf-8-validate@6.0.6)
@@ -6943,6 +6972,12 @@ snapshots:
       '@computesdk/cmd': 0.4.1
       computesdk: 4.1.17
       daemond: 0.1.8
+
+  '@computesdk/provider@2.1.24':
+    dependencies:
+      '@computesdk/cmd': 0.4.1
+      computesdk: 4.1.18
+      daemond: 0.1.9
 
   '@computesdk/quilt@1.0.21':
     dependencies:
@@ -9383,6 +9418,11 @@ snapshots:
       '@computesdk/cmd': 0.4.1
       daemond: 0.1.8
 
+  computesdk@4.1.18:
+    dependencies:
+      '@computesdk/cmd': 0.4.1
+      daemond: 0.1.9
+
   concat-map@0.0.1: {}
 
   confbox@0.1.8: {}
@@ -9426,6 +9466,8 @@ snapshots:
       which: 2.0.2
 
   daemond@0.1.8: {}
+
+  daemond@0.1.9: {}
 
   date-fns@4.4.0: {}
 
