@@ -68,9 +68,7 @@ export const TICK_LAG_S = Math.ceil((2 * SOAK_CHECK_INTERVAL_MS) / 1000);
  * 24h, e2b 24h on Pro, isorun timeoutSec <= 86400).
  */
 export const SOAK_MAX_LIFETIME_MS: Record<string, number> = {
-  // Docs allow 24h on Pro, but the audit saw this account capped at 5h —
-  // request what the account grants (shorter than the 5h55m shift).
-  vercel: 5 * 3_600_000,
+  vercel: 24 * 3_600_000,
   modal: 24 * 3_600_000,
   e2b: 24 * 3_600_000,
   novita: 24 * 3_600_000,
