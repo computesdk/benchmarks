@@ -48,12 +48,14 @@ export const PROTECTED_SITES: ProtectedSite[] = [
     slug: 'nowsecure',
     url: 'https://nowsecure.nl/',
     expectedVendor: 'cloudflare',
-    // Cloudflare JSD challenge: the real page ships immediately with the
-    // challenge embedded, so pass requires the signal AND no active challenge.
+    // Cloudflare injects its background JS detection script
+    // (/cdn-cgi/challenge-platform/scripts/jsd) into every page it serves, and
+    // the page embeds its own Turnstile demo widget (id cf-chl-widget-*), so
+    // neither marks an active challenge. `_cf_chl_opt` only ships on the
+    // "Just a moment" interstitial.
     passSignal: { selector: 'h2.content__title' },
     challengeSignal: {
-      html: 'challenge-platform',
-      selector: '.cf-chl-widget, [id^="cf-chl-widget"]',
+      html: '_cf_chl_opt',
       text: 'Verify you are human',
       title: 'Just a moment',
     },
@@ -66,7 +68,7 @@ export const PROTECTED_SITES: ProtectedSite[] = [
     expectedVendor: 'cloudflare',
     passSignal: { selector: 'input[name="q"]' },
     challengeSignal: {
-      html: 'challenge-platform',
+      html: '_cf_chl_opt',
       selector: '.cf-chl-widget, [id^="cf-chl-widget"]',
       title: 'Security Check',
       text: 'Just a moment',
@@ -90,7 +92,7 @@ export const PROTECTED_SITES: ProtectedSite[] = [
     slug: 'zillow',
     url: 'https://www.zillow.com/',
     expectedVendor: 'perimeterx',
-    passSignal: { selector: '#search-box-input' },
+    passSignal: { selector: '#search-box-input, [data-testid="search-bar-container"] input[role="combobox"]' },
     challengeSignal: {
       selector: '#px-captcha, .px-captcha',
       text: 'Please verify you are a human',
