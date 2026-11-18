@@ -59,6 +59,7 @@ test('workflows do not publish legacy results or generated charts to Git', () =>
     const source = read(file);
     assert.doesNotMatch(source, /git add[^\n]*(?:results\/|\.svg)/, file);
     assert.doesNotMatch(source, /pnpm (?:run )?generate-[\w-]*svg/, file);
+    assert.doesNotMatch(source, /svgScript|svgFile|Post results to merged PR/, file);
   }
   const ignored = read('.gitignore');
   assert.match(ignored, /^results\/$/m);

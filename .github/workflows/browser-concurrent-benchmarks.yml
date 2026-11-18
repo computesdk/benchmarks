@@ -22,7 +22,7 @@ on:
         required: false
         default: ''
       dry_run:
-        description: 'Run without ingesting or committing results'
+        description: 'Run without ingesting results'
         required: false
         default: false
         type: boolean

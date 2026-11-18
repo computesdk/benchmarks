@@ -10,8 +10,6 @@ on:
       - 'benchmarks/sandbox/dax.ts'
       - 'benchmarks/sandbox/providers.ts'
       - 'benchmarks/scripts/dax-benchmark.sh'
-      - 'benchmarks/sandbox/generate-dax-svg.ts'
-      - 'dax.svg'
       - '.github/workflows/sandbox-dax-benchmarks.yml'
   schedule:
     - cron: '30 13 * * 5' # Weekly on Friday at 1:30pm UTC (8:30am CDT, offset from TTI to avoid provider contention)
@@ -34,7 +32,7 @@ on:
         required: false
         default: ''
       dry_run:
-        description: 'Run without ingesting or committing results'
+        description: 'Run without ingesting results'
         required: false
         default: false
         type: boolean
