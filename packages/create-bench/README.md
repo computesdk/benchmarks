@@ -31,6 +31,6 @@ The CLI creates a directory with the given project name and writes:
 3. Copy `.env.example` to `.env` and fill in the required values
 4. `pnpm bench`
 
-For a full guide to authoring benchmarks and runnable examples covering every capability, see [`WRITING_BENCHMARKS.md`](../../WRITING_BENCHMARKS.md) and the [`examples/`](../../examples) directory.
+For a full guide to authoring benchmarks and runnable examples covering every capability, see the [`examples/`](../../examples) directory.
 
 For the full `bench` CLI reference (auth, runs, results, artifacts, export), see the [benchsdk-cli skill](../../.agents/skills/benchsdk-cli/SKILL.md).

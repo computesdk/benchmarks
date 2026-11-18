@@ -59,7 +59,7 @@ on:
           - gemini-direct
           - kimi-direct
       dry_run:
-        description: 'Run without ingesting or committing results'
+        description: 'Run without ingesting results'
         required: false
         default: false
         type: boolean
@@ -81,8 +81,8 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+
   id-token: write
 
 env:
@@ -112,33 +112,21 @@ jobs:
           - slug: anthropic
             label: Anthropic
             benchScript: benchmarks/ai-gateway/ai-gateway.bench.ts
-            resultsDir: ai-gateway-latency/anthropic
-            svgScript: generate-ai-gateway-svg
-            svgFile: ai-gateway.svg
             timeout: 60
             scheduleIterations: 50
           - slug: openai
             label: OpenAI
             benchScript: benchmarks/ai-gateway/ai-gateway-openai.bench.ts
-            resultsDir: ai-gateway-latency/openai
-            svgScript: generate-ai-gateway-openai-svg
-            svgFile: ai-gateway-openai.svg
             timeout: 60
             scheduleIterations: 50
           - slug: gemini
             label: Gemini
             benchScript: benchmarks/ai-gateway/ai-gateway-gemini.bench.ts
-            resultsDir: ai-gateway-latency/gemini
-            svgScript: generate-ai-gateway-gemini-svg
-            svgFile: ai-gateway-gemini.svg
             timeout: 60
             scheduleIterations: 50
           - slug: kimi
             label: Kimi
             benchScript: benchmarks/ai-gateway/ai-gateway-kimi.bench.ts
-            resultsDir: ai-gateway-latency/kimi
-            svgScript: generate-ai-gateway-kimi-svg
-            svgFile: ai-gateway-kimi.svg
             timeout: 150
             scheduleIterations: 25
             iterations: 25
@@ -226,158 +214,3 @@ jobs:
           npx tsx packages/benchsdk-runner/dist/bin.js run "${{ matrix.family.benchScript }}" "${provider_args[@]}" \
             --iterations "$ITERATIONS" \
             ${{ (github.event_name == 'push' || github.event.inputs.dry_run == 'true') && '--no-ingest' || '' }}
-      - run: pnpm run ${{ matrix.family.svgScript }}
-        if: github.event_name != 'workflow_dispatch' || github.event.inputs.family == 'all' || github.event.inputs.family == '' || github.event.inputs.family == matrix.family.slug
-      - name: Upload results and SVG as artifacts
-        if: always() && (github.event_name != 'workflow_dispatch' || github.event.inputs.family == 'all' || github.event.inputs.family == '' || github.event.inputs.family == matrix.family.slug)
-        uses: actions/upload-artifact@v4
-        with:
-          name: ai-gateway-results-${{ matrix.family.slug }}
-          path: |
-            results/${{ matrix.family.resultsDir }}/
-            ${{ matrix.family.svgFile }}
-          if-no-files-found: ignore
-          retention-days: 7
-      - name: Post results to merged PR
-        if: github.event_name == 'push'
-        continue-on-error: true
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const path = require('path');
-
-            const familyLabel = '${{ matrix.family.label }}';
-            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const latestPath = path.join('results', '${{ matrix.family.resultsDir }}', 'latest.json');
-            const marker = `## AI Gateway Benchmark Results — ${familyLabel}`;
-            let body = `${marker}\n\n`;
-            let hasResults = false;
-
-            const nameFor = {
-              'openrouter': 'OpenRouter',
-              'github-copilot': 'GitHub Copilot',
-              'vercel-ai-gateway': 'Vercel AI Gateway',
-              'cloudflare-ai-gateway': 'Cloudflare AI Gateway',
-              'llmgateway': 'LLM Gateway',
-              'pydantic-ai-gateway': 'Pydantic AI Gateway',
-              'concentrate-ai-gateway': 'Concentrate AI',
-              'anthropic-direct': 'Anthropic (direct)',
-              'openai-direct': 'OpenAI (direct)',
-              'gemini-direct': 'Gemini (direct)',
-              'kimi-direct': 'Kimi (direct)',
-              'novita': 'Novita',
-              'neon': 'Neon AI Gateway',
-              'ngrok': 'ngrok AI Gateway',
-              'llmapi': 'LLM API',
-            };
-
-            if (fs.existsSync(latestPath)) {
-              const data = JSON.parse(fs.readFileSync(latestPath, 'utf-8'));
-              const results = data.results
-                .filter(r => !r.skipped)
-                .sort((a, b) => (b.compositeScore || 0) - (a.compositeScore || 0));
-
-              if (results.length > 0) {
-                hasResults = true;
-                body += '| # | Gateway | Score | Cold E2E | Warm TTFT | Tok/sec | Status |\n';
-                body += '|---|---------|-------|----------|-----------|---------|--------|\n';
-                results.forEach((r, i) => {
-                  const name = nameFor[r.provider] || r.provider;
-                  const score = r.compositeScore !== undefined ? r.compositeScore.toFixed(1) : '--';
-                  const coldE2e = `${Math.round(r.summary.coldE2eMs.median)}ms`;
-                  const warmTtft = `${Math.round(r.summary.warmTtftMs.median)}ms`;
-                  const tps = r.summary.outputTokensPerSec.median.toFixed(1);
-                  const ok = r.iterations.filter(it => !it.error).length;
-                  const total = r.iterations.length;
-                  body += `| ${i + 1} | ${name} | ${score} | ${coldE2e} | ${warmTtft} | ${tps} | ${ok}/${total} |\n`;
-                });
-              }
-
-              const skipped = data.results.filter(r => r.skipped);
-              if (skipped.length > 0) {
-                body += `\n_Skipped: ${skipped.map(r => `${nameFor[r.provider] || r.provider} (${r.skipReason})`).join(', ')}_\n`;
-              }
-            }
-
-            if (!hasResults) {
-              body += '> No AI gateway benchmark results were generated.\n\n';
-            }
-
-            body += `\n---\n*[View full run](${runUrl}) · SVG available as a [build artifact](${runUrl}#artifacts)*`;
-
-            // This push is a merge to master — post results to the PR it closed.
-            // A commit can be associated with several PRs (backports, merge
-            // queue), so pick the one merged into the branch we pushed to.
-            const target = context.ref.replace('refs/heads/', '');
-            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              commit_sha: context.sha,
-            });
-            const pr = prs.find(p => p.merged_at && p.base.ref === target);
-            if (!pr) {
-              // Direct push with no associated PR — fall back to a commit comment.
-              await github.rest.repos.createCommitComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                commit_sha: context.sha,
-                body,
-              });
-              return;
-            }
-
-            // Each family posts its own comment (matched by its own marker) —
-            // matrix legs run concurrently, so upserting into one shared
-            // comment across parallel jobs isn't race-safe. Four distinct
-            // per-family comments are.
-            const comments = await github.paginate(github.rest.issues.listComments, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pr.number,
-              per_page: 100,
-            });
-
-            const existing = comments.find(c => c.body.startsWith(marker));
-
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pr.number,
-                body,
-              });
-            }
-      - name: Commit and push
-        if: github.event_name != 'push' && github.event.inputs.dry_run != 'true' && (github.event_name != 'workflow_dispatch' || github.event.inputs.family == 'all' || github.event.inputs.family == '' || github.event.inputs.family == matrix.family.slug)
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add ${{ matrix.family.svgFile }} results/${{ matrix.family.resultsDir }}/
-          git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "chore: update ${{ matrix.family.label }} ai gateway benchmark results [skip ci]"
-
-          # Remote master can advance during the run (concurrent benchmark
-          # workflows push to master too — including this workflow's other
-          # matrix legs, which touch disjoint files but still contend for the
-          # same branch tip). A plain push fails non-fast-forward, so rebase
-          # onto the latest remote and retry a few times before giving up.
-          branch="${GITHUB_REF#refs/heads/}"
-          for attempt in 1 2 3 4 5; do
-            git fetch origin "${branch}"
-            git rebase --autostash "origin/${branch}" || { git rebase --abort; exit 1; }
-            if git push origin "HEAD:${branch}"; then
-              echo "Pushed on attempt ${attempt}"
-              exit 0
-            fi
-            echo "Push rejected (attempt ${attempt}); will rebase and retry"
-          done
-          echo "Failed to push after multiple attempts" >&2
-          exit 1

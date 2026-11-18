@@ -30,7 +30,7 @@ on:
         default: false
         type: boolean
       dry_run:
-        description: 'Run without ingesting or committing results'
+        description: 'Run without ingesting results'
         required: false
         default: false
         type: boolean
@@ -105,67 +105,3 @@ jobs:
           fi
 
           pnpm bench:storage-concurrency -- "${PROVIDER_ARGS[@]}"
-      - name: Upload combined results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: storage-concurrency-results
-          path: results/storage-concurrency/
-          if-no-files-found: ignore
-          retention-days: 14
-
-  collect:
-    name: Collect Results
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    needs: benchmark
-    if: always()
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: 'pnpm'
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
-      - name: Build workspace packages
-        # The @benchsdk/* packages are built from source and dist/ is not
-        # committed. Build them in topological order so dependents like
-        # @benchsdk/client can resolve @benchsdk/worker during their own build.
-        run: pnpm -r --filter './packages/**' run build
-      - name: Download combined results
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: storage-concurrency-results
-          path: artifacts/storage-concurrency/
-      - name: Generate comparison report
-        run: |
-          if [ ! -f artifacts/storage-concurrency/latest.json ]; then
-            echo 'No storage concurrency results found; skipping report.' >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-          if [ ! -f benchmarks/storage/report-storage-concurrency.ts ] \
-            || ! grep -q '"report:storage-concurrency"' package.json; then
-            echo 'Storage concurrency report generator is not present on this ref; skipping report.' >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-          mkdir -p results/storage-concurrency
-          cp artifacts/storage-concurrency/latest.json results/storage-concurrency/latest.json
-          pnpm report:storage-concurrency
-          cat storage-concurrency.md >> "$GITHUB_STEP_SUMMARY"
-      - name: Upload comparison report
-        if: hashFiles('storage-concurrency.md', 'storage-concurrency.svg') != ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: storage-concurrency-report
-          path: |
-            storage-concurrency.md
-            storage-concurrency.svg
-            results/storage-concurrency/latest.json
-          retention-days: 14

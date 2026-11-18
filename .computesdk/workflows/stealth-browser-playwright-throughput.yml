@@ -1,0 +1,134 @@
+name: Stealth — Playwright-native Browser Throughput
+
+on:
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: 'Run only this provider (empty = all, interleaved)'
+        required: false
+        default: ''
+        type: string
+      dry_run:
+        description: 'Skip ingestion into benchmarks-platform'
+        required: true
+        default: true
+        type: boolean
+      iterations:
+        description: 'Sessions per provider (default 100; 1 for smoke)'
+        required: true
+        default: '100'
+        type: string
+      benchmark_slug:
+        description: 'Benchmark slug for platform ingestion'
+        required: true
+        default: 'browser-playwright-throughput'
+        type: string
+      benchmark_name:
+        description: 'Benchmark name for platform ingestion'
+        required: true
+        default: 'Playwright-native Browser Throughput'
+        type: string
+      trigger_source:
+        description: 'Recorded on platform runs as their trigger (e.g. platform-retrigger); leave empty for a plain manual run'
+        required: false
+        default: ''
+        type: string
+      trigger_requested_by:
+        description: 'Who asked for this run (e.g. the platform org slug); recorded alongside trigger_source'
+        required: false
+        default: ''
+        type: string
+      trigger_request_id:
+        description: 'Platform re-trigger request id; recorded so the platform can link this run back to the request'
+        required: false
+        default: ''
+        type: string
+  schedule:
+    - cron: '0 12 * * *'
+
+concurrency:
+  group: browser-playwright-throughput-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  BENCHMARK_NAME: ${{ github.event.inputs.benchmark_name || (github.event_name == 'schedule' && 'Playwright-native Browser Throughput - Stealth') || 'Playwright-native Browser Throughput' }}
+  BENCHMARK_SLUG: ${{ github.event.inputs.benchmark_slug || (github.event_name == 'schedule' && 'browser-playwright-throughput-stealth') || 'browser-playwright-throughput' }}
+
+jobs:
+  bench:
+    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
+    # One job on purpose: the suite interleaves providers round-by-round on a
+    # single runner — that IS the fairness mechanism. A provider matrix would
+    # split the comparison across machines. --provider stays a diagnostic
+    # escape via the `provider` input.
+    name: bench
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
+    # 100 sessions x (provision+connect+50-action loop+release) can exceed the 15m
+    # platform default when a provider queues sessions.
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      # See sandbox-fs-api.yml: pre-seed the workload token file so
+      # nscloud-setup skips the GitHub OIDC exchange and docker login.
+      - name: Seed Namespace token file
+        env:
+          NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
+        run: |
+          if [ -n "${NSC_TOKEN:-}" ] && [ ! -f /var/run/nsc/token.json ]; then
+            mkdir -p /var/run/nsc
+            case "$NSC_TOKEN" in
+              \{*) printf '%s\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+              *) printf '{"bearer_token":"%s"}\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+            esac
+            chmod 600 /var/run/nsc/token.json
+            echo "NSC_DOCKER_LOGIN=1" >> "$GITHUB_ENV"
+            echo "NSC_CONTAINER_REGISTRY=nscr.io" >> "$GITHUB_ENV"
+          fi
+      - uses: namespacelabs/nscloud-setup@v0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install
+      - name: Build workspace packages
+        run: pnpm -r --filter './packages/**' run build
+      - name: Run Playwright-native Browser Throughput benchmark
+        id: run-bench
+        env:
+          NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
+          PROVIDER: ${{ github.event.inputs.provider || '' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          ITERATIONS: ${{ github.event.inputs.iterations || '100' }}
+          BENCHMARKS_PLATFORM_API_KEY: ${{ secrets.BENCHMARKS_PLATFORM_API_KEY }}
+          BENCHMARKS_PLATFORM_URL: ${{ secrets.BENCHMARKS_PLATFORM_URL }}
+          RUN_KEY: ${{ github.run_id }}
+          BENCH_TRIGGER_SOURCE: ${{ github.event.inputs.trigger_source || '' }}
+          BENCH_TRIGGER_REQUESTED_BY: ${{ github.event.inputs.trigger_requested_by || '' }}
+          BENCH_TRIGGER_REQUEST_ID: ${{ github.event.inputs.trigger_request_id || '' }}
+        run: |
+          KEYS='^(BENCHMARKS_PLATFORM_API_KEY|MOMENTIC_BROWSER_FLEET_URL|MOMENTIC_BROWSER_FLEET_API_KEY|AZURE_PLAYWRIGHT_SERVICE_URL|AZURE_PLAYWRIGHT_ACCESS_TOKEN|BROWSERLESS_API_KEY|BROWSERLESS_URL)='
+          . ./benchmarks/stealth/scripts/load-vault-secrets.sh "$KEYS"
+
+          set -o pipefail
+          mkdir -p results
+          # Empty platform env vars must not survive: @benchsdk/runner >=0.3.0
+          # resolves the platform URL with ?? so an empty string overrides the
+          # built-in default and the ingest URL fails to parse.
+          [ -z "$BENCHMARKS_PLATFORM_URL" ] && unset BENCHMARKS_PLATFORM_URL
+          [ -z "$BENCHMARKS_PLATFORM_API_KEY" ] && unset BENCHMARKS_PLATFORM_API_KEY
+          # No `pnpm bench:stealth --` separator: @benchsdk/runner >=0.3.0 validates
+          # flags strictly and rejects a bare `--` in argv.
+          CMD="pnpm bench:stealth benchmarks/stealth/browser/browser-playwright-throughput.bench.ts --iterations \"$ITERATIONS\" --run-key \"$RUN_KEY\""
+          if [ -n "$PROVIDER" ]; then
+            CMD="${CMD} --provider \"$PROVIDER\""
+          fi
+          if [ "${DRY_RUN}" == "true" ]; then
+            CMD="${CMD} --no-ingest"
+          fi
+          echo "Running: ${CMD}"
+          eval "$CMD"

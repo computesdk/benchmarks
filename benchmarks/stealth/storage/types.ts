@@ -1,0 +1,75 @@
+import type { Storage } from '@storagesdk/core';
+
+/**
+ * Per-provider overrides for the snapshot/fork benchmark. Some backends need a
+ * different bucket/credentials there than for upload/download.
+ */
+export interface SnapshotForkOverride {
+  requiredEnvVars: string[];
+  createStorage: () => Storage;
+  bucket: string;
+}
+
+export interface StorageProviderConfig {
+  /** Provider name */
+  name: string;
+  /** Number of iterations (default: 100) */
+  iterations?: number;
+  /** Timeout per operation in ms (default: 30000) */
+  timeout?: number;
+  /** Number of parallel storage iterations to run (default: 1) */
+  concurrency?: number;
+  /** Environment variables that must all be set to run this benchmark */
+  requiredEnvVars: string[];
+  /** Creates a StorageSDK storage instance (bucket configured on the adapter) */
+  createStorage: () => Storage;
+  /** Bucket name for testing */
+  bucket: string;
+  /** Test file sizes in bytes */
+  fileSizes: number[];
+  /** Optional override applied only in snapshot/fork mode */
+  snapshotFork?: SnapshotForkOverride;
+}
+
+export interface StorageTimingResult {
+  /** Time to upload in ms */
+  uploadMs: number;
+  /** Time to download in ms */
+  downloadMs: number;
+  /** Throughput in Mbps */
+  throughputMbps: number;
+  /** File size in bytes */
+  fileSizeBytes: number;
+  /** Error message if this iteration failed */
+  error?: string;
+}
+
+export interface StorageStats {
+  uploadMs: { median: number; p95: number; p99: number };
+  downloadMs: { median: number; p95: number; p99: number };
+  throughputMbps: { median: number; p95: number; p99: number };
+}
+
+export interface StorageBenchmarkResult {
+  provider: string;
+  mode: 'storage';
+  bucket: string;
+  fileSizeBytes: number;
+  iterations: StorageTimingResult[];
+  summary: StorageStats;
+  /** Composite weighted score (0-100, higher = better). Computed post-benchmark. */
+  compositeScore?: number;
+  /** Success rate as a fraction (0 to 1). Computed post-benchmark. */
+  successRate?: number;
+  skipped?: boolean;
+  skipReason?: string;
+}
+
+export type StorageFileSize = '1MB' | '4MB' | '10MB' | '16MB';
+
+export const FILE_SIZE_BYTES: Record<StorageFileSize, number> = {
+  '1MB': 1 * 1024 * 1024,
+  '4MB': 4 * 1024 * 1024,
+  '10MB': 10 * 1024 * 1024,
+  '16MB': 16 * 1024 * 1024,
+};

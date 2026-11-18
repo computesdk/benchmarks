@@ -1,0 +1,240 @@
+name: Stealth — Sandbox Burst Survival
+
+# computesdk:secrets=NSC_TOKEN
+# computesdk:secrets-env=declared
+
+on:
+  schedule:
+    # Daily 10am Central (15:00 UTC during CDT; GitHub cron is always UTC).
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: 'Platform benchmark slug (defaults to the canonical slug)'
+        required: false
+        default: 'sandbox-burst-survival'
+      name:
+        description: 'Platform benchmark name (defaults to the canonical name)'
+        required: false
+        default: 'Sandbox Burst Survival'
+      iterations:
+        description: 'Iterations per provider (each bursts BURST_COUNT boxes, idles, then probes liveness)'
+        required: false
+        default: '3'
+      burst_count:
+        description: 'Sandboxes created concurrently per iteration'
+        required: false
+        default: '5'
+      idle_ms:
+        description: 'Idle wait before the liveness probe (ms)'
+        required: false
+        default: '60000'
+      provider:
+        description: 'Provider to run (leave empty for all)'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Run without ingesting results'
+        required: false
+        default: false
+        type: boolean
+      trigger_source:
+        description: 'Recorded on platform runs as their trigger (e.g. platform-retrigger); leave empty for a plain manual run'
+        required: false
+        default: ''
+      trigger_requested_by:
+        description: 'Who asked for this run (e.g. the platform org slug); recorded alongside trigger_source'
+        required: false
+        default: ''
+      trigger_request_id:
+        description: 'Platform re-trigger request id; recorded so the platform can link this run back to the request'
+        required: false
+        default: ''
+
+concurrency:
+  group: sandbox-burst-survival-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # The bench file reads BENCHMARK_SLUG/BENCHMARK_NAME (literal defaults when
+  # unset), so cadence variants are minted here: scheduled runs report as
+  # sandbox-burst-survival-stealth, and the slug/name inputs override for platform
+  # re-triggers.
+  BENCHMARK_SLUG: ${{ github.event.inputs.slug || (github.event_name == 'schedule' && 'sandbox-burst-survival-stealth' || 'sandbox-burst-survival') }}
+  BENCHMARK_NAME: ${{ github.event.inputs.name || (github.event_name == 'schedule' && 'Sandbox Burst Survival - Stealth' || 'Sandbox Burst Survival') }}
+  # workflow_dispatch pre-fills slug/name inputs with the canonical values;
+  # an empty override still falls back to the defaults above.
+  BENCH_TRIGGER_SOURCE: ${{ github.event.inputs.trigger_source || '' }}
+  BENCH_TRIGGER_REQUESTED_BY: ${{ github.event.inputs.trigger_requested_by || '' }}
+  BENCH_TRIGGER_REQUEST_ID: ${{ github.event.inputs.trigger_request_id || '' }}
+
+jobs:
+  providers:
+    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
+    name: Provider matrix
+    runs-on: namespace-profile-default
+    outputs:
+      list: ${{ steps.list.outputs.providers }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - id: list
+        run: |
+          node -e "const s=require('fs').readFileSync('benchmarks/stealth/sandbox/providers.ts','utf8');console.log('providers='+JSON.stringify([...s.matchAll(/^\s*name:\s*'([^']+)'/gm)].map(m=>m[1])))" >> "$GITHUB_OUTPUT"
+
+  bench:
+    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
+    name: bench-${{ matrix.provider }}
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
+    needs: providers
+    # 3 iterations of 5-box burst + 60s idle + liveness + destroy per provider.
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      BENCH_RESULTS_DIR: results/current-${{ github.run_id }}-${{ github.run_attempt }}/${{ matrix.provider }}
+      # A single-provider dispatch still starts every matrix job; the ones that
+      # don't match skip all their steps, including setup (whose cache-save post
+      # step otherwise fails the job because nothing was installed).
+      SHOULD_RUN: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.provider == '' || github.event.inputs.provider == matrix.provider }}
+    strategy:
+      fail-fast: false
+      matrix:
+        provider: ${{ fromJSON(needs.providers.outputs.list) }}
+    steps:
+      - uses: actions/checkout@v4
+        if: env.SHOULD_RUN == 'true'
+      - uses: pnpm/action-setup@v4
+        if: env.SHOULD_RUN == 'true'
+      - uses: actions/setup-node@v4
+        if: env.SHOULD_RUN == 'true'
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      # ComputeSDK runners get no GitHub OIDC token, so nscloud-setup's
+      # `nsc auth exchange-github-token` cannot work there. Pre-seed the
+      # workload token file it checks for when NSC_TOKEN is available;
+      # accepts either the raw bearer token or a full token JSON document.
+      # It also exports NSC_DOCKER_LOGIN/NSC_CONTAINER_REGISTRY so
+      # nscloud-setup skips `nsc docker login`, which this token is not
+      # granted for — the benchmarks only need vault access.
+      - name: Seed Namespace token file
+        if: env.SHOULD_RUN == 'true'
+        env:
+          NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
+        run: |
+          if [ -n "${NSC_TOKEN:-}" ] && [ ! -f /var/run/nsc/token.json ]; then
+            mkdir -p /var/run/nsc
+            case "$NSC_TOKEN" in
+              \{*) printf '%s\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+              *) printf '{"bearer_token":"%s"}\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+            esac
+            chmod 600 /var/run/nsc/token.json
+            # The seeded token has no container-registry grant; tell
+            # nscloud-setup to skip `nsc docker login` for later steps.
+            echo "NSC_DOCKER_LOGIN=1" >> "$GITHUB_ENV"
+            echo "NSC_CONTAINER_REGISTRY=nscr.io" >> "$GITHUB_ENV"
+          fi
+      - uses: namespacelabs/nscloud-setup@v0
+        if: env.SHOULD_RUN == 'true'
+      - name: Install dependencies
+        if: env.SHOULD_RUN == 'true'
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Build workspace packages
+        if: env.SHOULD_RUN == 'true'
+        run: pnpm -r --filter './packages/**' run build
+      - name: Run Sandbox Burst Survival benchmark
+        if: env.SHOULD_RUN == 'true'
+        id: run-bench
+        env:
+          NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
+          PROVIDER: ${{ matrix.provider }}
+          # Sandbox family: dedicated VM per create() instead of shared-disk exec.
+          ARCHIL_EXECUTION: persistent
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          ITERATIONS: ${{ github.event.inputs.iterations || '3' }}
+          BURST_COUNT: ${{ github.event.inputs.burst_count || '5' }}
+          IDLE_MS: ${{ github.event.inputs.idle_ms || '60000' }}
+          BENCHMARKS_PLATFORM_API_KEY: ${{ secrets.BENCHMARKS_PLATFORM_API_KEY }}
+          BENCHMARKS_PLATFORM_URL: ${{ secrets.BENCHMARKS_PLATFORM_URL }}
+          RUN_KEY: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          COMMON_KEYS='BENCHMARKS_PLATFORM_API_KEY'
+          case "$PROVIDER" in
+            agent37) PROVIDER_KEYS='AGENT37_API_KEY' ;;
+            archil) PROVIDER_KEYS='ARCHIL_API_KEY|ARCHIL_REGION|ARCHIL_DISK_ID_SANDBOX' ;;
+            arker) PROVIDER_KEYS='ARKER_API_KEY' ;;
+            beam) PROVIDER_KEYS='BEAM_TOKEN|BEAM_WORKSPACE_ID' ;;
+            blaxel) PROVIDER_KEYS='BL_API_KEY|BL_WORKSPACE' ;;
+            boat) PROVIDER_KEYS='BOAT_API_KEY' ;;
+            briq) PROVIDER_KEYS='BRIQ_API_KEY' ;;
+            buddy) PROVIDER_KEYS='BUDDY_TOKEN|BUDDY_WORKSPACE|BUDDY_PROJECT' ;;
+            cloud-run) PROVIDER_KEYS='CLOUD_RUN_SANDBOX_URL|CLOUD_RUN_SANDBOX_SECRET' ;;
+            cloudflare) PROVIDER_KEYS='CLOUDFLARE_SANDBOX_URL|SANDBOX_API_KEY' ;;
+            codesandbox) PROVIDER_KEYS='CSB_API_KEY' ;;
+            createos) PROVIDER_KEYS='CREATEOS_SANDBOX_API_KEY' ;;
+            daytona) PROVIDER_KEYS='DAYTONA_API_KEY' ;;
+            e2b) PROVIDER_KEYS='E2B_API_KEY' ;;
+            freestyle) PROVIDER_KEYS='FREESTYLE_API_KEY' ;;
+            givemeanode) PROVIDER_KEYS='GMN_API_HOST|GMN_TOKEN' ;;
+            gravixlayer) PROVIDER_KEYS='GRAVIXLAYER_API_KEY' ;;
+            hopx) PROVIDER_KEYS='HOPX_API_KEY' ;;
+            isorun) PROVIDER_KEYS='ISORUN_API_KEY' ;;
+            kosa8) PROVIDER_KEYS='KOSA8_API_KEY' ;;
+            lelantos) PROVIDER_KEYS='LELANTOS_API_KEY' ;;
+            modal) PROVIDER_KEYS='MODAL_TOKEN_ID|MODAL_TOKEN_SECRET' ;;
+            microsandbox) PROVIDER_KEYS='MSB_API_KEY' ;;
+            miosa) PROVIDER_KEYS='MIOSA_API_KEY' ;;
+            mosaic) PROVIDER_KEYS='MOSAIC_API_URL|MOSAIC_API_TOKEN' ;;
+            namespace) PROVIDER_KEYS='NSC_TOKEN' ;;
+            neevcloud) PROVIDER_KEYS='NEEVCLOUD_API_KEY' ;;
+            northflank) PROVIDER_KEYS='NORTHFLANK_TOKEN|NORTHFLANK_PROJECT_ID' ;;
+            novita) PROVIDER_KEYS='NOVITA_API_KEY' ;;
+            promigence) PROVIDER_KEYS='PROMIGENCE_API_KEY' ;;
+            railway) PROVIDER_KEYS='RAILWAY_API_TOKEN|RAILWAY_ENVIRONMENT_ID' ;;
+            sandbox0) PROVIDER_KEYS='SANDBOX0_TOKEN' ;;
+            sail) PROVIDER_KEYS='SAIL_API_KEY' ;;
+            sprites) PROVIDER_KEYS='SPRITES_TOKEN' ;;
+            superserve) PROVIDER_KEYS='SUPERSERVE_API_KEY' ;;
+            tenki) PROVIDER_KEYS='TENKI_API_KEY' ;;
+            tensorlake) PROVIDER_KEYS='TENSORLAKE_API_KEY' ;;
+            uno) PROVIDER_KEYS='UNO_API_KEY' ;;
+            upstash) PROVIDER_KEYS='UPSTASH_BOX_API_KEY' ;;
+            vercel) PROVIDER_KEYS='VERCEL_TOKEN|VERCEL_TEAM_ID|VERCEL_PROJECT_ID' ;;
+            *) PROVIDER_KEYS='' ;;
+          esac
+          if [ -n "$PROVIDER_KEYS" ]; then
+            KEYS="^(${COMMON_KEYS}|${PROVIDER_KEYS})="
+          else
+            KEYS="^(${COMMON_KEYS})="
+          fi
+          . ./benchmarks/stealth/scripts/load-vault-secrets.sh "$KEYS"
+          if [ -n "${ARCHIL_DISK_ID_SANDBOX:-}" ]; then export ARCHIL_DISK_ID="$ARCHIL_DISK_ID_SANDBOX"; fi
+
+          set -o pipefail
+          mkdir -p results
+          # Empty platform env vars must not survive: @benchsdk/runner >=0.3.0
+          # resolves the platform URL with ?? so an empty string overrides the
+          # built-in default and the ingest URL fails to parse. Use ${VAR:-}
+          # defaults — load-vault-secrets.sh enables `set -u`, so bare $VAR
+          # expansion of an unset variable aborts the step.
+          [ -z "${BENCHMARKS_PLATFORM_URL:-}" ] && unset BENCHMARKS_PLATFORM_URL
+          [ -z "${BENCHMARKS_PLATFORM_API_KEY:-}" ] && unset BENCHMARKS_PLATFORM_API_KEY
+          # No `pnpm bench:stealth --` separator: @benchsdk/runner >=0.3.0 validates
+          # flags strictly and rejects a bare `--` in argv.
+          [[ "$ITERATIONS" =~ ^[0-9]+$ ]] || { echo "invalid iterations: $ITERATIONS" >&2; exit 1; }
+          [[ "$BURST_COUNT" =~ ^[0-9]+$ ]] || { echo "invalid burst_count: $BURST_COUNT" >&2; exit 1; }
+          [[ "$IDLE_MS" =~ ^[0-9]+$ ]] || { echo "invalid idle_ms: $IDLE_MS" >&2; exit 1; }
+          # Every provider passes the same --run-key, so they get-or-create
+          # one shared run and rank against each other. The run attempt is in
+          # the key so a workflow re-run opens a fresh run.
+          # Array form, never eval: dispatch inputs reach this shell.
+          CMD=(pnpm bench:stealth benchmarks/stealth/sandbox/sandbox-burst-survival.bench.ts --provider "$PROVIDER" --iterations "$ITERATIONS" --run-key "$RUN_KEY")
+          if [ "${DRY_RUN}" = "true" ]; then
+            CMD+=(--no-ingest)
+          fi
+          echo "Running: ${CMD[*]}"
+          "${CMD[@]}"

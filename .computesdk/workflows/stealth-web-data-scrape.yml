@@ -1,0 +1,144 @@
+name: Stealth — Web Data Scrape
+
+on:
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: 'Comma-separated provider filter. Leave empty for all providers.'
+        required: false
+        default: ''
+        type: string
+      dry_run:
+        description: 'Skip ingestion into benchmarks-platform'
+        required: true
+        default: true
+        type: boolean
+      iterations:
+        description: 'Iterations per provider (multiples of 12 hit every URL equally)'
+        required: false
+        default: '36'
+        type: string
+      benchmark_slug:
+        description: 'Benchmark slug for platform ingestion'
+        required: true
+        default: 'web-data-scrape'
+        type: string
+      benchmark_name:
+        description: 'Benchmark name for platform ingestion'
+        required: true
+        default: 'Web Data Scrape'
+        type: string
+      trigger_source:
+        description: 'Recorded on platform runs as their trigger (e.g. platform-retrigger); leave empty for a plain manual run'
+        required: false
+        default: ''
+        type: string
+      trigger_requested_by:
+        description: 'Who asked for this run (e.g. the platform org slug); recorded alongside trigger_source'
+        required: false
+        default: ''
+        type: string
+      trigger_request_id:
+        description: 'Platform re-trigger request id; recorded so the platform can link this run back to the request'
+        required: false
+        default: ''
+        type: string
+  schedule:
+    - cron: '0 11 * * 5' # Weekly on Friday at 11am UTC (6am CDT)
+
+concurrency:
+  group: bench-web-data-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  BENCHMARK_NAME: ${{ github.event.inputs.benchmark_name || (github.event_name == 'schedule' && 'Web Data Scrape - Stealth') || 'Web Data Scrape' }}
+  BENCHMARK_SLUG: ${{ github.event.inputs.benchmark_slug || (github.event_name == 'schedule' && 'web-data-scrape-stealth') || 'web-data-scrape' }}
+
+jobs:
+  bench:
+    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
+    name: bench
+    # One job, not a per-provider matrix: `groupBy: 'round'` interleaves every
+    # provider on the same URL in the same process, which a matrix would split.
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      # ComputeSDK runners get no GitHub OIDC token, so nscloud-setup's
+      # `nsc auth exchange-github-token` cannot work there. Pre-seed the
+      # workload token file it checks for when NSC_TOKEN is available;
+      # accepts either the raw bearer token or a full token JSON document.
+      # It also exports NSC_DOCKER_LOGIN/NSC_CONTAINER_REGISTRY so
+      # nscloud-setup skips `nsc docker login`, which this token is not
+      # granted for — the benchmarks only need vault access.
+      - name: Seed Namespace token file
+        env:
+          NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
+        run: |
+          if [ -n "${NSC_TOKEN:-}" ] && [ ! -f /var/run/nsc/token.json ]; then
+            mkdir -p /var/run/nsc
+            case "$NSC_TOKEN" in
+              \{*) printf '%s\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+              *) printf '{"bearer_token":"%s"}\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+            esac
+            chmod 600 /var/run/nsc/token.json
+            # The seeded token has no container-registry grant; tell
+            # nscloud-setup to skip `nsc docker login` for later steps.
+            echo "NSC_DOCKER_LOGIN=1" >> "$GITHUB_ENV"
+            echo "NSC_CONTAINER_REGISTRY=nscr.io" >> "$GITHUB_ENV"
+          fi
+      - uses: namespacelabs/nscloud-setup@v0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install
+      - name: Build workspace packages
+        run: pnpm -r --filter './packages/**' run build
+      - name: Run Web Data Scrape benchmark
+        env:
+          NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
+          PROVIDER: ${{ github.event.inputs.provider }}
+          ITERATIONS: ${{ github.event.inputs.iterations || '36' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          BENCHMARKS_PLATFORM_API_KEY: ${{ secrets.BENCHMARKS_PLATFORM_API_KEY }}
+          BENCHMARKS_PLATFORM_URL: ${{ secrets.BENCHMARKS_PLATFORM_URL }}
+          RUN_KEY: ${{ github.run_id }}-${{ github.run_attempt }}
+          BENCH_TRIGGER_SOURCE: ${{ github.event.inputs.trigger_source || '' }}
+          BENCH_TRIGGER_REQUESTED_BY: ${{ github.event.inputs.trigger_requested_by || '' }}
+          BENCH_TRIGGER_REQUEST_ID: ${{ github.event.inputs.trigger_request_id || '' }}
+        run: |
+          COMMON_KEYS='BENCHMARKS_PLATFORM_API_KEY'
+          case "$PROVIDER" in
+            firecrawl) PROVIDER_KEYS='FIRECRAWL_API_KEY' ;;
+            context-dev) PROVIDER_KEYS='CONTEXT_DEV_API_KEY' ;;
+            *) PROVIDER_KEYS='FIRECRAWL_API_KEY|CONTEXT_DEV_API_KEY' ;;
+          esac
+          KEYS="^(${COMMON_KEYS}|${PROVIDER_KEYS})="
+          . ./benchmarks/stealth/scripts/load-vault-secrets.sh "$KEYS"
+
+          set -o pipefail
+          mkdir -p results
+          # Empty platform env vars must not survive: @benchsdk/runner >=0.3.0
+          # resolves the platform URL with ?? so an empty string overrides the
+          # built-in default and the ingest URL fails to parse.
+          [ -z "$BENCHMARKS_PLATFORM_URL" ] && unset BENCHMARKS_PLATFORM_URL
+          [ -z "$BENCHMARKS_PLATFORM_API_KEY" ] && unset BENCHMARKS_PLATFORM_API_KEY
+          # No `pnpm bench:stealth --` separator: @benchsdk/runner >=0.3.0 validates
+          # flags strictly and rejects a bare `--` in argv.
+          [[ "$ITERATIONS" =~ ^[0-9]+$ ]] || { echo "invalid iterations: $ITERATIONS" >&2; exit 1; }
+          # Array form, never eval: dispatch inputs reach this shell.
+          CMD=(pnpm bench:stealth benchmarks/stealth/web-data/web-data-scrape.bench.ts --iterations "$ITERATIONS" --run-key "$RUN_KEY")
+          if [ -n "$PROVIDER" ]; then
+            CMD+=(--provider "$PROVIDER")
+          fi
+          if [ "${DRY_RUN}" = "true" ]; then
+            CMD+=(--no-ingest)
+          fi
+          echo "Running: ${CMD[*]}"
+          "${CMD[@]}"

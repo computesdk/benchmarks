@@ -22,7 +22,7 @@ on:
         required: false
         default: ''
       dry_run:
-        description: 'Run without ingesting or committing results'
+        description: 'Run without ingesting results'
         required: false
         default: false
         type: boolean
@@ -177,8 +177,6 @@ jobs:
         # committed. Build them in topological order so dependents like
         # @benchsdk/client can resolve @benchsdk/worker during their own build.
         run: pnpm -r --filter './packages/**' run build
-      - name: Clear stale results from checkout
-        run: rm -rf results/browser-concurrent/
       - name: Run browser concurrent benchmark
         env:
           THROUGHPUT_URLS: ${{ needs.setup.outputs.urls }}
@@ -210,97 +208,3 @@ jobs:
             --levels "$LEVELS" \
             --run-key "$RUN_KEY" \
             ${{ (github.event_name == 'push' || github.event.inputs.dry_run == 'true') && '--no-ingest' || '' }}
-      - name: Upload results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: browser-concurrent-results-${{ matrix.provider }}
-          path: results/browser-concurrent/
-          if-no-files-found: ignore
-          retention-days: 7
-
-  collect:
-    name: Collect Results
-    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
-    permissions:
-      contents: write
-      pull-requests: write
-    needs: bench
-    if: always()
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: 'pnpm'
-      # ComputeSDK runners get no GitHub OIDC token, so nscloud-setup's
-      # `nsc auth exchange-github-token` cannot work there. Pre-seed the
-      # workload token file it checks for when NSC_TOKEN is available;
-      # accepts either the raw bearer token or a full token JSON document.
-      # It also exports NSC_DOCKER_LOGIN/NSC_CONTAINER_REGISTRY so
-      # nscloud-setup skips `nsc docker login`, which this token is not
-      # granted for — the benchmarks only need vault access.
-      - name: Seed Namespace token file
-        run: |
-          if [ -n "${NSC_TOKEN:-}" ] && [ ! -f /var/run/nsc/token.json ]; then
-            mkdir -p /var/run/nsc
-            case "$NSC_TOKEN" in
-              \{*) printf '%s\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
-              *) printf '{"bearer_token":"%s"}\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
-            esac
-            chmod 600 /var/run/nsc/token.json
-            # The seeded token has no container-registry grant; tell
-            # nscloud-setup to skip `nsc docker login` for later steps.
-            echo "NSC_DOCKER_LOGIN=1" >> "$GITHUB_ENV"
-            echo "NSC_CONTAINER_REGISTRY=nscr.io" >> "$GITHUB_ENV"
-          fi
-      - uses: namespacelabs/nscloud-setup@v0
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
-      - name: Build workspace packages
-        # The @benchsdk/* packages are built from source and dist/ is not
-        # committed. Build them in topological order so dependents like
-        # @benchsdk/client can resolve @benchsdk/worker during their own build.
-        run: pnpm -r --filter './packages/**' run build
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts/
-          pattern: browser-concurrent-results-*
-      - name: Merge results
-        run: npx tsx benchmarks/src/merge-results.ts --input artifacts --mode browser-concurrent
-      - run: pnpm run generate-browser-concurrent-svg
-      - name: Upload SVG as artifact
-        if: github.event_name == 'push'
-        uses: actions/upload-artifact@v4
-        with:
-          name: browser-concurrent-benchmark-svg
-          path: |
-            browser-concurrent.svg
-            browser-concurrent-degradation.svg
-          if-no-files-found: ignore
-          retention-days: 7
-      - name: Commit and push
-        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.event.inputs.dry_run != 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add browser-concurrent.svg browser-concurrent-degradation.svg results/browser-concurrent/
-          git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "chore: update browser concurrent benchmark results [skip ci]"
-
-          branch="${GITHUB_REF#refs/heads/}"
-          for attempt in 1 2 3 4 5; do
-            git fetch origin "${branch}"
-            git rebase --autostash "origin/${branch}" || { git rebase --abort; exit 1; }
-            if git push origin "HEAD:${branch}"; then
-              echo "Pushed on attempt ${attempt}"
-              exit 0
-            fi
-            echo "Push rejected (attempt ${attempt}); will rebase and retry"
-          done
-          echo "Failed to push after multiple attempts" >&2
-          exit 1

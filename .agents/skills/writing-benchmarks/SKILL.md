@@ -9,7 +9,7 @@ A benchmark is **a unit of work** (what one iteration measures) expressed as a
 declarative `*.bench.ts` file that exports exactly `config` + `task`. The
 `bench run` CLI owns orchestration — the file never calls the runner itself.
 
-Canonical API reference: `WRITING_BENCHMARKS.md` (repo root) — read it for the
+Canonical API reference: `packages/benchsdk-runner/README.md` — read it for the
 full field tables. Runnable templates: `examples/01-hello.bench.ts` through
 `11-logging.bench.ts`. Reference implementations:
 
@@ -98,11 +98,11 @@ Sandbox-benchmark conventions (follow `tti.bench.ts`):
 
 - Place under `benchmarks/<area>/<name>.bench.ts`. Start from the closest
   existing benchmark, not from scratch.
-- `import '../src/env.js'` first (loads `benchmarks/.env`).
+- `import '../src/env.js'` first (loads the root `.env`).
 - `config` essentials: `benchmarkSlug`, `benchmarkName`, `iterations`,
   `concurrency`, `participants`, `display`, `scoring`. Optional: `shapes`,
   `phases`, `groupBy`, `defaultProviders`, `dimensions`, `onComplete`,
-  `customCliFlags` — see WRITING_BENCHMARKS.md before reaching for them.
+  `customCliFlags` — see packages/benchsdk-runner/README.md before reaching for them.
 
 ## 5. Participants
 
@@ -162,7 +162,7 @@ BENCHMARKS_PLATFORM_API_KEY=bp-... pnpm exec bench run \
 
 ## Gotchas
 
-Read `WRITING_BENCHMARKS.md` § "Common gotchas" before debugging: stale
+Read `packages/benchsdk-runner/README.md` § "Common gotchas" before debugging: stale
 `dist/`, `--iterations` scaling per-phase, env-filtered participants, the
 weight-sum rule, outcome-shaped step returns, round-vs-participant step
 ownership, Vercel `persistent: false`.

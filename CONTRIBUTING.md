@@ -68,8 +68,9 @@ Documentation improvements are always welcome. No issue required for typos, clar
 ```bash
 git clone https://github.com/computesdk/benchmarks.git
 cd benchmarks
-pnpm install
-cp benchmarks/.env.example benchmarks/.env
+pnpm install --frozen-lockfile --ignore-scripts
+pnpm -r --filter './packages/**' run build
+# Supply provider credentials via the environment or a root .env file.
 ```
 
 ### Running Tests Locally

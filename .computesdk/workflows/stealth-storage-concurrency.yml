@@ -1,0 +1,184 @@
+name: Stealth — Storage Concurrency
+
+on:
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: 'Run only this provider (empty = all)'
+        required: false
+        default: ''
+        type: string
+      dry_run:
+        description: 'Skip ingestion into benchmarks-platform'
+        required: true
+        default: true
+        type: boolean
+      operations:
+        description: 'GET operations per concurrency cell'
+        required: false
+        default: '1052'
+        type: string
+      seed_corpus:
+        description: 'Seed missing corpus objects before benchmarking'
+        required: false
+        default: false
+        type: boolean
+      benchmark_slug:
+        description: 'Benchmark slug for platform ingestion'
+        required: true
+        default: 'storage-concurrency'
+        type: string
+      benchmark_name:
+        description: 'Benchmark name for platform ingestion'
+        required: true
+        default: 'Storage Concurrency'
+        type: string
+      trigger_source:
+        description: 'Recorded on platform runs as their trigger (e.g. platform-retrigger); leave empty for a plain manual run'
+        required: false
+        default: ''
+        type: string
+      trigger_requested_by:
+        description: 'Who asked for this run (e.g. the platform org slug); recorded alongside trigger_source'
+        required: false
+        default: ''
+        type: string
+      trigger_request_id:
+        description: 'Platform re-trigger request id; recorded so the platform can link this run back to the request'
+        required: false
+        default: ''
+        type: string
+  schedule:
+    - cron: '0 11 * * *'
+
+concurrency:
+  group: bench-storage-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  BENCHMARK_NAME: ${{ github.event.inputs.benchmark_name || (github.event_name == 'schedule' && 'Storage Concurrency - Stealth') || 'Storage Concurrency' }}
+  BENCHMARK_SLUG: ${{ github.event.inputs.benchmark_slug || (github.event_name == 'schedule' && 'storage-concurrency-stealth') || 'storage-concurrency' }}
+
+jobs:
+  bench:
+    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
+    name: bench-${{ matrix.provider }}
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
+    # Eight cells x ~1,052 GETs each, plus corpus seeding when requested —
+    # a throttled provider burns most of the 15m platform default.
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      SHOULD_RUN: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.provider == '' || github.event.inputs.provider == matrix.provider }}
+    strategy:
+      fail-fast: false
+      matrix:
+        provider:
+          - aws-s3
+          - cloudflare-r2
+          - tigris
+          - vercel-blob
+          - gcs
+          - azure-blob
+          - tensorlake
+          - archil
+          - neon
+    steps:
+      - uses: actions/checkout@v4
+        if: env.SHOULD_RUN == 'true'
+      # ComputeSDK runners get no GitHub OIDC token, so nscloud-setup's
+      # `nsc auth exchange-github-token` cannot work there. Pre-seed the
+      # workload token file it checks for when NSC_TOKEN is available;
+      # accepts either the raw bearer token or a full token JSON document.
+      # It also exports NSC_DOCKER_LOGIN/NSC_CONTAINER_REGISTRY so
+      # nscloud-setup skips `nsc docker login`, which this token is not
+      # granted for — the benchmarks only need vault access.
+      - name: Seed Namespace token file
+        if: env.SHOULD_RUN == 'true'
+        env:
+          NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
+        run: |
+          if [ -n "${NSC_TOKEN:-}" ] && [ ! -f /var/run/nsc/token.json ]; then
+            mkdir -p /var/run/nsc
+            case "$NSC_TOKEN" in
+              \{*) printf '%s\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+              *) printf '{"bearer_token":"%s"}\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+            esac
+            chmod 600 /var/run/nsc/token.json
+            # The seeded token has no container-registry grant; tell
+            # nscloud-setup to skip `nsc docker login` for later steps.
+            echo "NSC_DOCKER_LOGIN=1" >> "$GITHUB_ENV"
+            echo "NSC_CONTAINER_REGISTRY=nscr.io" >> "$GITHUB_ENV"
+          fi
+      - uses: namespacelabs/nscloud-setup@v0
+        if: env.SHOULD_RUN == 'true'
+      - uses: pnpm/action-setup@v4
+        if: env.SHOULD_RUN == 'true'
+      - uses: actions/setup-node@v4
+        if: env.SHOULD_RUN == 'true'
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        if: env.SHOULD_RUN == 'true'
+        run: pnpm install
+      - name: Build workspace packages
+        if: env.SHOULD_RUN == 'true'
+        run: pnpm -r --filter './packages/**' run build
+      - name: Run Storage Concurrency benchmark
+        if: env.SHOULD_RUN == 'true'
+        env:
+          NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
+          PROVIDER: ${{ matrix.provider }}
+          OPERATIONS: ${{ github.event.inputs.operations || '1052' }}
+          SEED_CORPUS: ${{ github.event.inputs.seed_corpus || 'false' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          BENCHMARKS_PLATFORM_API_KEY: ${{ secrets.BENCHMARKS_PLATFORM_API_KEY }}
+          BENCHMARKS_PLATFORM_URL: ${{ secrets.BENCHMARKS_PLATFORM_URL }}
+          RUN_KEY: ${{ github.run_id }}-${{ github.run_attempt }}
+          BENCH_TRIGGER_SOURCE: ${{ github.event.inputs.trigger_source || '' }}
+          BENCH_TRIGGER_REQUESTED_BY: ${{ github.event.inputs.trigger_requested_by || '' }}
+          BENCH_TRIGGER_REQUEST_ID: ${{ github.event.inputs.trigger_request_id || '' }}
+        run: |
+          COMMON_KEYS='BENCHMARKS_PLATFORM_API_KEY'
+          case "$PROVIDER" in
+            aws-s3) PROVIDER_KEYS='AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|AWS_REGION|S3_BUCKET' ;;
+            cloudflare-r2) PROVIDER_KEYS='R2_ACCESS_KEY_ID|R2_SECRET_ACCESS_KEY|R2_BUCKET|R2_ACCOUNT_ID' ;;
+            tigris) PROVIDER_KEYS='TIGRIS_STORAGE_ACCESS_KEY_ID|TIGRIS_STORAGE_SECRET_ACCESS_KEY|TIGRIS_STORAGE_BUCKET|TIGRIS_STORAGE_ENDPOINT' ;;
+            vercel-blob) PROVIDER_KEYS='BLOB_READ_WRITE_TOKEN|VERCEL_BLOB_BUCKET' ;;
+            gcs) PROVIDER_KEYS='GCS_PROJECT_ID|GCS_BUCKET|GCS_CLIENT_EMAIL|GCS_PRIVATE_KEY' ;;
+            azure-blob) PROVIDER_KEYS='AZURE_ACCOUNT_NAME|AZURE_ACCOUNT_KEY|AZURE_CONTAINER' ;;
+            tensorlake) PROVIDER_KEYS='TENSORLAKE_API_KEY|TENSORLAKE_API_URL|TENSORLAKE_ORGANIZATION_ID|TENSORLAKE_PROJECT_ID|TENSORLAKE_FILESYSTEM' ;;
+            archil) PROVIDER_KEYS='ARCHIL_S3_ACCESS_KEY_ID|ARCHIL_S3_SECRET_ACCESS_KEY|ARCHIL_BUCKET|ARCHIL_REGION|ARCHIL_BRANCH' ;;
+            neon) PROVIDER_KEYS='NEON_BUCKET|NEON_ENDPOINT|NEON_ACCESS_KEY_ID|NEON_SECRET_ACCESS_KEY|NEON_REGION' ;;
+            *) PROVIDER_KEYS='' ;;
+          esac
+          if [ -n "$PROVIDER_KEYS" ]; then
+            KEYS="^(${COMMON_KEYS}|${PROVIDER_KEYS})="
+          else
+            KEYS="^(${COMMON_KEYS})="
+          fi
+          . ./benchmarks/stealth/scripts/load-vault-secrets.sh "$KEYS"
+
+          set -o pipefail
+          mkdir -p results
+          # Empty platform env vars must not survive: @benchsdk/runner >=0.3.0
+          # resolves the platform URL with ?? so an empty string overrides the
+          # built-in default and the ingest URL fails to parse.
+          [ -z "$BENCHMARKS_PLATFORM_URL" ] && unset BENCHMARKS_PLATFORM_URL
+          [ -z "$BENCHMARKS_PLATFORM_API_KEY" ] && unset BENCHMARKS_PLATFORM_API_KEY
+
+          if [ "${SEED_CORPUS}" == "true" ]; then
+            pnpm stealth:seed:storage-concurrency --provider "$PROVIDER"
+          fi
+
+          # No `pnpm bench:stealth --` separator: @benchsdk/runner >=0.3.0 validates
+          # flags strictly and rejects a bare `--` in argv.
+          CMD="pnpm bench:stealth benchmarks/stealth/storage/storage-concurrency.bench.ts --provider \"$PROVIDER\" --storage-operations \"$OPERATIONS\" --run-key \"$RUN_KEY\""
+          if [ "${DRY_RUN}" == "true" ]; then
+            CMD="${CMD} --no-ingest"
+          fi
+          echo "Running: ${CMD}"
+          eval "$CMD"

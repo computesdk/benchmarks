@@ -34,7 +34,7 @@ on:
           - llmapi
           - novita
       dry_run:
-        description: 'Run without ingesting or committing results'
+        description: 'Run without ingesting results'
         required: false
         default: false
         type: boolean
@@ -56,7 +56,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
   id-token: write
 
 env:
@@ -116,32 +116,3 @@ jobs:
 
           npx tsx packages/benchsdk-runner/dist/bin.js run benchmarks/ai-gateway/ai-gateway-model-index.bench.ts "${provider_args[@]}" \
             ${{ (github.event_name == 'push' || github.event.inputs.dry_run == 'true') && '--no-ingest' || '' }}
-      - name: Upload results as artifact
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: ai-gateway-model-index-results
-          path: results/ai-gateway-model-index/
-          if-no-files-found: ignore
-          retention-days: 7
-      - name: Commit and push
-        if: github.event_name != 'push' && github.event.inputs.dry_run != 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add results/ai-gateway-model-index/
-          git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "chore: update ai gateway model index [skip ci]"
-
-          branch="${GITHUB_REF#refs/heads/}"
-          for attempt in 1 2 3 4 5; do
-            git fetch origin "${branch}"
-            git rebase --autostash "origin/${branch}" || { git rebase --abort; exit 1; }
-            if git push origin "HEAD:${branch}"; then
-              echo "Pushed on attempt ${attempt}"
-              exit 0
-            fi
-            echo "Push rejected (attempt ${attempt}); will rebase and retry"
-          done
-          echo "Failed to push after multiple attempts" >&2
-          exit 1

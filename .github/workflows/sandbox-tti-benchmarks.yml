@@ -33,7 +33,7 @@ on:
         required: false
         default: ''
       dry_run:
-        description: 'Run without ingesting or committing results'
+        description: 'Run without ingesting results'
         required: false
         default: false
         type: boolean
@@ -59,8 +59,8 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+
   id-token: write
 
 env:
@@ -216,9 +216,6 @@ jobs:
           LINE=$(./ec2-firecrab/host/pool-up.sh "${{ github.event.inputs.host_count }}" | tail -1)
           echo "$LINE"
           echo "POOL_SSH_TARGETS=${LINE#EC2_FIRECRAB_SSH_TARGETS=}" >> "$GITHUB_ENV"
-      - name: Clear stale results from checkout
-        if: env.SHOULD_RUN == 'true'
-        run: rm -rf results/
       - name: Run benchmark
         if: env.SHOULD_RUN == 'true'
         env:
@@ -290,205 +287,3 @@ jobs:
           else
             echo "no pool state — nothing to terminate"
           fi
-      - name: Upload results
-        if: always() && env.SHOULD_RUN == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: results-${{ matrix.provider }}
-          path: results/
-          if-no-files-found: ignore
-          retention-days: 7
-
-  collect:
-    name: Collect Results
-    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
-    # runs-on: self-hosted
-    needs: bench
-    if: always()
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          # Full history so the rebase-on-push retry below has a merge base.
-          # A shallow (depth-1) clone can make `git rebase origin/<branch>`
-          # fail when the remote has advanced past the shallow boundary.
-          fetch-depth: 0
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: 'pnpm'
-      # ComputeSDK runners get no GitHub OIDC token, so nscloud-setup's
-      # `nsc auth exchange-github-token` cannot work there. Pre-seed the
-      # workload token file it checks for when NSC_TOKEN is available;
-      # accepts either the raw bearer token or a full token JSON document.
-      # It also exports NSC_DOCKER_LOGIN/NSC_CONTAINER_REGISTRY so
-      # nscloud-setup skips `nsc docker login`, which this token is not
-      # granted for — the benchmarks only need vault access.
-      - name: Seed Namespace token file
-        run: |
-          if [ -n "${NSC_TOKEN:-}" ] && [ ! -f /var/run/nsc/token.json ]; then
-            mkdir -p /var/run/nsc
-            case "$NSC_TOKEN" in
-              \{*) printf '%s\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
-              *) printf '{"bearer_token":"%s"}\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
-            esac
-            chmod 600 /var/run/nsc/token.json
-            # The seeded token has no container-registry grant; tell
-            # nscloud-setup to skip `nsc docker login` for later steps.
-            echo "NSC_DOCKER_LOGIN=1" >> "$GITHUB_ENV"
-            echo "NSC_CONTAINER_REGISTRY=nscr.io" >> "$GITHUB_ENV"
-          fi
-      - uses: namespacelabs/nscloud-setup@v0
-      - name: Install dependencies
-        run: |
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            pnpm -r update --ignore-scripts
-          else
-            pnpm install --frozen-lockfile --ignore-scripts
-          fi
-          pnpm -r --filter './packages/**' run build
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts/
-          pattern: results-*
-      - name: Merge results
-        run: npx tsx benchmarks/src/merge-results.ts --input artifacts
-      - run: pnpm run generate-svg
-      - run: pnpm run generate-pricing-svg
-      - name: Upload SVGs as artifacts
-        if: github.event_name == 'push'
-        uses: actions/upload-artifact@v4
-        with:
-          name: sandbox-benchmark-svgs
-          path: |
-            results.svg
-            *_tti.svg
-            pricing.svg
-          if-no-files-found: ignore
-          retention-days: 7
-      - name: Post results to merged PR
-        if: github.event_name == 'push'
-        continue-on-error: true
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const path = require('path');
-
-            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const modes = [
-              { key: 'burst_tti', label: 'Burst' },
-            ];
-            let body = '## Sandbox Benchmark Results\n\n';
-            let hasResults = false;
-
-            for (const mode of modes) {
-              const latestPath = path.join('results', mode.key, 'latest.json');
-              if (!fs.existsSync(latestPath)) continue;
-
-              const data = JSON.parse(fs.readFileSync(latestPath, 'utf-8'));
-              const results = data.results
-                .filter(r => !r.skipped)
-                .sort((a, b) => (b.compositeScore || 0) - (a.compositeScore || 0));
-
-              if (results.length === 0) continue;
-              hasResults = true;
-
-              body += `### ${mode.label}\n\n`;
-              body += '| # | Provider | Score | Median TTI | P95 | P99 | Status |\n';
-              body += '|---|----------|-------|------------|-----|-----|--------|\n';
-
-              results.forEach((r, i) => {
-                const score = r.compositeScore !== undefined ? r.compositeScore.toFixed(1) : '--';
-                const median = (r.summary.ttiMs.median / 1000).toFixed(2) + 's';
-                const p95 = (r.summary.ttiMs.p95 / 1000).toFixed(2) + 's';
-                const p99 = (r.summary.ttiMs.p99 / 1000).toFixed(2) + 's';
-                const ok = r.iterations.filter(it => !it.error).length;
-                const total = r.iterations.length;
-                body += `| ${i + 1} | ${r.provider} | ${score} | ${median} | ${p95} | ${p99} | ${ok}/${total} |\n`;
-              });
-
-              body += '\n';
-            }
-
-            if (!hasResults) {
-              body += '> No sandbox benchmark results were generated.\n\n';
-            }
-
-            body += `---\n*[View full run](${runUrl}) · SVGs available as [build artifacts](${runUrl}#artifacts)*`;
-
-            // This push is a merge to master — post results to the PR it closed.
-            // A commit can be associated with several PRs (backports, merge
-            // queue), so pick the one merged into the branch we pushed to.
-            const target = context.ref.replace('refs/heads/', '');
-            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              commit_sha: context.sha,
-            });
-            const pr = prs.find(p => p.merged_at && p.base.ref === target);
-            if (!pr) {
-              // Direct push with no associated PR — fall back to a commit comment.
-              await github.rest.repos.createCommitComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                commit_sha: context.sha,
-                body,
-              });
-              return;
-            }
-
-            // Find and update existing comment or create new one
-            const marker = '## Sandbox Benchmark Results';
-            const comments = await github.paginate(github.rest.issues.listComments, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pr.number,
-              per_page: 100,
-            });
-
-            const existing = comments.find(c => c.body.startsWith(marker));
-
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pr.number,
-                body,
-              });
-            }
-      - name: Commit and push
-        if: github.event_name != 'push' && github.event.inputs.dry_run != 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json packages/*/package.json pnpm-lock.yaml results.svg *_tti.svg pricing.svg results/
-          git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "chore: update benchmark results [skip ci]"
-
-          # Remote master can advance during the run (concurrent runs / other
-          # commits), so a plain push fails non-fast-forward. Rebase onto the
-          # latest remote and retry a few times before giving up.
-          branch="${GITHUB_REF#refs/heads/}"
-          for attempt in 1 2 3 4 5; do
-            # Rebase before each attempt (including the last) so every rebase
-            # is followed by a push — otherwise the final iteration's rebase
-            # would be wasted and a resolvable non-fast-forward could still fail.
-            git fetch origin "${branch}"
-            git rebase --autostash "origin/${branch}" || { git rebase --abort; exit 1; }
-            if git push origin "HEAD:${branch}"; then
-              echo "Pushed on attempt ${attempt}"
-              exit 0
-            fi
-            echo "Push rejected (attempt ${attempt}); will rebase and retry"
-          done
-          echo "Failed to push after multiple attempts" >&2
-          exit 1
