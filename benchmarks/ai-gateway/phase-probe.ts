@@ -192,7 +192,7 @@ function extractOutputTokens(wireFormat: AIGatewayWireFormat, buf: string): numb
   // counting regex can't step past.
   let last: number | undefined;
   for (const line of buf.split('\n')) {
-    if (!line.startsWith('data:')) continue;
+    if (!line.startsWith('data:') || !line.includes('"usage"')) continue;
     let event: unknown;
     try {
       event = JSON.parse(line.slice(5));
