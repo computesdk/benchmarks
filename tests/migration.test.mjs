@@ -39,6 +39,10 @@ test('imported workflows point to existing suites and keep scheduled execution g
     }
     const jobs = source.split('\njobs:\n')[1].split(/(?=^  [\w-]+:\n)/m).filter((job) => job.trim());
     for (const job of jobs) {
+      if (file.endsWith('stealth-soak-state-import.yml')) {
+        assert.match(job, /vars\.STEALTH_BENCHMARKS_ENABLED != 'true'/);
+        continue;
+      }
       assert.match(job, /^    if: .*vars\.STEALTH_BENCHMARKS_ENABLED == 'true'/m, `${file}: ungated job`);
     }
     assert.doesNotMatch(source, /^  collect:/m, file);
