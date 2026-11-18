@@ -186,8 +186,8 @@ importers:
         specifier: ^0.2.21
         version: 0.2.21
       '@computesdk/tenki':
-        specifier: ^0.1.23
-        version: 0.1.23(bufferutil@4.2.0)(utf-8-validate@6.0.6)
+        specifier: ^0.1.25
+        version: 0.1.25(bufferutil@4.2.0)(utf-8-validate@6.0.6)
       '@computesdk/tensorlake':
         specifier: ^0.1.35
         version: 0.1.35(bufferutil@4.2.0)(utf-8-validate@6.0.6)
@@ -646,6 +646,14 @@ packages:
     peerDependencies:
       typescript: ^5.0.0
 
+  '@benchsdk/api@0.11.3':
+    resolution: {integrity: sha512-zmfPO/kRWq3kxwAiI0QObHUmd2EIzR9U5CrgSeiRiGUZNOeqo94AmACFtVUGFuDAX+qbFz6PyLDkiNSpskE5FA==}
+    engines: {node: '>=18.0.0'}
+
+  '@benchsdk/cli@0.9.5':
+    resolution: {integrity: sha512-8k9dNtKmyb/AAnlUx47TKerwvJJb5mtpw+jywO3PsjgwZZdDJZ77thi2aLi8tbyoHSbmara/B2xidzDjNjco/w==}
+    engines: {node: '>=18.0.0'}
+
   '@blaxel/core@0.3.39':
     resolution: {integrity: sha512-8oN0wYQxzWriPXu8EnMwKXo4LHjBNVdse9B8u9zotplbsts9YUrqBrIG6WYlNBDswvkwzVk222GVM622fEzRxQ==}
     engines: {node: '>=18'}
@@ -911,6 +919,9 @@ packages:
   '@computesdk/provider@2.1.24':
     resolution: {integrity: sha512-zQ+CmMEkfnhCgnI5BLlQAxQH088DEc9/97wmHELxYMzPDGoFwQppYrKn/lpsd3zUoZtTBRB1+74sSsAcjTwVuA==}
 
+  '@computesdk/provider@2.1.25':
+    resolution: {integrity: sha512-oSvmrBD13WvgiuZvrdFLKh0+DwX90GvaLm6jxX41wzmbNMJ98BkQm+TcD+wuwHGa/zYkzOlcvxDT2EN2eBPVlg==}
+
   '@computesdk/quilt@1.0.21':
     resolution: {integrity: sha512-UtGOMxngREyDXI0HQdUgpU9Pti9FfY/N0atpDZAkKC7i450egBCc5yZ+uhS4LXACjA0fIWlSmj0cFnwCIVVtyQ==}
     engines: {node: '>=22'}
@@ -938,8 +949,8 @@ packages:
   '@computesdk/superserve@0.2.21':
     resolution: {integrity: sha512-Jt9z+LwcSx0aggUOj8xgo8qOUpv6K0Wr0ByWUPCUEw4cHjWRgpyIYCmct5cokTmGsrHi1Ma+k9HpDicPC/xX1w==}
 
-  '@computesdk/tenki@0.1.23':
-    resolution: {integrity: sha512-Kp43yR0VdG2wegM3ZkPksmLt/eUKYF84rD+xoMkDa9zRaxi+oKjwu5+yRug8VUwQWdj8ULtWWdOAeiJMk9nFag==}
+  '@computesdk/tenki@0.1.25':
+    resolution: {integrity: sha512-0D5HdwI0ADKqQoFi4ZZFdY+nyKDcb5X3pJRf6ZE/mjhV3GV0WRZdLHVla4zyVHy6tkL9aFfOu+ViKW6XOQXw7A==}
     engines: {node: '>=20'}
 
   '@computesdk/tensorlake@0.1.35':
@@ -1682,6 +1693,10 @@ packages:
   '@lukeed/ms@2.0.2':
     resolution: {integrity: sha512-9I2Zn6+NJLfaGoz9jN3lpwDgAYvfGeNYdbAIjJOqzs4Tpc+VU3Jqq4IofSUBKajiDS8k9fZIg18/z13mpk1bsA==}
     engines: {node: '>=8'}
+
+  '@luxorai/sandbox@1.5.3':
+    resolution: {integrity: sha512-XeHXcfjkXGNb5Gj1yablmILgF7zjN7rnj43WToWFbRMCL1e3qO06YIpSQltjemhbKcuRRy277p0x0pY/EyyWJA==}
+    engines: {node: '>=18'}
 
   '@manypkg/find-root@1.1.0':
     resolution: {integrity: sha512-mki5uBvhHzO8kYYix/WRy2WX8S3B5wdVSc9D6KcU5lQNglP2yt58/VfLuAK49glRXChosY8ap2oJ1qgma3GUVA==}
@@ -2535,10 +2550,6 @@ packages:
   '@superserve/sdk@0.9.3':
     resolution: {integrity: sha512-JzGiaNFiaB/fMNnL+Zm6OdE7yGau5zkqPyESX3Sr3piisFwgbGyDnKT21cucW1iA3BEMg2XBIVsuXw6WF6dUIw==}
 
-  '@tenkicloud/sandbox@1.5.1':
-    resolution: {integrity: sha512-r96WU+hpjLt5HOJuCN6itU9D1zgAZo0+Y+qDbvebCazWJZu3kGpvXa++zQwIxlLuRsqDnlCOpHqhsOr9PCJfJA==}
-    engines: {node: '>=18'}
-
   '@tensorlakeai/native-darwin-arm64@0.5.148':
     resolution: {integrity: sha512-PJndrxk4XWKWxI3+WV3+4E2M80UsQ+qWxbtJWx2oxzzd9h2chSY5zbuY98sqox1ag7Y15byic/EwrO5HqNsBQg==}
     engines: {node: '>=22.0.0'}
@@ -3270,6 +3281,9 @@ packages:
 
   computesdk@4.1.18:
     resolution: {integrity: sha512-rOitYGTlGo9dYiVctR9/LrN6YEg2tH1hTqdxgok1KVEyWqoaw9rIJLmMLf1DvHkdzpoWTwjxMGdf4bw2qw8n5w==}
+
+  computesdk@4.1.19:
+    resolution: {integrity: sha512-Z6ua7SR1bntgJWrKTbg5c17vu3fVvPH0DM7j3JEvDu4vEVJlRMX5tjReZcIHGm4hfT+YfjJhyEtSgxBPE98iVw==}
 
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
@@ -6388,6 +6402,12 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  '@benchsdk/api@0.11.3': {}
+
+  '@benchsdk/cli@0.9.5':
+    dependencies:
+      '@benchsdk/api': 0.11.3
+
   '@blaxel/core@0.3.39(@hey-api/openapi-ts@0.99.0(magicast@0.3.5)(typescript@5.9.3))(bare-buffer@3.7.2)(bufferutil@4.2.0)(utf-8-validate@6.0.6)':
     dependencies:
       '@hey-api/client-fetch': 0.10.2(@hey-api/openapi-ts@0.99.0(magicast@0.3.5)(typescript@5.9.3))
@@ -6979,6 +6999,12 @@ snapshots:
       computesdk: 4.1.18
       daemond: 0.1.9
 
+  '@computesdk/provider@2.1.25':
+    dependencies:
+      '@computesdk/cmd': 0.4.1
+      computesdk: 4.1.19
+      daemond: 0.1.9
+
   '@computesdk/quilt@1.0.21':
     dependencies:
       '@computesdk/provider': 2.1.23
@@ -7034,11 +7060,11 @@ snapshots:
       '@superserve/sdk': 0.9.3
       computesdk: 4.1.17
 
-  '@computesdk/tenki@0.1.23(bufferutil@4.2.0)(utf-8-validate@6.0.6)':
+  '@computesdk/tenki@0.1.25(bufferutil@4.2.0)(utf-8-validate@6.0.6)':
     dependencies:
-      '@computesdk/provider': 2.1.23
-      '@tenkicloud/sandbox': 1.5.1(bufferutil@4.2.0)(utf-8-validate@6.0.6)
-      computesdk: 4.1.17
+      '@computesdk/provider': 2.1.25
+      '@luxorai/sandbox': 1.5.3(bufferutil@4.2.0)(utf-8-validate@6.0.6)
+      computesdk: 4.1.19
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -7657,6 +7683,16 @@ snapshots:
       - supports-color
 
   '@lukeed/ms@2.0.2': {}
+
+  '@luxorai/sandbox@1.5.3(bufferutil@4.2.0)(utf-8-validate@6.0.6)':
+    dependencies:
+      '@bufbuild/protobuf': 2.12.1
+      '@connectrpc/connect': 2.1.2(@bufbuild/protobuf@2.12.1)
+      '@connectrpc/connect-node': 2.1.2(@bufbuild/protobuf@2.12.1)(@connectrpc/connect@2.1.2(@bufbuild/protobuf@2.12.1))
+      ws: 8.21.3(bufferutil@4.2.0)(utf-8-validate@6.0.6)
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
   '@manypkg/find-root@1.1.0':
     dependencies:
@@ -8594,16 +8630,6 @@ snapshots:
 
   '@superserve/sdk@0.9.3': {}
 
-  '@tenkicloud/sandbox@1.5.1(bufferutil@4.2.0)(utf-8-validate@6.0.6)':
-    dependencies:
-      '@bufbuild/protobuf': 2.12.1
-      '@connectrpc/connect': 2.1.2(@bufbuild/protobuf@2.12.1)
-      '@connectrpc/connect-node': 2.1.2(@bufbuild/protobuf@2.12.1)(@connectrpc/connect@2.1.2(@bufbuild/protobuf@2.12.1))
-      ws: 8.21.3(bufferutil@4.2.0)(utf-8-validate@6.0.6)
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
   '@tensorlakeai/native-darwin-arm64@0.5.148':
     optional: true
 
@@ -9420,6 +9446,12 @@ snapshots:
 
   computesdk@4.1.18:
     dependencies:
+      '@computesdk/cmd': 0.4.1
+      daemond: 0.1.9
+
+  computesdk@4.1.19:
+    dependencies:
+      '@benchsdk/cli': 0.9.5
       '@computesdk/cmd': 0.4.1
       daemond: 0.1.9
 

@@ -37,7 +37,7 @@ import { sandbox0 } from '@computesdk/sandbox0';
 import { sail } from '@computesdk/sail';
 import { sprites } from '@computesdk/sprites';
 import { superserve } from '@computesdk/superserve';
-import { tenki } from '@computesdk/tenki';
+import { luxor } from '@computesdk/tenki';
 import { tensorlake } from '@computesdk/tensorlake'
 import { uno } from '@computesdk/uno';
 import { upstash } from '@computesdk/upstash';
@@ -351,9 +351,10 @@ export const providers: ProviderConfig[] = [
     sandboxOptions: { templateId: 'superserve/node-22' },
   },
   {
+    // Luxor uses the historical participant ID so results share one series.
     name: 'tenki',
     requiredEnvVars: ['TENKI_API_KEY'],
-    createCompute: () => tenki({ apiKey: process.env.TENKI_API_KEY! }),
+    createCompute: () => luxor({ apiKey: process.env.TENKI_API_KEY! }),
   },
   {
     name: 'tensorlake',
