@@ -12,6 +12,13 @@ import '../src/env.js';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
+import {
+  DeleteBucketTaggingCommand,
+  GetBucketTaggingCommand,
+  PutBucketTaggingCommand,
+  S3Client,
+  type Tag,
+} from '@aws-sdk/client-s3';
 import { defineBenchmarkConfig, defineTask, TaskError } from '@benchsdk/runner';
 import type { SnapshotInfo, Storage } from '@storagesdk/core';
 import { drainLateCleanups, trackLateCleanup, withTimeout } from '../src/util/timeout.js';
@@ -110,6 +117,39 @@ const datasetBytes = spec.objectCount * spec.objectSizeBytes;
 /** How long teardown waits for a timed-out create to finish so it can delete what it made. */
 const LATE_CREATE_WAIT_MS = 120_000;
 
+// S3-family adapters keep the snapshot/fork manifest in bucket tags under a
+// 50-tag budget; enough accumulated manifest entries overflow it and every
+// manifest write fails with `NotSupported: manifest does not fit in S3
+// bucket-tag capacity`. Clearing the `storagesdk-manifest-*` tags (prefix
+// hardcoded in @storagesdk/adapters' s3 adapter) resets the manifest so the
+// provider keeps benchmark coverage instead of failing every run. Leftover
+// snapshot/fork buckets the manifest tracked are orphaned either way.
+const S3_MANIFEST_TAG_PREFIX = 'storagesdk-manifest-';
+
+function isManifestTagOverflow(err: unknown): boolean {
+  return err instanceof Error && err.message.includes('bucket-tag capacity');
+}
+
+/** Drop the adapter's manifest tags from `bucket`, preserving user-set tags. */
+async function clearManifestTags(storage: Storage, bucket: string): Promise<boolean> {
+  const client = (storage as { raw?: unknown }).raw;
+  if (!(client instanceof S3Client)) return false;
+  let existing: Tag[];
+  try {
+    const res = await client.send(new GetBucketTaggingCommand({ Bucket: bucket }));
+    existing = res.TagSet ?? [];
+  } catch {
+    return false; // no tag set, or the backend can't read tags — nothing to clear
+  }
+  const userTags = existing.filter((t) => !(t.Key ?? '').startsWith(S3_MANIFEST_TAG_PREFIX));
+  if (userTags.length === 0) {
+    await client.send(new DeleteBucketTaggingCommand({ Bucket: bucket }));
+  } else {
+    await client.send(new PutBucketTaggingCommand({ Bucket: bucket, Tagging: { TagSet: userTags } }));
+  }
+  return true;
+}
+
 /**
  * One iteration: seed dataset -> snapshot -> fork(from snapshot) -> fork(from
  * live) -> read-back-from-fork (verify) -> teardown. Every created resource is
@@ -160,27 +200,48 @@ export const task = defineTask<StorageProviderConfig>(async (ctx) => {
     );
     const seedMs = performance.now() - seedStart;
 
+    // Retry a create once after clearing a manifest that outgrew the
+    // provider's bucket-tag capacity — the alternative is a permanent failure
+    // for S3-family adapters whose manifest only ever lives in tags.
+    const withTagOverflowRecovery = async <T>(op: () => Promise<T>): Promise<T> => {
+      try {
+        return await op();
+      } catch (err) {
+        if (!isManifestTagOverflow(err)) throw err;
+        const cleared = await clearManifestTags(storage!, participant.bucket).catch(() => false);
+        if (!cleared) throw err;
+        log('manifest exceeded bucket-tag capacity; cleared stale manifest tags and retrying', { level: 'warn' });
+        return op();
+      }
+    };
+
     const snapStart = performance.now();
-    const snapshot = await step<{ id: string }>('snapshot-create', () => {
-      snapshotCreate = storage!.snapshots.create({ name: snapshotName });
-      return withTimeout(snapshotCreate, timeout, 'Snapshot create timed out');
-    });
+    const snapshot = await step<{ id: string }>('snapshot-create', () =>
+      withTagOverflowRecovery(() => {
+        snapshotCreate = storage!.snapshots.create({ name: snapshotName });
+        return withTimeout(snapshotCreate, timeout, 'Snapshot create timed out');
+      }),
+    );
     const snapshotCreateMs = performance.now() - snapStart;
     snapshotId = snapshot.id;
 
     const forkSnapStart = performance.now();
-    await step('fork-from-snapshot', () => {
-      forkFromSnapCreate = storage!.forks.create({ name: forkFromSnapName, fromSnapshot: snapshot.id });
-      return withTimeout(forkFromSnapCreate, timeout, 'Fork-from-snapshot timed out');
-    });
+    await step('fork-from-snapshot', () =>
+      withTagOverflowRecovery(() => {
+        forkFromSnapCreate = storage!.forks.create({ name: forkFromSnapName, fromSnapshot: snapshot.id });
+        return withTimeout(forkFromSnapCreate, timeout, 'Fork-from-snapshot timed out');
+      }),
+    );
     const forkFromSnapshotMs = performance.now() - forkSnapStart;
     forkFromSnapCreated = true;
 
     const forkLiveStart = performance.now();
-    const forkFromLive = await step<{ fromSnapshot?: string }>('fork-from-live', () => {
-      forkFromLiveCreate = storage!.forks.create({ name: forkFromLiveName });
-      return withTimeout(forkFromLiveCreate, timeout, 'Fork-from-live timed out');
-    });
+    const forkFromLive = await step<{ fromSnapshot?: string }>('fork-from-live', () =>
+      withTagOverflowRecovery(() => {
+        forkFromLiveCreate = storage!.forks.create({ name: forkFromLiveName });
+        return withTimeout(forkFromLiveCreate, timeout, 'Fork-from-live timed out');
+      }),
+    );
     const forkFromLiveMs = performance.now() - forkLiveStart;
     forkFromLiveCreated = true;
     forkFromLiveSnapshotId = forkFromLive.fromSnapshot;
