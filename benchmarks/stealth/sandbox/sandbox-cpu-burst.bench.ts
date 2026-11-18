@@ -129,6 +129,12 @@ const CPU_BURST_RESOURCE_OPTIONS: Record<string, CpuBurstResourceSpec> = {
     { expectedCpu: CPU_BURST_RESOURCE_PROFILE.cpu },
     { templateId: 'base', timeout: 600_000 },
   ),
+  gravixlayer: providerSpecific(
+    'The shared provider registry pins gravixlayer to the 8-vCPU base-xlarge template; cpu-burst drops it so the provider default template applies.',
+    { expectedCpu: CPU_BURST_RESOURCE_PROFILE.cpu },
+    {},
+    ['templateId'],
+  ),
   isorun: providerSpecific(
     'Isorun supports 1 vCPU / 1 GiB as its nano tier; it does not offer the 2-GiB standard profile.',
     { expectedCpu: 1, expectedMemoryMb: 1024 },
