@@ -29,7 +29,7 @@ test('moved suites resolve their relative imports from their new locations', () 
 });
 
 test('imported workflows point to existing suites and keep scheduled execution gated', () => {
-  const workflows = files('.github/workflows').filter((name) => /\/stealth-.*\.yml$/.test(name));
+  const workflows = files('.computesdk/workflows');
   const referenced = new Set();
   for (const file of workflows) {
     const source = read(file);
@@ -37,7 +37,6 @@ test('imported workflows point to existing suites and keep scheduled execution g
       assert.ok(existsSync(path.join(root, name)), `${file}: missing ${name}`);
       referenced.add(name);
     }
-    if (file.endsWith('harness-tests.yml')) continue;
     const jobs = source.split('\njobs:\n')[1].split(/(?=^  [\w-]+:\n)/m).filter((job) => job.trim());
     for (const job of jobs) {
       assert.match(job, /^    if: .*vars\.STEALTH_BENCHMARKS_ENABLED == 'true'/m, `${file}: ungated job`);
@@ -48,14 +47,12 @@ test('imported workflows point to existing suites and keep scheduled execution g
     }
   }
   for (const suite of files('benchmarks/stealth').filter((name) => name.endsWith('.bench.ts'))) {
-    // Reliability is intentionally a manual/local suite in the source repository.
-    if (suite.endsWith('/sandbox-reliability.bench.ts')) continue;
     assert.ok(referenced.has(suite), `no workflow references ${suite}`);
   }
 });
 
 test('workflows do not publish legacy results or generated charts to Git', () => {
-  for (const file of files('.github/workflows')) {
+  for (const file of [...files('.github/workflows'), ...files('.computesdk/workflows')]) {
     const source = read(file);
     assert.doesNotMatch(source, /git add[^\n]*(?:results\/|\.svg)/, file);
     assert.doesNotMatch(source, /pnpm (?:run )?generate-[\w-]*svg/, file);
@@ -64,4 +61,15 @@ test('workflows do not publish legacy results or generated charts to Git', () =>
   const ignored = read('.gitignore');
   assert.match(ignored, /^results\/$/m);
   assert.match(ignored, /^\*\*\/results\/$/m);
+});
+
+test('GitHub Actions cannot execute imported live stealth workloads', () => {
+  for (const file of files('.github/workflows')) {
+    assert.doesNotMatch(read(file), /bench:stealth|benchmarks\/stealth\/[\w./-]+\.bench\.ts/, file);
+  }
+  const reliability = read('.computesdk/workflows/stealth-sandbox-reliability.yml');
+  assert.match(reliability, /^# computesdk:reliability$/m);
+  assert.doesNotMatch(reliability, /^  schedule:/m, 'do not create reliability slots before cutover');
+  assert.match(reliability, /COMPUTESDK_RUN_ID/);
+  assert.match(reliability, /--scheduled-for/);
 });

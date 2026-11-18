@@ -63,7 +63,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Validates all .github/workflows/*.yml for syntax and expression
+      # Validates GitHub validation and .computesdk execution workflows for syntax and expression
       # errors. The self-hosted runner label is declared in
       # .github/actionlint.yaml. The empty-string choice-input defaults
       # (used as "run all / none" sentinels) are accepted by GitHub Actions
@@ -72,6 +72,7 @@ jobs:
       # because the bench run: scripts rely on intentional word-splitting of
       # multi-flag variables (e.g. $SEQ_ARGS, $PARALLEL_ARGS, $PROVIDER_FLAG).
       - name: actionlint
-        uses: docker://rhysd/actionlint:1.7.12
-        with:
-          args: -color -ignore "string should not be empty" -shellcheck=
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.12 \
+            -color -ignore "string should not be empty" -shellcheck= \
+            .github/workflows/*.yml .computesdk/workflows/*.yml

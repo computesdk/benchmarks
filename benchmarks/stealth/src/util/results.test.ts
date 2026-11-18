@@ -26,7 +26,7 @@ try {
   assert.equal(fs.existsSync(path.join(fixture, 'current-run-attempt/other-provider')), false);
   const workflows = ["sandbox-snapshot","filesystem-snapshot","sandbox-fidelity","sandbox-snapshot-fanout","sandbox-pause-resume","sandbox-burst-survival","sandbox-cpu-burst","sandbox-fs-io","sandbox-fs-api","sandbox-rootfs","sandbox-volumes","oci-tti","sandbox-ci-capabilities","os-capabilities","sandbox-cpu"];
   for (const workflow of workflows) {
-    const yaml = fs.readFileSync(path.join(repoDir, '.github/workflows', 'stealth-' + workflow + '.yml'), 'utf8');
+    const yaml = fs.readFileSync(path.join(repoDir, '.computesdk/workflows', 'stealth-' + workflow + '.yml'), 'utf8');
     assert.ok(!yaml.includes('\n  collect:'), workflow);
     assert.ok(!/git (?:add|commit|push).*results/.test(yaml), workflow);
     assert.ok(!/path: results\//.test(yaml), workflow);
