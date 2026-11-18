@@ -63,7 +63,10 @@ export const browserProviders: BrowserProviderConfig[] = [
     createBrowserProvider: () => notte({
       apiKey: process.env.NOTTE_API_KEY!
     }),
-    sessionCreateOptions: { stealth: false },
+    sessionCreateOptions: {
+      proxies: false,
+      stealth: false,
+    },
   },
   {
     name: 'steel',
