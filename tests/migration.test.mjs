@@ -39,6 +39,11 @@ test('imported workflows point to existing suites and keep scheduled execution g
     }
     const jobs = source.split('\njobs:\n')[1].split(/(?=^  [\w-]+:\n)/m).filter((job) => job.trim());
     for (const job of jobs) {
+      if (file.endsWith('stealth-sandbox-reliability.yml')) {
+        // Reliability routing cut over: scheduled fires, no stealth gate.
+        assert.match(source, /^  schedule:/m, `${file}: reliability must be scheduled`);
+        continue;
+      }
       if (file.endsWith('stealth-soak-state-import.yml')) {
         assert.match(job, /vars\.STEALTH_BENCHMARKS_ENABLED != 'true'/);
         continue;
@@ -73,7 +78,7 @@ test('GitHub Actions cannot execute imported live stealth workloads', () => {
   }
   const reliability = read('.computesdk/workflows/stealth-sandbox-reliability.yml');
   assert.match(reliability, /^# computesdk:reliability$/m);
-  assert.doesNotMatch(reliability, /^  schedule:/m, 'do not create reliability slots before cutover');
+  assert.match(reliability, /^  schedule:/m, 'reliability routing has cut over: the run must be scheduled');
   assert.match(reliability, /COMPUTESDK_RUN_ID/);
   assert.match(reliability, /--scheduled-for/);
 });
