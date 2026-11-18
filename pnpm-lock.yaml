@@ -89,6 +89,9 @@ importers:
       '@computesdk/givemeanode':
         specifier: ^1.2.2
         version: 1.2.2
+      '@computesdk/gravixlayer':
+        specifier: ^1.0.3
+        version: 1.0.3(@opentelemetry/api@1.9.1)
       '@computesdk/hopx':
         specifier: ^0.2.32
         version: 0.2.32(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -786,6 +789,10 @@ packages:
   '@computesdk/givemeanode@1.2.2':
     resolution: {integrity: sha512-lPGVSmuYou5dpbvOan+cQ6l1Egc8B883J1w7pngjdI3gHiMa54LsSjzM6vfWMTVl4bdPT/5Wq4uo99EiK4OurA==}
 
+  '@computesdk/gravixlayer@1.0.3':
+    resolution: {integrity: sha512-FGfGroAYpc+7BoisabbKZlv31Y++6B7nLNqWoBKRqFdBC+1dmRs1AeYsgQPpL5ux6+/fPtyMY7ZstHiMHlRCqQ==}
+    engines: {node: '>=20.0.0'}
+
   '@computesdk/hopx@0.2.32':
     resolution: {integrity: sha512-2n5R+n3XPI6mzSJJo46IaWS83D5ybGHaVjq3euiUVtz01N5W6UdBddYWiaFXzBGIRWhTBJS4xiodrElO2uA/XQ==}
 
@@ -834,6 +841,9 @@ packages:
 
   '@computesdk/opencomputer@1.0.8':
     resolution: {integrity: sha512-zwdQaC+Y0zrtxTldRoV2cSdfrfB+bAoVdq7fceJ+de7eNh23hJRs/U0TlWLBKRn8Mbzd8Gavq/sNOXwSsFPFLw==}
+
+  '@computesdk/provider@2.1.11':
+    resolution: {integrity: sha512-jgryilUaZ7TD8W37sXZzoiiiKr20PeykwWBkJxwMWL3m6nS88VWEfnMlUWyYVBwxAlgsMS1oog/fx/EZ9/xusA==}
 
   '@computesdk/provider@2.1.9':
     resolution: {integrity: sha512-Gw2V+LuxwUWwXGibcL7aG7ao1zv/xW88Ggt22Afna+62Br0yQmhDgpNQ+ans2UihcIBBAQjfgwMiE29pGNCB5Q==}
@@ -1650,8 +1660,8 @@ packages:
   '@onkernel/sdk@0.49.0':
     resolution: {integrity: sha512-nsq5OfkaNKxRTCdXQF8BSTj/Wl0iBIqyWoI/ATgQt15pV+59E22MsZ+IHPiVwwb33tXLtnOqUe5ffOxm7l3GHg==}
 
-  '@opencomputer/sdk@2.1.2':
-    resolution: {integrity: sha512-Yd4R/OPFu0VnaB0ZXBN3gzB53g4Gg2pvF2gUG8y8H2D57bCn+KkwaQij3ZO72JSlhNR3z0rnp5FaEFALvNUlRg==}
+  '@opencomputer/sdk@2.3.1':
+    resolution: {integrity: sha512-1oCGDqsrsp7aJXNwvOzP7bAwQ3kKI05uxx7AbTpKRGYQ/4NgYidwFYmhf++lK+mjPlp19YHenKeZRniu2tqnjA==}
     engines: {node: '>=18'}
 
   '@opentelemetry/api-logs@0.217.0':
@@ -3057,6 +3067,9 @@ packages:
     resolution: {integrity: sha512-6FqVXeETqWPoGcfzrXb37E50NP0LXT8kAMu5ooZayhWWdgEY4lBEEcbQNXtkuKQsGduxiIcI4gOTsxTmuq/bSg==}
     engines: {node: '>= 14'}
 
+  computesdk@4.1.10:
+    resolution: {integrity: sha512-I99mW+7BfB24ilVbCpTQ7pglda8sETuRsbedwGHDQx/DRTLLtDGHQVfME17gVPvBUCRttbEe/qjY5ZEHUn/eBA==}
+
   computesdk@4.1.8:
     resolution: {integrity: sha512-UhEPuh9EMsVuOFPKHrAllyACGm8UYKGsUklH8uFJ24mdLUT11PkU4NTCFmG0V1O8Oyhi8d2riaUoavTnGa8PSA==}
 
@@ -3122,6 +3135,11 @@ packages:
 
   daemond@0.1.6:
     resolution: {integrity: sha512-vpYT4ToRHKRSIYmKG/ovUMNF6+7e1s3m/4eJ10AxmegIW7t0XcxSVzp3pYbz+X4rFeykyy02N7kFa6sHh1YZsA==}
+    engines: {node: '>=18.0.0'}
+    os: [linux, darwin]
+
+  daemond@0.1.8:
+    resolution: {integrity: sha512-hGk0lzT55g1vijr0Erfsb9m2cszofQnhmQFF88fv4xjJx9UKrGXIzrssad+D1iCk8TgRv4T50SapGQ+/9/T8Qg==}
     engines: {node: '>=18.0.0'}
     os: [linux, darwin]
 
@@ -3705,6 +3723,15 @@ packages:
   graphql@16.14.2:
     resolution: {integrity: sha512-Chq1s4CY7jmh8gO2qvLIJyfCDIN+EHLFW/9iShnp1z8FjBQMoodWP1kDC36VAMXXIvAjj4ARa7ntfAV2BrjsbA==}
     engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
+
+  gravixlayer@0.1.30:
+    resolution: {integrity: sha512-C24Ys92eYbHQSLm89oOzCLMpnowgZ3qKn6vL9Nazd6Ef39mCbi1jFNq0ByR2opXU1jX6EdGF654lhFcMnmy0TQ==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      '@opentelemetry/api': ^1.0.0
+    peerDependenciesMeta:
+      '@opentelemetry/api':
+        optional: true
 
   gtoken@7.1.0:
     resolution: {integrity: sha512-pCcEwRi+TKpMlxAQObHDQ56KawURgyAf6jtIY046fJ5tIv3zDe/LEIubckAO8fj6JnAxLdmWkUfNyulQ2iKdEw==}
@@ -6543,6 +6570,14 @@ snapshots:
       '@computesdk/provider': 2.1.9
       computesdk: 4.1.8
 
+  '@computesdk/gravixlayer@1.0.3(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@computesdk/provider': 2.1.11
+      computesdk: 4.1.10
+      gravixlayer: 0.1.30(@opentelemetry/api@1.9.1)
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
+
   '@computesdk/hopx@0.2.32(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
     dependencies:
       '@computesdk/provider': 2.1.9
@@ -6655,8 +6690,14 @@ snapshots:
   '@computesdk/opencomputer@1.0.8':
     dependencies:
       '@computesdk/provider': 2.1.9
-      '@opencomputer/sdk': 2.1.2
+      '@opencomputer/sdk': 2.3.1
       computesdk: 4.1.8
+
+  '@computesdk/provider@2.1.11':
+    dependencies:
+      '@computesdk/cmd': 0.4.1
+      computesdk: 4.1.10
+      daemond: 0.1.8
 
   '@computesdk/provider@2.1.9':
     dependencies:
@@ -7412,7 +7453,7 @@ snapshots:
 
   '@onkernel/sdk@0.49.0': {}
 
-  '@opencomputer/sdk@2.1.2':
+  '@opencomputer/sdk@2.3.1':
     dependencies:
       undici: 7.30.0
 
@@ -9004,6 +9045,11 @@ snapshots:
       normalize-path: 3.0.0
       readable-stream: 4.7.0
 
+  computesdk@4.1.10:
+    dependencies:
+      '@computesdk/cmd': 0.4.1
+      daemond: 0.1.8
+
   computesdk@4.1.8:
     dependencies:
       '@computesdk/cmd': 0.4.1
@@ -9052,6 +9098,8 @@ snapshots:
       which: 2.0.2
 
   daemond@0.1.6: {}
+
+  daemond@0.1.8: {}
 
   date-fns@4.4.0: {}
 
@@ -9813,6 +9861,10 @@ snapshots:
   graphemer@1.4.0: {}
 
   graphql@16.14.2: {}
+
+  gravixlayer@0.1.30(@opentelemetry/api@1.9.1):
+    optionalDependencies:
+      '@opentelemetry/api': 1.9.1
 
   gtoken@7.1.0:
     dependencies:
