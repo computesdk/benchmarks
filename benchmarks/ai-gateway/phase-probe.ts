@@ -180,14 +180,42 @@ function extractOutputTokens(wireFormat: AIGatewayWireFormat, buf: string): numb
   // "usage" object keyed by "output_tokens" (Anthropic: message_start/
   // message_delta; Responses: response.completed's `response.usage`) — same
   // shared extraction path. The last "output_tokens" seen in the buffer is
-  // the most up to date. Scoped to inside the "usage" object (allowing one
-  // level of nested {} for fields like usage.server_tool_use) so a gateway
+  // the most up to date. Scoped to objects keyed "usage" so a gateway
   // that echoes an unrelated "output_tokens" elsewhere — e.g. Concentrate's
   // sibling `cost.breakdown[…].output_tokens` dollar amount, present on both
   // its /messages and /responses endpoints — can't be mistaken for the real
   // count.
-  const matches = [...buf.matchAll(/"usage"\s*:\s*\{(?:[^{}]|\{[^{}]*\})*?"output_tokens"\s*:\s*(\d+)/g)];
-  return matches.length > 0 ? Number(matches[matches.length - 1][1]) : undefined;
+  //
+  // Parsed as JSON per SSE `data:` line rather than regex-matched: OpenAI's
+  // Responses `usage` now nests two levels deep before `output_tokens`
+  // (`input_tokens_details.cache_write_tokens_details`), which a brace-
+  // counting regex can't step past.
+  let last: number | undefined;
+  for (const line of buf.split('\n')) {
+    if (!line.startsWith('data:')) continue;
+    let event: unknown;
+    try {
+      event = JSON.parse(line.slice(5));
+    } catch {
+      continue; // partial trailing line or `[DONE]`
+    }
+    last = findUsageOutputTokens(event) ?? last;
+  }
+  return last;
+}
+
+/** Last `usage.output_tokens` count anywhere in a parsed event, only from objects keyed `usage`. */
+function findUsageOutputTokens(value: unknown): number | undefined {
+  if (value === null || typeof value !== 'object') return undefined;
+  let found: number | undefined;
+  for (const [key, child] of Object.entries(value)) {
+    if (key === 'usage' && child !== null && typeof child === 'object') {
+      const n = (child as Record<string, unknown>).output_tokens;
+      if (typeof n === 'number' && Number.isFinite(n)) found = n;
+    }
+    found = findUsageOutputTokens(child) ?? found;
+  }
+  return found;
 }
 
 /**
