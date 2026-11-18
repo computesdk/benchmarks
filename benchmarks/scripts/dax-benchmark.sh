@@ -226,13 +226,21 @@ node_is_recent_enough() {
   return 0
 }
 
+# Templates may preinstall Bun — skip the network legs entirely when the exact
+# pinned version is already on PATH.
+bun_already_present() {
+  command -v bun >/dev/null 2>&1 && [ "$(bun --version 2>/dev/null)" = "$BUN_VERSION" ]
+}
+
 download_bun() {
+  bun_already_present && return 0
   curl -fsSL \
     "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/${BUN_FILENAME}" \
     -o "$ROOT/bun.zip"
 }
 
 unpack_bun() {
+  bun_already_present && return 0
   unzip -q -j "$ROOT/bun.zip" "$BUN_INTERNAL_PATH" -d "$BUN_INSTALL/bin"
   chmod +x "$BUN_INSTALL/bin/bun"
 }
