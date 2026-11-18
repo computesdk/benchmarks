@@ -68,11 +68,14 @@ jobs:
       # .github/actionlint.yaml. The empty-string choice-input defaults
       # (used as "run all / none" sentinels) are accepted by GitHub Actions
       # but flagged by actionlint's stricter parser, so that one rule is
-      # ignored here. Shellcheck integration is disabled (-shellcheck=)
+      # ignored here, as is the "runs too frequently" rule — .computesdk
+      # schedules execute on ComputeSDK Actions, not GitHub's 5-minute-minimum
+      # cron (stealth-sandbox-reliability fires every minute). Shellcheck
+      # integration is disabled (-shellcheck=)
       # because the bench run: scripts rely on intentional word-splitting of
       # multi-flag variables (e.g. $SEQ_ARGS, $PARALLEL_ARGS, $PROVIDER_FLAG).
       - name: actionlint
         run: |
           docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.12 \
-            -color -ignore "string should not be empty" -shellcheck= \
+            -color -ignore "string should not be empty" -ignore "scheduled job runs too frequently" -shellcheck= \
             .github/workflows/*.yml .computesdk/workflows/*.yml
