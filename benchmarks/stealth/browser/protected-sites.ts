@@ -48,14 +48,12 @@ export const PROTECTED_SITES: ProtectedSite[] = [
     slug: 'nowsecure',
     url: 'https://nowsecure.nl/',
     expectedVendor: 'cloudflare',
-    // Cloudflare injects its background JS detection script
-    // (/cdn-cgi/challenge-platform/scripts/jsd) into every page it serves, and
-    // the page embeds its own Turnstile demo widget (id cf-chl-widget-*), so
-    // neither marks an active challenge. `_cf_chl_opt` only ships on the
-    // "Just a moment" interstitial.
+    // Cloudflare JSD challenge: the real page ships immediately with the
+    // challenge embedded, so pass requires the signal AND no active challenge.
     passSignal: { selector: 'h2.content__title' },
     challengeSignal: {
-      html: '_cf_chl_opt',
+      html: 'challenge-platform',
+      selector: '.cf-chl-widget, [id^="cf-chl-widget"]',
       text: 'Verify you are human',
       title: 'Just a moment',
     },
