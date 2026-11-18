@@ -1,184 +1,82 @@
 # ComputeSDK Benchmarks
 
-**The default platform for cloud infrastructure benchmarks.**
+Reproducible benchmarks for sandbox, browser, object storage and AI gateway providers, plus the BenchSDK packages that run them.
 
-ComputeSDK Benchmarks publishes reproducible, provider-neutral performance measurements for the infrastructure that AI agents and developer platforms run on: sandboxes, object storage, headless browsers, and AI gateways. Every test is automated, every result is committed as JSON, and the methodology is public.
+Results, run history and access controls live on the [benchmark platform](https://platform.computesdk.com). Public leaderboards are available at [computesdk.com/benchmarks](https://www.computesdk.com/benchmarks). Results and generated charts are no longer committed to this repository; existing Git history remains available.
 
-Live leaderboards and full methodology: [https://www.computesdk.com/benchmarks](https://www.computesdk.com/benchmarks)
+## Layout
 
-For LLMs and agents: see [`llms.txt`](./llms.txt) for a machine-readable index of this repo, and [`results/schema.json`](./results/schema.json) for the JSON Schema of every benchmark result file.
+```text
+benchmarks/
+  sandbox/           # Public benchmark suites
+  browser/
+  storage/
+  ai-gateway/
+  reliability/
+  scale/
+  stealth/           # Open source suites whose results use stealth platform access
+    sandbox/
+    browser/
+    storage/
+    composite/
+    web-data/
+    src/             # Stealth scoring and suite helpers
+    scripts/         # Stealth setup and local diagnostic tools
+  src/               # Public suite helpers
+  scripts/           # Public setup and operational scripts
+packages/            # BenchSDK runner, client, CLI, API, worker and scaffolder
+examples/            # Runnable benchmark authoring examples
+.github/workflows/   # Execution and validation
+```
 
-## Writing and running benchmarks
+The `stealth/` directory delineates suite membership, not source-code access. The platform controls who can see results. A folder move does not change platform visibility, grouping or benchmark IDs.
 
-- [`WRITING_BENCHMARKS.md`](./WRITING_BENCHMARKS.md) — step-by-step guide to authoring benchmarks.
-- [`examples/`](./examples) — runnable `*.bench.ts` examples covering every benchsdk capability.
-- [`packages/create-bench/README.md`](./packages/create-bench/README.md) — scaffold a new benchmark project in one command.
-- [`packages/benchsdk-runner/README.md`](./packages/benchsdk-runner/README.md) — runner API and `bench run` reference.
-- [`.agents/skills/benchsdk-cli/SKILL.md`](./.agents/skills/benchsdk-cli/SKILL.md) — full `bench` CLI reference (auth, org, runs, results, artifacts, export).
+Provider registries and scoring helpers that differ between the old repositories remain scoped to their suites to preserve measurements. Reconcile them separately when their behavior can be verified as equivalent.
 
-## Partners
+## Run locally
 
-Our partners support our independent benchmarks.
+Use Node.js 24 and the pnpm version declared in `package.json`.
 
-<p align="center"><sub><strong>★ SILVER</strong></sub></p>
-<p align="center">
-  <a href="https://latitude.sh/?utm_source=github&utm_medium=readme&utm_campaign=benchmarks-sponsor">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://logos.computesdk.com/api/svg/latitude/bounded/logo-dark">
-      <img src="https://logos.computesdk.com/api/svg/latitude/bounded/logo-light" alt="Latitude" height="36">
-    </picture>
-  </a>
-  &nbsp;&nbsp;&nbsp;
-  <a href="https://cloud.google.com/run?utm_source=github&utm_medium=readme&utm_campaign=benchmarks-sponsor">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://logos.computesdk.com/api/svg/google-cloud-run/bounded/logo-dark">
-      <img src="https://logos.computesdk.com/api/svg/google-cloud-run/bounded/logo-light" alt="Google Cloud Run" height="36">
-    </picture>
-  </a>
-</p>
+```bash
+pnpm install --frozen-lockfile --ignore-scripts
+pnpm -r --filter './packages/**' run build
 
-<p align="center"><sub><strong>+ BRONZE</strong></sub></p>
-<p align="center">
-  <a href="https://www.browserbase.com/?utm_source=github&utm_medium=readme&utm_campaign=benchmarks-sponsor">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://logos.computesdk.com/api/svg/browserbase/bounded/logo-dark">
-      <img src="https://logos.computesdk.com/api/svg/browserbase/bounded/logo-light" alt="Browserbase" height="26">
-    </picture>
-  </a>
-  &nbsp;&nbsp;&nbsp;
-  <a href="https://www.tigrisdata.com/?utm_source=github&utm_medium=readme&utm_campaign=benchmarks-sponsor">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://logos.computesdk.com/api/svg/tigris/bounded/logo-dark">
-      <img src="https://logos.computesdk.com/api/svg/tigris/bounded/logo-light" alt="Tigris" height="26">
-    </picture>
-  </a>
-  &nbsp;&nbsp;&nbsp;
-  <a href="https://neon.com/?utm_source=github&utm_medium=readme&utm_campaign=benchmarks-sponsor">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://logos.computesdk.com/api/svg/neon/bounded/logo-dark">
-      <img src="https://logos.computesdk.com/api/svg/neon/bounded/logo-light" alt="Neon" height="26">
-    </picture>
-  </a>
-  &nbsp;&nbsp;&nbsp;
-  <a href="https://www.gitbook.com/?utm_source=github&utm_medium=readme&utm_campaign=benchmarks-sponsor">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://logos.computesdk.com/api/svg/gitbook/bounded/logo-dark">
-      <img src="https://logos.computesdk.com/api/svg/gitbook/bounded/logo-light" alt="GitBook" height="26">
-    </picture>
-  </a>
-</p>
+# Supply the provider credentials required by the suite.
+# Add BENCHMARKS_PLATFORM_API_KEY to ingest a run; --no-ingest keeps it local.
+pnpm exec tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --provider e2b --iterations 1 --no-ingest
+pnpm bench:stealth benchmarks/stealth/sandbox/cpu.bench.ts --provider e2b --iterations 1 --no-ingest
+```
 
-<p align="center"><sub><strong>BENCHMARKS POWERED BY</strong></sub></p>
-<p align="center">
-  <a href="https://namespace.so/?utm_source=github&utm_medium=readme&utm_campaign=benchmarks-sponsor">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://logos.computesdk.com/api/svg/namespace/bounded/logo-dark">
-      <img src="https://logos.computesdk.com/api/svg/namespace/bounded/logo-light" alt="Namespace" height="30">
-    </picture>
-  </a>
-</p>
+Local diagnostics may be written to ignored `results/` directories. They are not the publication mechanism. CI runs ingest through BenchSDK; legacy result collectors, generated charts and result-committing steps have been removed.
 
-<p align="center"><a href="./SPONSORSHIP.md">Become a sponsor →</a></p>
+See the [runner reference](packages/benchsdk-runner/README.md), [CLI reference](packages/benchsdk-cli/README.md), [scaffolder](packages/create-bench/README.md) and [examples](examples/) to author benchmarks. SDK documentation stays with its packages.
 
-<br>
+## Validate
 
-## What We Measure
+```bash
+pnpm typecheck
+pnpm test:migration
+pnpm stealth:test:fs-api
+pnpm stealth:test:benchmark-setup
+pnpm stealth:test:scoring
+pnpm stealth:test:scoring:active
+node --test tests/stealth/cpu-local/*.test.mjs
+```
 
-We benchmark the infrastructure that AI agents and developer platforms rely on:
+The public CI and stealth harness workflows run without provider credentials. Live benchmark jobs require provider and platform credentials, loaded from the Namespace vault in CI.
 
-- **Sandboxes** — concurrent **Time to Interactive (TTI)**: API request to first successful command inside a fresh sandbox; **Dax**: a pinned OpenCode clone/install/typecheck workload.
-- **Object storage** — upload/download latency and throughput across providers and file sizes.
-- **Headless browsers** — session creation, navigation, and step throughput.
-- **AI gateways** — cold/warm connection latency and time to first token.
+## Migration and cutover
 
-## Methodology
+1. Deploy the dotcom consumer migration before merging this deletion. `src/utils/benchmark-data.ts`, comparison loaders, and `src/lib/agent-md.ts` still reference raw GitHub JSON under `results/`; switch those consumers and links to the platform first.
+2. Merge the consolidated source and workflow changes. The imported `stealth-*.yml` schedules are gated by the repository variable `STEALTH_BENCHMARKS_ENABLED`, which defaults to disabled; manual dispatch remains available for validation.
+3. Verify vault/runner access in this repository and manually smoke-test the imported suites. Preserve existing platform slugs, names, grouping and visibility. Use the existing workflow inputs to select the intended slug when dispatching; schedule defaults still use the existing `-stealth` IDs.
+4. Update the platform's source links and workflow dispatch configuration from `computesdk/benchmarks-stealth@main` to `computesdk/benchmarks@master`, paths under `benchmarks/stealth/`, and workflow names prefixed with `stealth-`.
+5. Pause schedules in the old repository, then set `STEALTH_BENCHMARKS_ENABLED=true` here. Do not run both sets of schedules. Verify ingested runs and source links before retiring the old repository.
 
-Each suite uses a shared open workload across its participating providers, with provider-specific setup and resource mappings. Scored benchmarks declare **per-metric ceilings and weights**, not one universal ceiling: for example, sandbox TTI uses 10,000 ms and Dax uses 200,000 ms. Ceilings set the scoring scale; execution deadlines and workload checks decide pass/fail. Scored metrics report median, P95, and P99, and the weighted metric score is multiplied by the benchmark's success rate. Some probes do not declare composite scoring. Tests run on suite-specific schedules, and published results are committed as JSON to this repo.
+The soak suite uses a provider-scoped Actions cache for operational sandbox state rather than committing state under `results/`. Transfer its current state before its first production shift if the current epoch must continue; without a cache it starts a fresh epoch. Cache eviction can also start a fresh epoch. Cached state is not a results archive and must not contain credentials. OCI template provisioning retains its separate provider artifact registry, which is execution configuration rather than benchmark results.
 
-For full details on each suite, see:
+This migration does not change repository visibility, platform configuration, or schedules in the old repository. It imports the current source snapshot, not the internal repository's Git history.
 
-- [Sandbox TTI, Dax, and per-suite scoring methodology →](./METHODOLOGY.md)
-- [Browser and throughput methodology →](./THROUGHPUT.md)
-- [AI gateway methodology →](./AI_GATEWAYS.md)
+## License
 
-## Transparency
-
-- 📖 **Open source** — All benchmark code is public
-- 📊 **Raw data** — Every result committed to repo as JSON
-- 🔁 **Reproducible** — Anyone can run the same tests
-- ⚙️ **Automated** — Suite-specific workflows; sandbox TTI and Dax run weekly on Fridays at 13:00 and 13:30 UTC, respectively
-- 🛡️ **Independent** — Sponsors cannot influence results
-
-## Latest Benchmarks
-
-> **Retired benchmarks:** The sequential and staggered sandbox TTI tests have been retired. Historic results are still accessible in the [`results/`](./results) directory under [`sequential_tti/`](./results/sequential_tti) and [`staggered_tti/`](./results/staggered_tti).
-
-### [Burst TTI](#burst-tti)
-
-![Burst TTI](./burst_tti.svg)
-
-### [Pricing Comparison](#pricing-comparison)
-
-![Pricing Comparison](./pricing.svg)
-
-### [Browser Sessions](#browser-sessions)
-
-![Browser Sessions](./browser.svg)
-
-### [Browser Step Throughput](#browser-step-throughput)
-
-![Browser Sessions](./browser-throughput.svg)
-
-### [Object Storage](#object-storage)
-
-![Object Storage — 10MB](./storage_10mb.svg)
-
-### [Snapshot & Fork](#snapshot--fork)
-
-![Object Storage Snapshot & Fork](./snapshot_fork_small.svg)
-
-### [DAX Sandbox Builds](#dax-sandbox-builds)
-
-![DAX Sandbox Builds](./dax.svg)
-
-The [DAX resource configuration](./benchmarks/sandbox/dax.bench.ts) generally targets
-8 vCPUs and 16 GiB RAM. Modal uses the VM runtime with its default CPU request of
-0.125 physical cores and a burst limit of 8 physical cores (16 vCPU equivalent). Its 16 GiB memory
-request has no explicit memory limit, allowing memory bursting when host capacity
-is available. Modal [bills CPU and memory at the greater of request or actual usage](https://modal.com/docs/guide/sandbox-resources),
-including usage above the memory request.
-
-### [AI Gateway - Anthropic](#ai-gateway---anthropic)
-
-![AI Gateway - Anthropic](./ai-gateway.svg)
-
-### [AI Gateway - OpenAI](#ai-gateway---openai)
-
-![AI Gateway - OpenAI](./ai-gateway-openai.svg)
-
-### [AI Gateway - Gemini](#ai-gateway---gemini)
-
-![AI Gateway - Gemini](./ai-gateway-gemini.svg)
-
-### [AI Gateway - Kimi](#ai-gateway---kimi)
-
-![AI Gateway - Kimi](./ai-gateway-kimi.svg)
-
-## Roadmap
-
-- [x] computesdk.com/benchmarks
-- [x] Add P95 & P99
-- [x] TTI n=100 test
-- [x] TTI n=100 concurrency test (staggered + burst)
-- [x] 100,000 concurrent sandbox stress test
-- [ ] Cold start vs warm start metrics
-- [ ] Multi-region testing
-- [x] Cost-per-sandbox-minute
-
-<br>
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-
-**Powered by ComputeSDK** — We use [ComputeSDK](https://github.com/computesdk/computesdk), a multi-provider SDK, to test all sandbox providers with the same code. One API, multiple providers, fair comparison.
-
-MIT License
+[MIT](LICENSE)

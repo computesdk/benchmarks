@@ -38,6 +38,9 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Test repository migration contracts
+        run: pnpm test:migration
+
       - name: Test daily workflow defaults
         run: node --test benchmarks/scripts/daily/oss-workflow-defaults.test.mjs
 

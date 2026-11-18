@@ -25,4 +25,4 @@ BENCHMARKS_PLATFORM_API_KEY=bp-... pnpm exec bench run examples/01-hello.bench.t
 | [10-shared-run.bench.ts](./10-shared-run.bench.ts) | `--run-key` for multi-process shared runs |
 | [11-logging.bench.ts](./11-logging.bench.ts) | leveled `log`, step output capture, and `captureOutput` |
 
-For the full authoring guide, see [`WRITING_BENCHMARKS.md`](../WRITING_BENCHMARKS.md).
+For the full authoring guide, see [the runner reference](../packages/benchsdk-runner/README.md).

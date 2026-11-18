@@ -1,0 +1,95 @@
+export interface ProviderConfig {
+  /** Provider name */
+  name: string;
+  /** Number of iterations (default: 10) */
+  iterations?: number;
+  /** Timeout per iteration in ms (default: 120000) */
+  timeout?: number;
+  /** Environment variables that must all be set to run this benchmark */
+  requiredEnvVars: string[];
+  /** Creates a compute instance — either direct SDK or gateway-based */
+  createCompute: () => any;
+  /** Options passed to sandbox.create() (e.g. { image: 'node:20' }) */
+  sandboxOptions?: Record<string, any>;
+  /** Persistent payload workspace when command cwd differs from filesystem API scope. */
+  snapshotWorkdir?: string;
+  /** Timeout for sandbox.destroy() in ms (default: 15000) */
+  destroyTimeoutMs?: number;
+  /** The provider's sandbox.create options accept `name`. Benchmarks that tag
+   * their boxes (e.g. burst-tti-1k) set a run-scoped name per box so a
+   * post-destroy sweep can find and delete orphans — including boxes that
+   * exist provider-side but whose create() errored or timed out client-side. */
+  supportsCreateNameOption?: boolean;
+  /** Dispatch-only provider: benchmarks that filter on this flag (e.g.
+   * reliability) exclude it from their measured set. */
+  manualOnly?: boolean;
+}
+
+export interface TimingResult {
+  /** Total time from start to first successful code execution */
+  ttiMs?: number;
+  /** Error message if this iteration failed */
+  error?: string;
+}
+
+export interface Stats {
+  median: number;
+  p95: number;
+  p99: number;
+}
+
+export type BenchmarkMode = 'sequential' | 'staggered' | 'burst' | 'concurrent';
+
+export interface BenchmarkResult {
+  provider: string;
+  mode?: BenchmarkMode;
+  iterations: TimingResult[];
+  summary: {
+    ttiMs: Stats;
+  };
+  /** Composite weighted score (0-100, higher = better). Computed post-benchmark. */
+  compositeScore?: number;
+  /** Success rate as a fraction (0 to 1). Computed post-benchmark. */
+  successRate?: number;
+  skipped?: boolean;
+  skipReason?: string;
+}
+
+export interface ConcurrentBenchmarkResult extends BenchmarkResult {
+  mode: 'concurrent';
+  /** Number of sandboxes launched simultaneously */
+  concurrency: number;
+  /** Wall-clock time from first request to last sandbox ready (ms) */
+  wallClockMs: number;
+  /** Time until the fastest sandbox was interactive under load (ms) */
+  timeToFirstReadyMs: number;
+}
+
+export interface StaggeredBenchmarkResult extends BenchmarkResult {
+  mode: 'staggered';
+  /** Number of sandboxes launched */
+  concurrency: number;
+  /** Delay in ms between each sandbox launch */
+  staggerDelayMs: number;
+  /** Wall-clock time from first launch to last sandbox ready (ms) */
+  wallClockMs: number;
+  /** Time until the fastest sandbox was interactive (ms) */
+  timeToFirstReadyMs: number;
+  /** Per-sandbox timing profile showing launch offset and TTI */
+  rampProfile: { launchedAt: number; readyAt: number; ttiMs: number }[];
+}
+
+/** Pass/fail record for a single CI capability check in a provider run. */
+export interface CapabilityFeatureResult {
+  passed: boolean;
+  error?: string;
+}
+
+/** Map of check name -> result for one provider iteration. */
+export type ProviderCapabilityMatrix = Record<string, CapabilityFeatureResult>;
+
+/** One provider's row in the CI capabilities results JSON. */
+export interface CapabilityMatrixResult {
+  provider: string;
+  features: ProviderCapabilityMatrix;
+}

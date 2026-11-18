@@ -1,0 +1,217 @@
+name: Stealth — Sandbox Soak Benchmark
+
+# computesdk:secrets=NSC_TOKEN
+# computesdk:secrets-env=declared
+
+on:
+  schedule:
+    # Daily at 03:45 UTC — minute 45 stays clear of every other workflow's
+    # minute (0/15/30) and the 11:00-14:00 UTC cluster. Each run is a "shift"
+    # that reattaches to the soaking sandbox and checks it for ~355min; the
+    # writer appends 24/7, so the shift's incremental verify also covers the
+    # chain built up between shifts.
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: 'Platform benchmark slug (defaults to the canonical slug)'
+        required: false
+        default: 'sandbox-soak'
+      name:
+        description: 'Platform benchmark name (defaults to the canonical name)'
+        required: false
+        default: 'Sandbox Soak'
+      shift_minutes:
+        description: 'Shift window in minutes — how long one run checks the soaking sandbox'
+        required: false
+        default: '355'
+      epoch_days:
+        description: 'Epoch length in days (default 1 — a daily soak) — at this soak age the shift retires the sandbox and starts a fresh epoch'
+        required: false
+        default: '1'
+      check_interval_s:
+        description: 'Seconds between check ticks inside a shift'
+        required: false
+        default: '60'
+      provider:
+        description: 'Provider to run (leave empty for all)'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Run without ingesting results'
+        required: false
+        default: false
+        type: boolean
+      trigger_source:
+        description: 'Recorded on platform runs as their trigger (e.g. platform-retrigger); leave empty for a plain manual run'
+        required: false
+        default: ''
+      trigger_requested_by:
+        description: 'Who asked for this run (e.g. the platform org slug); recorded alongside trigger_source'
+        required: false
+        default: ''
+      trigger_request_id:
+        description: 'Platform re-trigger request id; recorded so the platform can link this run back to the request'
+        required: false
+        default: ''
+
+concurrency:
+  # A queued shift must WAIT for the running one, not kill it — the sandbox
+  # and its state file are shared between shifts.
+  group: bench-sandbox-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+  id-token: write
+
+env:
+  # The bench file reads BENCHMARK_SLUG/BENCHMARK_NAME (literal defaults when
+  # unset), so cadence variants are minted here: scheduled runs report as
+  # sandbox-soak-stealth, and the slug/name inputs override for platform
+  # re-triggers.
+  BENCHMARK_SLUG: ${{ github.event.inputs.slug || (github.event_name == 'schedule' && 'sandbox-soak-stealth' || 'sandbox-soak') }}
+  BENCHMARK_NAME: ${{ github.event.inputs.name || (github.event_name == 'schedule' && 'Sandbox Soak - Stealth' || 'Sandbox Soak') }}
+  # workflow_dispatch pre-fills slug/name inputs with the canonical values;
+  # an empty override still falls back to the defaults above.
+  BENCH_TRIGGER_SOURCE: ${{ github.event.inputs.trigger_source || '' }}
+  BENCH_TRIGGER_REQUESTED_BY: ${{ github.event.inputs.trigger_requested_by || '' }}
+  BENCH_TRIGGER_REQUEST_ID: ${{ github.event.inputs.trigger_request_id || '' }}
+
+jobs:
+  providers:
+    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
+    name: Provider matrix
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
+    outputs:
+      list: ${{ steps.list.outputs.providers }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - id: list
+        run: |
+          node -e "const s=require('fs').readFileSync('benchmarks/stealth/sandbox/providers.ts','utf8');console.log('providers='+JSON.stringify([...s.matchAll(/^\s*name:\s*'([^']+)'/gm)].map(m=>m[1])))" >> "$GITHUB_OUTPUT"
+
+  bench:
+    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
+    name: Bench ${{ matrix.provider }}
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
+    needs: providers
+    # ~355min shift + setup/attach headroom. A literal — the platform's CI
+    # parser does not evaluate expressions here.
+    timeout-minutes: 390
+    env:
+      # A single-provider dispatch still starts every matrix job; the ones that
+      # don't match skip all their steps, including setup (whose cache-save post
+      # step otherwise fails the job because nothing was installed).
+      SHOULD_RUN: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.provider == '' || github.event.inputs.provider == matrix.provider }}
+    strategy:
+      fail-fast: false
+      matrix:
+        provider: ${{ fromJSON(needs.providers.outputs.list) }}
+    steps:
+      - uses: actions/checkout@v4
+        if: env.SHOULD_RUN == 'true'
+      - uses: pnpm/action-setup@v4
+        if: env.SHOULD_RUN == 'true'
+      - uses: actions/setup-node@v4
+        if: env.SHOULD_RUN == 'true'
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      # ComputeSDK runners get no GitHub OIDC token, so nscloud-setup's
+      # `nsc auth exchange-github-token` cannot work there. Pre-seed the
+      # workload token file it checks for when NSC_TOKEN is available;
+      # accepts either the raw bearer token or a full token JSON document.
+      # It also exports NSC_DOCKER_LOGIN/NSC_CONTAINER_REGISTRY so
+      # nscloud-setup skips `nsc docker login`, which this token is not
+      # granted for — the benchmarks only need vault access.
+      - name: Seed Namespace token file
+        if: env.SHOULD_RUN == 'true'
+        env:
+          NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
+        run: |
+          if [ -n "${NSC_TOKEN:-}" ] && [ ! -f /var/run/nsc/token.json ]; then
+            mkdir -p /var/run/nsc
+            case "$NSC_TOKEN" in
+              \{*) printf '%s\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+              *) printf '{"bearer_token":"%s"}\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+            esac
+            chmod 600 /var/run/nsc/token.json
+            # The seeded token has no container-registry grant; tell
+            # nscloud-setup to skip `nsc docker login` for later steps.
+            echo "NSC_DOCKER_LOGIN=1" >> "$GITHUB_ENV"
+            echo "NSC_CONTAINER_REGISTRY=nscr.io" >> "$GITHUB_ENV"
+          fi
+      - uses: namespacelabs/nscloud-setup@v0
+        if: env.SHOULD_RUN == 'true'
+      - name: Install dependencies
+        if: env.SHOULD_RUN == 'true'
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            pnpm update --ignore-scripts
+          else
+            pnpm install --frozen-lockfile --ignore-scripts
+          fi
+      - name: Build workspace packages
+        if: env.SHOULD_RUN == 'true'
+        run: pnpm -r --filter './packages/**' run build
+      - name: Build Superserve soak template with 1 vCPU / 256 MiB
+        if: env.SHOULD_RUN == 'true' && matrix.provider == 'superserve'
+        run: |
+          . ./benchmarks/stealth/scripts/load-vault-secrets.sh '^(SUPERSERVE_API_KEY)'
+          npx tsx benchmarks/stealth/scripts/build-superserve-soak-template.ts
+      - name: Restore soak state
+        if: env.SHOULD_RUN == 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: results/sandbox_soak/state/${{ matrix.provider }}.json
+          key: soak-state-${{ github.ref_name }}-${{ matrix.provider }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            soak-state-${{ github.ref_name }}-${{ matrix.provider }}-
+      - name: Run benchmark
+        if: env.SHOULD_RUN == 'true'
+        env:
+          # Persistent VM per create(): exec mode has no snapshot/pause/detached
+          # processes. Default in computesdk#1075; explicit until it is released.
+          ARCHIL_EXECUTION: persistent
+          NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
+          SHIFT_MINUTES: ${{ github.event.inputs.shift_minutes || '355' }}
+          EPOCH_DAYS: ${{ github.event.inputs.epoch_days || '1' }}
+          CHECK_INTERVAL_S: ${{ github.event.inputs.check_interval_s || '60' }}
+        run: |
+          . benchmarks/stealth/scripts/load-vault-secrets.sh "$(benchmarks/stealth/scripts/vault-keys.sh benchmarks/stealth/sandbox/providers.ts BENCHMARKS_PLATFORM_API_KEY)"
+
+          # Empty platform env vars must not survive: @benchsdk/runner >=0.3.0
+          # resolves the platform URL with ?? so an empty string overrides the
+          # built-in default and the ingest URL fails to parse. Use ${VAR:-}
+          # defaults — load-vault-secrets.sh enables `set -u`, so bare $VAR
+          # expansion of an unset variable aborts the step.
+          [ -z "${BENCHMARKS_PLATFORM_URL:-}" ] && unset BENCHMARKS_PLATFORM_URL
+          [ -z "${BENCHMARKS_PLATFORM_API_KEY:-}" ] && unset BENCHMARKS_PLATFORM_API_KEY
+
+          export SOAK_SHIFT_MS=$(( ${SHIFT_MINUTES:-355} * 60000 ))
+          export SOAK_EPOCH_MS=$(( ${EPOCH_DAYS:-1} * 86400000 ))
+          export SOAK_CHECK_INTERVAL_MS=$(( ${CHECK_INTERVAL_S:-60} * 1000 ))
+
+          # Every provider passes the same --run-key, so they get-or-create
+          # one shared run and rank against each other (each still registers
+          # itself and claims its own worker). The run attempt is in the key
+          # so a workflow re-run opens a fresh run instead of rejoining the
+          # completed one. No `--` separator: @benchsdk/runner >=0.3.0
+          # validates argv and rejects it.
+          RUN_KEY="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          pnpm bench:stealth benchmarks/stealth/sandbox/sandbox-soak.bench.ts \
+            --provider ${{ matrix.provider }} \
+            --iterations 1 \
+            --run-key "$RUN_KEY" \
+            ${{ github.event.inputs.dry_run == 'true' && '--no-ingest' || '' }}
+      - name: Save soak state
+        if: always() && env.SHOULD_RUN == 'true' && github.event.inputs.dry_run != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: results/sandbox_soak/state/${{ matrix.provider }}.json
+          key: soak-state-${{ github.ref_name }}-${{ matrix.provider }}-${{ github.run_id }}-${{ github.run_attempt }}

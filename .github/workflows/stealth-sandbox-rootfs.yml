@@ -1,0 +1,233 @@
+name: Stealth — Sandbox Rootfs
+
+on:
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: 'Run only this provider (empty = all)'
+        required: false
+        default: ''
+        type: string
+      dry_run:
+        description: 'Skip ingestion into benchmarks-platform'
+        required: true
+        default: true
+        type: boolean
+      iterations:
+        description: 'Full lifecycle iterations per provider (1 for smoke)'
+        required: true
+        default: '2'
+        type: string
+      benchmark_slug:
+        description: 'Benchmark slug for platform ingestion'
+        required: true
+        default: 'sandbox-rootfs'
+        type: string
+      benchmark_name:
+        description: 'Benchmark name for platform ingestion'
+        required: true
+        default: 'Sandbox Rootfs'
+        type: string
+      trigger_source:
+        description: 'Recorded on platform runs as their trigger (e.g. platform-retrigger); leave empty for a plain manual run'
+        required: false
+        default: ''
+        type: string
+      trigger_requested_by:
+        description: 'Who asked for this run (e.g. the platform org slug); recorded alongside trigger_source'
+        required: false
+        default: ''
+        type: string
+      trigger_request_id:
+        description: 'Platform re-trigger request id; recorded so the platform can link this run back to the request'
+        required: false
+        default: ''
+        type: string
+  schedule:
+    - cron: '0 20 * * *' # Daily 2pm CT (hourly-staggered sandbox suite)
+
+concurrency:
+  group: sandbox-rootfs-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  BENCHMARK_NAME: ${{ github.event.inputs.benchmark_name || (github.event_name == 'schedule' && 'Sandbox Rootfs - Stealth') || 'Sandbox Rootfs' }}
+  BENCHMARK_SLUG: ${{ github.event.inputs.benchmark_slug || (github.event_name == 'schedule' && 'sandbox-rootfs-stealth') || 'sandbox-rootfs' }}
+
+jobs:
+  bench:
+    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
+    name: rootfs-${{ matrix.provider }}
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      BENCH_RESULTS_DIR: results/current-${{ github.run_id }}-${{ github.run_attempt }}/${{ matrix.provider }}
+      SHOULD_RUN: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.provider == '' || github.event.inputs.provider == matrix.provider }}
+    strategy:
+      fail-fast: false
+      matrix:
+        provider:
+          # Every provider participates: every sandbox has a root disk, so
+          # unlike sandbox-volumes there are no capability-matrix skips.
+          - agent37
+          - archil
+          - arker
+          - beam
+          - blaxel
+          - boat
+          - briq
+          - buddy
+          - cloud-run
+          - cloudflare
+          - codesandbox
+          - createos
+          - daytona
+          - e2b
+          - freestyle
+          - givemeanode
+          - gravixlayer
+          - hopx
+          - isorun
+          - kosa8
+          - lelantos
+          - microsandbox
+          - miosa
+          - modal
+          - mosaic
+          - namespace
+          - neevcloud
+          - northflank
+          - novita
+          - promigence
+          - sail
+          - sandbox0
+          - sprites
+          - superserve
+          - tenki
+          - tensorlake
+          - uno
+          - upstash
+          - vercel
+    steps:
+      - uses: actions/checkout@v4
+        if: env.SHOULD_RUN == 'true'
+      # ComputeSDK runners get no GitHub OIDC token, so nscloud-setup's
+      # `nsc auth exchange-github-token` cannot work there. Pre-seed the
+      # workload token file it checks for when NSC_TOKEN is available;
+      # accepts either the raw bearer token or a full token JSON document.
+      # It also exports NSC_DOCKER_LOGIN/NSC_CONTAINER_REGISTRY so
+      # nscloud-setup skips `nsc docker login`, which this token is not
+      # granted for — the benchmarks only need vault access.
+      - name: Seed Namespace token file
+        if: env.SHOULD_RUN == 'true'
+        env:
+          NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
+        run: |
+          if [ -n "${NSC_TOKEN:-}" ] && [ ! -f /var/run/nsc/token.json ]; then
+            mkdir -p /var/run/nsc
+            case "$NSC_TOKEN" in
+              \{*) printf '%s\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+              *) printf '{"bearer_token":"%s"}\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+            esac
+            chmod 600 /var/run/nsc/token.json
+            echo "NSC_DOCKER_LOGIN=1" >> "$GITHUB_ENV"
+            echo "NSC_CONTAINER_REGISTRY=nscr.io" >> "$GITHUB_ENV"
+          fi
+      - uses: namespacelabs/nscloud-setup@v0
+        if: env.SHOULD_RUN == 'true'
+      - uses: pnpm/action-setup@v4
+        if: env.SHOULD_RUN == 'true'
+      - uses: actions/setup-node@v4
+        if: env.SHOULD_RUN == 'true'
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        if: env.SHOULD_RUN == 'true'
+        run: pnpm install
+      - name: Build workspace packages
+        if: env.SHOULD_RUN == 'true'
+        run: pnpm -r --filter './packages/**' run build
+      - name: Run Sandbox Rootfs benchmark
+        if: env.SHOULD_RUN == 'true'
+        id: run-bench
+        env:
+          NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
+          PROVIDER: ${{ matrix.provider }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          ITERATIONS: ${{ github.event.inputs.iterations || '2' }}
+          BENCHMARKS_PLATFORM_API_KEY: ${{ secrets.BENCHMARKS_PLATFORM_API_KEY }}
+          BENCHMARKS_PLATFORM_URL: ${{ secrets.BENCHMARKS_PLATFORM_URL }}
+          RUN_KEY: ${{ github.run_id }}-${{ github.run_attempt }}
+          BENCH_TRIGGER_SOURCE: ${{ github.event.inputs.trigger_source || '' }}
+          BENCH_TRIGGER_REQUESTED_BY: ${{ github.event.inputs.trigger_requested_by || '' }}
+          BENCH_TRIGGER_REQUEST_ID: ${{ github.event.inputs.trigger_request_id || '' }}
+        run: |
+          COMMON_KEYS='BENCHMARKS_PLATFORM_API_KEY'
+          case "$PROVIDER" in
+            agent37) PROVIDER_KEYS='AGENT37_API_KEY' ;;
+            archil) PROVIDER_KEYS='ARCHIL_API_KEY|ARCHIL_REGION|ARCHIL_DISK_ID_FILESYSTEM' ;;
+            arker) PROVIDER_KEYS='ARKER_API_KEY' ;;
+            beam) PROVIDER_KEYS='BEAM_TOKEN|BEAM_WORKSPACE_ID' ;;
+            blaxel) PROVIDER_KEYS='BL_API_KEY|BL_WORKSPACE' ;;
+            boat) PROVIDER_KEYS='BOAT_API_KEY' ;;
+            briq) PROVIDER_KEYS='BRIQ_API_KEY' ;;
+            buddy) PROVIDER_KEYS='BUDDY_TOKEN|BUDDY_WORKSPACE|BUDDY_PROJECT' ;;
+            cloud-run) PROVIDER_KEYS='CLOUD_RUN_SANDBOX_URL|CLOUD_RUN_SANDBOX_SECRET' ;;
+            cloudflare) PROVIDER_KEYS='CLOUDFLARE_SANDBOX_URL|SANDBOX_API_KEY' ;;
+            codesandbox) PROVIDER_KEYS='CSB_API_KEY' ;;
+            createos) PROVIDER_KEYS='CREATEOS_SANDBOX_API_KEY' ;;
+            daytona) PROVIDER_KEYS='DAYTONA_API_KEY' ;;
+            e2b) PROVIDER_KEYS='E2B_API_KEY' ;;
+            freestyle) PROVIDER_KEYS='FREESTYLE_API_KEY' ;;
+            givemeanode) PROVIDER_KEYS='GMN_TOKEN|GMN_API_HOST' ;;
+            gravixlayer) PROVIDER_KEYS='GRAVIXLAYER_API_KEY' ;;
+            hopx) PROVIDER_KEYS='HOPX_API_KEY' ;;
+            isorun) PROVIDER_KEYS='ISORUN_API_KEY' ;;
+            kosa8) PROVIDER_KEYS='KOSA8_API_KEY' ;;
+            lelantos) PROVIDER_KEYS='LELANTOS_API_KEY|LELANTOS_DOMAIN' ;;
+            modal) PROVIDER_KEYS='MODAL_TOKEN_ID|MODAL_TOKEN_SECRET' ;;
+            microsandbox) PROVIDER_KEYS='MSB_API_KEY' ;;
+            miosa) PROVIDER_KEYS='MIOSA_API_KEY' ;;
+            mosaic) PROVIDER_KEYS='MOSAIC_API_URL|MOSAIC_API_TOKEN' ;;
+            namespace) PROVIDER_KEYS='NSC_TOKEN' ;;
+            neevcloud) PROVIDER_KEYS='NEEVCLOUD_API_KEY' ;;
+            northflank) PROVIDER_KEYS='NORTHFLANK_TOKEN|NORTHFLANK_PROJECT_ID' ;;
+            novita) PROVIDER_KEYS='NOVITA_API_KEY' ;;
+            promigence) PROVIDER_KEYS='PROMIGENCE_API_KEY' ;;
+            sandbox0) PROVIDER_KEYS='SANDBOX0_TOKEN' ;;
+            sail) PROVIDER_KEYS='SAIL_API_KEY' ;;
+            sprites) PROVIDER_KEYS='SPRITES_TOKEN' ;;
+            superserve) PROVIDER_KEYS='SUPERSERVE_API_KEY' ;;
+            tenki) PROVIDER_KEYS='TENKI_API_KEY' ;;
+            tensorlake) PROVIDER_KEYS='TENSORLAKE_API_KEY' ;;
+            uno) PROVIDER_KEYS='UNO_API_KEY' ;;
+            upstash) PROVIDER_KEYS='UPSTASH_BOX_API_KEY' ;;
+            vercel) PROVIDER_KEYS='VERCEL_TOKEN|VERCEL_TEAM_ID|VERCEL_PROJECT_ID' ;;
+            *) PROVIDER_KEYS='' ;;
+          esac
+          if [ -n "$PROVIDER_KEYS" ]; then
+            KEYS="^(${COMMON_KEYS}|${PROVIDER_KEYS})="
+          else
+            KEYS="^(${COMMON_KEYS})="
+          fi
+          . ./benchmarks/stealth/scripts/load-vault-secrets.sh "$KEYS"
+          if [ -n "${ARCHIL_DISK_ID_FILESYSTEM:-}" ]; then export ARCHIL_DISK_ID="$ARCHIL_DISK_ID_FILESYSTEM"; fi
+
+          set -o pipefail
+          mkdir -p "$BENCH_RESULTS_DIR"
+          # Empty platform env vars must not survive: @benchsdk/runner >=0.3.0
+          # resolves the platform URL with ?? so an empty string overrides the
+          # built-in default and the ingest URL fails to parse.
+          [ -z "$BENCHMARKS_PLATFORM_URL" ] && unset BENCHMARKS_PLATFORM_URL
+          [ -z "$BENCHMARKS_PLATFORM_API_KEY" ] && unset BENCHMARKS_PLATFORM_API_KEY
+          # No `pnpm bench:stealth --` separator: @benchsdk/runner >=0.3.0 validates
+          # flags strictly and rejects a bare `--` in argv.
+          ARGS=(--provider "$PROVIDER" --iterations "$ITERATIONS" --run-key "$RUN_KEY")
+          if [ "${DRY_RUN}" == "true" ]; then
+            ARGS+=(--no-ingest)
+          fi
+          pnpm bench:stealth benchmarks/stealth/sandbox/rootfs.bench.ts "${ARGS[@]}" | tee "$BENCH_RESULTS_DIR/run.log"

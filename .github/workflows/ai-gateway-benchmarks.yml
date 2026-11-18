@@ -81,8 +81,8 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+
   id-token: write
 
 env:
@@ -113,32 +113,24 @@ jobs:
             label: Anthropic
             benchScript: benchmarks/ai-gateway/ai-gateway.bench.ts
             resultsDir: ai-gateway-latency/anthropic
-            svgScript: generate-ai-gateway-svg
-            svgFile: ai-gateway.svg
             timeout: 60
             scheduleIterations: 50
           - slug: openai
             label: OpenAI
             benchScript: benchmarks/ai-gateway/ai-gateway-openai.bench.ts
             resultsDir: ai-gateway-latency/openai
-            svgScript: generate-ai-gateway-openai-svg
-            svgFile: ai-gateway-openai.svg
             timeout: 60
             scheduleIterations: 50
           - slug: gemini
             label: Gemini
             benchScript: benchmarks/ai-gateway/ai-gateway-gemini.bench.ts
             resultsDir: ai-gateway-latency/gemini
-            svgScript: generate-ai-gateway-gemini-svg
-            svgFile: ai-gateway-gemini.svg
             timeout: 60
             scheduleIterations: 50
           - slug: kimi
             label: Kimi
             benchScript: benchmarks/ai-gateway/ai-gateway-kimi.bench.ts
             resultsDir: ai-gateway-latency/kimi
-            svgScript: generate-ai-gateway-kimi-svg
-            svgFile: ai-gateway-kimi.svg
             timeout: 150
             scheduleIterations: 25
             iterations: 25
@@ -228,16 +220,6 @@ jobs:
             ${{ (github.event_name == 'push' || github.event.inputs.dry_run == 'true') && '--no-ingest' || '' }}
       - run: pnpm run ${{ matrix.family.svgScript }}
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.family == 'all' || github.event.inputs.family == '' || github.event.inputs.family == matrix.family.slug
-      - name: Upload results and SVG as artifacts
-        if: always() && (github.event_name != 'workflow_dispatch' || github.event.inputs.family == 'all' || github.event.inputs.family == '' || github.event.inputs.family == matrix.family.slug)
-        uses: actions/upload-artifact@v4
-        with:
-          name: ai-gateway-results-${{ matrix.family.slug }}
-          path: |
-            results/${{ matrix.family.resultsDir }}/
-            ${{ matrix.family.svgFile }}
-          if-no-files-found: ignore
-          retention-days: 7
       - name: Post results to merged PR
         if: github.event_name == 'push'
         continue-on-error: true
@@ -355,29 +337,3 @@ jobs:
                 body,
               });
             }
-      - name: Commit and push
-        if: github.event_name != 'push' && github.event.inputs.dry_run != 'true' && (github.event_name != 'workflow_dispatch' || github.event.inputs.family == 'all' || github.event.inputs.family == '' || github.event.inputs.family == matrix.family.slug)
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add ${{ matrix.family.svgFile }} results/${{ matrix.family.resultsDir }}/
-          git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "chore: update ${{ matrix.family.label }} ai gateway benchmark results [skip ci]"
-
-          # Remote master can advance during the run (concurrent benchmark
-          # workflows push to master too — including this workflow's other
-          # matrix legs, which touch disjoint files but still contend for the
-          # same branch tip). A plain push fails non-fast-forward, so rebase
-          # onto the latest remote and retry a few times before giving up.
-          branch="${GITHUB_REF#refs/heads/}"
-          for attempt in 1 2 3 4 5; do
-            git fetch origin "${branch}"
-            git rebase --autostash "origin/${branch}" || { git rebase --abort; exit 1; }
-            if git push origin "HEAD:${branch}"; then
-              echo "Pushed on attempt ${attempt}"
-              exit 0
-            fi
-            echo "Push rejected (attempt ${attempt}); will rebase and retry"
-          done
-          echo "Failed to push after multiple attempts" >&2
-          exit 1

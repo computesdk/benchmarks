@@ -1,0 +1,302 @@
+import { agent37 } from '@computesdk/agent37';
+import { archil } from '@computesdk/archil';
+import { arker } from '@computesdk/arker';
+import { beam } from '@computesdk/beam';
+import { blaxel } from '@computesdk/blaxel';
+import { briq } from '@computesdk/briq';
+import { buddy } from '@computesdk/buddy';
+import { cloudRun } from '@computesdk/gcp/cloud-run';
+// import { collimate } from '@computesdk/collimate';
+import { cloudflare } from '@computesdk/cloudflare';
+import { daytona } from '@computesdk/daytona';
+import { e2b } from '@computesdk/e2b';
+import { ec2Firecrab } from '@computesdk/ec2-firecrab';
+import { freestyle } from '@computesdk/freestyle';
+import { givemeanode } from '@computesdk/givemeanode';
+import { isorun } from '@computesdk/isorun';
+// import { lelantos } from '@computesdk/lelantos';
+import { modal } from '@computesdk/modal';
+import { microsandbox } from '@computesdk/microsandbox';
+import { miosa } from '@computesdk/miosa';
+import { mosaic } from '@computesdk/mosaic';
+import { namespace } from '@computesdk/namespace';
+import { novita } from '@computesdk/novita';
+// import { quilt } from '@computesdk/quilt';
+import { railway } from '@computesdk/railway';
+// import { runloop } from '@computesdk/runloop';
+import { sandbox0 } from '@computesdk/sandbox0';
+import { sail } from '@computesdk/sail';
+import { sprites } from '@computesdk/sprites';
+import { superserve } from '@computesdk/superserve';
+import { tenki } from '@computesdk/tenki';
+import { tensorlake } from '@computesdk/tensorlake'
+import { uno } from '@computesdk/uno';
+import { upstash } from '@computesdk/upstash';
+import { vercel } from '@computesdk/vercel';
+import type { ProviderConfig } from './types.js';
+
+/**
+ * All provider benchmark configurations.
+ *
+ * Direct mode providers use ComputeSDK's open source package directly.
+ * Automatic mode providers route through the ComputeSDK gateway.
+ */
+export const providers: ProviderConfig[] = [
+  // --- Direct mode (provider SDK packages) ---
+  {
+    name: 'agent37',
+    requiredEnvVars: ['AGENT37_API_KEY'],
+    createCompute: () => agent37({ apiKey: process.env.AGENT37_API_KEY! }),
+  },
+  {
+    name: 'archil',
+    // Persistent VM per probe, as in the sandbox-family benches: a shared-disk
+    // exec handle is opt-in since @computesdk/archil made persistent the default.
+    requiredEnvVars: ['ARCHIL_API_KEY', 'ARCHIL_REGION'],
+    createCompute: () => archil({
+      apiKey: process.env.ARCHIL_API_KEY!,
+      region: process.env.ARCHIL_REGION!,
+      execution: 'persistent',
+    }),
+    // Short TTL: a create that outlives the 60s step timeout still finishes and
+    // can't be destroyed, so Archil's TTL is what reaps it (a probe needs ~2 min).
+    sandboxOptions: { baseImage: 'node:24-bookworm', maxTtlSeconds: 300 },
+  },
+  {
+    // Arker sizes via `platforms` on the factory, not sandbox.create(), so like
+    // lightning it is set from the dax workflow env (ARKER_PLATFORMS=graviton4).
+    name: 'arker',
+    requiredEnvVars: ['ARKER_API_KEY'],
+    createCompute: () => arker({ apiKey: process.env.ARKER_API_KEY! }),
+    sandboxOptions: { templateId: 'ubuntu-small' },
+  },
+  {
+    // Activated in daily + PR benchmarks once BEAM_TOKEN / BEAM_WORKSPACE_ID secrets landed.
+    name: 'beam',
+    requiredEnvVars: ['BEAM_TOKEN', 'BEAM_WORKSPACE_ID'],
+    createCompute: () => beam({
+      token: process.env.BEAM_TOKEN!,
+      workspaceId: process.env.BEAM_WORKSPACE_ID!,
+      gatewayUrl: process.env.BEAM_GATEWAY_URL,
+    }),
+    sandboxOptions: { name: 'computesdk-benchmarks', runtime: 'node' },
+  },
+  {
+    name: 'blaxel',
+    requiredEnvVars: ['BL_API_KEY', 'BL_WORKSPACE'],
+    createCompute: () => blaxel({ apiKey: process.env.BL_API_KEY!, workspace: process.env.BL_WORKSPACE!, region: 'us-was-1' }),
+  },
+  {
+    name: 'briq',
+    requiredEnvVars: ['BRIQ_API_KEY'],
+    createCompute: () => briq({ apiKey: process.env.BRIQ_API_KEY! }),
+  },
+  {
+    name: 'buddy',
+    requiredEnvVars: ['BUDDY_TOKEN', 'BUDDY_WORKSPACE', 'BUDDY_PROJECT'],
+    createCompute: () => buddy({
+      token: process.env.BUDDY_TOKEN!,
+      workspace: process.env.BUDDY_WORKSPACE!,
+      project: process.env.BUDDY_PROJECT!,
+    }),
+  },
+  {
+    name: 'cloud-run',
+    requiredEnvVars: ['CLOUD_RUN_SANDBOX_URL', 'CLOUD_RUN_SANDBOX_SECRET'],
+    createCompute: () => cloudRun({ sandboxUrl: process.env.CLOUD_RUN_SANDBOX_URL!, sandboxSecret: process.env.CLOUD_RUN_SANDBOX_SECRET! }),
+  },
+  {
+    name: 'cloudflare',
+    requiredEnvVars: ['CLOUDFLARE_SANDBOX_URL', 'SANDBOX_API_KEY'],
+    createCompute: () => cloudflare({ sandboxUrl: process.env.CLOUDFLARE_SANDBOX_URL!, sandboxApiKey: process.env.SANDBOX_API_KEY! }),
+  },
+  // {
+  //   name: 'collimate',
+  //   requiredEnvVars: ['COLLIMATE_API_KEY'],
+  //   createCompute: () => collimate({ apiKey: process.env.COLLIMATE_API_KEY! }),
+  // },
+  {
+    name: 'daytona',
+    requiredEnvVars: ['DAYTONA_API_KEY'],
+    createCompute: () => daytona({ apiKey: process.env.DAYTONA_API_KEY! }),
+    sandboxOptions: { autoStopInterval: 15, autoDeleteInterval: 0, snapshotId: 'daytona-8cpu-16gb' },
+  },
+  {
+    name: 'e2b',
+    requiredEnvVars: ['E2B_API_KEY'],
+    createCompute: () => e2b({ apiKey: process.env.E2B_API_KEY! }),
+    sandboxOptions: { templateId: 'base-8cpu-16gb', timeout: 600_000 },
+  },
+  {
+    // Self-hosted firecrab host(s) on EC2 — comma-separated SSH targets + key
+    // (one entry for a single host; a pool comes from host/pool-up.sh). The
+    // adapter self-opens per-host API tunnels, derives the exec jumphosts,
+    // and round-robins creates across hosts.
+    // destroy is ~30s graceful ACPI, hence the longer timeout.
+    name: 'ec2-firecrab',
+    requiredEnvVars: ['EC2_FIRECRAB_SSH_TARGETS', 'EC2_FIRECRAB_SSH_KEY', 'EC2_FIRECRAB_MICRO_NETWORK'],
+    createCompute: () => ec2Firecrab({
+      sshTargets: process.env.EC2_FIRECRAB_SSH_TARGETS!.split(',').map((s) => s.trim()).filter(Boolean),
+      sshTarget: process.env.EC2_FIRECRAB_SSH_TARGET,
+      sshIdentityPem: process.env.EC2_FIRECRAB_SSH_KEY!,
+      microNetwork: process.env.EC2_FIRECRAB_MICRO_NETWORK!,
+      // Slim node rootfs (~150MB) instead of the ~2GB act image — disk
+      // materialization dominates TTI; ~6s create vs ~20s+ bare.
+      template: process.env.EC2_FIRECRAB_TEMPLATE ?? 'node-22-alpine',
+      // Smallest viable guest for the burst TTI probe (just `node -v`):
+      // 128MiB is firecrab's floor but the act image idles ~119MiB, so
+      // 256MiB is the honest minimum; diskGb floor is 2 (API enforces).
+      // ~200 of these fit on one c8i.8xlarge.
+      cpus: 1,
+      memoryMib: 256,
+      diskGb: 2,
+      // Adapter's internal create→running deadline (default 120s) — same
+      // headroom as `timeout` below or the boot wait caps first.
+      bootTimeoutMs: 600_000,
+      egressPolicy: 'internet',
+    }),
+    // Burst create latency is the metric under test — 40 concurrent
+    // preparingDisk ops on a small host push TTI well past the 120s
+    // default (observed ~107s on the successes), so don't truncate it.
+    timeout: 600_000,
+    destroyTimeoutMs: 90_000,
+    // Dispatch-only: the host pool is spun up per manual run, so scheduled
+    // matrices derived from this list (benchmarks-daily) must skip it.
+    manualOnly: true,
+  },
+  {
+    name: 'freestyle',
+    requiredEnvVars: ['FREESTYLE_API_KEY'],
+    createCompute: () => freestyle({ apiKey: process.env.FREESTYLE_API_KEY! }),
+  },
+  {
+    name: 'givemeanode',
+    requiredEnvVars: ['GMN_TOKEN'],
+    createCompute: () => givemeanode({ apiKey: process.env.GMN_TOKEN!, baseUrl: process.env.GMN_API_HOST }),
+  },
+  {
+    name: 'isorun',
+    requiredEnvVars: ['ISORUN_API_KEY'],
+    createCompute: () => isorun({ apiKey: process.env.ISORUN_API_KEY! }),
+    sandboxOptions: { image: 'node:22' },
+  },
+  // {
+  //   name: 'lelantos',
+  //   requiredEnvVars: ['LELANTOS_API_KEY'],
+  //   createCompute: () => lelantos({ apiKey: process.env.LELANTOS_API_KEY! }),
+  // },
+  {
+    name: 'modal',
+    requiredEnvVars: ['MODAL_TOKEN_ID', 'MODAL_TOKEN_SECRET'],
+    createCompute: () => modal({ tokenId: process.env.MODAL_TOKEN_ID!, tokenSecret: process.env.MODAL_TOKEN_SECRET! }),
+  },
+  {
+    name: 'microsandbox',
+    requiredEnvVars: ['MSB_API_KEY'],
+    createCompute: () => microsandbox({ apiKey: process.env.MSB_API_KEY! }),
+    sandboxOptions: { image: 'node:22' },
+  },
+  {
+    name: 'miosa',
+    requiredEnvVars: ['MIOSA_API_KEY'],
+    createCompute: () => miosa({ apiKey: process.env.MIOSA_API_KEY! }),
+  },
+  {
+    name: 'mosaic',
+    requiredEnvVars: ['MOSAIC_API_URL', 'MOSAIC_API_TOKEN'],
+    createCompute: () => mosaic({
+      baseUrl: process.env.MOSAIC_API_URL!,
+      apiKey: process.env.MOSAIC_API_TOKEN!,
+      // The burst benchmark starts 100 lifecycles at once; the adapter's
+      // default cap of 32 in-flight requests queues the rest client-side.
+      maxConcurrentRequests: 100,
+    }),
+    sandboxOptions: { templateId: 'node-20' },
+  },
+  {
+    name: 'namespace',
+    requiredEnvVars: ['NSC_TOKEN'],
+    createCompute: () =>
+      namespace({
+        token: process.env.NSC_TOKEN!,
+        virtualCpu: 8,
+        memoryMegabytes: 16384,
+      }),
+    // Use namespace's builtin:base image (default in @computesdk/namespace@1.6.14+)
+  },
+  {
+    name: 'novita',
+    requiredEnvVars: ['NOVITA_API_KEY'],
+    createCompute: () => novita({ apiKey: process.env.NOVITA_API_KEY! }),
+  },
+  // {
+  //   name: 'quilt',
+  //   requiredEnvVars: ['QUILT_API_KEY', 'QUILT_BASE_URL'],
+  //   createCompute: () => quilt({ apiKey: process.env.QUILT_API_KEY!, baseUrl: process.env.QUILT_BASE_URL! }),
+  // },
+  {
+    name: 'railway',
+    requiredEnvVars: ['RAILWAY_API_TOKEN', 'RAILWAY_ENVIRONMENT_ID'],
+    createCompute: () => railway({ token: process.env.RAILWAY_API_TOKEN!, environmentId: process.env.RAILWAY_ENVIRONMENT_ID! }),
+  },
+  // {
+  //   name: 'runloop',
+  //   requiredEnvVars: ['RUNLOOP_API_KEY'],
+  //   createCompute: () => runloop({ apiKey: process.env.RUNLOOP_API_KEY! }),
+  // },
+  {
+    name: 'sandbox0',
+    requiredEnvVars: ['SANDBOX0_TOKEN'],
+    createCompute: () => sandbox0({ token: process.env.SANDBOX0_TOKEN! }),
+    // TTI modes (sequential, staggered, and burst) use 128 MiB for Sandbox0.
+    // DAX overrides memory to 16 GiB while preserving this hard TTL.
+    // Outlive the 10-minute DAX timeout without leaving a zombie sandbox if cleanup cannot run.
+    sandboxOptions: { memory: 128, hardTtl: 900 },
+  },
+  {
+    name: 'sail',
+    requiredEnvVars: ['SAIL_API_KEY'],
+    createCompute: () => sail({ apiKey: process.env.SAIL_API_KEY! }),
+  },
+  {
+    name: 'sprites',
+    requiredEnvVars: ['SPRITES_TOKEN'],
+    createCompute: () => sprites({ apiKey: process.env.SPRITES_TOKEN! }),
+  },
+  {
+    name: 'superserve',
+    requiredEnvVars: ['SUPERSERVE_API_KEY'],
+    createCompute: () => superserve({ apiKey: process.env.SUPERSERVE_API_KEY! }),
+    // Default template (superserve/base) has no Node; the `node -v` readiness probe needs it.
+    sandboxOptions: { templateId: 'superserve/node-22' },
+  },
+  {
+    name: 'tenki',
+    requiredEnvVars: ['TENKI_API_KEY'],
+    createCompute: () => tenki({ apiKey: process.env.TENKI_API_KEY! }),
+  },
+  {
+    name: 'tensorlake',
+    requiredEnvVars: ['TENSORLAKE_API_KEY'],
+    createCompute: () => tensorlake({ apiKey: process.env.TENSORLAKE_API_KEY! }),
+  },
+  {
+    name: 'uno',
+    requiredEnvVars: ['UNO_API_KEY'],
+    createCompute: () => uno({ apiKey: process.env.UNO_API_KEY!, region: process.env.UNO_REGION || 'us' }),
+  },
+  {
+    name: 'upstash',
+    requiredEnvVars: ['UPSTASH_BOX_API_KEY'],
+    createCompute: () => upstash({ apiKey: process.env.UPSTASH_BOX_API_KEY! }),
+    sandboxOptions: { ephemeral: true },
+  },
+  {
+    // Vercel sandboxes are persistent by default: every stop() auto-snapshots
+    // the filesystem, which accrues Snapshot Storage. Benchmarks never resume.
+    name: 'vercel',
+    requiredEnvVars: ['VERCEL_TOKEN', 'VERCEL_TEAM_ID', 'VERCEL_PROJECT_ID'],
+    createCompute: () => vercel({ token: process.env.VERCEL_TOKEN!, teamId: process.env.VERCEL_TEAM_ID!, projectId: process.env.VERCEL_PROJECT_ID! }),
+    sandboxOptions: { persistent: false },
+  },
+];

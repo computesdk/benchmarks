@@ -5,3 +5,9 @@ dist/
 scale-run.log
 scale.mjs
 fetch-raw-json.ts
+# Platform data and local benchmark diagnostics are never committed.
+results/
+**/results/
+artifacts/
+.env.*
+*.log

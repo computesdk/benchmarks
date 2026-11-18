@@ -163,7 +163,7 @@ pnpm --filter @benchsdk/runner run manifest
 
 ## Examples and full guide
 
-For a step-by-step authoring guide and runnable examples covering every capability, see [`WRITING_BENCHMARKS.md`](../../WRITING_BENCHMARKS.md) and the [`examples/`](../../examples) directory.
+For a step-by-step authoring guide and runnable examples covering every capability, see the [`examples/`](../../examples) directory.
 
 ## License
 

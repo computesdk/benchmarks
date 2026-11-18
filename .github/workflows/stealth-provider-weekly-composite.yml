@@ -1,0 +1,233 @@
+name: Stealth — Provider Weekly Composite
+
+on:
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: 'Run only this provider (empty = all)'
+        required: false
+        default: ''
+        type: string
+      category:
+        description: 'Category leg to run — one platform run per category'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - sandbox
+          - browser
+          - storage
+          - ai-gateway
+      benchmark_slug:
+        description: 'Base benchmark slug — `-<category>` is appended per leg'
+        required: true
+        default: 'provider-weekly-composite'
+        type: string
+      benchmark_name:
+        description: 'Base benchmark name — ` - <Category>` is appended per leg'
+        required: true
+        default: 'Provider Weekly Composite'
+        type: string
+      dry_run:
+        description: 'Skip ingestion into benchmarks-platform'
+        required: true
+        default: true
+        type: boolean
+      trigger_source:
+        description: 'Recorded on platform runs as their trigger (e.g. platform-retrigger); leave empty for a plain manual run'
+        required: false
+        default: ''
+        type: string
+      trigger_requested_by:
+        description: 'Who asked for this run (e.g. the platform org slug); recorded alongside trigger_source'
+        required: false
+        default: ''
+        type: string
+      trigger_request_id:
+        description: 'Platform re-trigger request id; recorded so the platform can link this run back to the request'
+        required: false
+        default: ''
+        type: string
+  # Daily at midnight Central (05:00 UTC during CDT) — the window is the
+  # previous 7 complete UTC days.
+  schedule:
+    - cron: '0 5 * * *'
+
+concurrency:
+  group: bench-composite-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  bench:
+    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
+    name: bench-${{ matrix.provider }}
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      SHOULD_RUN: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.provider == '' || github.event.inputs.provider == matrix.provider }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Keep in sync with benchmarks/stealth/composite/providers.ts.
+        provider:
+          - agent37
+          - archil
+          - arker
+          - beam
+          - blaxel
+          - boat
+          - briq
+          - buddy
+          - cloud-run
+          - cloudflare
+          - codesandbox
+          - createos
+          - daytona
+          - declaw
+          - e2b
+          - freestyle
+          - givemeanode
+          - gravixlayer
+          - hopx
+          - isorun
+          - kosa8
+          # - lightning  # parked — re-activate with the sandbox registry
+          - modal
+          - microsandbox
+          - promigence
+          - miosa
+          - mosaic
+          - namespace
+          - northflank
+          - novita
+          # - opencomputer  # parked — re-activate with the sandbox registry
+          - railway
+          - sandbox0
+          - sail
+          - sprites
+          - superserve
+          - tenki
+          - tensorlake
+          - uno
+          - upstash
+          - vercel
+          - browserbase
+          - browseruse
+          - hyperbrowser
+          - kernel
+          - notte
+          - steel
+          - tilion
+          - aws-s3
+          - azure-blob
+          - cloudflare-r2
+          - gcs
+          - neon
+          - tigris
+          - vercel-blob
+          - openrouter
+          - vercel-ai-gateway
+          - cloudflare-ai-gateway
+          - blazerail
+          - llmgateway
+          - pydantic-ai-gateway
+          - concentrate-ai-gateway
+          - ramp
+          - ngrok
+          - llmapi
+          - github-copilot
+          - anthropic-direct
+    steps:
+      - uses: actions/checkout@v4
+        if: env.SHOULD_RUN == 'true'
+      # ComputeSDK runners get no GitHub OIDC token, so nscloud-setup's
+      # `nsc auth exchange-github-token` cannot work there. Pre-seed the
+      # workload token file it checks for when NSC_TOKEN is available;
+      # accepts either the raw bearer token or a full token JSON document.
+      # It also exports NSC_DOCKER_LOGIN/NSC_CONTAINER_REGISTRY so
+      # nscloud-setup skips `nsc docker login`, which this token is not
+      # granted for — the benchmarks only need vault access.
+      - name: Seed Namespace token file
+        if: env.SHOULD_RUN == 'true'
+        env:
+          NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
+        run: |
+          if [ -n "${NSC_TOKEN:-}" ] && [ ! -f /var/run/nsc/token.json ]; then
+            mkdir -p /var/run/nsc
+            case "$NSC_TOKEN" in
+              \{*) printf '%s\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+              *) printf '{"bearer_token":"%s"}\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+            esac
+            chmod 600 /var/run/nsc/token.json
+            # The seeded token has no container-registry grant; tell
+            # nscloud-setup to skip `nsc docker login` for later steps.
+            echo "NSC_DOCKER_LOGIN=1" >> "$GITHUB_ENV"
+            echo "NSC_CONTAINER_REGISTRY=nscr.io" >> "$GITHUB_ENV"
+          fi
+      - uses: namespacelabs/nscloud-setup@v0
+        if: env.SHOULD_RUN == 'true'
+      - uses: pnpm/action-setup@v4
+        if: env.SHOULD_RUN == 'true'
+      - uses: actions/setup-node@v4
+        if: env.SHOULD_RUN == 'true'
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        if: env.SHOULD_RUN == 'true'
+        run: pnpm install
+      - name: Build workspace packages
+        if: env.SHOULD_RUN == 'true'
+        run: pnpm -r --filter './packages/**' run build
+      - name: Run Provider Weekly Composite
+        if: env.SHOULD_RUN == 'true'
+        env:
+          NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
+          PROVIDER: ${{ matrix.provider }}
+          CATEGORY_INPUT: ${{ github.event.inputs.category || 'all' }}
+          SLUG_BASE: ${{ github.event.inputs.benchmark_slug || 'provider-weekly-composite' }}
+          NAME_BASE: ${{ github.event.inputs.benchmark_name || 'Provider Weekly Composite' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          BENCHMARKS_PLATFORM_API_KEY: ${{ secrets.BENCHMARKS_PLATFORM_API_KEY }}
+          BENCHMARKS_PLATFORM_URL: ${{ secrets.BENCHMARKS_PLATFORM_URL }}
+          BENCH_TRIGGER_SOURCE: ${{ github.event.inputs.trigger_source || '' }}
+          BENCH_TRIGGER_REQUESTED_BY: ${{ github.event.inputs.trigger_requested_by || '' }}
+          BENCH_TRIGGER_REQUEST_ID: ${{ github.event.inputs.trigger_request_id || '' }}
+        run: |
+          # No provider credentials — the bench only reads the platform API.
+          KEYS='^(BENCHMARKS_PLATFORM_API_KEY|BENCHMARKS_PLATFORM_URL)='
+          . ./benchmarks/stealth/scripts/load-vault-secrets.sh "$KEYS"
+
+          set -o pipefail
+          # Empty platform env vars must not survive: @benchsdk/runner >=0.3.0
+          # resolves the platform URL with ?? so an empty string overrides the
+          # built-in default and the ingest URL fails to parse.
+          [ -z "${BENCHMARKS_PLATFORM_URL:-}" ] && unset BENCHMARKS_PLATFORM_URL
+          [ -z "${BENCHMARKS_PLATFORM_API_KEY:-}" ] && unset BENCHMARKS_PLATFORM_API_KEY
+
+          if [ "${CATEGORY_INPUT}" == "all" ]; then
+            CATEGORIES="sandbox browser storage ai-gateway"
+          else
+            CATEGORIES="${CATEGORY_INPUT}"
+          fi
+
+          for CATEGORY in ${CATEGORIES}; do
+            # One platform run per category: every provider leg shares the
+            # same category-scoped run key.
+            RUN_KEY="${{ github.run_id }}-${{ github.run_attempt }}-${CATEGORY}"
+            TITLE="$(printf '%s' "${CATEGORY}" | cut -c1 | tr '[:lower:]' '[:upper:]')${CATEGORY#?}"
+            CMD="pnpm bench:stealth benchmarks/stealth/composite/provider-weekly-composite.bench.ts"
+            CMD="${CMD} --provider \"${PROVIDER}\" --iterations 1 --run-key \"${RUN_KEY}\""
+            if [ "${DRY_RUN}" == "true" ]; then
+              CMD="${CMD} --no-ingest"
+            fi
+            echo "=== Category ${CATEGORY}: ${CMD}"
+            BENCHMARK_CATEGORY="${CATEGORY}" \
+            BENCHMARK_SLUG="${SLUG_BASE}-${CATEGORY}" \
+            BENCHMARK_NAME="${NAME_BASE} - ${TITLE}" \
+              eval "${CMD}"
+          done

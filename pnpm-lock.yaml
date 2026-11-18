@@ -4,6 +4,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@tensorlakeai/tensorlake': 0.5.148
+  ink>es-toolkit: 1.53.0
+
 importers:
 
   .:
@@ -146,6 +150,9 @@ importers:
       '@computesdk/namespace':
         specifier: ^1.6.42
         version: 1.6.42
+      '@computesdk/neevcloud':
+        specifier: ^1.0.19
+        version: 1.0.22(ws@8.22.0(bufferutil@4.2.0)(utf-8-validate@6.0.6))
       '@computesdk/northflank':
         specifier: ^1.1.22
         version: 1.1.22
@@ -212,6 +219,9 @@ importers:
       '@google-cloud/storage':
         specifier: ^7.22.0
         version: 7.22.0
+      '@nodeops-createos/sandbox':
+        specifier: ^0.8.2
+        version: 0.8.3
       '@northflank/js-client':
         specifier: ^0.9.5
         version: 0.9.5
@@ -224,12 +234,18 @@ importers:
       '@superserve/sdk':
         specifier: ^0.11.6
         version: 0.11.6
+      '@tenkicloud/sandbox':
+        specifier: ^1.4.1
+        version: 1.5.1(bufferutil@4.2.0)(utf-8-validate@6.0.6)
       '@tigrisdata/storage':
         specifier: ^3.23.0
         version: 3.23.0
       '@vercel/blob':
         specifier: ^2.9.0
         version: 2.9.0
+      '@vercel/sandbox':
+        specifier: ^3.8.0
+        version: 3.9.1
       computesdk:
         specifier: ^4.1.17
         version: 4.1.17
@@ -239,9 +255,15 @@ importers:
       e2b:
         specifier: ^2.63.0
         version: 2.63.0
+      fflate:
+        specifier: ^0.8.3
+        version: 0.8.3
       gravixlayer:
         specifier: ^0.1.51
         version: 0.1.51(@opentelemetry/api@1.10.0)
+      microsandbox:
+        specifier: ^0.6.18
+        version: 0.6.18
       modal:
         specifier: ^0.11.1
         version: 0.11.1
@@ -257,6 +279,12 @@ importers:
       playwright-core:
         specifier: ^1.65.0
         version: 1.65.0
+      playwright-native-core:
+        specifier: npm:playwright-core@1.60.0
+        version: playwright-core@1.60.0
+      sandbox0:
+        specifier: ^0.9.8
+        version: 0.9.8(bufferutil@4.2.0)(utf-8-validate@6.0.6)
       sql.js:
         specifier: ^1.16.0
         version: 1.16.0
@@ -646,6 +674,14 @@ packages:
     peerDependencies:
       typescript: ^5.0.0
 
+  '@benchsdk/api@0.11.3':
+    resolution: {integrity: sha512-zmfPO/kRWq3kxwAiI0QObHUmd2EIzR9U5CrgSeiRiGUZNOeqo94AmACFtVUGFuDAX+qbFz6PyLDkiNSpskE5FA==}
+    engines: {node: '>=18.0.0'}
+
+  '@benchsdk/cli@0.9.5':
+    resolution: {integrity: sha512-8k9dNtKmyb/AAnlUx47TKerwvJJb5mtpw+jywO3PsjgwZZdDJZ77thi2aLi8tbyoHSbmara/B2xidzDjNjco/w==}
+    engines: {node: '>=18.0.0'}
+
   '@blaxel/core@0.3.39':
     resolution: {integrity: sha512-8oN0wYQxzWriPXu8EnMwKXo4LHjBNVdse9B8u9zotplbsts9YUrqBrIG6WYlNBDswvkwzVk222GVM622fEzRxQ==}
     engines: {node: '>=18'}
@@ -885,6 +921,9 @@ packages:
   '@computesdk/namespace@1.6.42':
     resolution: {integrity: sha512-V4BnbZO9jJ52TWjakNzM/jgAdyt4sDNTv6RT8gLLFKp39h/G/Zxoy67yWvVEB3lxeGn3uSAkAnmeMQK8zrzr4w==}
 
+  '@computesdk/neevcloud@1.0.22':
+    resolution: {integrity: sha512-Nl9is/NliKicU89rWjUeBBaJcYWCalvK2LU8FIy0iBTnruQ/v3bDlcm2sFTVwJEqbKZCMkbtAFE0hVr3K2b3yQ==}
+
   '@computesdk/northflank@1.1.22':
     resolution: {integrity: sha512-9tO5GkModAmeVu2BouKWK1ymY5iI/nDMUlSnoKQS7pscyQspKcXLGw6j0+EQ/SQJbMpNDaWPV3r4/LJsz5cDeA==}
 
@@ -910,6 +949,9 @@ packages:
 
   '@computesdk/provider@2.1.24':
     resolution: {integrity: sha512-zQ+CmMEkfnhCgnI5BLlQAxQH088DEc9/97wmHELxYMzPDGoFwQppYrKn/lpsd3zUoZtTBRB1+74sSsAcjTwVuA==}
+
+  '@computesdk/provider@2.1.25':
+    resolution: {integrity: sha512-oSvmrBD13WvgiuZvrdFLKh0+DwX90GvaLm6jxX41wzmbNMJ98BkQm+TcD+wuwHGa/zYkzOlcvxDT2EN2eBPVlg==}
 
   '@computesdk/quilt@1.0.21':
     resolution: {integrity: sha512-UtGOMxngREyDXI0HQdUgpU9Pti9FfY/N0atpDZAkKC7i450egBCc5yZ+uhS4LXACjA0fIWlSmj0cFnwCIVVtyQ==}
@@ -1718,6 +1760,15 @@ packages:
     resolution: {integrity: sha512-mQ2s0pYYiav+tzCDR05Zptem8Ey2v8s11lri5RKGhTtL4COVCvVCk5vtyRYNT+9L8qSfyOqqefF9UtnW8mC5jA==}
     engines: {node: '>= 20.19.0'}
 
+  '@neevcloud/sdk@0.8.2':
+    resolution: {integrity: sha512-JcSs8yRalJoUiKbZbws8rCIqMmvnBLLyN9DDROxMgvm/3dJi93sTITcqhAwqRZ03BbpGrCevIyvW6GvpsJB7xg==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      ws: ^8
+    peerDependenciesMeta:
+      ws:
+        optional: true
+
   '@nodable/entities@3.1.0':
     resolution: {integrity: sha512-LsS/DjHr+uDM647Gru/cA8+J3a3HfhttwCKLyuoyN7yXTFCxKBtSgMQBvrW9yNPa2/zDRUNuGPaH5QUFoa4arQ==}
 
@@ -2497,16 +2548,36 @@ packages:
     resolution: {integrity: sha512-v4Ya5h4Ulc5yj+FO0iNCm05hvc1UvvFJxT/e44Ip/WcXMHpHAAQioOGG+S89iKJ+YXywRhCjwz0S2141gH/agA==}
     engines: {node: '>=20'}
 
+  '@superradcompany/microsandbox-darwin-arm64@0.6.18':
+    resolution: {integrity: sha512-C+bz9+v8JXQ6BG0FXbiTywM/dSNjIFifF3fOh5IU3JW3OiB0HcgjBiVRFWpZYk/pV6eKhZTYSkUiIWwYc3SRNA==}
+    engines: {node: '>= 22'}
+    cpu: [arm64]
+    os: [darwin]
+
   '@superradcompany/microsandbox-darwin-arm64@0.7.15':
     resolution: {integrity: sha512-dmg7UvPhk1Nr4CIrSvNRVhSrNMkTPEaAZ70v4JND/KTDZ4YHxsIXrrnh6OJ8DeV2Bq30UWWBuGCnWwxB4h/u9g==}
     engines: {node: '>= 22'}
     cpu: [arm64]
     os: [darwin]
 
+  '@superradcompany/microsandbox-linux-arm64-gnu@0.6.18':
+    resolution: {integrity: sha512-UVtFm32CExLeB0VhiLIW+mvVCkyWi6Yg+1AYWQAvfXj8ngDYEprZz/0Kksp/T8lAnV5hFIYZ2ZrPs0jAGbAR6A==}
+    engines: {node: '>= 22'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
   '@superradcompany/microsandbox-linux-arm64-gnu@0.7.15':
     resolution: {integrity: sha512-Njrd5O9Bbasr90jx5TGVmNxMIsbi+/Ucl48l6btcHV4NwP6dDIlZIYaSinRrlsM6XaN5gls4y29Z8HI1Gq/1jQ==}
     engines: {node: '>= 22'}
     cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@superradcompany/microsandbox-linux-x64-gnu@0.6.18':
+    resolution: {integrity: sha512-b9Mu+tu1Vq407c8sr7scNOxBgGpJX/Znd4NGFQ/Dx44SS6bHU3pjUEAdso3IpEB2Cx9nrGIBtBdaRrVw1ro+6w==}
+    engines: {node: '>= 22'}
+    cpu: [x64]
     os: [linux]
     libc: [glibc]
 
@@ -2517,10 +2588,22 @@ packages:
     os: [linux]
     libc: [glibc]
 
+  '@superradcompany/microsandbox-win32-arm64-msvc@0.6.18':
+    resolution: {integrity: sha512-QDW9JfnTHd4lbFpms3y+c5oyEdOXK1kZCNPONm6nVrdz1Wr+UVy+zMiMadzL1AJgG4rF3Tg6WT9Xa1j0ekPk6w==}
+    engines: {node: '>= 22'}
+    cpu: [arm64]
+    os: [win32]
+
   '@superradcompany/microsandbox-win32-arm64-msvc@0.7.15':
     resolution: {integrity: sha512-/yo8hr28oO5ABCSwFz5X3zu5mrkPr1m+Bn7M4DAGHI6N+ggl3T2XDCX//RXgy1sYWBNaxOqVGAo8Ub+9M6tWXg==}
     engines: {node: '>= 22'}
     cpu: [arm64]
+    os: [win32]
+
+  '@superradcompany/microsandbox-win32-x64-msvc@0.6.18':
+    resolution: {integrity: sha512-PS1vBcboB4QwZjruBouRApAsqyhUk9U1c2w+hQOCzYzFMoWVsSyUanAwuswiloqyoj2SREwBG5wY8jnAJFzr2g==}
+    engines: {node: '>= 22'}
+    cpu: [x64]
     os: [win32]
 
   '@superradcompany/microsandbox-win32-x64-msvc@0.7.15':
@@ -2545,21 +2628,8 @@ packages:
     cpu: [arm64]
     os: [darwin]
 
-  '@tensorlakeai/native-darwin-arm64@0.5.164':
-    resolution: {integrity: sha512-LBj2R35tpdMnNGAqOLQJLlVnoB2CWZlaxJDv92vVvjpAHzDGiQUjzAxL5Beb1QTZy3L+ST3QhyzgE5XidM84QQ==}
-    engines: {node: '>=22.0.0'}
-    cpu: [arm64]
-    os: [darwin]
-
   '@tensorlakeai/native-linux-arm64-gnu@0.5.148':
     resolution: {integrity: sha512-xCNUK2BghK6S9o3A0LebbU+LY2gbBADzE+ueyMVwTpGnfJnpKDeYRY7IPkrREDXHk7eiPrh93sJlJ5Ra5sBnxA==}
-    engines: {node: '>=22.0.0'}
-    cpu: [arm64]
-    os: [linux]
-    libc: [glibc]
-
-  '@tensorlakeai/native-linux-arm64-gnu@0.5.164':
-    resolution: {integrity: sha512-k79oFcLH0SJ/TN8j/xzTl+FJLSOZXxmCVrtS3myOHH2qmlZBhPJBRIMOM+1pSaXmlutOCp3x2t+OaPrxZkBOSg==}
     engines: {node: '>=22.0.0'}
     cpu: [arm64]
     os: [linux]
@@ -2572,22 +2642,8 @@ packages:
     os: [linux]
     libc: [musl]
 
-  '@tensorlakeai/native-linux-arm64-musl@0.5.164':
-    resolution: {integrity: sha512-t0bw6OP9Ao0Lm68Qw6NASwCcsSz7VRg62E88RtbFCt8H4NWzqnuUUFQAm43d79mf1vJLRju02H2sX1wmmo+FIQ==}
-    engines: {node: '>=22.0.0'}
-    cpu: [arm64]
-    os: [linux]
-    libc: [musl]
-
   '@tensorlakeai/native-linux-x64-gnu@0.5.148':
     resolution: {integrity: sha512-xpBG3FfVbmcVmi4h/ojhCHtj6PwDS9QtukmXU+k29BJu+cDMVOU1jQBxR3Pz2LhxVFY7CgNkF5DN4kKZXytZ7A==}
-    engines: {node: '>=22.0.0'}
-    cpu: [x64]
-    os: [linux]
-    libc: [glibc]
-
-  '@tensorlakeai/native-linux-x64-gnu@0.5.164':
-    resolution: {integrity: sha512-puKE+ZbxFn0v9s9vpW4cDlarbV+8stKSrLsr9M9UUYVdGPtXaq/Lo2dcaa9hhjDyvp/cNi9OVVDzxV8Cz2/3Ag==}
     engines: {node: '>=22.0.0'}
     cpu: [x64]
     os: [linux]
@@ -2600,32 +2656,14 @@ packages:
     os: [linux]
     libc: [musl]
 
-  '@tensorlakeai/native-linux-x64-musl@0.5.164':
-    resolution: {integrity: sha512-NgAImij+A6mPnHddzUN7uw19Qt925AIgOp10hk3m76OOfUl2/5FjTlRjzxqPTB0/ps2Ow19al2CrReyoJ50jog==}
-    engines: {node: '>=22.0.0'}
-    cpu: [x64]
-    os: [linux]
-    libc: [musl]
-
   '@tensorlakeai/native-win32-x64@0.5.148':
     resolution: {integrity: sha512-gHo8khnnkt4gP3rfZ+U2ajtcXa3dxfFzMUegTc3v/DJLuIlkDUITQ3DQt5pBJltDwKFvfpjbRTG3n604zfL2rQ==}
     engines: {node: '>=22.0.0'}
     cpu: [x64]
     os: [win32]
 
-  '@tensorlakeai/native-win32-x64@0.5.164':
-    resolution: {integrity: sha512-z1FnPe8ZIvNcos1e5y5YcgzSYiozJpV6i9Wx19JAOMS6k6DRFSHQKWfpcKmDUQwN+qKX1P+JGNMDAzvvUa371g==}
-    engines: {node: '>=22.0.0'}
-    cpu: [x64]
-    os: [win32]
-
   '@tensorlakeai/tensorlake@0.5.148':
     resolution: {integrity: sha512-sjFLS96vIX8L9U826e+/iGtrYi/tC+Fpwr509uziqduv3ick4XIq/F7YxnDjwH15daNpd4yX3TcCXkA+wz7MVA==}
-    engines: {node: '>=22.0.0'}
-    hasBin: true
-
-  '@tensorlakeai/tensorlake@0.5.164':
-    resolution: {integrity: sha512-kSDTXvqhzeokQSjBrHsEkCfRnyN2sE9MXV+iBQ2Tfk3b2CLwcLfY+MHplbQTe+XMPcSDnOwKxY0uJ9hw4RxeQw==}
     engines: {node: '>=22.0.0'}
     hasBin: true
 
@@ -3271,6 +3309,9 @@ packages:
   computesdk@4.1.18:
     resolution: {integrity: sha512-rOitYGTlGo9dYiVctR9/LrN6YEg2tH1hTqdxgok1KVEyWqoaw9rIJLmMLf1DvHkdzpoWTwjxMGdf4bw2qw8n5w==}
 
+  computesdk@4.1.19:
+    resolution: {integrity: sha512-Z6ua7SR1bntgJWrKTbg5c17vu3fVvPH0DM7j3JEvDu4vEVJlRMX5tjReZcIHGm4hfT+YfjJhyEtSgxBPE98iVw==}
+
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
@@ -3523,8 +3564,8 @@ packages:
     resolution: {integrity: sha512-j6vWzfrGVfyXxge+O0x5sh6cvxAog0a/4Rdd2K36zCMV5eJ+/+tOAngRO8cODMNWbVRdVlmGZQL2YS3yR8bIUA==}
     engines: {node: '>= 0.4'}
 
-  es-toolkit@1.53.2:
-    resolution: {integrity: sha512-iUqZ+NlwH4jUgRmXZUxFBsV/9762TQEa1O4IXLFBmDEjVHScBytKuseX23I0+v9ShZ5MYxEx6WKNzm6IPnex8g==}
+  es-toolkit@1.53.0:
+    resolution: {integrity: sha512-3+AYXp9fmJ/UhHBMYj2/U+RaUouMD90SzoItyDOB2Za7W6dB7fQApFGnZPl2MF6K8/Tv1koh1JyirSx/kju6Pw==}
 
   esbuild@0.21.5:
     resolution: {integrity: sha512-mg3OPMV4hXywwpoDxu3Qda5xCKQi+vCTZq8S9J/EpkhB2HzKXq4SNFZE3+NK93JYxc8VMSep+lOUSC/RVKaBqw==}
@@ -4466,6 +4507,11 @@ packages:
     resolution: {integrity: sha512-PXwfBhYu0hBCPw8Dn0E+WDYb7af3dSLVWKi3HGv84IdF4TyFoC0ysxFd0Goxw7nSv4T/PzEJQxsYsEiFCKo2BA==}
     engines: {node: '>=8.6'}
 
+  microsandbox@0.6.18:
+    resolution: {integrity: sha512-M38LkxCk6ppz7qXuQ+bHAgahX4bWNgNdrN5OIFpm7OVV1Bqfpvbwog+zP/QvIiImNHgIleB7M8dU1Kd4jTdwvg==}
+    engines: {node: '>= 22'}
+    hasBin: true
+
   microsandbox@0.7.15:
     resolution: {integrity: sha512-HbDR0Ps0I5ZmdC+tztarXzpLrrfhiQL9UjFxJt7Sutsld+BRcuBhSK/+F2RnTGKyeDVgQY+vwGUWu7bhqwgY9Q==}
     engines: {node: '>= 22'}
@@ -4922,6 +4968,11 @@ packages:
 
   platform@1.3.6:
     resolution: {integrity: sha512-fnWVljUchTro6RiCFvCXBbNhJc2NijN7oIQxbwsyL0buWJPG85v81ehlHI9fXrJsMNgTofEoWIQeClKpgxFLrg==}
+
+  playwright-core@1.60.0:
+    resolution: {integrity: sha512-9bW6zvX/m0lEbgTKJ6YppOKx8H3VOPBMOCFh2irXFOT4BbHgrx5hPjwJYLT40Lu+4qtD36qKc/Hn56StUW57IA==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   playwright-core@1.65.0:
     resolution: {integrity: sha512-vNSKgH6YqtN7cdT/L334zo0a+YwkrpicyrHJlWWPIm/Q+Nn2SWInil01oT0mbu96U4GgoRtCYQD9CzJQgju+lA==}
@@ -6388,6 +6439,12 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  '@benchsdk/api@0.11.3': {}
+
+  '@benchsdk/cli@0.9.5':
+    dependencies:
+      '@benchsdk/api': 0.11.3
+
   '@blaxel/core@0.3.39(@hey-api/openapi-ts@0.99.0(magicast@0.3.5)(typescript@5.9.3))(bare-buffer@3.7.2)(bufferutil@4.2.0)(utf-8-validate@6.0.6)':
     dependencies:
       '@hey-api/client-fetch': 0.10.2(@hey-api/openapi-ts@0.99.0(magicast@0.3.5)(typescript@5.9.3))
@@ -6924,6 +6981,14 @@ snapshots:
       '@computesdk/provider': 2.1.23
       computesdk: 4.1.17
 
+  '@computesdk/neevcloud@1.0.22(ws@8.22.0(bufferutil@4.2.0)(utf-8-validate@6.0.6))':
+    dependencies:
+      '@computesdk/provider': 2.1.25
+      '@neevcloud/sdk': 0.8.2(ws@8.22.0(bufferutil@4.2.0)(utf-8-validate@6.0.6))
+      computesdk: 4.1.19
+    transitivePeerDependencies:
+      - ws
+
   '@computesdk/northflank@1.1.22':
     dependencies:
       '@computesdk/provider': 2.1.23
@@ -6977,6 +7042,12 @@ snapshots:
     dependencies:
       '@computesdk/cmd': 0.4.1
       computesdk: 4.1.18
+      daemond: 0.1.9
+
+  '@computesdk/provider@2.1.25':
+    dependencies:
+      '@computesdk/cmd': 0.4.1
+      computesdk: 4.1.19
       daemond: 0.1.9
 
   '@computesdk/quilt@1.0.21':
@@ -7713,6 +7784,12 @@ snapshots:
       node-addon-api: 8.9.2
       prebuild-install: 7.1.3
     optional: true
+
+  '@neevcloud/sdk@0.8.2(ws@8.22.0(bufferutil@4.2.0)(utf-8-validate@6.0.6))':
+    dependencies:
+      openapi-fetch: 0.17.0
+    optionalDependencies:
+      ws: 8.22.0(bufferutil@4.2.0)(utf-8-validate@6.0.6)
 
   '@nodable/entities@3.1.0': {}
 
@@ -8575,16 +8652,31 @@ snapshots:
 
   '@storagesdk/core@0.5.0': {}
 
+  '@superradcompany/microsandbox-darwin-arm64@0.6.18':
+    optional: true
+
   '@superradcompany/microsandbox-darwin-arm64@0.7.15':
+    optional: true
+
+  '@superradcompany/microsandbox-linux-arm64-gnu@0.6.18':
     optional: true
 
   '@superradcompany/microsandbox-linux-arm64-gnu@0.7.15':
     optional: true
 
+  '@superradcompany/microsandbox-linux-x64-gnu@0.6.18':
+    optional: true
+
   '@superradcompany/microsandbox-linux-x64-gnu@0.7.15':
     optional: true
 
+  '@superradcompany/microsandbox-win32-arm64-msvc@0.6.18':
+    optional: true
+
   '@superradcompany/microsandbox-win32-arm64-msvc@0.7.15':
+    optional: true
+
+  '@superradcompany/microsandbox-win32-x64-msvc@0.6.18':
     optional: true
 
   '@superradcompany/microsandbox-win32-x64-msvc@0.7.15':
@@ -8607,37 +8699,19 @@ snapshots:
   '@tensorlakeai/native-darwin-arm64@0.5.148':
     optional: true
 
-  '@tensorlakeai/native-darwin-arm64@0.5.164':
-    optional: true
-
   '@tensorlakeai/native-linux-arm64-gnu@0.5.148':
-    optional: true
-
-  '@tensorlakeai/native-linux-arm64-gnu@0.5.164':
     optional: true
 
   '@tensorlakeai/native-linux-arm64-musl@0.5.148':
     optional: true
 
-  '@tensorlakeai/native-linux-arm64-musl@0.5.164':
-    optional: true
-
   '@tensorlakeai/native-linux-x64-gnu@0.5.148':
-    optional: true
-
-  '@tensorlakeai/native-linux-x64-gnu@0.5.164':
     optional: true
 
   '@tensorlakeai/native-linux-x64-musl@0.5.148':
     optional: true
 
-  '@tensorlakeai/native-linux-x64-musl@0.5.164':
-    optional: true
-
   '@tensorlakeai/native-win32-x64@0.5.148':
-    optional: true
-
-  '@tensorlakeai/native-win32-x64@0.5.164':
     optional: true
 
   '@tensorlakeai/tensorlake@0.5.148(bufferutil@4.2.0)(utf-8-validate@6.0.6)':
@@ -8656,26 +8730,6 @@ snapshots:
       '@tensorlakeai/native-linux-x64-gnu': 0.5.148
       '@tensorlakeai/native-linux-x64-musl': 0.5.148
       '@tensorlakeai/native-win32-x64': 0.5.148
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
-  '@tensorlakeai/tensorlake@0.5.164(bufferutil@4.2.0)(utf-8-validate@6.0.6)':
-    dependencies:
-      '@grpc/grpc-js': 1.14.7
-      '@grpc/proto-loader': 0.8.1
-      ajv: 8.20.0
-      fflate: 0.8.3
-      google-proto-files: 5.0.3
-      nanoid: 3.3.20
-      ws: 8.23.0(bufferutil@4.2.0)(utf-8-validate@6.0.6)
-    optionalDependencies:
-      '@tensorlakeai/native-darwin-arm64': 0.5.164
-      '@tensorlakeai/native-linux-arm64-gnu': 0.5.164
-      '@tensorlakeai/native-linux-arm64-musl': 0.5.164
-      '@tensorlakeai/native-linux-x64-gnu': 0.5.164
-      '@tensorlakeai/native-linux-x64-musl': 0.5.164
-      '@tensorlakeai/native-win32-x64': 0.5.164
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -9423,6 +9477,12 @@ snapshots:
       '@computesdk/cmd': 0.4.1
       daemond: 0.1.9
 
+  computesdk@4.1.19:
+    dependencies:
+      '@benchsdk/cli': 0.9.5
+      '@computesdk/cmd': 0.4.1
+      daemond: 0.1.9
+
   concat-map@0.0.1: {}
 
   confbox@0.1.8: {}
@@ -9642,7 +9702,7 @@ snapshots:
       has-tostringtag: 1.0.2
       hasown: 2.0.4
 
-  es-toolkit@1.53.2: {}
+  es-toolkit@1.53.0: {}
 
   esbuild@0.21.5:
     optionalDependencies:
@@ -10388,7 +10448,7 @@ snapshots:
       cli-cursor: 4.0.0
       cli-truncate: 6.2.0
       code-excerpt: 4.0.0
-      es-toolkit: 1.53.2
+      es-toolkit: 1.53.0
       indent-string: 5.0.0
       is-in-ci: 2.0.0
       patch-console: 2.0.0
@@ -10748,6 +10808,14 @@ snapshots:
     dependencies:
       braces: 3.0.3
       picomatch: 2.3.2
+
+  microsandbox@0.6.18:
+    optionalDependencies:
+      '@superradcompany/microsandbox-darwin-arm64': 0.6.18
+      '@superradcompany/microsandbox-linux-arm64-gnu': 0.6.18
+      '@superradcompany/microsandbox-linux-x64-gnu': 0.6.18
+      '@superradcompany/microsandbox-win32-arm64-msvc': 0.6.18
+      '@superradcompany/microsandbox-win32-x64-msvc': 0.6.18
 
   microsandbox@0.7.15:
     dependencies:
@@ -11195,6 +11263,8 @@ snapshots:
       pathe: 2.0.3
 
   platform@1.3.6: {}
+
+  playwright-core@1.60.0: {}
 
   playwright-core@1.65.0: {}
 
@@ -11910,7 +11980,7 @@ snapshots:
 
   tensorlake@0.5.164(bufferutil@4.2.0)(utf-8-validate@6.0.6):
     dependencies:
-      '@tensorlakeai/tensorlake': 0.5.164(bufferutil@4.2.0)(utf-8-validate@6.0.6)
+      '@tensorlakeai/tensorlake': 0.5.148(bufferutil@4.2.0)(utf-8-validate@6.0.6)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate

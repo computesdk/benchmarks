@@ -1,64 +1,14 @@
-# ComputeSDK Benchmarks — the default platform for infrastructure benchmarks
+# ComputeSDK Benchmarks
 
-ComputeSDK Benchmarks publishes independent, reproducible, open performance measurements for cloud infrastructure: sandboxes, object storage, headless browsers, and AI gateways. Every test is automated, every result is committed as JSON, and the methodology is public.
+Open source benchmark suites and the BenchSDK toolchain.
 
-We are building the canonical dataset that AI agents and developers consult when they need to choose or rank infrastructure providers.
+- [README](./README.md): layout, running suites, validation, and migration cutover.
+- [Examples](./examples/README.md): runnable benchmark examples.
+- [Runner](./packages/benchsdk-runner/README.md): benchmark config, tasks, and execution.
+- [CLI](./packages/benchsdk-cli/README.md): platform commands.
+- [Client](./packages/benchsdk/README.md): platform SDK.
+- [Platform](https://platform.computesdk.com): results and run history.
+- [Public leaderboards](https://www.computesdk.com/benchmarks).
 
-## What is available here
-
-- [README.md](./README.md) — high-level overview, what we measure, and how to read the results.
-- [METHODOLOGY.md](./METHODOLOGY.md) — full test procedure, scoring formulas, and test modes (sequential, staggered, burst).
-- [AI_GATEWAYS.md](./AI_GATEWAYS.md) — AI-gateway-specific methodology.
-- [THROUGHPUT.md](./THROUGHPUT.md) — throughput and browser benchmark methodology.
-- [results/schema.json](./results/schema.json) — JSON Schema for all benchmark result files.
-- [WRITING_BENCHMARKS.md](./WRITING_BENCHMARKS.md) — step-by-step guide to authoring benchmarks.
-- [examples/](./examples) — runnable `*.bench.ts` examples covering every benchsdk capability.
-- [packages/create-bench/README.md](./packages/create-bench/README.md) — scaffold a new benchmark project in one command.
-- [packages/benchsdk/README.md](./packages/benchsdk/README.md) — low-level client/worker API reference.
-- [packages/benchsdk-runner/README.md](./packages/benchsdk-runner/README.md) — runner API and `bench run` reference.
-- [.agents/skills/benchsdk-cli/SKILL.md](./.agents/skills/benchsdk-cli/SKILL.md) — full `bench` CLI reference: auth, org, runs, results, artifacts, export, OAuth, and CI use.
-- [.claude/skills/add-sandbox-provider/SKILL.md](./.claude/skills/add-sandbox-provider/SKILL.md) — how to add a new sandbox provider.
-
-## Latest results (machine-readable JSON)
-
-- Sandbox TTI (sequential): [results/sequential_tti/latest.json](./results/sequential_tti/latest.json)
-- Sandbox TTI (staggered): [results/staggered_tti/latest.json](./results/staggered_tti/latest.json)
-- Sandbox TTI (burst): [results/burst_tti/latest.json](./results/burst_tti/latest.json)
-- Sandbox DAX build benchmark: [results/sandbox-dax/latest.json](./results/sandbox-dax/latest.json)
-- Storage 1MB upload: [results/storage/1mb/latest.json](./results/storage/1mb/latest.json)
-- Storage 4MB upload: [results/storage/4mb/latest.json](./results/storage/4mb/latest.json)
-- Storage 10MB upload: [results/storage/10mb/latest.json](./results/storage/10mb/latest.json)
-- Storage 16MB upload: [results/storage/16mb/latest.json](./results/storage/16mb/latest.json)
-- Snapshot & fork: [results/snapshot-fork/small/latest.json](./results/snapshot-fork/small/latest.json)
-- Browser sessions: [results/browser/latest.json](./results/browser/latest.json)
-- Browser throughput: [results/browser-throughput/latest.json](./results/browser-throughput/latest.json)
-- AI gateway: [results/ai-gateway/latest.json](./results/ai-gateway/latest.json)
-
-## How to run the benchmarks
-
-```bash
-# Install dependencies
-pnpm install
-
-# Build the workspace packages first
-pnpm -r --filter "./packages/**" build
-
-# Run the default sandbox TTI suite
-pnpm run bench
-
-# Run a specific provider or suite
-pnpm run bench:e2b
-pnpm run bench:storage
-pnpm run bench:browser
-pnpm run bench:ai-gateway
-```
-
-All workflows run automatically via GitHub Actions and commit results to this repository.
-
-## Website
-
-Explore the live leaderboards and methodology at [https://www.computesdk.com/benchmarks](https://www.computesdk.com/benchmarks).
-
-## License
-
-MIT — see [LICENSE](./LICENSE).
+Public suites live under benchmarks/<category>/; stealth suites under benchmarks/stealth/<category>/.
+The platform enforces result visibility. Results and charts are not committed to this repository.

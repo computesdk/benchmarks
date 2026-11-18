@@ -1,0 +1,71 @@
+name: Stealth — Sandbox harness tests
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'benchmarks/stealth/**'
+      - '.github/workflows/**'
+      - 'packages/**'
+      - 'tests/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+  push:
+    branches: [master]
+    paths:
+      - 'benchmarks/stealth/**'
+      - '.github/workflows/**'
+      - 'packages/**'
+      - 'tests/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Sandbox harness regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Build workspace packages
+        run: pnpm -r --filter './packages/**' run build
+      - name: Run keyless regressions
+        run: |
+          pnpm stealth:test:fs-api
+          pnpm stealth:test:reliability
+          pnpm stealth:test:benchmark-setup
+          pnpm stealth:test:results
+          pnpm stealth:test:snapshot-source
+          pnpm stealth:test:fidelity
+          pnpm stealth:test:scoring
+          pnpm stealth:test:composite
+          pnpm typecheck
+          node --test tests/stealth/cpu-local/*.test.mjs
+
+  active-scoring:
+    name: Active scoring integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - name: Verify active configs and exporters without provider work
+        run: |
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm -r --filter './packages/**' run build
+          pnpm exec tsx benchmarks/stealth/scripts/check-scoring-runner.ts
+          pnpm stealth:test:scoring:active

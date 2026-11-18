@@ -1,0 +1,167 @@
+name: Stealth — Sandbox CPU Burst
+
+on:
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: 'Run only this provider (empty = all)'
+        required: false
+        default: ''
+        type: string
+      dry_run:
+        description: 'Skip ingestion into benchmarks-platform'
+        required: true
+        default: true
+        type: boolean
+      iterations:
+        description: 'Replicates per provider (each creates a fresh sandbox and bursts it; 5 = 5 tests, 1 for smoke)'
+        required: true
+        default: '5'
+        type: string
+      benchmark_slug:
+        description: 'Benchmark slug for platform ingestion'
+        required: true
+        default: 'sandbox-cpu-burst'
+        type: string
+      benchmark_name:
+        description: 'Benchmark name for platform ingestion'
+        required: true
+        default: 'Sandbox CPU Burst'
+        type: string
+      trigger_source:
+        description: 'Recorded on platform runs as their trigger (e.g. platform-retrigger); leave empty for a plain manual run'
+        required: false
+        default: ''
+        type: string
+      trigger_requested_by:
+        description: 'Who asked for this run (e.g. the platform org slug); recorded alongside trigger_source'
+        required: false
+        default: ''
+        type: string
+      trigger_request_id:
+        description: 'Platform re-trigger request id; recorded so the platform can link this run back to the request'
+        required: false
+        default: ''
+        type: string
+  schedule:
+    - cron: '0 10 * * *'
+
+concurrency:
+  group: sandbox-cpu-burst-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  BENCHMARK_NAME: ${{ github.event.inputs.benchmark_name || (github.event_name == 'schedule' && 'Sandbox CPU Burst - Stealth') || 'Sandbox CPU Burst' }}
+  BENCHMARK_SLUG: ${{ github.event.inputs.benchmark_slug || (github.event_name == 'schedule' && 'sandbox-cpu-burst-stealth') || 'sandbox-cpu-burst' }}
+
+jobs:
+  providers:
+    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
+    name: Provider matrix
+    runs-on: namespace-profile-default
+    outputs:
+      list: ${{ steps.list.outputs.providers }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - id: list
+        run: |
+          node -e "const s=require('fs').readFileSync('benchmarks/stealth/sandbox/providers.ts','utf8');console.log('providers='+JSON.stringify([...s.matchAll(/^\s*name:\s*'([^']+)'/gm)].map(m=>m[1])))" >> "$GITHUB_OUTPUT"
+
+  bench:
+    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
+    name: bench-${{ matrix.provider }}
+    runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
+    needs: providers
+    # 5 replicates of create + burst + destroy per provider; the burst phase
+    # alone has a 300s workload timeout per replicate.
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      BENCH_RESULTS_DIR: results/current-${{ github.run_id }}-${{ github.run_attempt }}/${{ matrix.provider }}
+      SHOULD_RUN: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.provider == '' || github.event.inputs.provider == matrix.provider }}
+    strategy:
+      fail-fast: false
+      matrix:
+        provider: ${{ fromJSON(needs.providers.outputs.list) }}
+    steps:
+      - uses: actions/checkout@v4
+        if: env.SHOULD_RUN == 'true'
+      # ComputeSDK runners get no GitHub OIDC token, so nscloud-setup's
+      # `nsc auth exchange-github-token` cannot work there. Pre-seed the
+      # workload token file it checks for when NSC_TOKEN is available;
+      # accepts either the raw bearer token or a full token JSON document.
+      # It also exports NSC_DOCKER_LOGIN/NSC_CONTAINER_REGISTRY so
+      # nscloud-setup skips `nsc docker login`, which this token is not
+      # granted for — the benchmarks only need vault access.
+      - name: Seed Namespace token file
+        if: env.SHOULD_RUN == 'true'
+        env:
+          NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
+        run: |
+          if [ -n "${NSC_TOKEN:-}" ] && [ ! -f /var/run/nsc/token.json ]; then
+            mkdir -p /var/run/nsc
+            case "$NSC_TOKEN" in
+              \{*) printf '%s\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+              *) printf '{"bearer_token":"%s"}\n' "$NSC_TOKEN" > /var/run/nsc/token.json ;;
+            esac
+            chmod 600 /var/run/nsc/token.json
+            # The seeded token has no container-registry grant; tell
+            # nscloud-setup to skip `nsc docker login` for later steps.
+            echo "NSC_DOCKER_LOGIN=1" >> "$GITHUB_ENV"
+            echo "NSC_CONTAINER_REGISTRY=nscr.io" >> "$GITHUB_ENV"
+          fi
+      - uses: namespacelabs/nscloud-setup@v0
+        if: env.SHOULD_RUN == 'true'
+      - uses: pnpm/action-setup@v4
+        if: env.SHOULD_RUN == 'true'
+      - uses: actions/setup-node@v4
+        if: env.SHOULD_RUN == 'true'
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        if: env.SHOULD_RUN == 'true'
+        run: pnpm install
+      - name: Build workspace packages
+        if: env.SHOULD_RUN == 'true'
+        run: pnpm -r --filter './packages/**' run build
+      - name: Run Sandbox CPU Burst benchmark
+        if: env.SHOULD_RUN == 'true'
+        id: run-bench
+        env:
+          NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
+          PROVIDER: ${{ matrix.provider }}
+          # Sandbox family: dedicated VM per create() instead of shared-disk exec.
+          ARCHIL_EXECUTION: persistent
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          ITERATIONS: ${{ github.event.inputs.iterations || '5' }}
+          BENCHMARKS_PLATFORM_API_KEY: ${{ secrets.BENCHMARKS_PLATFORM_API_KEY }}
+          BENCHMARKS_PLATFORM_URL: ${{ secrets.BENCHMARKS_PLATFORM_URL }}
+          RUN_KEY: ${{ github.run_id }}
+          BENCH_TRIGGER_SOURCE: ${{ github.event.inputs.trigger_source || '' }}
+          BENCH_TRIGGER_REQUESTED_BY: ${{ github.event.inputs.trigger_requested_by || '' }}
+          BENCH_TRIGGER_REQUEST_ID: ${{ github.event.inputs.trigger_request_id || '' }}
+        run: |
+          . ./benchmarks/stealth/scripts/load-vault-secrets.sh "$(benchmarks/stealth/scripts/vault-keys.sh benchmarks/stealth/sandbox/providers.ts BENCHMARKS_PLATFORM_API_KEY ARCHIL_DISK_ID_SANDBOX)"
+          if [ -n "${ARCHIL_DISK_ID_SANDBOX:-}" ]; then export ARCHIL_DISK_ID="$ARCHIL_DISK_ID_SANDBOX"; fi
+
+          set -o pipefail
+          mkdir -p results
+          # Empty platform env vars must not survive: @benchsdk/runner >=0.3.0
+          # resolves the platform URL with ?? so an empty string overrides the
+          # built-in default and the ingest URL fails to parse.
+          [ -z "$BENCHMARKS_PLATFORM_URL" ] && unset BENCHMARKS_PLATFORM_URL
+          [ -z "$BENCHMARKS_PLATFORM_API_KEY" ] && unset BENCHMARKS_PLATFORM_API_KEY
+          # No `pnpm bench:stealth --` separator: @benchsdk/runner >=0.3.0 validates
+          # flags strictly and rejects a bare `--` in argv.
+          CMD="pnpm bench:stealth benchmarks/stealth/sandbox/sandbox-cpu-burst.bench.ts --provider \"$PROVIDER\" --iterations \"$ITERATIONS\" --run-key \"$RUN_KEY\""
+          if [ "${DRY_RUN}" == "true" ]; then
+            CMD="${CMD} --no-ingest"
+          fi
+          echo "Running: ${CMD}"
+          eval "$CMD"
