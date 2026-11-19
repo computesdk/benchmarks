@@ -208,8 +208,8 @@ importers:
         specifier: ^0.3.30
         version: 0.3.30(zod@4.6.7)
       '@computesdk/vercel':
-        specifier: ^1.7.55
-        version: 1.7.55
+        specifier: ^1.7.58
+        version: 1.7.58
       '@daytonaio/sdk':
         specifier: ^0.224.1
         version: 0.224.1(bufferutil@4.2.0)(utf-8-validate@6.0.6)
@@ -244,8 +244,8 @@ importers:
         specifier: ^2.9.0
         version: 2.9.0
       '@vercel/sandbox':
-        specifier: ^3.8.0
-        version: 3.9.1
+        specifier: ^4.0.0
+        version: 4.0.0
       computesdk:
         specifier: ^4.1.17
         version: 4.1.17
@@ -953,6 +953,9 @@ packages:
   '@computesdk/provider@2.1.25':
     resolution: {integrity: sha512-oSvmrBD13WvgiuZvrdFLKh0+DwX90GvaLm6jxX41wzmbNMJ98BkQm+TcD+wuwHGa/zYkzOlcvxDT2EN2eBPVlg==}
 
+  '@computesdk/provider@2.1.26':
+    resolution: {integrity: sha512-cb6NdC74S0MMm+A/IJfsv44WLDM+PQZfc0bh+zWrIxiZrKwsmCE6Selxz7U0psvY1N/7uVFFKk/x9V+FtbC/AQ==}
+
   '@computesdk/quilt@1.0.21':
     resolution: {integrity: sha512-UtGOMxngREyDXI0HQdUgpU9Pti9FfY/N0atpDZAkKC7i450egBCc5yZ+uhS4LXACjA0fIWlSmj0cFnwCIVVtyQ==}
     engines: {node: '>=22'}
@@ -996,8 +999,8 @@ packages:
   '@computesdk/upstash@0.3.30':
     resolution: {integrity: sha512-zWxoG5hmZDVC68pJNIRDKl2zaFZuk3z79VwZaOqebREZPT+6EIWbCpDSBZ8Dau2uq6TQWnymo1QboIqdsBqhpw==}
 
-  '@computesdk/vercel@1.7.55':
-    resolution: {integrity: sha512-JSoPz0V0OfhduavNJelVuW/JkWLbqmZHea93IXzIsh2gcKXr/jLNqtFW26JB6NmoxJBMVknSwZZLDOMn4dMU1w==}
+  '@computesdk/vercel@1.7.58':
+    resolution: {integrity: sha512-1iG43ZRrQGsZmzBeH/iroWDyJY+Sx1dkU5MU2c1zMz71mEnRSzFyVdXKrLtmcSmgxDUw7LRZjhC6oNvesMX9QQ==}
 
   '@connectrpc/connect-node@2.1.2':
     resolution: {integrity: sha512-+i/aAOpsI8sIx1mbYp6d99zvxaUSF6t/jP9Ux9maAmjsZPgmIQ3JuIeYi0zJIP9zlCnBlJjkpPosshCgdRuThQ==}
@@ -2774,8 +2777,9 @@ packages:
     resolution: {integrity: sha512-ko6ATeRUlHZMB5hLFdC7+/Q1dI2f3NX3gZHxtpALdkxurwjD5HFHGWYF+4o+4SF0E47jg6KzcHknmRpHcKgJ5A==}
     engines: {node: '>= 20'}
 
-  '@vercel/sandbox@3.9.1':
-    resolution: {integrity: sha512-8/3vqPknI2WrE1Zd4O3LbMFbrD9elCXqCe0JjqSJH+EqsEtBHGafwwxx1raq1kTWvpLLk4lh0bZW9dMy6L5efA==}
+  '@vercel/sandbox@4.0.0':
+    resolution: {integrity: sha512-wFYlkheUEofX47e5MWKQ80MumZ+tYmqLc+Ni3DT4mMRXiQdbyg1caH7hSr24CgnGVWmRO0QV8oQwi6Pgyt9CRQ==}
+    engines: {node: '>=22.19.0'}
 
   '@vitest/coverage-v8@1.6.1':
     resolution: {integrity: sha512-6YeRZwuO4oTGKxD3bijok756oktHSIm3eczVVzNe3scqzuhLwltIF3S9ZL/vwOVIpURmU6SnZhziXXAfw8/Qlw==}
@@ -3311,6 +3315,9 @@ packages:
 
   computesdk@4.1.19:
     resolution: {integrity: sha512-Z6ua7SR1bntgJWrKTbg5c17vu3fVvPH0DM7j3JEvDu4vEVJlRMX5tjReZcIHGm4hfT+YfjJhyEtSgxBPE98iVw==}
+
+  computesdk@4.1.20:
+    resolution: {integrity: sha512-H/VBM3f+KLqIDPcbmfEKgR1vsYX7/a0bwBH8c0J6m/z87srq5Ft6f2zEIUS3KK0NaIjvLqjfsrS90l5azX/2VQ==}
 
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
@@ -7050,6 +7057,12 @@ snapshots:
       computesdk: 4.1.19
       daemond: 0.1.9
 
+  '@computesdk/provider@2.1.26':
+    dependencies:
+      '@computesdk/cmd': 0.4.1
+      computesdk: 4.1.20
+      daemond: 0.1.9
+
   '@computesdk/quilt@1.0.21':
     dependencies:
       '@computesdk/provider': 2.1.23
@@ -7141,11 +7154,11 @@ snapshots:
     transitivePeerDependencies:
       - zod
 
-  '@computesdk/vercel@1.7.55':
+  '@computesdk/vercel@1.7.58':
     dependencies:
-      '@computesdk/provider': 2.1.23
-      '@vercel/sandbox': 3.9.1
-      computesdk: 4.1.17
+      '@computesdk/provider': 2.1.26
+      '@vercel/sandbox': 4.0.0
+      computesdk: 4.1.20
       ms: 2.1.3
     transitivePeerDependencies:
       - bare-abort-controller
@@ -8883,7 +8896,7 @@ snapshots:
       '@vercel/cli-exec': 1.0.1
       jose: 5.10.0
 
-  '@vercel/sandbox@3.9.1':
+  '@vercel/sandbox@4.0.0':
     dependencies:
       '@vercel/detect-agent': 1.2.5
       '@vercel/oidc': 4.0.0
@@ -8895,7 +8908,7 @@ snapshots:
       ms: 2.1.3
       picocolors: 1.1.1
       tar-stream: 3.1.7
-      undici: 7.30.2
+      undici: 8.12.4
       xdg-app-paths: 5.1.0
       zod: 4.6.7
     transitivePeerDependencies:
@@ -9478,6 +9491,12 @@ snapshots:
       daemond: 0.1.9
 
   computesdk@4.1.19:
+    dependencies:
+      '@benchsdk/cli': 0.9.5
+      '@computesdk/cmd': 0.4.1
+      daemond: 0.1.9
+
+  computesdk@4.1.20:
     dependencies:
       '@benchsdk/cli': 0.9.5
       '@computesdk/cmd': 0.4.1
