@@ -182,7 +182,9 @@ async function populateHeavy(
   const effMemMb = Number.isFinite(guestMemMb) && guestMemMb > 0
     ? Math.min(memMb, Math.floor(guestMemMb * 0.6))
     : memMb;
-  if (effMemMb < 64) return { memInterp: null, memReadyMs: null, memMb: 0 };
+  // Skip only when the guest can't hold a meaningful payload: an honored
+  // small request (e.g. 32 MB on a big box) still runs the memory leg.
+  if (effMemMb < Math.min(memMb, 64)) return { memInterp: null, memReadyMs: null, memMb: 0 };
 
   // Pick an interpreter for the memory-dirty process.
   let interp: 'python3' | 'node' | null = null;
@@ -252,10 +254,13 @@ async function verifyHeavy(
   let memoryPersisted: boolean | null = null;
   if (memInterp) {
     const beat = `${baseDir}/membeat.txt`;
+    // Heartbeats are 'counter' (python) or 'counter:bytes' (node); the
+    // counter field is what must advance.
     const probe =
       `pgrep -f '${baseDir}/${MEM_PROGRAMS[memInterp].file}' >/dev/null 2>&1 || exit 1; ` +
       `c1=$(cat '${beat}' 2>/dev/null); sleep 1.5; c2=$(cat '${beat}' 2>/dev/null); ` +
-      `[ -n "$c1" ] && [ -n "$c2" ] && [ "$c2" -gt "$c1" ]`;
+      `n1=\${c1%%:*}; n2=\${c2%%:*}; ` +
+      `[ -n "$n1" ] && [ -n "$n2" ] && [ "$n2" -gt "$n1" ]`;
     const memProbe = await sandbox.runCommand(probe, { timeout: CREATE_TIMEOUT_MS }).catch(() => null);
     memoryPersisted = memProbe !== null && memProbe.exitCode === 0;
   }
