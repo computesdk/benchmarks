@@ -247,7 +247,7 @@ export async function uploadRunArtifact(
   if (!key) throw new Error('BENCHMARKS_PLATFORM_API_KEY is required');
 
   const res = await fetch(
-    `${base}/api/v1/benchmarks/stealth/${encodeURIComponent(benchmarkSlug)}/runs/${encodeURIComponent(runId)}/artifacts`,
+    `${base}/api/v1/benchmarks/${encodeURIComponent(benchmarkSlug)}/runs/${encodeURIComponent(runId)}/artifacts`,
     {
       method: 'POST',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },

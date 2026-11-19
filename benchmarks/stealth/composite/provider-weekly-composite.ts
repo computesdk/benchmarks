@@ -4,14 +4,14 @@
  * Endpoints used (all authenticated with `Authorization: Bearer <key>`):
  *   GET /api/v1/benchmarks?limit=500&offset=N
  *       → { items: [{ slug, organizationSlug, category? }] }
- *   GET /api/v1/benchmarks/stealth/{slug}/results?since&until&timeZone=UTC&limit=100&offset=N
+ *   GET /api/v1/benchmarks/{slug}/results?since&until&timeZone=UTC&limit=100&offset=N
  *       → { items: [{ run: { id, status, createdAt, totalTasks, summary },
  *          participants: [{ taskCount }], analytics }] } — one paged read per
  *         benchmark covers the whole window, then runs are grouped by their
  *         createdAt day locally. This replaced a per-day run-list call plus a
  *         run-detail fetch per run: 36 workers × (140 lists + ~100s of run
  *         fetches) overloaded the API and tasks died on 30s timeouts/500s.
- *   GET /api/v1/benchmarks/stealth/~/{sourceOrg}/{slug}/results?...same params
+ *   GET /api/v1/benchmarks/~/{sourceOrg}/{slug}/results?...same params
  *       → the foreign-entitled variant used when the own-org route 404s.
  *   run.summary.results[] carries per-provider rows with `compositeScore`.
  *       The run-wide aggregate row is identified via summary.scoring's
@@ -444,7 +444,7 @@ export class PlatformApi {
     let items: ResultsItem[];
     if (!this.foreignSlugs.has(bench.slug)) {
       try {
-        items = await this.pagedResults(`/api/v1/benchmarks/stealth/${encodeURIComponent(bench.slug)}/results?${query}`);
+        items = await this.pagedResults(`/api/v1/benchmarks/${encodeURIComponent(bench.slug)}/results?${query}`);
       } catch (error) {
         if (!(error instanceof HttpError && error.status === 404)) throw error;
         this.foreignSlugs.add(bench.slug);
@@ -455,7 +455,7 @@ export class PlatformApi {
     }
     if (this.foreignSlugs.has(bench.slug)) {
       items = await this.pagedResults(
-        `/api/v1/benchmarks/stealth/~/${encodeURIComponent(bench.organizationSlug)}/${encodeURIComponent(bench.slug)}/results?${query}`,
+        `/api/v1/benchmarks/~/${encodeURIComponent(bench.organizationSlug)}/${encodeURIComponent(bench.slug)}/results?${query}`,
       );
     }
 
@@ -492,7 +492,7 @@ export class PlatformApi {
     body: string,
   ): Promise<void> {
     const res = await fetch(
-      `${this.base}/api/v1/benchmarks/stealth/${encodeURIComponent(benchmarkSlug)}/runs/${encodeURIComponent(runId)}/artifacts`,
+      `${this.base}/api/v1/benchmarks/${encodeURIComponent(benchmarkSlug)}/runs/${encodeURIComponent(runId)}/artifacts`,
       {
         method: 'POST',
         headers: { Authorization: `Bearer ${this.key}`, 'Content-Type': 'application/json' },
