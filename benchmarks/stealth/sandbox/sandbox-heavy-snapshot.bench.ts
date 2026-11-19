@@ -202,7 +202,7 @@ async function populateHeavy(
   const beat = `${baseDir}/membeat.txt`;
   const spawn =
     `S=; command -v setsid >/dev/null 2>&1 && S=setsid; ` +
-    `$S nohup ${interp} '${baseDir}/${program.file}' ${effMemMb} '${beat}' ` +
+    `$S nohup ${interp} '${baseDir}/${program.file}' ${Math.floor(effMemMb)} '${beat}' ` +
     `>'${baseDir}/memproc.log' 2>&1 < /dev/null & ` +
     // The .sha file appears only after the whole buffer is allocated —
     // that's the "dirty memory resident" commit point for the snapshot.
