@@ -24,7 +24,7 @@ import type { ConcurrentProviderConfig } from './concurrent-types.js';
  *     downloads. Enables the `provider-api` mechanism (poll the provider's
  *     own downloads/files API for the file the page triggered).
  *
- * Providers with no hook (notte, tilion) can still pass via the `playwright`
+ * Providers with no hook (tilion) can still pass via the `playwright`
  * mechanism; if that fails the download step records a capability result of
  * unsupported rather than failing the task.
  */
@@ -136,6 +136,28 @@ async function browseruseFetchSessionDownloads(sessionId: string): Promise<Retri
   return out;
 }
 
+// ── notte: session files API (provider-api mechanism) ───────────────────────
+async function notteFetchSessionDownloads(sessionId: string): Promise<RetrievedFile[]> {
+  // Same base URL resolution as @computesdk/notte.
+  const base = (process.env.NOTTE_API_URL || 'https://api.notte.cc').replace(/\/+$/, '');
+  const headers = { Authorization: `Bearer ${process.env.NOTTE_API_KEY}` };
+  const json = await httpJson(`${base}/sessions/${sessionId}/files?source=session_download`, headers);
+  const files = (json?.files ?? []) as { id?: string; filename?: string }[];
+  const out: RetrievedFile[] = [];
+  for (const f of files) {
+    if (!f.id) continue;
+    try {
+      // Answers with a redirect to a presigned URL; fetch drops the
+      // Authorization header on the cross-origin hop.
+      out.push({
+        name: f.filename ?? 'download',
+        bytes: await httpBytes(`${base}/sessions/${sessionId}/files/${f.id}`, headers),
+      });
+    } catch { /* skip unreadable entries */ }
+  }
+  return out;
+}
+
 export const fileTransferProviders: FileTransferProviderConfig[] = [
   {
     name: 'browserbase',
@@ -220,6 +242,10 @@ export const fileTransferProviders: FileTransferProviderConfig[] = [
       headless: true,
       viewport: VIEWPORT,
     },
+    // Notte points every Browser.setDownloadBehavior at the session's
+    // download dir, which the session files API lists, so no
+    // downloadBehavior override is needed.
+    fetchSessionDownloads: notteFetchSessionDownloads,
   },
   {
     name: 'steel',
