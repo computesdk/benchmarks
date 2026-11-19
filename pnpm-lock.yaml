@@ -178,8 +178,8 @@ importers:
         specifier: ^1.3.75
         version: 1.3.75
       '@computesdk/sail':
-        specifier: ^1.0.22
-        version: 1.0.22
+        specifier: ^1.0.27
+        version: 1.0.27
       '@computesdk/sandbox0':
         specifier: ^1.0.24
         version: 1.0.24(bufferutil@4.2.0)(utf-8-validate@6.0.6)
@@ -956,6 +956,9 @@ packages:
   '@computesdk/provider@2.1.26':
     resolution: {integrity: sha512-cb6NdC74S0MMm+A/IJfsv44WLDM+PQZfc0bh+zWrIxiZrKwsmCE6Selxz7U0psvY1N/7uVFFKk/x9V+FtbC/AQ==}
 
+  '@computesdk/provider@2.1.28':
+    resolution: {integrity: sha512-0wnIcuyghq7EAll4DCSUOT86Eac7EXeCQFnuz3D0x6w+vf1Zq+rIlSwz7Sl0a0dKsGQ9L3SPsdiHUIGr/uTBJA==}
+
   '@computesdk/quilt@1.0.21':
     resolution: {integrity: sha512-UtGOMxngREyDXI0HQdUgpU9Pti9FfY/N0atpDZAkKC7i450egBCc5yZ+uhS4LXACjA0fIWlSmj0cFnwCIVVtyQ==}
     engines: {node: '>=22'}
@@ -967,8 +970,8 @@ packages:
   '@computesdk/runloop@1.3.75':
     resolution: {integrity: sha512-p5TtdLSNaWkwKjKfLEqQbuq5i6g8Digl2nOtnf+5H3o8nGYXO14bILU0eXKNkdNeXlcCPYvWOhZBJaFSldnPig==}
 
-  '@computesdk/sail@1.0.22':
-    resolution: {integrity: sha512-KyXs61AMt4zIjnB7RBDpCu5g4oTvUkK4oHvYZkyEfdpKEmZTsY/ZOdUn+560rV/Kc8N6PVcrYnuGTbET7uzdKg==}
+  '@computesdk/sail@1.0.27':
+    resolution: {integrity: sha512-R5xf9wg768UDgesIvTzFp3KbIY0yk8nQjq/RXOLBDV997XX/2p8PaRW7Jj5FD4ZmUxHH+pivqBwEb8EuVsys7A==}
     engines: {node: '>=22'}
 
   '@computesdk/sandbox0@1.0.24':
@@ -2377,54 +2380,54 @@ packages:
   '@runloop/api-client@1.32.0':
     resolution: {integrity: sha512-aCNKjlGzLVEAFl8WA42LmgiYkdIkaocOlFK/cMGppijsM0AGS+1hkw/RxroQxyHlkIhjyRaqLv7m5ZNMGhks7Q==}
 
-  '@sailresearch/sdk-darwin-arm64@0.5.9':
-    resolution: {integrity: sha512-8JgR2haWp0Fx7IDgDLjCITvplK7kFw+2oxmf0lUvK/v64JnpQCxXZQxODA5Nkq5x1hy4//os+Nss7Mu/58Zk+A==}
+  '@sailresearch/sdk-darwin-arm64@0.18.3':
+    resolution: {integrity: sha512-60ASWAizrsM4FUfUaylsdQBNYPOOR9nHXIyB2mgcnohpLN6aYHqSu3ogR0Hxp9GqcNigD1H8cWLW6/H19rpjsg==}
     engines: {node: '>=22'}
     cpu: [arm64]
     os: [darwin]
 
-  '@sailresearch/sdk-darwin-x64@0.5.9':
-    resolution: {integrity: sha512-TqHSWVYa6t0fA12VpiXuQlhYgRJlFIgw6b1njbv0QdbZtKNzTcNN254f3RG36EKlzcqlw0R5+9jAnaieE3AjLA==}
+  '@sailresearch/sdk-darwin-x64@0.18.3':
+    resolution: {integrity: sha512-S9TKcaaQoM2LI00UM1Supf+5HvuJdraL4PaMQtAd7vZxlg6wQ8GALRQludltlW2hG3DWMx+CI5zPmhwphnQ/vg==}
     engines: {node: '>=22'}
     cpu: [x64]
     os: [darwin]
 
-  '@sailresearch/sdk-linux-arm64-gnu@0.5.9':
-    resolution: {integrity: sha512-hPEAZlskb6fK7yhuv6TxppP3Dm5NEkbE4q+8L2YuhalKN4rBU120f9K0IYFqTLxAz6OK2CAwfexpvN2yGtiyLg==}
+  '@sailresearch/sdk-linux-arm64-gnu@0.18.3':
+    resolution: {integrity: sha512-U90ke7YBe60QajE/5i3DJxwF42coPsf4VjjHOr3Ol6QaTAq1c3B+LXUMrpUVxSe1m5aUFyYm8RH0FJbMGrVIhA==}
     engines: {node: '>=22'}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@sailresearch/sdk-linux-arm64-musl@0.5.9':
-    resolution: {integrity: sha512-N+ZNdsHWg5HkAiri5bVvmuPZPulGgJNiM/SceTPJREg+YyRR2Lf9GNR3tfCUJh1PX+lonbvF/gsbqLWBtY5+Cg==}
+  '@sailresearch/sdk-linux-arm64-musl@0.18.3':
+    resolution: {integrity: sha512-gcblluYuRjnHPLhjVjuyotuPAbivQIEszFJpwIGuhYHAIQevxNP3Oq8mTfidBKxNO/p0xaKzaKd9rpk1pb86vw==}
     engines: {node: '>=22'}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@sailresearch/sdk-linux-x64-gnu@0.5.9':
-    resolution: {integrity: sha512-ToL9133mQ7xy3tdLZ1XO2kJe/VglQEr/6bfpCKFzcwhaH3WnyoZjjrVWtQXILWmhzUz1AC+WiDxwdTQifyF2nw==}
+  '@sailresearch/sdk-linux-x64-gnu@0.18.3':
+    resolution: {integrity: sha512-a4u4DU8DdlQEXfMUwJ+Hv9J3g+uTStwo8yXdnH7+qabby4RvmoNzMzBtdNTXfXnS8rM4+E49Vt+RsZH+yc5I5A==}
     engines: {node: '>=22'}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@sailresearch/sdk-linux-x64-musl@0.5.9':
-    resolution: {integrity: sha512-mzY3VwRMuzNQl8qQ6uSPQQHUr3vA86BP03rwf8bPHDCruTB2sT3wTi7NW32Qc+jcWKrXoA1867v16qmaODoBGA==}
+  '@sailresearch/sdk-linux-x64-musl@0.18.3':
+    resolution: {integrity: sha512-vp5RV0mexystRQO9ezhAfytp+iMH92kYaSLQl1QT6xu8nED7hj5v0iNPAuNWY4XUdbBFD4cW/XJLod33OyRRLA==}
     engines: {node: '>=22'}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@sailresearch/sdk-win32-x64-msvc@0.5.9':
-    resolution: {integrity: sha512-mk7QkiGAOY8rKXEO6VkepbW+Ep9KjrM4PUpXoGWBUdcR9LShJe5kZd3bxfsIRPmEJe510Fmi9wYrE1TkmS/hPQ==}
+  '@sailresearch/sdk-win32-x64-msvc@0.18.3':
+    resolution: {integrity: sha512-Qx8CG12jNNxRmZEODef+ThxFbjsvFSo3uLLqY5/Hm2rHAMkzQawHlYfQiigD3fx8wa074gYd1Ek1uzlRLtkBgQ==}
     engines: {node: '>=22'}
     cpu: [x64]
     os: [win32]
 
-  '@sailresearch/sdk@0.5.9':
-    resolution: {integrity: sha512-l+Amd8lgkZGE1XAUlltR3BAlEFKVkqcKUOzcCGqJYbPfvTcu0lOWTdfCiWZxQ8zTJ6UmCFNVUVapBE2ayvgEEQ==}
+  '@sailresearch/sdk@0.18.3':
+    resolution: {integrity: sha512-d3+yMR8+Ut+81KUBGUxOZEBi8wEN9gy7e9MtxprUyWYDalOezEz9XhnRBoUTjW/WyA2iN/sr0QbKRHfzvxr/hg==}
     engines: {node: '>=22'}
 
   '@sentry/core@9.47.2':
@@ -3318,6 +3321,9 @@ packages:
 
   computesdk@4.1.20:
     resolution: {integrity: sha512-H/VBM3f+KLqIDPcbmfEKgR1vsYX7/a0bwBH8c0J6m/z87srq5Ft6f2zEIUS3KK0NaIjvLqjfsrS90l5azX/2VQ==}
+
+  computesdk@4.1.22:
+    resolution: {integrity: sha512-Z/BcYcM9lFkStFWUMkuKiga20u/SLPYFVRQH/ewQu+g+O0xZezwyYxdEoChoZzC/d/9mSVddAIZ12KrcGOOdFw==}
 
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
@@ -7063,6 +7069,12 @@ snapshots:
       computesdk: 4.1.20
       daemond: 0.1.9
 
+  '@computesdk/provider@2.1.28':
+    dependencies:
+      '@computesdk/cmd': 0.4.1
+      computesdk: 4.1.22
+      daemond: 0.1.9
+
   '@computesdk/quilt@1.0.21':
     dependencies:
       '@computesdk/provider': 2.1.23
@@ -7082,11 +7094,11 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@computesdk/sail@1.0.22':
+  '@computesdk/sail@1.0.27':
     dependencies:
-      '@computesdk/provider': 2.1.23
-      '@sailresearch/sdk': 0.5.9
-      computesdk: 4.1.17
+      '@computesdk/provider': 2.1.28
+      '@sailresearch/sdk': 0.18.3
+      computesdk: 4.1.22
 
   '@computesdk/sandbox0@1.0.24(bufferutil@4.2.0)(utf-8-validate@6.0.6)':
     dependencies:
@@ -8497,38 +8509,38 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@sailresearch/sdk-darwin-arm64@0.5.9':
+  '@sailresearch/sdk-darwin-arm64@0.18.3':
     optional: true
 
-  '@sailresearch/sdk-darwin-x64@0.5.9':
+  '@sailresearch/sdk-darwin-x64@0.18.3':
     optional: true
 
-  '@sailresearch/sdk-linux-arm64-gnu@0.5.9':
+  '@sailresearch/sdk-linux-arm64-gnu@0.18.3':
     optional: true
 
-  '@sailresearch/sdk-linux-arm64-musl@0.5.9':
+  '@sailresearch/sdk-linux-arm64-musl@0.18.3':
     optional: true
 
-  '@sailresearch/sdk-linux-x64-gnu@0.5.9':
+  '@sailresearch/sdk-linux-x64-gnu@0.18.3':
     optional: true
 
-  '@sailresearch/sdk-linux-x64-musl@0.5.9':
+  '@sailresearch/sdk-linux-x64-musl@0.18.3':
     optional: true
 
-  '@sailresearch/sdk-win32-x64-msvc@0.5.9':
+  '@sailresearch/sdk-win32-x64-msvc@0.18.3':
     optional: true
 
-  '@sailresearch/sdk@0.5.9':
+  '@sailresearch/sdk@0.18.3':
     dependencies:
       '@types/node': 22.20.5
     optionalDependencies:
-      '@sailresearch/sdk-darwin-arm64': 0.5.9
-      '@sailresearch/sdk-darwin-x64': 0.5.9
-      '@sailresearch/sdk-linux-arm64-gnu': 0.5.9
-      '@sailresearch/sdk-linux-arm64-musl': 0.5.9
-      '@sailresearch/sdk-linux-x64-gnu': 0.5.9
-      '@sailresearch/sdk-linux-x64-musl': 0.5.9
-      '@sailresearch/sdk-win32-x64-msvc': 0.5.9
+      '@sailresearch/sdk-darwin-arm64': 0.18.3
+      '@sailresearch/sdk-darwin-x64': 0.18.3
+      '@sailresearch/sdk-linux-arm64-gnu': 0.18.3
+      '@sailresearch/sdk-linux-arm64-musl': 0.18.3
+      '@sailresearch/sdk-linux-x64-gnu': 0.18.3
+      '@sailresearch/sdk-linux-x64-musl': 0.18.3
+      '@sailresearch/sdk-win32-x64-msvc': 0.18.3
 
   '@sentry/core@9.47.2':
     optional: true
@@ -9497,6 +9509,12 @@ snapshots:
       daemond: 0.1.9
 
   computesdk@4.1.20:
+    dependencies:
+      '@benchsdk/cli': 0.9.5
+      '@computesdk/cmd': 0.4.1
+      daemond: 0.1.9
+
+  computesdk@4.1.22:
     dependencies:
       '@benchsdk/cli': 0.9.5
       '@computesdk/cmd': 0.4.1

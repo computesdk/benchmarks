@@ -313,6 +313,7 @@ export const providers: ProviderConfig[] = [
   },
   {
     name: 'sail',
+    supportsCreateNameOption: true,
     requiredEnvVars: ['SAIL_API_KEY'],
     createCompute: () => sail({ apiKey: process.env.SAIL_API_KEY! }),
   },

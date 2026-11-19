@@ -213,8 +213,11 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
   // run even when create() errored or timed out client-side.
   const runTag = String(process.env.RUN_KEY ?? Date.now()).replace(/[^A-Za-z0-9-]/g, '-');
   const sweepPrefix = `tti1k-${runTag}-`;
+  // Sail's default sandbox is 8 vCPU and counts against an account vCPU
+  // quota, so each box in the burst takes its 1 vCPU size instead.
+  const baseOptions = p.name === 'sail' ? { ...p.sandboxOptions, sizeClass: 'sm' } : p.sandboxOptions;
   const createOptions = (i: number): Record<string, any> | undefined =>
-    p.supportsCreateNameOption ? { ...p.sandboxOptions, name: `${sweepPrefix}i${i}` } : p.sandboxOptions;
+    p.supportsCreateNameOption ? { ...baseOptions, name: `${sweepPrefix}i${i}` } : baseOptions;
 
   let burstCreateWallClockMs = 0;
   let idleWaitMs = 0;

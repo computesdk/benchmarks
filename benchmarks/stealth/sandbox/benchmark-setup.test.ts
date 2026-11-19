@@ -7,7 +7,7 @@ import { task } from './sandbox-pause-resume.bench.js';
 
 const lease = 3_600_000;
 const base = { timeout: 600_000, hardTtl: 900, templateId: 'custom' };
-assert.deepEqual(getCiSandboxOptions('sail', base, lease), { hardTtl: 900, templateId: 'custom', size: 'l' });
+assert.deepEqual(getCiSandboxOptions('sail', base, lease), { timeout: lease, hardTtl: 900, templateId: 'custom', sizeClass: 'xl' });
 assert.equal(base.timeout, 600_000);
 assert.equal(getCiSandboxOptions('sail', base, 240_000, 'deadline').timeout, 240_000);
 assert.deepEqual(getCiSandboxOptions('sandbox0', { hardTtl: 900 }, lease), { memory: 16384, timeout: lease, ttl: 3600, hardTtl: 3600 });
