@@ -189,7 +189,11 @@ async function populateHeavy(
     : memMb;
   // Skip only when the guest can't hold a meaningful payload: an honored
   // small request (e.g. 32 MB on a big box) still runs the memory leg.
-  if (effMemMb < Math.min(memMb, 64)) return { memInterp: null, memReadyMs: null, memMb: 0 };
+  // Sub-MiB requests floor to an empty buffer — skip rather than snapshot
+  // a process that reports ready while dirtying nothing.
+  if (effMemMb < Math.min(memMb, 64) || Math.floor(effMemMb) < 1) {
+    return { memInterp: null, memReadyMs: null, memMb: 0 };
+  }
 
   // Pick an interpreter for the memory-dirty process.
   let interp: 'python3' | 'node' | null = null;
@@ -448,10 +452,15 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
         // @ts-expect-error - 'scope' lands in @computesdk/microsandbox >= 0.1.27 types
         const snapCreate = compute.snapshot!.create(sandbox!.sandboxId, { name: `snap-${runId}`, scope: 'full' });
         // If create resolves after withTimeout rejects, the snapshot id is
-        // captured here so cleanup can delete it instead of leaking it.
-        void snapCreate.then((s) => {
-          lateSnapshotId = s.id;
-        });
+        // captured here so cleanup can delete it instead of leaking it. The
+        // rejection handler keeps a provider rejection from going unhandled
+        // (the lifecycle catch already records it).
+        void snapCreate.then(
+          (s) => {
+            lateSnapshotId = s.id;
+          },
+          () => {},
+        );
         const snapshot = await step('snapshot-create', () =>
           withTimeout(snapCreate, populateTimeout, 'Snapshot creation timed out'),
         );
