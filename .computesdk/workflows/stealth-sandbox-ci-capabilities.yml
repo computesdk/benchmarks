@@ -130,6 +130,8 @@ jobs:
         env:
           NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
           PROVIDER: ${{ matrix.provider }}
+          # Sandbox family: dedicated VM per create() instead of shared-disk exec.
+          ARCHIL_EXECUTION: persistent
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
           BENCHMARKS_PLATFORM_API_KEY: ${{ secrets.BENCHMARKS_PLATFORM_API_KEY }}
           BENCHMARKS_PLATFORM_URL: ${{ secrets.BENCHMARKS_PLATFORM_URL }}

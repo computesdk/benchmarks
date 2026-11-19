@@ -149,6 +149,8 @@ jobs:
         if: env.SHOULD_RUN == 'true'
         env:
           NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
+          # Sandbox family: dedicated VM per create() instead of shared-disk exec.
+          ARCHIL_EXECUTION: persistent
         run: |
           . benchmarks/stealth/scripts/load-vault-secrets.sh "$(benchmarks/stealth/scripts/vault-keys.sh benchmarks/stealth/sandbox/providers.ts BENCHMARKS_PLATFORM_API_KEY)"
 
