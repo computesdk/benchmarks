@@ -52,8 +52,8 @@ importers:
         specifier: ^0.2.25
         version: 0.2.25(bufferutil@4.2.0)(utf-8-validate@6.0.6)
       '@computesdk/archil':
-        specifier: ^0.4.31
-        version: 0.4.31(zod@4.6.7)
+        specifier: ^0.4.37
+        version: 0.4.37(zod@4.6.7)
       '@computesdk/arker':
         specifier: ^0.1.24
         version: 0.1.24(@computesdk/daytona@1.7.53(bufferutil@4.2.0)(utf-8-validate@6.0.6))(@computesdk/e2b@1.7.72)(@computesdk/modal@1.9.30)(bufferutil@4.2.0)(utf-8-validate@6.0.6)
@@ -808,8 +808,8 @@ packages:
   '@computesdk/anchorbrowser@0.2.25':
     resolution: {integrity: sha512-qx7cvnit3tjCK4epj1x4nU4DCU+L4gw+QBnrw7nifsrzlyYJpdoy+c+STsqUUZ+7a/LSGwD6fz+clWry0Pn56A==}
 
-  '@computesdk/archil@0.4.31':
-    resolution: {integrity: sha512-28+Zn9JRhPDUHQo1Bl9xbvdBtz2/3MqMkhZe32pSbNnw1b8d6qaHLHsSTF85TYD32i5pIB8kHA9Jeu0K7nO+dg==}
+  '@computesdk/archil@0.4.37':
+    resolution: {integrity: sha512-/q1gYbcR0tiPJa487O6MtuHwuSpOtIDUD6VpKLLhVJPUTUwAf1REuE2VtsbZZSQj45euFbAJyO+4fzGffxtDgg==}
 
   '@computesdk/arker@0.1.24':
     resolution: {integrity: sha512-aDPUqQztPu2g6YtdO4Juzeu/bnglKWnrrDKoLo299+/yqsXL4/j7o37xCaDSHk7VypcZWO/Zam/W8TFeKGxQ1Q==}
@@ -955,6 +955,9 @@ packages:
 
   '@computesdk/provider@2.1.26':
     resolution: {integrity: sha512-cb6NdC74S0MMm+A/IJfsv44WLDM+PQZfc0bh+zWrIxiZrKwsmCE6Selxz7U0psvY1N/7uVFFKk/x9V+FtbC/AQ==}
+
+  '@computesdk/provider@2.1.28':
+    resolution: {integrity: sha512-0wnIcuyghq7EAll4DCSUOT86Eac7EXeCQFnuz3D0x6w+vf1Zq+rIlSwz7Sl0a0dKsGQ9L3SPsdiHUIGr/uTBJA==}
 
   '@computesdk/quilt@1.0.21':
     resolution: {integrity: sha512-UtGOMxngREyDXI0HQdUgpU9Pti9FfY/N0atpDZAkKC7i450egBCc5yZ+uhS4LXACjA0fIWlSmj0cFnwCIVVtyQ==}
@@ -3318,6 +3321,9 @@ packages:
 
   computesdk@4.1.20:
     resolution: {integrity: sha512-H/VBM3f+KLqIDPcbmfEKgR1vsYX7/a0bwBH8c0J6m/z87srq5Ft6f2zEIUS3KK0NaIjvLqjfsrS90l5azX/2VQ==}
+
+  computesdk@4.1.22:
+    resolution: {integrity: sha512-Z/BcYcM9lFkStFWUMkuKiga20u/SLPYFVRQH/ewQu+g+O0xZezwyYxdEoChoZzC/d/9mSVddAIZ12KrcGOOdFw==}
 
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
@@ -6719,10 +6725,10 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@computesdk/archil@0.4.31(zod@4.6.7)':
+  '@computesdk/archil@0.4.37(zod@4.6.7)':
     dependencies:
-      '@computesdk/provider': 2.1.23
-      computesdk: 4.1.17
+      '@computesdk/provider': 2.1.28
+      computesdk: 4.1.22
       disk: 1.12.1(zod@4.6.7)
     transitivePeerDependencies:
       - zod
@@ -7061,6 +7067,12 @@ snapshots:
     dependencies:
       '@computesdk/cmd': 0.4.1
       computesdk: 4.1.20
+      daemond: 0.1.9
+
+  '@computesdk/provider@2.1.28':
+    dependencies:
+      '@computesdk/cmd': 0.4.1
+      computesdk: 4.1.22
       daemond: 0.1.9
 
   '@computesdk/quilt@1.0.21':
@@ -9497,6 +9509,12 @@ snapshots:
       daemond: 0.1.9
 
   computesdk@4.1.20:
+    dependencies:
+      '@benchsdk/cli': 0.9.5
+      '@computesdk/cmd': 0.4.1
+      daemond: 0.1.9
+
+  computesdk@4.1.22:
     dependencies:
       '@benchsdk/cli': 0.9.5
       '@computesdk/cmd': 0.4.1
