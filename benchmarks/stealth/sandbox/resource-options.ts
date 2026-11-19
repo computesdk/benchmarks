@@ -63,7 +63,7 @@ export const LARGE_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // Sandbox0 exposes only memory. Overrides the 128 MiB TTI size;
   // getSandboxOptionsWithResources preserves hardTtl from providers.ts.
   sandbox0:     { memory: 16384 },
-  sail:         { size: 'l' },
+  sail:         { sizeClass: 'xl' },                         // xl = 8 vCPU / 16 GiB
   freestyle:    { sizeClass: 'xl' },                         // applied by computesdk#1075; older adapters run 4/8
   railway:      { resources: { cpu: 8, memoryGB: 16 } },
 };
@@ -83,9 +83,8 @@ export function getCiSandboxOptions(
   const options = { ...(purpose === 'workload'
     ? getSandboxOptionsWithResources(provider, baseOptions)
     : baseOptions) };
-  // Briq refuses create-time timeout; sail ignores workload timeouts.
+  // Briq refuses create-time timeout.
   if (provider === 'briq') delete options.timeout;
-  else if (provider === 'sail' && purpose === 'workload') delete options.timeout;
   else options.timeout = timeoutMs;
   // Deadline check: the box must be gone after timeoutMs. Superserve's
   // default is pause-on-timeout (exec keeps working), which reads as

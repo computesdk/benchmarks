@@ -194,12 +194,13 @@ export const PROVIDER_SIZE_OPTIONS: Record<string, Partial<Record<MarketSize, Re
   promigence: { small: null, medium: {}, large: null, xlarge: null },
   // Railway sizes per create via resources {cpu, memoryGB} (railway >=3.16).
   railway: allTiers((c, m) => ({ resources: { cpu: c, memoryGB: m / 1024 } })),
-  // sail sizes s/m/l = 1/4/8 vCPU — market small/large/xlarge; there is no
-  // 2 vCPU offering for market medium.
+  // Sail's standard sizes sm/md/lg/xl are 1/2/4/8 vCPU, each with 16 GiB
+  // (its smallest memory limit).
   sail: {
-    small: { size: 's' },
-    large: { size: 'm' },
-    xlarge: { size: 'l' },
+    small: { sizeClass: 'sm' },
+    medium: { sizeClass: 'md' },
+    large: { sizeClass: 'lg' },
+    xlarge: { sizeClass: 'xl' },
   },
   // Novita sizes at template build (cpuCount/memoryMB, E2B-compatible); tiers
   // are per-account setup (size-templates.ts). Raise the default 300s
