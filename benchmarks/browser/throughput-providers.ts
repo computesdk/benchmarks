@@ -24,7 +24,7 @@ export const throughputProviders: ThroughputProviderConfig[] = [
       projectId: process.env.BROWSERBASE_PROJECT_ID!,
     }),
     sessionCreateOptions: {
-      region: 'us-east-1',
+      region: 'us-west-2',
       stealth: false,
       proxies: false,
       headless: true,
