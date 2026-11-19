@@ -59,13 +59,14 @@ export const providers: ProviderConfig[] = [
   },
   {
     name: 'archil',
-    // Execution mode is env-driven because this registry is shared with
-    // filesystem/reliability/capability benches that must stay on the
-    // exec-mode shared disk. Workflows set ARCHIL_EXECUTION=persistent for
-    // sandbox-family benches: create() then provisions a dedicated VM (own
-    // rootfs, state persists across commands, destroy() actually deletes)
-    // instead of resolving a shared-disk exec handle. baseImage must carry
-    // node — Archil's default (ubuntu) fails the `node -v` readiness probe.
+    // Execution mode is env-driven. Workflows set ARCHIL_EXECUTION=persistent
+    // for any bench that treats create() as a sandbox: it then provisions a
+    // dedicated VM (own rootfs, state persists across commands, destroy()
+    // actually deletes). Without it, create() resolves an exec handle on the
+    // shared disk and every runCommand runs in a fresh VM, so a file written
+    // with filesystem.writeFile outside /mnt/archil is gone by the next
+    // command. baseImage must carry node — Archil's default (ubuntu) fails
+    // the `node -v` readiness probe.
     requiredEnvVars: process.env.ARCHIL_EXECUTION === 'persistent'
       ? ['ARCHIL_API_KEY', 'ARCHIL_REGION']
       : ['ARCHIL_API_KEY', 'ARCHIL_REGION', 'ARCHIL_DISK_ID'],
