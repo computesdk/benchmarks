@@ -89,11 +89,12 @@ const MEM_PROGRAMS: Record<string, { file: string; body: string }> = {
     file: 'heavy-mem.py',
     body: `import os, sys, time, hashlib
 mb, beat = int(sys.argv[1]), sys.argv[2]
+# Fresh entropy per chunk: repeating one block lets providers that
+# compress/dedup pages snapshot far less memory than requested.
 n = mb * 1024 * 1024
 buf = bytearray(n)
-chunk = os.urandom(65536)
 for o in range(0, n, 65536):
-    buf[o:o + 65536] = chunk
+    buf[o:o + 65536] = os.urandom(65536)
 with open(beat + '.sha', 'w') as f:
     f.write(hashlib.sha256(buf).hexdigest())
 i = 0
@@ -109,11 +110,13 @@ while True:
     body: `const fs = require('fs'), crypto = require('crypto');
 const mb = +process.argv[2], beat = process.argv[3];
 const buf = Buffer.alloc(mb * 1024 * 1024);
-const chunk = crypto.randomBytes(65536);
-for (let o = 0; o < buf.length; o += 65536) chunk.copy(buf, o);
+// Fresh entropy per chunk (no shared block, see python variant).
+for (let o = 0; o < buf.length; o += 65536) crypto.randomBytes(65536).copy(buf, o);
 fs.writeFileSync(beat + '.sha', crypto.createHash('sha256').update(buf).digest('hex'));
 let i = 0;
-setInterval(() => fs.writeFileSync(beat, String(i++)), 1000);
+// The callback must capture buf — uncaptured module locals are collectible
+// once the script finishes evaluating, which would free the payload.
+setInterval(() => fs.writeFileSync(beat, String(i++) + ':' + buf.length), 1000);
 `,
   },
 };
@@ -123,6 +126,8 @@ interface HeavyPopulateResult {
   memInterp: 'python3' | 'node' | null;
   /** Wall time for the memory buffer to be fully allocated (poll for .sha). */
   memReadyMs: number | null;
+  /** MB actually requested from the guest process (clamped to guest RAM). */
+  memMb: number;
 }
 
 /**
@@ -164,7 +169,20 @@ async function populateHeavy(
     throw new Error(`heavy disk populate failed: ${JSON.stringify(diskRes)}`);
   }
 
-  if (memMb <= 0) return { memInterp: null, memReadyMs: null };
+  if (memMb <= 0) return { memInterp: null, memReadyMs: null, memMb: 0 };
+
+  // Clamp the dirty target to what the guest can actually hold: providers
+  // that size the box small (e.g. sandbox0's 128 MiB) must still run the
+  // disk legs instead of failing allocation before 'unsupported' is scored.
+  // Skip the memory leg below 64 MB of headroom rather than OOM the box.
+  const memInfo = await sandbox.runCommand("awk '/MemTotal/{print int($2/1024)}' /proc/meminfo", {
+    timeout: CREATE_TIMEOUT_MS,
+  });
+  const guestMemMb = Number((memInfo.stdout ?? '').trim());
+  const effMemMb = Number.isFinite(guestMemMb) && guestMemMb > 0
+    ? Math.min(memMb, Math.floor(guestMemMb * 0.6))
+    : memMb;
+  if (effMemMb < 64) return { memInterp: null, memReadyMs: null, memMb: 0 };
 
   // Pick an interpreter for the memory-dirty process.
   let interp: 'python3' | 'node' | null = null;
@@ -175,14 +193,14 @@ async function populateHeavy(
       break;
     }
   }
-  if (!interp) return { memInterp: null, memReadyMs: null };
+  if (!interp) return { memInterp: null, memReadyMs: null, memMb: 0 };
 
   const program = MEM_PROGRAMS[interp];
   await sandbox.filesystem.writeFile(`${baseDir}/${program.file}`, program.body);
   const beat = `${baseDir}/membeat.txt`;
   const spawn =
     `S=; command -v setsid >/dev/null 2>&1 && S=setsid; ` +
-    `$S nohup ${interp} '${baseDir}/${program.file}' ${memMb} '${beat}' ` +
+    `$S nohup ${interp} '${baseDir}/${program.file}' ${effMemMb} '${beat}' ` +
     `>'${baseDir}/memproc.log' 2>&1 < /dev/null & ` +
     // The .sha file appears only after the whole buffer is allocated —
     // that's the "dirty memory resident" commit point for the snapshot.
@@ -194,7 +212,7 @@ async function populateHeavy(
   if (memRes.exitCode !== 0 || !out.startsWith('ready')) {
     throw new Error(`heavy memory populate failed: ${out || JSON.stringify(memRes)}`);
   }
-  return { memInterp: interp, memReadyMs: performance.now() - memStart };
+  return { memInterp: interp, memReadyMs: performance.now() - memStart, memMb: effMemMb };
 }
 
 interface HeavyVerifyResult {
@@ -216,7 +234,10 @@ async function verifyHeavy(
   const check = await sandbox.runCommand(
     `cd '${baseDir}' && out=$(sha256sum -c manifest.txt 2>/dev/null); ec=$?; ` +
       `ok=$(echo "$out" | grep -c ': OK$'); total=$(wc -l < manifest.txt 2>/dev/null || echo 0); ` +
-      `echo "exit=$ec ok=$ok total=$total"`,
+      // Files present on disk the manifest no longer lists (truncated
+      // manifest) must fail verification, not pass un-checked.
+      `actual=$(find deps blobs -type f | wc -l); ` +
+      `echo "exit=$ec ok=$ok total=$total actual=$actual"`,
     { timeout: timeoutMs },
   );
   const kv = Object.fromEntries(
@@ -224,7 +245,9 @@ async function verifyHeavy(
   );
   const fileCount = Number(kv.total) || 0;
   const filesVerified = Number(kv.ok) || 0;
-  const allMatched = check.exitCode === 0 && kv.exit === '0' && filesVerified === fileCount && fileCount > 0;
+  const filesPresent = Number(kv.actual) || 0;
+  const allMatched =
+    check.exitCode === 0 && kv.exit === '0' && filesVerified === fileCount && fileCount === filesPresent && fileCount > 0;
 
   let memoryPersisted: boolean | null = null;
   if (memInterp) {
@@ -350,6 +373,8 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
   let markerDirSource: SnapshotDirSource | null = null;
   let memInterp: 'python3' | 'node' | null = null;
   let memReadyMs: number | null = null;
+  /** memMb after clamping to guest MemTotal (0 when the leg was skipped). */
+  let memMbEffective = 0;
   let memoryPersisted: boolean | null = null;
   let filesVerified: number | null = null;
   let fileCount: number | null = null;
@@ -379,13 +404,15 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
           const res = await populateHeavy(sandbox!, baseDir, diskMb, memMb, populateTimeout);
           memInterp = res.memInterp;
           memReadyMs = res.memReadyMs;
+          memMbEffective = res.memMb;
         })(),
         populateTimeout,
         'Heavy populate timed out',
       ),
     );
     populateMs = performance.now() - populateStart;
-    const populateMeta: JsonObject = { populateMs, heavyDiskMb: diskMb, heavyMemMb: memInterp ? memMb : 0 };
+    const populateMeta: JsonObject = { populateMs, heavyDiskMb: diskMb, heavyMemMb: memMbEffective };
+    if (memMbEffective !== memMb) populateMeta.heavyMemMbRequested = memMb;
     if (memReadyMs !== null) populateMeta.memReadyMs = memReadyMs;
     measure(populateMeta);
 

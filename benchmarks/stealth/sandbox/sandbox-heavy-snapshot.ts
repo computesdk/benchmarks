@@ -35,24 +35,32 @@ export const HEAVY_CONFIG = {
   restoreTimeoutMs: 15 * 60_000,
 };
 
+function heavyEnvNumber(name: string): number | undefined {
+  // A blank .env value must not parse as 0 and silently erase the workload.
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === '') return undefined;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : undefined;
+}
+
 export function resolveHeavyDiskMb(): number {
-  const n = Number(process.env.BENCH_HEAVY_DISK_MB);
-  return Number.isFinite(n) && n >= 0 ? n : HEAVY_CONFIG.diskMb;
+  const n = heavyEnvNumber('BENCH_HEAVY_DISK_MB');
+  return n !== undefined && n >= 0 ? n : HEAVY_CONFIG.diskMb;
 }
 
 export function resolveHeavyMemMb(): number {
-  const n = Number(process.env.BENCH_HEAVY_MEM_MB);
-  return Number.isFinite(n) && n >= 0 ? n : HEAVY_CONFIG.memMb;
+  const n = heavyEnvNumber('BENCH_HEAVY_MEM_MB');
+  return n !== undefined && n >= 0 ? n : HEAVY_CONFIG.memMb;
 }
 
 export function resolveHeavyPopulateTimeoutMs(): number {
-  const n = Number(process.env.BENCH_HEAVY_POPULATE_TIMEOUT_MS);
-  return Number.isFinite(n) && n > 0 ? n : HEAVY_CONFIG.populateTimeoutMs;
+  const n = heavyEnvNumber('BENCH_HEAVY_POPULATE_TIMEOUT_MS');
+  return n !== undefined && n > 0 ? n : HEAVY_CONFIG.populateTimeoutMs;
 }
 
 export function resolveHeavyRestoreTimeoutMs(): number {
-  const n = Number(process.env.BENCH_HEAVY_RESTORE_TIMEOUT_MS);
-  return Number.isFinite(n) && n > 0 ? n : HEAVY_CONFIG.restoreTimeoutMs;
+  const n = heavyEnvNumber('BENCH_HEAVY_RESTORE_TIMEOUT_MS');
+  return n !== undefined && n > 0 ? n : HEAVY_CONFIG.restoreTimeoutMs;
 }
 
 /** Loose ceilings until real heavy-run medians land (unscored metrics are observability only). */
