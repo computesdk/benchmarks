@@ -28,6 +28,11 @@
  * benchmark's per-file-size directories:
  *   results/browser_concurrency/c1/, c5/, c10/, c25/, c50/
  *
+ * After the connect barrier, every session makes one untimed request to its
+ * article's host before the action loop (see `warmUpArticleHost`). It is not an
+ * action: it is outside every step, excluded from the round's `totalMs`, and
+ * its result is ignored.
+ *
  * Levels run one at a time within a task, and a cooldown separates them:
  * overlapping them would put two levels' sessions on the same provider account
  * at once, which destroys the comparison the benchmark is making.
@@ -226,6 +231,24 @@ function parseNavUrls(): string[] {
 function navUrlForSession(concurrencyLevel: number, roundIndex: number, sessionIndex: number): string {
   if (NAV_URLS.length === 0) return RANDOM_URL;
   return NAV_URLS[(roundIndex * concurrencyLevel + sessionIndex) % NAV_URLS.length];
+}
+
+/**
+ * One untimed request to the article host before the measured loop, its result
+ * ignored. Wikimedia's edge answers a browser's first article request with HTTP
+ * 429 when it comes from some cloud IP ranges and no Wikipedia cookie is set
+ * yet (computesdk/benchmarks#612), much more often when many sessions start at
+ * once, and every session starts from a fresh browser, so without this the
+ * first navigate measures that rate limit rather than the provider. Any earlier
+ * request to the host clears it, including one that was itself answered 429.
+ * robots.txt has no subresources, so the browser cache and the article's CDN
+ * cache stay as they were; only the cookies Wikimedia sets and the open
+ * connection to the host carry over.
+ */
+async function warmUpArticleHost(page: Page, articleUrl: string): Promise<void> {
+  await page
+    .goto(new URL('/robots.txt', articleUrl).href, { waitUntil: 'load', timeout: ACTION_TIMEOUT_MS })
+    .catch(() => {});
 }
 
 function isArticleLink(href: string | null): boolean {
@@ -460,6 +483,7 @@ async function runRound(ctx: RoundContext): Promise<{ round: RoundResult; harnes
   let connectMs = 0;
   let taskMs = 0;
   let releaseMs = 0;
+  let warmupMs = 0;
   let sessionsAlive = 0;
   let aggregateActionsPerSecond = 0;
   let maxConcurrentActions = 0;
@@ -663,6 +687,15 @@ async function runRound(ctx: RoundContext): Promise<{ round: RoundResult; harnes
 
     // ─── BARRIER: all surviving sessions are alive + connected ──────────────
 
+    // Untimed and unscored: outside every step and subtracted from totalMs.
+    if (pages.length > 0) {
+      const warmupStart = performance.now();
+      await Promise.all(
+        pages.map((page, i) => warmUpArticleHost(page, navUrlForSession(concurrencyLevel, roundIndex, i))),
+      );
+      warmupMs = performance.now() - warmupStart;
+    }
+
     // ── Phase 3: Run 10-action loop on all sessions simultaneously ──────────
     if (pages.length > 0) {
       await step(`actions-all-c${concurrencyLevel}`, async () => {
@@ -742,7 +775,7 @@ async function runRound(ctx: RoundContext): Promise<{ round: RoundResult; harnes
   maxConcurrentActions = actionWatch.stop();
   maxLiveSessions = liveWatch.stop();
 
-  const totalMs = performance.now() - totalStart;
+  const totalMs = performance.now() - totalStart - warmupMs;
 
   // A provider that cannot reach the requested concurrency peak is treated as a
   // failure for that task: the data describes a smaller experiment and would
