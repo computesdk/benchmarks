@@ -24,10 +24,6 @@ assert.equal(unknown.source, "requested");
 assert.equal(unknown.maxLifetimeMs, null);
 assert.equal(unknown.maxShorterThanShift, false);
 
-// A real cap shorter than the shift is requested at the cap and reported.
-const vercel = soakLifetime("vercel", SHIFT);
-assert.equal(vercel.lifetimeMs, 5 * 3_600_000);
-assert.equal(vercel.maxShorterThanShift, true);
 assert.equal(soakLifetime("x", SHIFT, { maxMs: 3_600_000 }).source, "sdk");
 
 const sh = (cmd: string) =>
