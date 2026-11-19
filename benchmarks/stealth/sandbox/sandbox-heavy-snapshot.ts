@@ -44,8 +44,10 @@ function heavyEnvNumber(name: string): number | undefined {
 }
 
 export function resolveHeavyDiskMb(): number {
+  // Disk can't be disabled (unlike memory): a 0/sub-MB request would silently
+  // measure a near-empty snapshot, so it falls back to the default.
   const n = heavyEnvNumber('BENCH_HEAVY_DISK_MB');
-  return n !== undefined && n >= 0 ? n : HEAVY_CONFIG.diskMb;
+  return n !== undefined && n >= 1 ? n : HEAVY_CONFIG.diskMb;
 }
 
 export function resolveHeavyMemMb(): number {

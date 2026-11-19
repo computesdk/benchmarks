@@ -142,6 +142,8 @@ async function populateHeavy(
   memMb: number,
   timeoutMs: number,
 ): Promise<HeavyPopulateResult> {
+  // Guest programs and bash arithmetic take whole MBs only.
+  diskMb = Math.max(1, Math.floor(diskMb));
   const diskScript = [
     'set -eu',
     `D='${baseDir}'`,
@@ -162,6 +164,9 @@ async function populateHeavy(
     '  i=$((i + 1))',
     'done',
     'cd "$D" && find deps blobs -type f | sort | xargs sha256sum > manifest.txt',
+    // The expected file count outlives the manifest: a restore that drops
+    // files AND their manifest entries together would otherwise pass verify.
+    'wc -l < manifest.txt > manifest.count',
     'echo populated',
   ].join('\n');
   const diskRes = await sandbox.runCommand(diskScript, { timeout: timeoutMs });
@@ -237,9 +242,11 @@ async function verifyHeavy(
     `cd '${baseDir}' && out=$(sha256sum -c manifest.txt 2>/dev/null); ec=$?; ` +
       `ok=$(echo "$out" | grep -c ': OK$'); total=$(wc -l < manifest.txt 2>/dev/null || echo 0); ` +
       // Files present on disk the manifest no longer lists (truncated
-      // manifest) must fail verification, not pass un-checked.
+      // manifest), and files + entries lost together (count written at
+      // populate time), must both fail verification, not pass un-checked.
       `actual=$(find deps blobs -type f | wc -l); ` +
-      `echo "exit=$ec ok=$ok total=$total actual=$actual"`,
+      `expected=$(cat manifest.count 2>/dev/null || echo 0); ` +
+      `echo "exit=$ec ok=$ok total=$total actual=$actual expected=$expected"`,
     { timeout: timeoutMs },
   );
   const kv = Object.fromEntries(
@@ -248,8 +255,14 @@ async function verifyHeavy(
   const fileCount = Number(kv.total) || 0;
   const filesVerified = Number(kv.ok) || 0;
   const filesPresent = Number(kv.actual) || 0;
+  const expectedFiles = Number(kv.expected) || 0;
   const allMatched =
-    check.exitCode === 0 && kv.exit === '0' && filesVerified === fileCount && fileCount === filesPresent && fileCount > 0;
+    check.exitCode === 0 &&
+    kv.exit === '0' &&
+    filesVerified === fileCount &&
+    fileCount === filesPresent &&
+    fileCount === expectedFiles &&
+    fileCount > 0;
 
   let memoryPersisted: boolean | null = null;
   if (memInterp) {
@@ -358,6 +371,8 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
   let sandbox: SnapshotSandbox | undefined;
   let restoredSandbox: SnapshotSandbox | undefined;
   let snapshotId: string | undefined;
+  /** Snapshot id captured on a create that resolves after its timeout. */
+  let lateSnapshotId: string | undefined;
   let sourceDestroyed = false;
   let snapshotIsBoxIdentity = false;
   let createMs = 0;
@@ -430,13 +445,15 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
           { reportConcurrency: false },
         );
         const snapStart = performance.now();
+        // @ts-expect-error - 'scope' lands in @computesdk/microsandbox >= 0.1.27 types
+        const snapCreate = compute.snapshot!.create(sandbox!.sandboxId, { name: `snap-${runId}`, scope: 'full' });
+        // If create resolves after withTimeout rejects, the snapshot id is
+        // captured here so cleanup can delete it instead of leaking it.
+        void snapCreate.then((s) => {
+          lateSnapshotId = s.id;
+        });
         const snapshot = await step('snapshot-create', () =>
-          withTimeout(
-            // @ts-expect-error - 'scope' lands in @computesdk/microsandbox >= 0.1.27 types
-            compute.snapshot!.create(sandbox!.sandboxId, { name: `snap-${runId}`, scope: 'full' }),
-            populateTimeout,
-            'Snapshot creation timed out',
-          ),
+          withTimeout(snapCreate, populateTimeout, 'Snapshot creation timed out'),
         );
         snapshotCreateMs = performance.now() - snapStart;
         snapshotId = snapshot.id;
@@ -579,6 +596,17 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
       }
     }
 
+    // A snapshot created after its own timeout never reached snapshotId.
+    if (lateSnapshotId && lateSnapshotId !== snapshotId && compute.snapshot) {
+      await step(
+        'snapshot-delete',
+        () => withTimeout(compute.snapshot!.delete(lateSnapshotId!), cleanupTimeout, 'Snapshot delete timeout'),
+        { reportConcurrency: false },
+      ).catch((err: unknown) =>
+        log('orphaned snapshot delete failed', { level: 'warn', meta: { error: formatError(err) } }),
+      );
+    }
+
     if (snapshotId && compute.snapshot && !snapshotIsBoxIdentity) {
       await step(
         'snapshot-delete',
@@ -598,7 +626,8 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
     createMs,
     populateMs,
     heavyDiskMb: diskMb,
-    heavyMemMb: memInterp ? memMb : 0,
+    heavyMemMb: memInterp ? memMbEffective : 0,
+    ...(memMbEffective !== memMb ? { heavyMemMbRequested: memMb } : {}),
     memInterp: memInterp ?? null,
     memReadyMs,
     memoryPersisted,
