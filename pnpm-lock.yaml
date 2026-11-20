@@ -249,6 +249,9 @@ importers:
       computesdk:
         specifier: ^4.1.22
         version: 4.1.22
+      disk:
+        specifier: ^1.14.0
+        version: 1.14.0(zod@4.6.7)
       dotenv:
         specifier: ^18.0.10
         version: 18.0.10
@@ -475,8 +478,13 @@ packages:
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
 
-  '@archildata/api-types@0.0.81':
-    resolution: {integrity: sha512-v5POIAOhko0pzVM9kQUvFJj31D3fDo/8kwHgmly0wNT20SepGPGThoB6qOcvUoA3rfiS3PGCkynLNfkoZf/QxQ==}
+  '@archildata/api-types@0.0.98':
+    resolution: {integrity: sha512-6IOTVZ9E6W8CSgjlBGH/GpKX+3rB2c9Jef8nAheOmDpnyAjPAn9HTl7r3SQ9MqeOAnldLPumtJWR7zE81GHn3A==}
+    peerDependencies:
+      '@bufbuild/protobuf': ^2.16.0
+    peerDependenciesMeta:
+      '@bufbuild/protobuf':
+        optional: true
 
   '@arker-ai/sdk@1.3.0':
     resolution: {integrity: sha512-YtH3yG7HEz0kNckuZRMKlqYL/UEEMhJJBJG1LCQdIBsqG0zGHB5svh7h1Eg7HPdiOtyDvUWbdamQVWdL7ghIbQ==}
@@ -3621,8 +3629,8 @@ packages:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
     engines: {node: '>=8'}
 
-  disk@1.12.1:
-    resolution: {integrity: sha512-KsvU2C8b8m0B0GnIsvNMOzhun7eoD1XkTHxnreX7NNdMDOiXl93KWLnq9Jb4S+Kf5cy3NsoKMjEJ5V9j8Ggfbg==}
+  disk@1.14.0:
+    resolution: {integrity: sha512-0AOa8Wv7t5+w4N9IhnL82bWFHBT+/IuSNM1TbhHRQN/aLTBrYj5hApVeOu8vYGPMyz7x3WwKTYbzQClKNIfCvg==}
     engines: {node: '>= 22.19.0'}
     hasBin: true
     peerDependencies:
@@ -6223,7 +6231,9 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
 
-  '@archildata/api-types@0.0.81': {}
+  '@archildata/api-types@0.0.98(@bufbuild/protobuf@2.17.0)':
+    optionalDependencies:
+      '@bufbuild/protobuf': 2.17.0
 
   '@arker-ai/sdk@1.3.0(@computesdk/daytona@1.7.58(bufferutil@4.2.0)(utf-8-validate@6.0.6))(@computesdk/e2b@1.7.77)(@computesdk/modal@1.9.35)(bufferutil@4.2.0)(computesdk@4.1.22)(utf-8-validate@6.0.6)':
     dependencies:
@@ -6876,7 +6886,7 @@ snapshots:
     dependencies:
       '@computesdk/provider': 2.1.28
       computesdk: 4.1.22
-      disk: 1.12.1(zod@4.6.7)
+      disk: 1.14.0(zod@4.6.7)
     transitivePeerDependencies:
       - zod
 
@@ -10023,9 +10033,10 @@ snapshots:
     dependencies:
       path-type: 4.0.0
 
-  disk@1.12.1(zod@4.6.7):
+  disk@1.14.0(zod@4.6.7):
     dependencies:
-      '@archildata/api-types': 0.0.81
+      '@archildata/api-types': 0.0.98(@bufbuild/protobuf@2.17.0)
+      '@bufbuild/protobuf': 2.17.0
       undici: 8.12.4
     optionalDependencies:
       zod: 4.6.7
