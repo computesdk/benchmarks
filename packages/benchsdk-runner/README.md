@@ -55,10 +55,10 @@ export const task = defineTask(async ({ participant, step, measure, log }) => {
 Run it with the CLI (flags override the config knobs):
 
 ```sh
-bench run benchmarks/sandbox/sandbox-tti.bench.ts --iterations 100 --concurrency 20 --provider e2b,modal
+bench run benchmarks/sandbox/tti.bench.ts --iterations 100 --concurrency 20 --provider e2b,modal
 ```
 
-`bench run` requires platform auth — `BENCHMARKS_PLATFORM_API_KEY`, `BENCHMARKS_PLATFORM_TOKEN`, or a token saved via `bench auth login` — even for `--dry-run` / `--no-ingest` / `BENCHSDK_NO_INGEST=1`; those flags only skip uploading, they do not skip auth.
+`bench run` requires platform auth for ingestion — `BENCHMARKS_PLATFORM_API_KEY`, `BENCHMARKS_PLATFORM_TOKEN`, or a token saved via `bench auth login`. For local execution without platform auth or uploads, use `--no-ingest`, its alias `--dry-run`, or `BENCHSDK_NO_INGEST=1`. These options still execute the workload: provider credentials, resource creation and usage charges still apply. See the [repository methodology](../../docs/methodology.md) and [suite index](../../docs/suites.md) to evaluate the included provider benchmarks.
 
 To load a TypeScript benchmark without a build step, run the CLI under a TS loader:
 
