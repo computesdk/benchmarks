@@ -20,7 +20,7 @@ const path = 'package.json';
 const pkg = JSON.parse(readFileSync(path, 'utf8'));
 
 async function latestVersion(name) {
-  const res = await fetch(`https://registry.npmjs.org/${encodeURIComponent(name)}/latest`);
+  const res = await fetch(`https://registry.npmjs.org/${encodeURIComponent(name)}/latest`, { signal: AbortSignal.timeout(15_000) });
   if (!res.ok) throw new Error(`npm registry ${res.status} for ${name}`);
   return (await res.json()).version;
 }
@@ -35,7 +35,9 @@ const changes = [];
 const skipped = [];
 
 for (const [name, spec] of Object.entries(pkg.dependencies ?? {})) {
-  if (spec.startsWith('workspace:') || spec.startsWith('npm:') || spec.startsWith('file:') || spec.startsWith('link:')) {
+  // Allowlist: only plain semver specs get bumped — anything else (workspace:/npm:/
+  // file:/link:, git or URL deps, dist-tags, wildcard/range specs) is left alone.
+  if (!/^[\^~]?\d+\.\d+\.\d+(?:[-+][\w.+-]*)?$/.test(spec)) {
     skipped.push(name);
     continue;
   }
@@ -50,9 +52,10 @@ for (const [name, spec] of Object.entries(pkg.dependencies ?? {})) {
 for (const [name, spec] of Object.entries(pkg.pnpm?.overrides ?? {})) {
   if (name.includes('>') || name.includes(' ')) { skipped.push(name); continue; }
   const latest = await latestVersion(name);
-  if (latest !== spec) {
-    pkg.pnpm.overrides[name] = latest;
-    changes.push({ name: `pnpm override ${name}`, from: spec, to: latest });
+  const next = bumpSpec(spec, latest);
+  if (next !== spec) {
+    pkg.pnpm.overrides[name] = next;
+    changes.push({ name: `pnpm override ${name}`, from: spec, to: next });
   }
 }
 
