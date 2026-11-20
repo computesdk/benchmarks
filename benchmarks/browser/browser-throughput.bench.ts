@@ -383,12 +383,15 @@ export const task = defineTask<ThroughputProviderConfig>(async (ctx) => {
     try {
       await withTimeout(page.context().addCookies([{
         name: 'WMF-Last-Access-Global',
+        // Cookie date format: DD-Mon-YYYY, e.g. 20-Nov-2026, in UTC.
         value: new Date().toUTCString().slice(5, 16).replaceAll(' ', '-'),
         domain: '.wikipedia.org',
         path: '/',
         secure: true,
         sameSite: 'Lax',
       }]), 5_000, 'Wikipedia cookie setup timed out');
+    } catch (err) {
+      throw new Error(`Wikipedia cookie setup failed: ${err instanceof Error ? err.message : String(err)}`, { cause: err });
     } finally {
       cookieSetupMs = performance.now() - cookieSetupStart;
     }
