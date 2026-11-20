@@ -36,6 +36,16 @@ Provider registries and scoring helpers that differ between the old repositories
 
 Browserbase uses Oregon (`us-west-2`) for both sessions and benchmark runners in the lifecycle, throughput, concurrency, file transfer, idle resume, and session persistence suites. Tigris storage and snapshot benchmarks use Oregon runners and the existing global S3 endpoint. The public browser lifecycle and throughput workflows run Browser Use in Ohio (`us-east-2`). Compare historical latencies with the runner and session regions in mind.
 
+Public browser throughput seeds a secure `WMF-Last-Access-Global` session cookie
+on `.wikipedia.org`, using the current UTC date, before the first measured
+navigation for every provider. This normalizes cookie state because fresh,
+cookieless sessions on some cloud networks receive Wikipedia HTTP 429 responses.
+Cookie setup makes no HTTP request and is excluded from action, connection, and
+total lifecycle timings; the first article navigation still includes DNS and
+connection setup. The cookie workaround is based on observed behavior, not a
+documented Wikimedia guarantee. Measured navigations are not retried, and HTTP
+errors still count against action completion and scoring.
+
 ## Run locally
 
 Use Node.js 24 and the pnpm version declared in `package.json`.

@@ -340,6 +340,7 @@ export const task = defineTask<ThroughputProviderConfig>(async (ctx) => {
   const actions: ActionResult[] = [];
   let createMs = 0;
   let connectMs = 0;
+  let cookieSetupMs = 0;
   let releaseMs = 0;
   let taskMs = 0;
   let actionsCompleted = 0;
@@ -374,6 +375,26 @@ export const task = defineTask<ThroughputProviderConfig>(async (ctx) => {
       return existingPage ?? (await context.newPage());
     });
     connectMs = performance.now() - connectStart;
+
+    // Seed identical Wikipedia cookie state for every provider. Fresh,
+    // cookieless sessions on some cloud networks receive HTTP 429. Setting
+    // the cookie locally avoids warming DNS, TLS, or the article connection.
+    const cookieSetupStart = performance.now();
+    try {
+      await withTimeout(page.context().addCookies([{
+        name: 'WMF-Last-Access-Global',
+        // Cookie date format: DD-Mon-YYYY, e.g. 20-Nov-2026, in UTC.
+        value: new Date().toUTCString().slice(5, 16).replaceAll(' ', '-'),
+        domain: '.wikipedia.org',
+        path: '/',
+        secure: true,
+        sameSite: 'Lax',
+      }]), 5_000, 'Wikipedia cookie setup timed out');
+    } catch (err) {
+      throw new Error(`Wikipedia cookie setup failed: ${err instanceof Error ? err.message : String(err)}`, { cause: err });
+    } finally {
+      cookieSetupMs = performance.now() - cookieSetupStart;
+    }
 
     // Individual action failures are recorded but do not abort the session.
     // Throughput is a rate the step latency can't express, so report it as step
@@ -412,7 +433,7 @@ export const task = defineTask<ThroughputProviderConfig>(async (ctx) => {
     }
   }
 
-  const totalMs = performance.now() - totalStart;
+  const totalMs = performance.now() - totalStart - cookieSetupMs;
   const summary = {
     createMs,
     connectMs,
