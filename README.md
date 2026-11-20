@@ -4,6 +4,62 @@ Reproducible benchmarks for sandbox, browser, object storage and AI gateway prov
 
 Results, run history and access controls live on the [benchmark platform](https://platform.computesdk.com). Public leaderboards are available at [computesdk.com/benchmarks](https://www.computesdk.com/benchmarks). Results and generated charts are no longer committed to this repository; existing Git history remains available.
 
+## Run benchmarks and read results on the platform
+
+Every benchmark run is ingested into the [benchmark platform](https://platform.computesdk.com). You can read all results through the platform's API, CLI and MCP server, or browse the public leaderboards at [computesdk.com/benchmarks](https://www.computesdk.com/benchmarks).
+
+### Connect to the platform
+
+1. Sign in at [platform.computesdk.com](https://platform.computesdk.com) to create your organization.
+2. Install the `bench` CLI: `npm install -g @benchsdk/runner`.
+3. Authenticate with `bench auth login` (device-code login), or create an API key under **Settings → API keys** and export it as `BENCHMARKS_PLATFORM_API_KEY`.
+
+### Run a benchmark in your organization
+
+Clone this repository, build the packages (see [Run locally](#run-locally)) and run any suite without `--no-ingest`. The run is uploaded to your organization, and its results, logs and artifacts appear on the platform dashboard.
+
+```bash
+export BENCHMARKS_PLATFORM_API_KEY=bp_...   # or: bench auth login
+export E2B_API_KEY=...                       # credentials for the providers you select
+pnpm exec tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --provider e2b --iterations 10
+```
+
+To keep your own copy of a published benchmark, fork it into your organization. The fork is a private benchmark that tracks the upstream `.bench.ts` file:
+
+```bash
+bench fork sandbox-tti --source-org computesdk
+```
+
+The dashboard has a **Fork** button on the benchmark overview that does the same thing.
+
+### Run a benchmark in ComputeSDK Actions
+
+[ComputeSDK Actions](https://platform.computesdk.com) runs GitHub-style workflow YAML on CI providers from the ComputeSDK router, or on your own provider accounts (BYOK).
+
+1. Fork this repository.
+2. On the platform, connect your GitHub account (**Settings → Git Connections**) and enable your fork under **Actions → Repos**.
+3. Pick where jobs run under **Settings → Providers**: a provider from the router, or your own provider key.
+4. Add `BENCHMARKS_PLATFORM_API_KEY` and the credentials of the providers you benchmark as Actions secrets (**Settings → Actions setup**).
+5. Start a workflow with the **Run workflow** button or the `compute` CLI ([`@computesdk/cli`](https://www.npmjs.com/package/@computesdk/cli)):
+
+```bash
+compute actions dispatch <you>/benchmarks --workflow .github/workflows/sandbox-tti-benchmarks.yml --ref master
+```
+
+The run's benchmark results show on the Actions run page and on the benchmark in your organization. The workflows in this repository load provider credentials from ComputeSDK's own vault; in your fork, point them at your Actions secrets.
+
+### Read results
+
+Public benchmarks are published by the `computesdk` organization (`sandbox-tti`, `sandbox-dax`, `sandbox-reliability`, `browser-lifecycle`, `browser-throughput`, `storage-lifecycle`, `snapshot-fork`, `ai-gateway-latency-*` and `ai-gateway-model-index`). List them with `bench benchmarks list --group public`. Reading results requires a platform credential.
+
+| Surface | How to use it |
+|---|---|
+| Website | Public leaderboards at [computesdk.com/benchmarks](https://www.computesdk.com/benchmarks) |
+| Dashboard | Runs, results, logs and artifacts at [platform.computesdk.com](https://platform.computesdk.com) |
+| CLI | `bench results sandbox-tti --source-org computesdk`; also `bench runs list`, `bench reliability`, `bench export`. See the [CLI reference](packages/benchsdk-cli/README.md) |
+| API | `GET https://platform.computesdk.com/api/v1/benchmarks/~/computesdk/sandbox-tti/results` with `Authorization: Bearer $BENCHMARKS_PLATFORM_API_KEY`. The OpenAPI document is at `/api/v1/openapi.json` |
+| MCP | Connect an MCP client to `https://platform.computesdk.com/mcp` (OAuth or an org API key as a bearer token). Tools include `benchmarks_list`, `benchmarks_get_results`, `benchmarks_get_run_results` and `benchmarks_get_reliability` |
+
 ## Layout
 
 ```text
