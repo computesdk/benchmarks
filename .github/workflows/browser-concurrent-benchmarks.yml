@@ -9,6 +9,8 @@ on:
     paths:
       - 'benchmarks/browser/*concurrent*'
       - 'benchmarks/browser/concurrent-*'
+      - 'benchmarks/browser/wikipedia.ts'
+      - 'benchmarks/stealth/browser/*concurr*'
   schedule:
     - cron: '0 4 * * 1' # Weekly on Monday at 04:00 UTC (offset from other browser benchmarks)
   workflow_dispatch:

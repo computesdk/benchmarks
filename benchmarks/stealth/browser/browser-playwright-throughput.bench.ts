@@ -10,6 +10,7 @@
  *   pnpm bench benchmarks/stealth/browser/browser-playwright-throughput.bench.ts --provider azure --iterations 1 --no-ingest
  */
 import { defineBenchmarkConfig, defineTask, TaskError, mergeConfig, type BenchmarkScoringConfig } from '@benchsdk/runner';
+import { seedWikipediaCookie } from '../../browser/wikipedia.js';
 import { runSession } from './playwright-session.js';
 import { playwrightProviders, requireProviderCredentials, playwrightArgs } from './playwright-providers.js';
 import type { PlaywrightProviderConfig } from './playwright-types.js';
@@ -77,6 +78,7 @@ export const task = defineTask<PlaywrightProviderConfig>(ctx => {
   const actions: ActionResult[] = [];
   return runSession(ctx, async (page, _startedAt, data) => {
     data.articleUrl = url;
+    await seedWikipediaCookie(page.context());
     await ctx.step('actions', async () => {
       try {
         await runActionLoop(page, url, actions);

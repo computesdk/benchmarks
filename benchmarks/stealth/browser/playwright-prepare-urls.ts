@@ -8,6 +8,7 @@
  *   pnpm exec tsx benchmarks/stealth/browser/prepare-urls.ts 100 benchmarks/stealth/browser/browser-playwright-urls.json
  */
 import { chromium } from 'playwright-native-core';
+import { seedWikipediaCookie } from '../../browser/wikipedia.js';
 import { writeFileSync } from 'node:fs';
 import { articleUrl, firstArticleLink } from './playwright-workload.js';
 import { withTimeout } from '../src/util/timeout.js';
@@ -21,6 +22,7 @@ try {
   const page = await browser.newPage({ viewport: VIEWPORT });
   page.setDefaultTimeout(30_000);
   page.setDefaultNavigationTimeout(30_000);
+  await seedWikipediaCookie(page.context());
   const urls: string[] = [];
   for (let i = 0; i < count; i++) {
     await page.goto('https://en.wikipedia.org/wiki/Special:Random', { waitUntil: 'load' });
