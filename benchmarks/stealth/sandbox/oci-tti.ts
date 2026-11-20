@@ -137,6 +137,8 @@ export const OCI_PARTICIPANTS: Record<string, OciParticipantSpec> = {
   northflank: { mechanism: 'image', resolve: image() },
   // promigence builds a snapshot from the image on first create, then reuses it.
   promigence: { mechanism: 'image', resolve: image() },
+  // sail builds the image on an account's first create, then reuses it.
+  sail: { mechanism: 'image', resolve: image() },
   // tenki has no spec: see UNSUPPORTED_REASONS.
   // vercel resolves image against its Container Registry — the ref must be
   // pushed there first (see oci-tti-materialize.ts --provider vercel).

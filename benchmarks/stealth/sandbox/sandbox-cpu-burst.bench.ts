@@ -158,6 +158,11 @@ const CPU_BURST_RESOURCE_OPTIONS: Record<string, CpuBurstResourceSpec> = {
       custom_gb_memory: 2,
     },
   }),
+  sail: providerSpecific(
+    'Sail supports 1 vCPU as its sm size, with 16 GiB (its smallest memory limit); it does not offer the 2-GiB standard profile.',
+    { expectedCpu: 1, expectedMemoryMb: 16384 },
+    { sizeClass: 'sm' },
+  ),
   sandbox0: providerSpecific(
     'Sandbox0 exposes a memory setting but does not expose a benchmark-level CPU setting; CPU remains provider-controlled.',
     { expectedCpu: CPU_BURST_RESOURCE_PROFILE.cpu, expectedMemoryMb: CPU_BURST_RESOURCE_PROFILE.memoryMb },

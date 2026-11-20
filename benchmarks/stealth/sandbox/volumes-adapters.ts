@@ -153,6 +153,7 @@ const CREATE_MOUNT_PROVIDERS: Array<Pick<VolumeAdapter, 'provider' | 'storageCla
   { provider: 'northflank', storageClass: 'block' },    // RWX volumes
   { provider: 'sandbox0', storageClass: 'unknown' },    // claim mounts
   { provider: 'microsandbox', storageClass: 'block' },
+  { provider: 'sail', storageClass: 'object' },         // file system on object storage
 ];
 
 const RUNTIME_ATTACH_PROVIDERS: Array<Pick<VolumeAdapter, 'provider' | 'storageClass'>> = [
