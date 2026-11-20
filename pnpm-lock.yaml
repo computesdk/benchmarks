@@ -205,8 +205,8 @@ importers:
         specifier: ^0.1.5
         version: 0.1.5
       '@computesdk/upstash':
-        specifier: ^0.3.30
-        version: 0.3.30(zod@4.6.7)
+        specifier: ^0.3.36
+        version: 0.3.36(bufferutil@4.2.0)(utf-8-validate@6.0.6)(zod@4.6.7)
       '@computesdk/vercel':
         specifier: ^1.7.58
         version: 1.7.58
@@ -956,6 +956,9 @@ packages:
   '@computesdk/provider@2.1.26':
     resolution: {integrity: sha512-cb6NdC74S0MMm+A/IJfsv44WLDM+PQZfc0bh+zWrIxiZrKwsmCE6Selxz7U0psvY1N/7uVFFKk/x9V+FtbC/AQ==}
 
+  '@computesdk/provider@2.1.28':
+    resolution: {integrity: sha512-0wnIcuyghq7EAll4DCSUOT86Eac7EXeCQFnuz3D0x6w+vf1Zq+rIlSwz7Sl0a0dKsGQ9L3SPsdiHUIGr/uTBJA==}
+
   '@computesdk/quilt@1.0.21':
     resolution: {integrity: sha512-UtGOMxngREyDXI0HQdUgpU9Pti9FfY/N0atpDZAkKC7i450egBCc5yZ+uhS4LXACjA0fIWlSmj0cFnwCIVVtyQ==}
     engines: {node: '>=22'}
@@ -996,8 +999,8 @@ packages:
   '@computesdk/uno@0.1.5':
     resolution: {integrity: sha512-mzZ8+22xFEqxHseGSieV8Q1qQ5SFzKlHaSbdqlyY8qIJ5w4BvLk5uyz5FN5pbY7weI9RU0pA/t65Z0OMIx+aEg==}
 
-  '@computesdk/upstash@0.3.30':
-    resolution: {integrity: sha512-zWxoG5hmZDVC68pJNIRDKl2zaFZuk3z79VwZaOqebREZPT+6EIWbCpDSBZ8Dau2uq6TQWnymo1QboIqdsBqhpw==}
+  '@computesdk/upstash@0.3.36':
+    resolution: {integrity: sha512-vEvs/IeE2C98f7G1BKYR0PY01jHMTwnDknpAj8Fgk5LEK4gfp5HxqVVeCBUa8nHC6uRgB15fZaiy7Nap1ZzY5g==}
 
   '@computesdk/vercel@1.7.58':
     resolution: {integrity: sha512-1iG43ZRrQGsZmzBeH/iroWDyJY+Sx1dkU5MU2c1zMz71mEnRSzFyVdXKrLtmcSmgxDUw7LRZjhC6oNvesMX9QQ==}
@@ -2748,8 +2751,8 @@ packages:
   '@ungap/structured-clone@1.4.0':
     resolution: {integrity: sha512-1mEZtMKPM09vDmQt5y7YvmN2+DFTP7Tg0EWXdic8/C6VRnpb33e4ghisCIE3WZjsE2N8mf+QV1Zqh7ZFYLWInQ==}
 
-  '@upstash/box@0.5.5':
-    resolution: {integrity: sha512-fypRKwrIgOKe6hWhhw/gvhUI30GKH453KUo1deRWjIP02rqUqMCJu3ecGWNg1XMzPY2UHEbIn54lfrg9p6pt3g==}
+  '@upstash/box@0.8.1':
+    resolution: {integrity: sha512-zJcXhBR0kMCAQsSYb3HsZfCmmUuImrtMHlpMK8POiIjTh4Gy0JQKKZeWzg6LunzYFjbuu6aPlpYNgeJmwNWh1Q==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
@@ -3318,6 +3321,9 @@ packages:
 
   computesdk@4.1.20:
     resolution: {integrity: sha512-H/VBM3f+KLqIDPcbmfEKgR1vsYX7/a0bwBH8c0J6m/z87srq5Ft6f2zEIUS3KK0NaIjvLqjfsrS90l5azX/2VQ==}
+
+  computesdk@4.1.22:
+    resolution: {integrity: sha512-Z/BcYcM9lFkStFWUMkuKiga20u/SLPYFVRQH/ewQu+g+O0xZezwyYxdEoChoZzC/d/9mSVddAIZ12KrcGOOdFw==}
 
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
@@ -7063,6 +7069,12 @@ snapshots:
       computesdk: 4.1.20
       daemond: 0.1.9
 
+  '@computesdk/provider@2.1.28':
+    dependencies:
+      '@computesdk/cmd': 0.4.1
+      computesdk: 4.1.22
+      daemond: 0.1.9
+
   '@computesdk/quilt@1.0.21':
     dependencies:
       '@computesdk/provider': 2.1.23
@@ -7146,12 +7158,14 @@ snapshots:
       '@computesdk/provider': 2.1.23
       computesdk: 4.1.17
 
-  '@computesdk/upstash@0.3.30(zod@4.6.7)':
+  '@computesdk/upstash@0.3.36(bufferutil@4.2.0)(utf-8-validate@6.0.6)(zod@4.6.7)':
     dependencies:
-      '@computesdk/provider': 2.1.23
-      '@upstash/box': 0.5.5(zod@4.6.7)
-      computesdk: 4.1.17
+      '@computesdk/provider': 2.1.28
+      '@upstash/box': 0.8.1(bufferutil@4.2.0)(utf-8-validate@6.0.6)(zod@4.6.7)
+      computesdk: 4.1.22
     transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
       - zod
 
   '@computesdk/vercel@1.7.58':
@@ -8859,10 +8873,14 @@ snapshots:
 
   '@ungap/structured-clone@1.4.0': {}
 
-  '@upstash/box@0.5.5(zod@4.6.7)':
+  '@upstash/box@0.8.1(bufferutil@4.2.0)(utf-8-validate@6.0.6)(zod@4.6.7)':
     dependencies:
+      ws: 8.23.0(bufferutil@4.2.0)(utf-8-validate@6.0.6)
       zod: 4.6.7
       zod-to-json-schema: 3.25.2(zod@4.6.7)
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
   '@vercel/blob@2.9.0':
     dependencies:
@@ -9497,6 +9515,12 @@ snapshots:
       daemond: 0.1.9
 
   computesdk@4.1.20:
+    dependencies:
+      '@benchsdk/cli': 0.9.5
+      '@computesdk/cmd': 0.4.1
+      daemond: 0.1.9
+
+  computesdk@4.1.22:
     dependencies:
       '@benchsdk/cli': 0.9.5
       '@computesdk/cmd': 0.4.1
