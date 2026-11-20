@@ -29,7 +29,8 @@ jobs:
         run: node benchmarks/scripts/bump-deps.mjs
 
       - name: Update lockfile
-        run: pnpm install --ignore-scripts
+        # --no-frozen-lockfile: package.json was just edited; CI defaults to frozen.
+        run: pnpm install --no-frozen-lockfile --ignore-scripts
 
       - name: Open PR
         uses: peter-evans/create-pull-request@v7
