@@ -1,0 +1,44 @@
+name: Dependency bump
+
+# Opens a draft PR bumping runtime dependencies to their latest npm releases.
+# Thursday noon Central (18:00 UTC) so the bump PR can merge the same workday.
+on:
+  schedule:
+    - cron: '0 18 * * 4'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    name: Bump npm dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Bump package.json specifiers
+        env:
+          BUMP_REPORT: ${{ runner.temp }}/bump.md
+        run: node benchmarks/scripts/bump-deps.mjs
+
+      - name: Update lockfile
+        # --no-frozen-lockfile: package.json was just edited; CI defaults to frozen.
+        run: pnpm install --no-frozen-lockfile --ignore-scripts
+
+      - name: Open PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          branch: chore/npm-deps-bump
+          title: 'chore(deps): bump benchmark packages to latest npm releases'
+          body-path: ${{ runner.temp }}/bump.md
+          draft: true
+          commit-message: 'chore(deps): bump benchmark packages to latest npm releases'
