@@ -65,8 +65,9 @@ export const providers: ProviderConfig[] = [
     // actually deletes). Without it, create() resolves an exec handle on the
     // shared disk and every runCommand runs in a fresh VM, so a file written
     // with filesystem.writeFile outside /mnt/archil is gone by the next
-    // command. baseImage must carry node — Archil's default (ubuntu) fails
-    // the `node -v` readiness probe.
+    // command. node:24-trixie rather than bookworm: bookworm's coreutils
+    // hash in software, trixie's through OpenSSL (SHA-NI), which the CPU
+    // bench's `sha256sum` measures.
     requiredEnvVars: process.env.ARCHIL_EXECUTION === 'persistent'
       ? ['ARCHIL_API_KEY', 'ARCHIL_REGION']
       : ['ARCHIL_API_KEY', 'ARCHIL_REGION', 'ARCHIL_DISK_ID'],
@@ -76,7 +77,7 @@ export const providers: ProviderConfig[] = [
       execution: process.env.ARCHIL_EXECUTION === 'persistent' ? 'persistent' : 'exec',
     }),
     sandboxOptions: process.env.ARCHIL_EXECUTION === 'persistent'
-      ? { baseImage: 'node:24-bookworm', maxTtlSeconds: 900 }
+      ? { baseImage: 'node:24-trixie', maxTtlSeconds: 900 }
       : { diskId: process.env.ARCHIL_DISK_ID! },
   },
   {
