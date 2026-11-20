@@ -44,6 +44,9 @@ jobs:
       - name: Test daily workflow defaults
         run: node --test benchmarks/scripts/daily/oss-workflow-defaults.test.mjs
 
+      - name: Test Wikipedia browser setup
+        run: node --import tsx --test benchmarks/browser/wikipedia.test.ts
+
       - name: Test
         run: pnpm --filter @benchsdk/client run test
 

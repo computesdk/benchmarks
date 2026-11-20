@@ -36,6 +36,7 @@ import path from 'node:path';
 import { continuousScoring } from '../sandbox/performance-runtime-scoring.js';
 import { fileURLToPath } from 'node:url';
 import { chromium, type Browser, type Page } from 'playwright-core';
+import { seedWikipediaCookie } from '../../browser/wikipedia.js';
 import { defineBenchmarkConfig, defineTask, TaskError, type TaskContext } from '@benchsdk/runner';
 import type { JsonValue } from '@benchsdk/client';
 import { withTimeout } from '../src/util/timeout.js';
@@ -150,8 +151,8 @@ function collectRound(provider: string, level: number, round: RoundResult): void
 }
 
 export const config = defineBenchmarkConfig({
-  benchmarkSlug: process.env.BENCHMARK_SLUG ?? 'browser-concurrency',
-  benchmarkName: process.env.BENCHMARK_NAME ?? 'Browser concurrency',
+  benchmarkSlug: process.env.BENCHMARK_SLUG || 'browser-concurrency',
+  benchmarkName: process.env.BENCHMARK_NAME || 'Browser concurrency',
   // One phase per level, one task each: the phase names the level a record
   // belongs to, so nothing depends on task position, and declaring phases makes
   // the runner refuse `--iterations` instead of silently reinterpreting it as a
@@ -458,6 +459,7 @@ async function runRound(ctx: RoundContext): Promise<{ round: RoundResult; harnes
   const totalStart = performance.now();
   let createMs = 0;
   let connectMs = 0;
+  let cookieSetupMs = 0;
   let taskMs = 0;
   let releaseMs = 0;
   let sessionsAlive = 0;
@@ -661,6 +663,17 @@ async function runRound(ctx: RoundContext): Promise<{ round: RoundResult; harnes
       });
     }
 
+    // Prepare every context before releasing the action barrier. Keep this
+    // local cookie setup out of connect/action timings and the level budget.
+    const cookieSetupStart = performance.now();
+    try {
+      const results = await Promise.allSettled(pages.map(page => seedWikipediaCookie(page.context())));
+      const failure = results.find(result => result.status === 'rejected');
+      if (failure?.status === 'rejected') throw failure.reason;
+    } finally {
+      cookieSetupMs = performance.now() - cookieSetupStart;
+    }
+
     // ─── BARRIER: all surviving sessions are alive + connected ──────────────
 
     // ── Phase 3: Run 10-action loop on all sessions simultaneously ──────────
@@ -742,7 +755,7 @@ async function runRound(ctx: RoundContext): Promise<{ round: RoundResult; harnes
   maxConcurrentActions = actionWatch.stop();
   maxLiveSessions = liveWatch.stop();
 
-  const totalMs = performance.now() - totalStart;
+  const totalMs = performance.now() - totalStart - cookieSetupMs;
 
   // A provider that cannot reach the requested concurrency peak is treated as a
   // failure for that task: the data describes a smaller experiment and would
