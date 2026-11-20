@@ -202,8 +202,8 @@ importers:
         specifier: ^0.1.19
         version: 0.1.19
       '@computesdk/uno':
-        specifier: ^0.1.5
-        version: 0.1.5
+        specifier: ^0.1.8
+        version: 0.1.8
       '@computesdk/upstash':
         specifier: ^0.3.30
         version: 0.3.30(zod@4.6.7)
@@ -993,8 +993,8 @@ packages:
   '@computesdk/tilion@0.1.19':
     resolution: {integrity: sha512-qvHo3JN5LlNfu6+710SkPqLbwTaqCZcgxuajsErvu7vNq1hSHhvTGxXo8XZXCxpqmKHXxl0REPVMh701x2P34w==}
 
-  '@computesdk/uno@0.1.5':
-    resolution: {integrity: sha512-mzZ8+22xFEqxHseGSieV8Q1qQ5SFzKlHaSbdqlyY8qIJ5w4BvLk5uyz5FN5pbY7weI9RU0pA/t65Z0OMIx+aEg==}
+  '@computesdk/uno@0.1.8':
+    resolution: {integrity: sha512-+o+IfyM0ky+/TNXCNOAStBoO3bBL3wNw2mjD6qEedUudklT/WiNiRiapc2iAYflQpxBJuhFd2V61ciyeK7d9mw==}
 
   '@computesdk/upstash@0.3.30':
     resolution: {integrity: sha512-zWxoG5hmZDVC68pJNIRDKl2zaFZuk3z79VwZaOqebREZPT+6EIWbCpDSBZ8Dau2uq6TQWnymo1QboIqdsBqhpw==}
@@ -7141,10 +7141,10 @@ snapshots:
       '@computesdk/provider': 2.1.23
       computesdk: 4.1.17
 
-  '@computesdk/uno@0.1.5':
+  '@computesdk/uno@0.1.8':
     dependencies:
-      '@computesdk/provider': 2.1.23
-      computesdk: 4.1.17
+      '@computesdk/provider': 2.1.26
+      computesdk: 4.1.20
 
   '@computesdk/upstash@0.3.30(zod@4.6.7)':
     dependencies:
