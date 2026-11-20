@@ -1,10 +1,10 @@
 name: Dependency bump
 
 # Opens a draft PR bumping runtime dependencies to their latest npm releases.
-# Thursday night US time (06:00 UTC Friday = midnight CST).
+# Thursday noon Central (18:00 UTC) so the bump PR can merge the same workday.
 on:
   schedule:
-    - cron: '0 6 * * 5'
+    - cron: '0 18 * * 4'
   workflow_dispatch:
 
 permissions:
