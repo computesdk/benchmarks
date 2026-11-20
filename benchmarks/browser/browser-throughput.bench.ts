@@ -10,6 +10,10 @@
  * timing and status. `actionsPerSecond`/`actionsCompleted` are non-latency
  * throughput metrics, so they're reported with `ctx.measure` inside `actions`.
  *
+ * Between connect and the action loop, every session makes one untimed request
+ * to the article host (see `warmUpArticleHost`). It is not an action: it is
+ * outside every step, excluded from `totalMs`, and its result is ignored.
+ *
  *   bench run benchmarks/browser/browser-throughput.bench.ts
  *   bench run benchmarks/browser/browser-throughput.bench.ts --iterations 5 --provider browserbase
  */
@@ -133,6 +137,25 @@ function parseNavUrls(): string[] {
 function navUrlForIteration(i: number): string {
   if (NAV_URLS.length > 0) return NAV_URLS[i % NAV_URLS.length];
   return RANDOM_URL;
+}
+
+/**
+ * One untimed request to the article host before the measured loop, its result
+ * ignored. Wikimedia's edge answers a browser's first article request with HTTP
+ * 429 when it comes from some cloud IP ranges and no Wikipedia cookie is set
+ * yet (computesdk/benchmarks#612), and every session starts from a fresh
+ * browser, so without this the first navigate measures that rate limit rather
+ * than the provider. Any earlier request to the host clears it, including one
+ * that was itself answered 429. robots.txt has no subresources, so the browser
+ * cache and the article's CDN cache stay as they were; only the cookies Wikimedia
+ * sets and the open connection to the host carry over.
+ */
+async function warmUpArticleHost(page: Page, articleUrl: string): Promise<number> {
+  const start = performance.now();
+  await page
+    .goto(new URL('/robots.txt', articleUrl).href, { waitUntil: 'load', timeout: ACTION_TIMEOUT_MS })
+    .catch(() => {});
+  return performance.now() - start;
 }
 
 /** Returns true if an href points to a real article (not a namespace page). */
@@ -341,6 +364,7 @@ export const task = defineTask<ThroughputProviderConfig>(async (ctx) => {
   let createMs = 0;
   let connectMs = 0;
   let releaseMs = 0;
+  let warmupMs = 0;
   let taskMs = 0;
   let actionsCompleted = 0;
   let actionsPerSecond = 0;
@@ -374,6 +398,9 @@ export const task = defineTask<ThroughputProviderConfig>(async (ctx) => {
       return existingPage ?? (await context.newPage());
     });
     connectMs = performance.now() - connectStart;
+
+    // Untimed and unscored: outside every step and subtracted from totalMs.
+    warmupMs = await warmUpArticleHost(page, navigateUrl);
 
     // Individual action failures are recorded but do not abort the session.
     // Throughput is a rate the step latency can't express, so report it as step
@@ -412,7 +439,7 @@ export const task = defineTask<ThroughputProviderConfig>(async (ctx) => {
     }
   }
 
-  const totalMs = performance.now() - totalStart;
+  const totalMs = performance.now() - totalStart - warmupMs;
   const summary = {
     createMs,
     connectMs,
