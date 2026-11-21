@@ -108,6 +108,7 @@ jobs:
           PROVIDER: ${{ github.event.inputs.provider }}
         run: |
           . benchmarks/scripts/load-vault-secrets.sh "^($(jq -r '.["ai-gateway-model-index"] | to_entries[] | .value[]?' benchmarks/scripts/provider-vars.json | sort -u | paste -sd'|')|BENCHMARKS_PLATFORM_API_KEY)"
+          . benchmarks/scripts/apply-provider-test-env.sh
 
           provider_args=()
           if [ -n "$PROVIDER" ]; then
