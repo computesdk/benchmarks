@@ -66,7 +66,7 @@ export const PROTECTED_SITES: ProtectedSite[] = [
     expectedVendor: 'cloudflare',
     passSignal: { selector: 'input[name="q"]' },
     challengeSignal: {
-      html: 'challenge-platform',
+      html: '_cf_chl_opt',
       selector: '.cf-chl-widget, [id^="cf-chl-widget"]',
       title: 'Security Check',
       text: 'Just a moment',
@@ -90,7 +90,7 @@ export const PROTECTED_SITES: ProtectedSite[] = [
     slug: 'zillow',
     url: 'https://www.zillow.com/',
     expectedVendor: 'perimeterx',
-    passSignal: { selector: '#search-box-input' },
+    passSignal: { selector: '#search-box-input, [data-testid="search-bar-container"] input[role="combobox"]' },
     challengeSignal: {
       selector: '#px-captcha, .px-captcha',
       text: 'Please verify you are a human',
