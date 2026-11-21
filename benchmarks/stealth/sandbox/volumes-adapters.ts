@@ -160,7 +160,7 @@ const RUNTIME_ATTACH_PROVIDERS: Array<Pick<VolumeAdapter, 'provider' | 'storageC
   { provider: 'novita', storageClass: 'block' },
   // miosa has no leg on purpose: its volumes attach to "computers", a
   // separate product — sandbox records carry no computer_id to attach to.
-  { provider: 'tenki', storageClass: 'block' },
+  { provider: 'luxor', storageClass: 'block' },
   { provider: 'createos', storageClass: 'object' },     // BYO S3 disk
 ];
 
@@ -211,8 +211,8 @@ adapters.set('namespace', {
 
 // tenki: attachVolume throws SYNC_PENDING while a fresh volume's initial
 // sync-back is in flight — retry until the window clears.
-adapters.set('tenki', {
-  ...sdkAdapter('tenki', 'block', 'runtime'),
+adapters.set('luxor', {
+  ...sdkAdapter('luxor', 'block', 'runtime'),
   createMounted: (args) =>
     sdkRuntimeAttach(args, async (sandbox) => {
       const deadline = Date.now() + 120_000;

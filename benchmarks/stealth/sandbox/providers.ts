@@ -170,7 +170,7 @@ export const providers: ProviderConfig[] = [
     createCompute: () => freestyle({ apiKey: process.env.FREESTYLE_API_KEY! }),
   },
   {
-    name: 'givemeanode',
+    name: 'sfcompute',
     requiredEnvVars: ['GMN_TOKEN'],
     createCompute: () => givemeanode({ apiKey: process.env.GMN_TOKEN!, baseUrl: process.env.GMN_API_HOST }),
   },
@@ -334,7 +334,7 @@ export const providers: ProviderConfig[] = [
     sandboxOptions: { templateId: 'node-22-docker' },
   },
   {
-    name: 'tenki',
+    name: 'luxor',
     requiredEnvVars: ['TENKI_API_KEY'],
     createCompute: () => tenki({ apiKey: process.env.TENKI_API_KEY! }),
   },

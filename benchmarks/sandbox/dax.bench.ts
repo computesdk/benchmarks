@@ -143,7 +143,7 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // cores (16 vCPU equivalent). The 16 GiB memory request has no memoryLimitMiB,
   // so memory can also burst when host capacity is available.
   modal:        { cpu: 0.125, cpuLimit: 8, memoryMiB: 16384, templateId: 'node:22', runtime: 'vm' },
-  tenki:        { cpuCores: 8, memoryMb: 16384, diskSizeGb: 20 }, // default disk cannot hold the OpenCode install
+  luxor:        { cpuCores: 8, memoryMb: 16384, diskSizeGb: 20 }, // default disk cannot hold the OpenCode install
   tensorlake:   { cpus: 8, memoryMb: 16000 },            // Tensorlake caps memory at 16000 MB (16384 is rejected with a 400)
   isorun:       { vcpus: 8, memMiB: 16384 },
   runloop:      { launch_parameters: { resource_size_request: 'CUSTOM_SIZE', custom_cpu_cores: 8, custom_gb_memory: 16 } },
@@ -180,7 +180,7 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // givemeanode has no 8 vCPU / 16 GiB named shape; asking for 8 vCPU and 16 GiB
   // selects sandbox-lg (8 vCPU / 32 GiB). The actual memory is reported by the
   // benchmark script, so the mismatch is visible in results.
-  givemeanode:  { vcpus: 8, memoryMiB: 16384 },
+  sfcompute:  { vcpus: 8, memoryMiB: 16384 },
   gravixlayer:  { templateId: 'base-4xlarge' },                // built-in template requested by the Gravix team
   // Sandbox0 exposes only memory. Override the 128 MiB TTI size;
   // getSandboxOptionsWithResources preserves hardTtl from providers.ts.

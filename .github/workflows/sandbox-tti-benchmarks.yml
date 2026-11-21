@@ -107,7 +107,7 @@ jobs:
           - e2b
           - ec2-firecrab  # manual dispatch only (gated in SHOULD_RUN)
           - freestyle
-          - givemeanode
+          - sfcompute
           - gravixlayer
           # - hopx  # parked — kept out of weekly tti/dax
           - isorun
@@ -129,7 +129,7 @@ jobs:
           - sandbox0
           - sprites
           - superserve
-          - tenki
+          - luxor
           - tensorlake
           # - uno  # parked — dax only for now (3-machine account cap)
           - upstash

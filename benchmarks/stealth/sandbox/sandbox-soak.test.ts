@@ -18,7 +18,7 @@ import {
 const SHIFT = 355 * 60_000;
 
 // Unknown cap: the shift is still requested instead of the adapter default.
-const unknown = soakLifetime("tenki", SHIFT);
+const unknown = soakLifetime("luxor", SHIFT);
 assert.equal(unknown.lifetimeMs, SHIFT + SOAK_LIFETIME_HEADROOM_MS);
 assert.equal(unknown.source, "requested");
 assert.equal(unknown.maxLifetimeMs, null);
