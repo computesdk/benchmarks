@@ -24,7 +24,7 @@ export const LARGE_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   archil:       { vcpus: 8, memoryMiB: 16384 },
   arker:        { templateId: 'ubuntu-full-8' },           // 8 vCPU / 16 GiB golden
   modal:        { cpu: 4, cpuLimit: 4, memoryMiB: 16384, templateId: 'node:22' }, // Modal: 1 core = 2 vCPUs, so 4 cores = 8 vCPUs
-  tenki:        { cpuCores: 8, memoryMb: 16384, diskSizeGb: 20 }, // default disk cannot hold the OpenCode install
+  luxor:        { cpuCores: 8, memoryMb: 16384, diskSizeGb: 20 }, // default disk cannot hold the OpenCode install
   tensorlake:   { cpus: 8, memoryMb: 16000 },               // per-sandbox RAM cap is 16000 MB
   isorun:       { vcpus: 8, memMiB: 16384 },
   runloop:      { launch_parameters: { resource_size_request: 'CUSTOM_SIZE', custom_cpu_cores: 8, custom_gb_memory: 16 } },
@@ -58,7 +58,7 @@ export const LARGE_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // givemeanode has no 8 vCPU / 16 GiB named shape; asking for 8 vCPU and 16 GiB
   // selects sandbox-lg (8 vCPU / 32 GiB). The actual memory is reported by the
   // benchmark script, so the mismatch is visible in results.
-  givemeanode:  { vcpus: 8, memoryMiB: 16384 },
+  sfcompute:  { vcpus: 8, memoryMiB: 16384 },
   gravixlayer:  { templateId: 'base-large' },                  // largest built-in: 4 vCPU / 8 GiB (no 8/16 template)
   // Sandbox0 exposes only memory. Overrides the 128 MiB TTI size;
   // getSandboxOptionsWithResources preserves hardTtl from providers.ts.

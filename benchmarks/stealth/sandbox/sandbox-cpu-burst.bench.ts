@@ -168,7 +168,7 @@ const CPU_BURST_RESOURCE_OPTIONS: Record<string, CpuBurstResourceSpec> = {
     { expectedCpu: CPU_BURST_RESOURCE_PROFILE.cpu, expectedMemoryMb: CPU_BURST_RESOURCE_PROFILE.memoryMb },
     { memory: 2048 },
   ),
-  tenki: standard({ cpuCores: 1, memoryMb: 2048 }),
+  luxor: standard({ cpuCores: 1, memoryMb: 2048 }),
   tensorlake: standard({ cpus: 1, memoryMb: 2048 }),
   vercel: providerSpecific(
     'Vercel requests 1 vCPU, but its sandbox API does not expose a memory setting here.',
