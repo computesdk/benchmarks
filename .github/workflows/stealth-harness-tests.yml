@@ -46,6 +46,7 @@ jobs:
           pnpm stealth:test:fs-api
           pnpm stealth:test:reliability
           pnpm stealth:test:benchmark-setup
+          pnpm stealth:test:volumes
           pnpm test:soak-handoff
           pnpm stealth:test:results
           pnpm stealth:test:snapshot-source

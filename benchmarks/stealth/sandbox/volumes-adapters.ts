@@ -17,6 +17,7 @@
  * - archil's "volume" is the shared bench disk referenced by
  *   ARCHIL_DISK_ID — no CRUD, mounted via the diskId create option.
  */
+import { superserveVolumeTemplateId } from './superserve-volume-template.js';
 
 export const MOUNT_PATH = '/mnt/bench-volume';
 
@@ -158,6 +159,7 @@ const CREATE_MOUNT_PROVIDERS: Array<Pick<VolumeAdapter, 'provider' | 'storageCla
 
 const RUNTIME_ATTACH_PROVIDERS: Array<Pick<VolumeAdapter, 'provider' | 'storageClass'>> = [
   { provider: 'novita', storageClass: 'block' },
+  { provider: 'superserve', storageClass: 'object' },   // JuiceFS over object storage
   // miosa has no leg on purpose: its volumes attach to "computers", a
   // separate product — sandbox records carry no computer_id to attach to.
   { provider: 'tenki', storageClass: 'block' },
@@ -189,6 +191,20 @@ for (const { provider, storageClass } of RUNTIME_ATTACH_PROVIDERS) {
 }
 
 /* --------------------- bench-specific tolerances --------------------- */
+
+// The volume guest runtime is prepared at template-build time, without
+// changing the shared template used by the other Superserve benchmarks.
+adapters.set('superserve', {
+  ...adapters.get('superserve')!,
+  createVolume: async (name, _mountPath, compute) => {
+    const v = await compute.volume.create({ name, sizeBytes: 1024 * 1024 * 1024 });
+    return { id: v.id, name: v.name ?? name, native: v.native };
+  },
+  createMounted: (args) => sdkRuntimeAttach({
+    ...args,
+    sandboxOptions: { ...(args.sandboxOptions ?? {}), templateId: superserveVolumeTemplateId() },
+  }, (sandbox) => sandbox.attachVolume(args.volume, args.mountPath)),
+});
 
 // microsandbox: create volumes with an explicit size. The bench writes
 // ~256MiB plus small files; the provider default may be smaller, which
