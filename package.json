@@ -175,6 +175,7 @@
     "stealth:test:fs-api": "tsx benchmarks/stealth/sandbox/sandbox-fs-api.test.ts",
     "stealth:test:reliability": "tsx benchmarks/stealth/sandbox/sandbox-reliability.test.ts",
     "stealth:test:benchmark-setup": "tsx benchmarks/stealth/sandbox/benchmark-setup.test.ts && tsx benchmarks/stealth/sandbox/run-cloud-registration.test.ts",
+    "stealth:test:volumes": "tsx benchmarks/stealth/sandbox/volumes-adapters.test.ts",
     "stealth:test:results": "tsx benchmarks/stealth/src/util/results.test.ts",
     "stealth:test:burst-summary": "tsx benchmarks/stealth/sandbox/burst-summary.test.ts",
     "stealth:test:sandbox-soak": "tsx benchmarks/stealth/sandbox/sandbox-soak.test.ts",
