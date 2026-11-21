@@ -60,7 +60,7 @@ export const providers: ProviderConfig[] = [
     }),
     // Short TTL: a create that outlives the 60s step timeout still finishes and
     // can't be destroyed, so Archil's TTL is what reaps it (a probe needs ~2 min).
-    sandboxOptions: { baseImage: 'node:24-bookworm', maxTtlSeconds: 300 },
+    sandboxOptions: { baseImage: 'node:24-trixie', maxTtlSeconds: 300 },
   },
   {
     // Arker sizes via `platforms` on the factory, not sandbox.create(), so like
