@@ -42,6 +42,7 @@ import { tensorlake } from '@computesdk/tensorlake'
 import { uno } from '@computesdk/uno';
 import { upstash } from '@computesdk/upstash';
 import { vercel } from '@computesdk/vercel';
+import { ARCHIL_BASE_IMAGE } from './archil-image.js';
 import type { ProviderConfig } from './types.js';
 
 /**
@@ -64,9 +65,9 @@ export const providers: ProviderConfig[] = [
     // disk. Workflows set ARCHIL_EXECUTION=persistent for sandbox-family
     // benches: create() then provisions a dedicated VM (own rootfs, state
     // persists across commands, destroy() actually deletes) instead of
-    // resolving a shared-disk exec handle. node:24-trixie rather than
-    // bookworm: bookworm's coreutils hash in software, trixie's through
-    // OpenSSL (SHA-NI), which the CPU bench's `sha256sum` measures.
+    // resolving a shared-disk exec handle. Workflows that build the image
+    // first (scripts/build-archil-image.ts) set ARCHIL_IMAGE_ID; without it
+    // create() boots ARCHIL_BASE_IMAGE by tag.
     requiredEnvVars: process.env.ARCHIL_EXECUTION === 'persistent'
       ? ['ARCHIL_API_KEY', 'ARCHIL_REGION']
       : ['ARCHIL_API_KEY', 'ARCHIL_REGION', 'ARCHIL_DISK_ID'],
@@ -76,7 +77,12 @@ export const providers: ProviderConfig[] = [
       execution: process.env.ARCHIL_EXECUTION === 'persistent' ? 'persistent' : 'exec',
     }),
     sandboxOptions: process.env.ARCHIL_EXECUTION === 'persistent'
-      ? { baseImage: 'node:24-trixie', maxTtlSeconds: 900 }
+      ? {
+          ...(process.env.ARCHIL_IMAGE_ID
+            ? { sandbox: { imageId: process.env.ARCHIL_IMAGE_ID } }
+            : { baseImage: ARCHIL_BASE_IMAGE }),
+          maxTtlSeconds: 900,
+        }
       : { diskId: process.env.ARCHIL_DISK_ID! },
   },
   {
