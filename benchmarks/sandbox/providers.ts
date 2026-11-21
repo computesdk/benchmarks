@@ -217,6 +217,7 @@ export const providers: ProviderConfig[] = [
     name: 'gravixlayer',
     requiredEnvVars: ['GRAVIXLAYER_API_KEY'],
     createCompute: () => gravixlayer({ apiKey: process.env.GRAVIXLAYER_API_KEY! }),
+    sandboxOptions: { templateId: 'base-medium' },
   },
   {
     name: 'hopx',
