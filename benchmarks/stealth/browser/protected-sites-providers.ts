@@ -21,9 +21,9 @@ import type { ConcurrentProviderConfig } from './concurrent-types.js';
  *   the closest expressible option. No CAPTCHA-solve flag.
  * - hyperbrowser: stealth → useStealth; proxies → useProxy. The underlying
  *   SDK's `solveCaptchas` option is not exposed through sessionCreateOptions.
- * - kernel: stealth → stealth mode (stealth sessions already egress via
- *   kernel's stealth proxy, which also handles CAPTCHAs); no `proxies`
- *   toggle exists — the adapter warns and drops it.
+ * - kernel: stealth → stealth mode (CAPTCHA solving included); proxies →
+ *   a kernel managed US residential proxy, which replaces the shared ISP
+ *   proxy stealth sessions egress through by default.
  * - notte: stealth is not a per-session option (adapter warns; applied
  *   server-side); proxies → notte's default proxy pool. `solve_captchas`
  *   is not exposed through sessionCreateOptions.
@@ -90,8 +90,7 @@ export const protectedSitesProviders: ConcurrentProviderConfig[] = [
     }),
     sessionCreateOptions: {
       stealth: true,
-      // No proxies toggle: kernel stealth sessions already route through its
-      // stealth proxy.
+      proxies: true,
       headless: true,
       viewport: VIEWPORT,
     },
