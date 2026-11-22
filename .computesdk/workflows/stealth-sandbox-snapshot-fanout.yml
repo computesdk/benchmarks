@@ -142,7 +142,7 @@ jobs:
         if: env.SHOULD_RUN == 'true'
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            pnpm update --ignore-scripts
+            pnpm update -r --ignore-scripts
           else
             pnpm install --frozen-lockfile --ignore-scripts
           fi
