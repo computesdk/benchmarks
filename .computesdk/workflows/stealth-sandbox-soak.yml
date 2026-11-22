@@ -81,7 +81,6 @@ env:
 
 jobs:
   providers:
-    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
     name: Provider matrix
     runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
     outputs:
@@ -96,7 +95,6 @@ jobs:
           node -e "const s=require('fs').readFileSync('benchmarks/stealth/sandbox/providers.ts','utf8');console.log('providers='+JSON.stringify([...s.matchAll(/^\s*name:\s*'([^']+)'/gm)].map(m=>m[1])))" >> "$GITHUB_OUTPUT"
 
   bench:
-    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
     name: Bench ${{ matrix.provider }}
     runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
     needs: providers

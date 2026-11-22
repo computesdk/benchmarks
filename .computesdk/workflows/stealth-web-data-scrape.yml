@@ -56,7 +56,6 @@ env:
 
 jobs:
   bench:
-    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
     name: bench
     # One job, not a per-provider matrix: `groupBy: 'round'` interleaves every
     # provider on the same URL in the same process, which a matrix would split.

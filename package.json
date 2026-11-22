@@ -177,8 +177,7 @@
     "stealth:test:scoring:active:state": "tsx benchmarks/stealth/sandbox/state-scoring-active.test.ts",
     "stealth:test:scoring:active": "pnpm stealth:test:scoring:active:state && tsx benchmarks/stealth/sandbox/performance-activation.test.ts && tsx benchmarks/stealth/browser/browsers-activation.test.ts && tsx benchmarks/stealth/sandbox/performance-matrix-activation.test.ts",
     "bench:stealth": "tsx benchmarks/stealth/scripts/check-scoring-runner.ts && tsx packages/benchsdk-runner/dist/bin.js run",
-    "test:migration": "node --test tests/migration.test.mjs",
-    "test:soak-handoff": "node --import tsx --test tests/soak-state-import.test.mjs"
+    "test:migration": "node --test tests/migration.test.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1173.0",
