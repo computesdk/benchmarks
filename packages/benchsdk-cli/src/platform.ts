@@ -1,7 +1,7 @@
 export const DEFAULT_PLATFORM_URL = 'https://platform.computesdk.com';
 
 export function getPlatformBaseUrl(override?: string): string {
-  const base = override ?? process.env.BENCHMARKS_PLATFORM_URL ?? DEFAULT_PLATFORM_URL;
+  const base = override?.trim() || process.env.BENCHMARKS_PLATFORM_URL?.trim() || DEFAULT_PLATFORM_URL;
   return base.replace(/\/+$/, '');
 }
 

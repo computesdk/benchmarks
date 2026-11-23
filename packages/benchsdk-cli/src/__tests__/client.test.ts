@@ -86,6 +86,18 @@ describe('resolveAuth', () => {
     await expect(resolveAuth()).resolves.toMatchObject({ apiKey: 'legacy-key' });
   });
 
+  it('uses the hosted platform when the scaffold leaves the platform URL empty', async () => {
+    process.env.BENCHMARKS_PLATFORM_URL = '';
+    process.env.COMPUTESDK_API_KEY = 'compute-key';
+    vi.spyOn(config, 'loadConfig').mockResolvedValue({});
+    vi.spyOn(config, 'loadCredentials').mockResolvedValue({});
+
+    await expect(resolveAuth()).resolves.toMatchObject({
+      apiKey: 'compute-key',
+      baseUrl: 'https://platform.computesdk.com',
+    });
+  });
+
   it('does not use COMPUTESDK_API_KEY for a custom platform host', async () => {
     process.env.COMPUTESDK_API_KEY = 'compute-key';
     vi.spyOn(config, 'loadConfig').mockResolvedValue({ baseUrl: 'https://custom.example.com' });
