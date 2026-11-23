@@ -7,7 +7,7 @@
 
 # ComputeSDK Benchmarks
 
-We use the sandbox benchmarks in this repository to build and validate [ComputeSDK Sandbox Router](https://www.computesdk.com/sandbox-router). They give us a repeatable way to compare provider startup time, build performance, and reliability.
+We use the sandbox benchmark results as a reference when developing [ComputeSDK Sandbox Router](https://www.computesdk.com/sandbox-router). The benchmarks run directly against providers to measure startup time, build performance, and reliability independently of the router.
 
 Browse reproducible performance measurements for [sandboxes](https://www.computesdk.com/benchmarks/sandboxes), [browsers](https://www.computesdk.com/benchmarks/browsers), [storage](https://www.computesdk.com/benchmarks/storage), and [AI gateways](https://www.computesdk.com/benchmarks/ai-gateway).
 
