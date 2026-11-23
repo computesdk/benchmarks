@@ -7,7 +7,9 @@
 
 # ComputeSDK Benchmarks
 
-Reproducible performance measurements across infrastructure providers. Compare [sandboxes](https://www.computesdk.com/benchmarks/sandboxes), [browsers](https://www.computesdk.com/benchmarks/browsers), [storage](https://www.computesdk.com/benchmarks/storage), and [AI gateways](https://www.computesdk.com/benchmarks/ai-gateway).
+We use the sandbox benchmarks in this repository to build and validate [ComputeSDK Sandbox Router](https://www.computesdk.com/sandbox-router). They give us a repeatable way to compare provider startup time, build performance, and reliability.
+
+Browse reproducible performance measurements for [sandboxes](https://www.computesdk.com/benchmarks/sandboxes), [browsers](https://www.computesdk.com/benchmarks/browsers), [storage](https://www.computesdk.com/benchmarks/storage), and [AI gateways](https://www.computesdk.com/benchmarks/ai-gateway).
 
 [Public rankings](https://www.computesdk.com/benchmarks) · [Methodology](https://www.computesdk.com/methodology) · [Stealth benchmarks](https://www.computesdk.com/stealth-benchmarks)
 
