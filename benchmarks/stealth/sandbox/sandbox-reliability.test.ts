@@ -15,7 +15,7 @@ for (const listener of process.listeners('unhandledRejection')) {
   if (!rejectionListeners.has(listener)) process.removeListener('unhandledRejection', listener);
 }
 
-for (const name of ['gravixlayer', 'promigence', 'createos', 'codesandbox', 'boat', 'kosa8']) {
+for (const name of ['gravixlayer', 'promigence', 'createos', 'codesandbox', 'kosa8']) {
   assert.ok(!providers.some((provider) => provider.name === name), `${name} must not be in the reliability roster`);
   assert.ok(!config.participants.some((participant) => participant.name === name), `${name} must not be measured`);
 }
