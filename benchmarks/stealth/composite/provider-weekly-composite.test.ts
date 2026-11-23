@@ -143,7 +143,7 @@ assert.throws(() => aggregateWeek([day(['sandbox-new-thing', 50])], sandbox), /s
       name: 'e2b',
       data: {
         weeklyComposite: 40,
-        daysWithData: 1,
+        daysWithData: 7,
         benchmarksContributing: 1,
         benchmarksZeroFilled: 1,
         benchmarkScores: [
@@ -158,6 +158,19 @@ assert.throws(() => aggregateWeek([day(['sandbox-new-thing', 50])], sandbox), /s
   assert.match(dataset.cells['oci-tti-stealth'].e2b.detail, /counted as 0/);
   assert.deepEqual(dataset.cells['sandbox-tti-daily'].e2b, { value: 60, detail: '5/7 days, 2 counted as 0', state: 'data' });
   assert.ok(dataset.cards.e2b.facts.some((f) => f.label === 'Benchmarks counted as 0' && f.value === '1'));
+}
+
+// Matrix: a provider with fewer than 7 days of data is left out entirely.
+{
+  const scores = [{ slug: 'sandbox-tti-daily', compositeScore: 90, daysWithData: 2, state: 'data' }];
+  const dataset = buildMatrixDataset([
+    { name: 'new', data: { weeklyComposite: 90, daysWithData: 6, benchmarkScores: scores } },
+    { name: 'old', data: { weeklyComposite: 50, daysWithData: 7, benchmarkScores: [{ ...scores[0], compositeScore: 50 }] } },
+    { name: 'empty', data: undefined },
+  ]);
+  assert.deepEqual(dataset.participants.map((p) => p.key), ['old']);
+  assert.deepEqual(Object.keys(dataset.cards), ['old']);
+  assert.deepEqual(Object.keys(dataset.cells['sandbox-tti-daily']), ['old']);
 }
 
 // Exercise the real weekly reader without network access or platform writes.
@@ -181,6 +194,8 @@ assert.throws(() => aggregateWeek([day(['sandbox-new-thing', 50])], sandbox), /s
     };
     const dayRuns = async (...items: unknown[]) => (await fixture(...items)).get(DAY) ?? [];
     assert.equal((await dayRuns(item({ results: [{ provider: 'fixture', compositeScore: 0 }] })))[0].scores.get('fixture'), 0);
+    const renamed = (await dayRuns(item({ results: [{ provider: 'tenki', compositeScore: 61 }] })))[0];
+    assert.deepEqual([...renamed.scores], [['luxor', 61]], 'old provider id read as the new id');
     const skipped = (await dayRuns(item({ results: [{ provider: 'fixture', compositeScore: null, skipped: true }] })))[0];
     assert.equal(skipped.scores.size + (skipped.incomplete?.size ?? 0), 0);
     const mixed = (
