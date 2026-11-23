@@ -1,4 +1,4 @@
-<a href="https://www.computesdk.com/benchmarks">
+<a href="https://www.computesdk.com/">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://www.computesdk.com/share/computesdk-logo-dark.svg">
     <img src="https://www.computesdk.com/share/computesdk-logo-light.svg" alt="ComputeSDK" width="300">
@@ -11,7 +11,7 @@ We use the sandbox benchmark results as a reference when developing [ComputeSDK 
 
 Browse reproducible performance measurements for [sandboxes](https://www.computesdk.com/benchmarks/sandboxes), [browsers](https://www.computesdk.com/benchmarks/browsers), [storage](https://www.computesdk.com/benchmarks/storage), and [AI gateways](https://www.computesdk.com/benchmarks/ai-gateway).
 
-[Public rankings](https://www.computesdk.com/benchmarks) · [Methodology](https://www.computesdk.com/methodology) · [Stealth benchmarks](https://www.computesdk.com/stealth-benchmarks)
+[Public rankings](https://www.computesdk.com/benchmarks) · [Methodology](https://www.computesdk.com/methodology) · [Stealth benchmarks](https://www.computesdk.com/stealth-benchmarks) · [ComputeSDK](https://www.computesdk.com/) · [TypeScript SDK](https://github.com/computesdk/computesdk)
 
 The public rankings and scoring methodology are free to browse. This repository contains the benchmark workloads and the BenchSDK packages used to run them. Use the [benchmark platform](https://platform.computesdk.com) to query raw results and run history, or to run benchmarks for your own organization.
 
