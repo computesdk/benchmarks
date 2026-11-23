@@ -1,6 +1,15 @@
+<a href="https://www.computesdk.com/benchmarks">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://www.computesdk.com/share/computesdk-logo-dark.svg">
+    <img src="https://www.computesdk.com/share/computesdk-logo-light.svg" alt="ComputeSDK" width="240">
+  </picture>
+</a>
+
 # @benchsdk/runner
 
-Benchmark framework for authoring `*.bench.ts` files and operating benchmark workers. It reports to the benchmarks platform via `@benchsdk/api`; [`@benchsdk/client`](../benchsdk) is a backwards-compatibility re-export shim.
+Write and run reproducible infrastructure benchmarks. Describe a workload in a `*.bench.ts` file, run it across participants with the `bench` CLI, and report measurements to the ComputeSDK benchmark platform.
+
+[Public benchmarks](https://www.computesdk.com/benchmarks) · [Methodology](https://www.computesdk.com/methodology) · [Runnable examples](https://github.com/computesdk/benchmarks/tree/master/examples)
 
 ## What it provides
 
@@ -13,7 +22,7 @@ Benchmark framework for authoring `*.bench.ts` files and operating benchmark wor
 ## Install
 
 ```sh
-pnpm add @benchsdk/runner @benchsdk/client
+pnpm add @benchsdk/runner
 ```
 
 ## Usage
@@ -55,10 +64,10 @@ export const task = defineTask(async ({ participant, step, measure, log }) => {
 Run it with the CLI (flags override the config knobs):
 
 ```sh
-bench run benchmarks/sandbox/sandbox-tti.bench.ts --iterations 100 --concurrency 20 --provider e2b,modal
+bench run benchmarks/sandbox/tti.bench.ts --iterations 100 --concurrency 20 --provider e2b,modal
 ```
 
-`bench run` requires platform auth — `BENCHMARKS_PLATFORM_API_KEY`, `BENCHMARKS_PLATFORM_TOKEN`, or a token saved via `bench auth login` — even for `--dry-run` / `--no-ingest` / `BENCHSDK_NO_INGEST=1`; those flags only skip uploading, they do not skip auth.
+`bench run` uses `COMPUTESDK_API_KEY`, `BENCHMARKS_PLATFORM_TOKEN`, or a session saved by `bench auth login` to upload results. Use `--dry-run`, `--no-ingest`, or `BENCHSDK_NO_INGEST=1` for local runs without platform credentials.
 
 To load a TypeScript benchmark without a build step, run the CLI under a TS loader:
 

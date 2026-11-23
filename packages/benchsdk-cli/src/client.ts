@@ -1,4 +1,9 @@
-import { createBenchmarkClient, type BenchmarkClient, BenchmarkApiError } from '@benchsdk/api';
+import {
+  BenchmarkApiError,
+  createBenchmarkClient,
+  getBenchmarkApiKeyFromEnv,
+  type BenchmarkClient,
+} from '@benchsdk/api';
 import {
   loadCredentials,
   saveCredentials,
@@ -28,11 +33,6 @@ export interface CliAuth {
 function tokenFromEnvironment(): string | undefined {
   if (typeof process === 'undefined') return undefined;
   return process.env.BENCHMARKS_PLATFORM_TOKEN;
-}
-
-function apiKeyFromEnvironment(): string | undefined {
-  if (typeof process === 'undefined') return undefined;
-  return process.env.BENCHMARKS_PLATFORM_API_KEY;
 }
 
 function computeTokenExpiry(expiresInSeconds: number): number {
@@ -83,7 +83,7 @@ async function refreshIfNeeded(auth: CliAuth, credentials: Credentials): Promise
 
   if (!auth.refreshToken || (refreshExpiry > 0 && now >= refreshExpiry)) {
     throw new AuthError(
-      'Your session has expired. Run `bench auth login` or set BENCHMARKS_PLATFORM_API_KEY.',
+      'Your session has expired. Run `bench auth login` or set COMPUTESDK_API_KEY.',
     );
   }
 
@@ -100,13 +100,13 @@ async function refreshIfNeeded(auth: CliAuth, credentials: Credentials): Promise
     return updated;
   } catch {
     throw new AuthError(
-      'Failed to refresh your session. Run `bench auth login` or set BENCHMARKS_PLATFORM_API_KEY.',
+      'Failed to refresh your session. Run `bench auth login` or set COMPUTESDK_API_KEY.',
     );
   }
 }
 
 export function getAuthHeader(auth: CliAuth): string | undefined {
-  const token = auth.token ?? auth.apiKey ?? apiKeyFromEnvironment();
+  const token = auth.token ?? auth.apiKey ?? getBenchmarkApiKeyFromEnv(auth.apiBaseUrl);
   if (!token) return undefined;
   return `Bearer ${token}`;
 }
@@ -123,7 +123,13 @@ export async function resolveAuth(override?: {
     org: override?.org,
   });
 
-  const envApiKey = apiKeyFromEnvironment();
+  // A shared key may be present during a session on another platform. Use
+  // that session's destination unless the caller configured a URL explicitly.
+  const apiKeyPlatformUrl = getPlatformBaseUrl(
+    mergedConfig.baseUrl,
+    process.env.BENCHMARKS_PLATFORM_API_KEY ? undefined : credentials.baseUrl,
+  );
+  const envApiKey = getBenchmarkApiKeyFromEnv(apiKeyPlatformUrl);
   const envToken = tokenFromEnvironment();
 
   let token: string | undefined;
@@ -154,7 +160,7 @@ export async function resolveAuth(override?: {
     apiKey = envApiKey;
     token = undefined;
     refreshToken = undefined;
-    platformUrl = getPlatformBaseUrl(mergedConfig.baseUrl);
+    platformUrl = apiKeyPlatformUrl;
     orgSlug = mergedConfig.org;
     orgId = undefined;
   } else {
@@ -214,7 +220,7 @@ export async function resolveAuth(override?: {
 
   if (!auth.token && !auth.apiKey) {
     throw new AuthError(
-      'No credentials found. Set BENCHMARKS_PLATFORM_API_KEY or BENCHMARKS_PLATFORM_TOKEN, or run `bench auth login` for OAuth. Create an API key at https://platform.computesdk.com in your organization settings (Settings → API keys).',
+      'No credentials found. Set COMPUTESDK_API_KEY or BENCHMARKS_PLATFORM_TOKEN, or run `bench auth login` for OAuth. Create an API key at https://platform.computesdk.com in your organization settings (Settings → API keys).',
     );
   }
 

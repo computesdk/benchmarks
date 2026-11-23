@@ -1,25 +1,36 @@
+<a href="https://www.computesdk.com/">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://www.computesdk.com/share/computesdk-logo-dark.svg">
+    <img src="https://www.computesdk.com/share/computesdk-logo-light.svg" alt="ComputeSDK" width="300">
+  </picture>
+</a>
+
 # ComputeSDK Benchmarks
 
-Reproducible benchmarks for sandbox, browser, object storage and AI gateway providers, plus the BenchSDK packages that run them.
+We use the sandbox benchmark results as a reference when developing [ComputeSDK Sandbox Router](https://www.computesdk.com/sandbox-router). The benchmarks run directly against providers to measure startup time, build performance, and reliability independently of the router.
 
-Results, run history and access controls live on the [benchmark platform](https://platform.computesdk.com). Public leaderboards are available at [computesdk.com/benchmarks](https://www.computesdk.com/benchmarks). Results and generated charts are no longer committed to this repository; existing Git history remains available.
+Browse reproducible performance measurements for [sandboxes](https://www.computesdk.com/benchmarks/sandboxes), [browsers](https://www.computesdk.com/benchmarks/browsers), [storage](https://www.computesdk.com/benchmarks/storage), and [AI gateways](https://www.computesdk.com/benchmarks/ai-gateway).
+
+[Public rankings](https://www.computesdk.com/benchmarks) · [Methodology](https://www.computesdk.com/methodology) · [Stealth benchmarks](https://www.computesdk.com/stealth-benchmarks) · [ComputeSDK](https://www.computesdk.com/) · [TypeScript SDK](https://github.com/computesdk/computesdk)
+
+The public rankings and scoring methodology are free to browse. This repository contains the benchmark workloads and the BenchSDK packages used to run them. Use the [benchmark platform](https://platform.computesdk.com) to query raw results and run history, or to run benchmarks for your own organization.
 
 ## Run benchmarks and read results on the platform
 
-Every benchmark run is ingested into the [benchmark platform](https://platform.computesdk.com). You can read all results through the platform's API, CLI and MCP server, or browse the public leaderboards at [computesdk.com/benchmarks](https://www.computesdk.com/benchmarks).
+Use the [benchmark platform](https://platform.computesdk.com) to collect results from your runs, review logs and artifacts, and query the measurements you have access to.
 
 ### Connect to the platform
 
 1. Sign in at [platform.computesdk.com](https://platform.computesdk.com) to create your organization.
 2. Install the `bench` CLI: `npm install -g @benchsdk/runner`.
-3. Authenticate with `bench auth login` (device-code login), or create an API key under **Settings → API keys** and export it as `BENCHMARKS_PLATFORM_API_KEY`.
+3. Authenticate with `bench auth login` (device-code login), or create an API key under **Settings → API keys** and export it as `COMPUTESDK_API_KEY`.
 
 ### Run a benchmark in your organization
 
 Clone this repository, build the packages (see [Run locally](#run-locally)) and run any suite without `--no-ingest`. The run is uploaded to your organization, and its results, logs and artifacts appear on the platform dashboard.
 
 ```bash
-export BENCHMARKS_PLATFORM_API_KEY=bp_...   # or: bench auth login
+export COMPUTESDK_API_KEY=bp_...   # or: bench auth login
 export E2B_API_KEY=...                       # credentials for the providers you select
 pnpm exec tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --provider e2b --iterations 10
 ```
@@ -34,12 +45,12 @@ The dashboard has a **Fork** button on the benchmark overview that does the same
 
 ### Run a benchmark in ComputeSDK Actions
 
-[ComputeSDK Actions](https://platform.computesdk.com) runs GitHub-style workflow YAML on CI providers from the ComputeSDK router, or on your own provider accounts (BYOK).
+[ComputeSDK Actions](https://www.computesdk.com/actions) runs supported GitHub workflows on Sandbox Router. Use managed compute or bring your own provider keys (BYOK).
 
 1. Fork this repository.
 2. On the platform, connect your GitHub account (**Settings → Git Connections**) and enable your fork under **Actions → Repos**.
 3. Pick where jobs run under **Settings → Providers**: a provider from the router, or your own provider key.
-4. Add `BENCHMARKS_PLATFORM_API_KEY` and the credentials of the providers you benchmark as Actions secrets (**Settings → Actions setup**).
+4. Add `COMPUTESDK_API_KEY` and the credentials of the providers you benchmark as Actions secrets (**Settings → Actions setup**). In your fork, map these secrets to the benchmark step's environment variables.
 5. Start a workflow with the **Run workflow** button or the `compute` CLI ([`@computesdk/cli`](https://www.npmjs.com/package/@computesdk/cli)):
 
 ```bash
@@ -50,14 +61,14 @@ The run's benchmark results show on the Actions run page and on the benchmark in
 
 ### Read results
 
-Public benchmarks are published by the `computesdk` organization (`sandbox-tti`, `sandbox-dax`, `sandbox-reliability`, `browser-lifecycle`, `browser-throughput`, `storage-lifecycle`, `snapshot-fork`, `ai-gateway-latency-*` and `ai-gateway-model-index`). List them with `bench benchmarks list --group public`. Reading results requires a platform credential.
+Public benchmarks are published by the `computesdk` organization (`sandbox-tti`, `sandbox-dax`, `sandbox-reliability`, `browser-lifecycle`, `browser-throughput`, `storage-lifecycle`, `snapshot-fork`, `ai-gateway-latency-*` and `ai-gateway-model-index`). List them with `bench benchmarks list --group public`. The CLI, API, and MCP server require a platform credential.
 
 | Surface | How to use it |
 |---|---|
 | Website | Public leaderboards at [computesdk.com/benchmarks](https://www.computesdk.com/benchmarks) |
 | Dashboard | Runs, results, logs and artifacts at [platform.computesdk.com](https://platform.computesdk.com) |
 | CLI | `bench results sandbox-tti --source-org computesdk`; also `bench runs list`, `bench reliability`, `bench export`. See the [CLI reference](packages/benchsdk-cli/README.md) |
-| API | `GET https://platform.computesdk.com/api/v1/benchmarks/~/computesdk/sandbox-tti/results` with `Authorization: Bearer $BENCHMARKS_PLATFORM_API_KEY`. The OpenAPI document is at `/api/v1/openapi.json` |
+| API | `GET https://platform.computesdk.com/api/v1/benchmarks/~/computesdk/sandbox-tti/results` with `Authorization: Bearer $COMPUTESDK_API_KEY`. The OpenAPI document is at `/api/v1/openapi.json` |
 | MCP | Connect an MCP client to `https://platform.computesdk.com/mcp` (OAuth or an org API key as a bearer token). Tools include `benchmarks_list`, `benchmarks_get_results`, `benchmarks_get_run_results` and `benchmarks_get_reliability` |
 
 ## Layout
@@ -121,14 +132,25 @@ pnpm install --frozen-lockfile --ignore-scripts
 pnpm -r --filter './packages/**' run build
 
 # Supply the provider credentials required by the suite.
-# Add BENCHMARKS_PLATFORM_API_KEY to ingest a run; --no-ingest keeps it local.
+# Add COMPUTESDK_API_KEY to ingest a run; --no-ingest keeps it local.
 pnpm exec tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --provider e2b --iterations 1 --no-ingest
 pnpm bench:stealth benchmarks/stealth/sandbox/cpu.bench.ts --provider e2b --iterations 1 --no-ingest
 ```
 
 Local diagnostics may be written to ignored `results/` directories. They are not the publication mechanism. CI runs ingest through BenchSDK; legacy result collectors, generated charts and result-committing steps have been removed.
 
-See the [runner reference](packages/benchsdk-runner/README.md), [CLI reference](packages/benchsdk-cli/README.md), [scaffolder](packages/create-bench/README.md) and [examples](examples/) to author benchmarks. SDK documentation stays with its packages.
+## BenchSDK packages
+
+| Package | Use it to |
+|---|---|
+| [`@benchsdk/runner`](packages/benchsdk-runner/README.md) | Write and run benchmarks and install the `bench` CLI |
+| [`create-bench`](packages/create-bench/README.md) | Scaffold a TypeScript benchmark project |
+| [`@benchsdk/api`](packages/benchsdk-api/README.md) | Query the benchmark platform from TypeScript |
+| [`@benchsdk/cli`](packages/benchsdk-cli/README.md) | Integrate platform authentication and commands into tooling |
+| [`@benchsdk/worker`](packages/benchsdk-worker/README.md) | Execute assignments and report results to the platform |
+| [`@benchsdk/client`](packages/benchsdk/README.md) | Maintain existing integrations that use the legacy client |
+
+See the [runnable examples](examples/) for workloads you can adapt.
 
 ## Validate
 

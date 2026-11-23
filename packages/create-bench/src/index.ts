@@ -30,7 +30,7 @@ function scaffold(targetDir: string, projectName: string): void {
       typecheck: 'tsc --noEmit',
     },
     dependencies: {
-      '@benchsdk/runner': '^0.5.0',
+      '@benchsdk/runner': '^0.8.7',
     },
     devDependencies: {
       tsx: '^4.22.4',
@@ -106,7 +106,7 @@ export const task = defineTask(async ({ taskIndex, step, measure, log }) => {
 
   const envExample = `# Copy to .env and fill in your values
 BENCHMARKS_PLATFORM_URL=
-BENCHMARKS_PLATFORM_API_KEY=
+COMPUTESDK_API_KEY=
 BENCHMARK_SLUG=example
 `;
 
@@ -126,9 +126,12 @@ This project was scaffolded by [\`create-bench\`](https://github.com/computesdk/
 
 2. Copy \`.env.example\` to \`.env\` and fill in the required values.
 
-3. Run the benchmark worker:
+3. Export the settings and run the benchmark:
 
    \`\`\`sh
+   set -a
+   . ./.env
+   set +a
    pnpm bench
    \`\`\`
 `;
@@ -173,7 +176,7 @@ export async function createBench(projectName?: string): Promise<void> {
   console.log(`  cd ${path.relative(process.cwd(), targetDir) || packageName}`);
   console.log('  pnpm install');
   console.log('  cp .env.example .env');
-  console.log('  pnpm bench');
+  console.log('  Follow README.md to configure and run your benchmark.');
 }
 
 async function main(): Promise<void> {

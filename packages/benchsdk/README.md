@@ -1,10 +1,10 @@
 # @benchsdk/client
 
-> **Backwards-compatibility shim.** `@benchsdk/client` re-exports the full `@benchsdk/runner` surface and preserves the legacy `createBenchmarkClient().runWorker(options)` spelling. New projects should import from `@benchsdk/runner` for authoring/operator helpers or `@benchsdk/api` for raw REST types.
+Compatibility package for BenchSDK. It re-exports `@benchsdk/runner` and preserves the legacy `createBenchmarkClient().runWorker(options)` interface. Workers claim assigned work and report results to the ComputeSDK benchmark platform.
 
-Client and worker helpers for the ComputeSDK benchmark orchestrator.
+Use [`@benchsdk/runner`](https://www.npmjs.com/package/@benchsdk/runner) to author and run benchmarks in new projects and [`@benchsdk/api`](https://www.npmjs.com/package/@benchsdk/api) to query the platform directly.
 
-This package talks to the platform-owned benchmark/run/participant/worker API. It does not mint canonical run, worker, attempt, event, or task IDs. Workers claim platform-assigned work, execute task indexes in their assigned range, and send `task_results` batches back to the platform.
+[Public benchmarks](https://www.computesdk.com/benchmarks) · [BenchSDK packages](https://github.com/computesdk/benchmarks#benchsdk-packages)
 
 ## Installation
 
@@ -12,15 +12,10 @@ This package talks to the platform-owned benchmark/run/participant/worker API. I
 npm install @benchsdk/client
 ```
 
-> Higher-level benchmark authoring (`defineBenchmarkConfig` / `defineTask` and
-> the local orchestrator) lives in
-> [`@benchsdk/runner`](../benchsdk-runner). This package is REST transport plus
-> the worker engine only.
-
 ## Authentication
 
 `createBenchmarkClient` requires a platform API key or OAuth token. Provide
-`apiKey`/`token` directly, or set `BENCHMARKS_PLATFORM_API_KEY` or
+`apiKey`/`token` directly, or set `COMPUTESDK_API_KEY` or
 `BENCHMARKS_PLATFORM_TOKEN` in the environment.
 
 ## Run A Worker
@@ -30,7 +25,7 @@ import { createBenchmarkClient } from '@benchsdk/client';
 import { compute } from 'computesdk';
 
 const client = createBenchmarkClient({
-  apiKey: process.env.BENCHMARKS_PLATFORM_API_KEY,
+  apiKey: process.env.COMPUTESDK_API_KEY,
 });
 
 // `task` is a raw function; declare named steps imperatively via `step(...)`,
@@ -70,7 +65,7 @@ Task results are flushed to the platform in batches of 1,000 records by default.
 import { createBenchmarkClient } from '@benchsdk/client';
 
 const client = createBenchmarkClient({
-  apiKey: process.env.BENCHMARKS_PLATFORM_API_KEY,
+  apiKey: process.env.COMPUTESDK_API_KEY,
 });
 
 await client.upsertBenchmark('scale', {

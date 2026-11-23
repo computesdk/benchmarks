@@ -6,7 +6,7 @@ Each `*.bench.ts` file here demonstrates one benchsdk capability. All examples a
 
 ```bash
 pnpm -r --filter "./packages/**" build
-BENCHMARKS_PLATFORM_API_KEY=bp-... pnpm exec bench run examples/01-hello.bench.ts --dry-run
+COMPUTESDK_API_KEY=bp_... pnpm exec bench run examples/01-hello.bench.ts --dry-run
 ```
 
 ## Examples
