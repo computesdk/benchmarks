@@ -51,6 +51,7 @@ const allTiers = (
  */
 export const PROVIDER_SIZE_OPTIONS: Record<string, Partial<Record<MarketSize, Record<string, any> | null>>> = {
   // --- raw cpu/memory parameters: all four tiers ---
+  'run-cloud': allTiers((c, m) => ({ cpu: c, memory: m })),
   // Modal: 1 core = 2 vCPUs, so cpus/2 (fractional cores are supported).
   modal: allTiers((c, m) => ({ cpu: c / 2, cpuLimit: c / 2, memoryMiB: m, templateId: 'node:22' })),
   // diskSizeGb: default disk is small; 20 GiB headroom is harmless for cpu.
@@ -72,7 +73,6 @@ export const PROVIDER_SIZE_OPTIONS: Record<string, Partial<Record<MarketSize, Re
     large: { vcpus: 4, memMiB: 8192 },
     xlarge: { vcpus: 8, memMiB: 16384 },
   },
-  // RunCloud accepts cpu (cores) / memory (MiB) per sandbox.
   runloop: allTiers((c, m) => ({
     launch_parameters: { resource_size_request: 'CUSTOM_SIZE', custom_cpu_cores: c, custom_gb_memory: m / 1024 },
   })),

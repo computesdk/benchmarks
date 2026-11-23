@@ -115,6 +115,7 @@ const providerSpecific = (
 });
 
 const CPU_BURST_RESOURCE_OPTIONS: Record<string, CpuBurstResourceSpec> = {
+  'run-cloud': standard({ cpu: 1, memory: 2048 }),
   beam: standard({ cpu: 1, memory: 2048 }),
   blaxel: standard({ memory: 2048 }),
   createos: standard({ cpus: 1, memoryMb: 2048 }),
