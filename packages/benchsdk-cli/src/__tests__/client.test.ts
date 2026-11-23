@@ -106,6 +106,28 @@ describe('resolveAuth', () => {
     await expect(resolveAuth()).rejects.toThrow('No credentials found');
   });
 
+  it('preserves a saved custom platform login when the shared ComputeSDK key is set', async () => {
+    process.env.COMPUTESDK_API_KEY = 'compute-key';
+    vi.spyOn(config, 'loadConfig').mockResolvedValue({});
+    vi.spyOn(config, 'loadCredentials').mockResolvedValue({
+      token: 'saved-token',
+      kind: 'oauth',
+      baseUrl: 'https://custom.example.com',
+      orgSlug: 'saved-org',
+    });
+
+    await expect(resolveAuth()).resolves.toMatchObject({
+      apiKey: undefined,
+      token: 'saved-token',
+      baseUrl: 'https://custom.example.com',
+      orgSlug: 'saved-org',
+    });
+    await expect(resolveAuth({ baseUrl: 'https://platform.computesdk.com' })).resolves.toMatchObject({
+      apiKey: 'compute-key',
+      baseUrl: 'https://platform.computesdk.com',
+    });
+  });
+
   it('prefers BENCHMARKS_PLATFORM_TOKEN over saved OAuth and does not inherit saved org/baseUrl', async () => {
     process.env.BENCHMARKS_PLATFORM_TOKEN = 'env-token';
     vi.spyOn(config, 'loadConfig').mockResolvedValue({});

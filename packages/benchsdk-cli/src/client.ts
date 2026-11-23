@@ -123,8 +123,13 @@ export async function resolveAuth(override?: {
     org: override?.org,
   });
 
-  const envPlatformUrl = getPlatformBaseUrl(mergedConfig.baseUrl);
-  const envApiKey = getBenchmarkApiKeyFromEnv(envPlatformUrl);
+  // A shared key may be present during a session on another platform. Use
+  // that session's destination unless the caller configured a URL explicitly.
+  const apiKeyPlatformUrl = getPlatformBaseUrl(
+    mergedConfig.baseUrl,
+    process.env.BENCHMARKS_PLATFORM_API_KEY ? undefined : credentials.baseUrl,
+  );
+  const envApiKey = getBenchmarkApiKeyFromEnv(apiKeyPlatformUrl);
   const envToken = tokenFromEnvironment();
 
   let token: string | undefined;
@@ -148,14 +153,14 @@ export async function resolveAuth(override?: {
     refreshToken = undefined;
     tokenExpiresAt = undefined;
     refreshExpiresAt = undefined;
-    platformUrl = envPlatformUrl;
+    platformUrl = getPlatformBaseUrl(mergedConfig.baseUrl);
     orgSlug = mergedConfig.org;
     orgId = undefined;
   } else if (envApiKey) {
     apiKey = envApiKey;
     token = undefined;
     refreshToken = undefined;
-    platformUrl = envPlatformUrl;
+    platformUrl = apiKeyPlatformUrl;
     orgSlug = mergedConfig.org;
     orgId = undefined;
   } else {
