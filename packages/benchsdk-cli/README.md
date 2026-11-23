@@ -1,8 +1,10 @@
 # @benchsdk/cli
 
-Programmatic CLI for authenticating with and querying the ComputeSDK benchmarks platform.
+Authenticate with the ComputeSDK benchmark platform and query runs, results, and artifacts from your own tools.
 
-You rarely need to install this package directly: it is bundled into the `bench` binary shipped by [`@benchsdk/runner`](../benchsdk-runner). Use this package when you want to build your own CLI or script on top of the same auth, config, and platform-query primitives.
+Install [`@benchsdk/runner`](https://www.npmjs.com/package/@benchsdk/runner) to use the `bench` command in a terminal. Install this package to reuse the same authentication, configuration, and commands in your own CLI or script.
+
+[Public benchmarks](https://www.computesdk.com/benchmarks) · [Bench CLI guide](https://github.com/computesdk/benchmarks/blob/master/.agents/skills/benchsdk-cli/SKILL.md)
 
 ## What it provides
 

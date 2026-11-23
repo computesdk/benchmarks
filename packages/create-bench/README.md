@@ -1,6 +1,8 @@
 # create-bench
 
-Scaffold a new ComputeSDK benchmark project that uses [`@benchsdk/runner`](https://github.com/computesdk/benchmarks/tree/master/packages/benchsdk-runner).
+Start a reproducible infrastructure benchmark with a TypeScript workload, configuration, and scripts powered by [`@benchsdk/runner`](https://www.npmjs.com/package/@benchsdk/runner).
+
+[Public benchmarks](https://www.computesdk.com/benchmarks) · [Methodology](https://www.computesdk.com/methodology) · [Runnable examples](https://github.com/computesdk/benchmarks/tree/master/examples)
 
 ## Usage
 
@@ -31,6 +33,4 @@ The CLI creates a directory with the given project name and writes:
 3. Copy `.env.example` to `.env` and fill in the required values
 4. `pnpm bench`
 
-For a full guide to authoring benchmarks and runnable examples covering every capability, see the [`examples/`](../../examples) directory.
-
-For the full `bench` CLI reference (auth, runs, results, artifacts, export), see the [benchsdk-cli skill](../../.agents/skills/benchsdk-cli/SKILL.md).
+For authentication, runs, results, artifacts, and export, see the [Bench CLI guide](https://github.com/computesdk/benchmarks/blob/master/.agents/skills/benchsdk-cli/SKILL.md).

@@ -1,21 +1,16 @@
 # @benchsdk/client
 
-> **Backwards-compatibility shim.** `@benchsdk/client` re-exports the full `@benchsdk/runner` surface and preserves the legacy `createBenchmarkClient().runWorker(options)` spelling. New projects should import from `@benchsdk/runner` for authoring/operator helpers or `@benchsdk/api` for raw REST types.
+Compatibility package for BenchSDK. It re-exports `@benchsdk/runner` and preserves the legacy `createBenchmarkClient().runWorker(options)` interface. Workers claim assigned work and report results to the ComputeSDK benchmark platform.
 
-Client and worker helpers for the ComputeSDK benchmark orchestrator.
+Use [`@benchsdk/runner`](https://www.npmjs.com/package/@benchsdk/runner) to author and run benchmarks in new projects and [`@benchsdk/api`](https://www.npmjs.com/package/@benchsdk/api) to query the platform directly.
 
-This package talks to the platform-owned benchmark/run/participant/worker API. It does not mint canonical run, worker, attempt, event, or task IDs. Workers claim platform-assigned work, execute task indexes in their assigned range, and send `task_results` batches back to the platform.
+[Public benchmarks](https://www.computesdk.com/benchmarks) · [BenchSDK packages](https://github.com/computesdk/benchmarks#benchsdk-packages)
 
 ## Installation
 
 ```bash
 npm install @benchsdk/client
 ```
-
-> Higher-level benchmark authoring (`defineBenchmarkConfig` / `defineTask` and
-> the local orchestrator) lives in
-> [`@benchsdk/runner`](../benchsdk-runner). This package is REST transport plus
-> the worker engine only.
 
 ## Authentication
 
