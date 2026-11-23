@@ -29,6 +29,7 @@ import { fileURLToPath } from 'node:url';
 import { defineBenchmarkConfig, defineTask, TaskError } from '@benchsdk/runner';
 import type { JsonObject } from '@benchsdk/client';
 import type { CommandResult, CreateSandboxOptions, SandboxInterface } from 'computesdk';
+import { runCloud } from '@computesdk/run-cloud';
 import { drainLateCleanups, withTimeout } from '../src/util/timeout.js';
 import { formatError } from '../src/util/error.js';
 import { sandboxId } from '../src/util/sandbox-id.js';
@@ -82,7 +83,15 @@ export const config = defineBenchmarkConfig({
   benchmarkName: process.env.BENCHMARK_NAME ?? 'Sandbox CI Capabilities',
   iterations: 1,
   concurrency: 1,
-  participants: providers,
+  participants: [
+    ...providers,
+    {
+      name: 'run-cloud',
+      requiredEnvVars: ['RUN_CLOUD_API_KEY'],
+      createCompute: () => runCloud({ apiKey: process.env.RUN_CLOUD_API_KEY! }),
+      sandboxOptions: { templateId: 'runcloud/agent-base' },
+    },
+  ],
   // Composite = share of the battery's checks that passed. A provider whose
   // sandbox never comes up fails its task (successRate 0) and scores 0.
   scoring: {
