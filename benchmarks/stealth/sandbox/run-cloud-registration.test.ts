@@ -50,12 +50,19 @@ async function main() {
 
   function checkWorkflowCredentials(workflow: string, label: string) {
     if (workflow.includes('vault-keys.sh')) {
-      const keys = execFileSync('bash', [
+      assert.ok(
+        workflow.includes('vault-keys.sh benchmarks/stealth/sandbox/providers.ts --provider "${{ matrix.provider }}"'),
+        `${label}: vault keys must be scoped to the leg's provider`,
+      );
+      const vaultKeys = (provider: string) => new RegExp(execFileSync('bash', [
         'benchmarks/stealth/scripts/vault-keys.sh',
         'benchmarks/stealth/sandbox/providers.ts',
+        '--provider',
+        provider,
         'BENCHMARKS_PLATFORM_API_KEY',
-      ], { cwd: root, encoding: 'utf8' });
-      assert.match('RUN_CLOUD_API_KEY=fixture', new RegExp(keys), label);
+      ], { cwd: root, encoding: 'utf8' }));
+      assert.match('RUN_CLOUD_API_KEY=fixture', vaultKeys('run-cloud'), label);
+      assert.doesNotMatch('RUN_CLOUD_API_KEY=fixture', vaultKeys('e2b'), `${label}: other legs must not receive RUN_CLOUD_API_KEY`);
       return;
     }
     const cases = [...workflow.matchAll(/case "\$PROVIDER" in[\s\S]*?\besac/g)];
