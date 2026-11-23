@@ -90,7 +90,9 @@ export const providers: ProviderConfig[] = [
   {
     name: 'boat',
     requiredEnvVars: ['BOAT_API_KEY'],
-    createCompute: () => boat({ apiKey: process.env.BOAT_API_KEY! }),
+    // Give up on readiness before the 60s create step times out, so the SDK
+    // deletes an unready sandbox itself instead of leaving it to its TTL.
+    createCompute: () => boat({ apiKey: process.env.BOAT_API_KEY!, readyTimeout: 45_000 }),
   },
   {
     name: 'briq',
