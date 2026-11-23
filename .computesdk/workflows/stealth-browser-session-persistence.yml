@@ -74,6 +74,7 @@ jobs:
           - kernel
           - notte
           - steel
+          - styne
           - tilion
     steps:
       - uses: actions/checkout@v4
@@ -139,6 +140,7 @@ jobs:
             kernel) PROVIDER_KEYS='KERNEL_API_KEY' ;;
             notte) PROVIDER_KEYS='NOTTE_API_KEY' ;;
             steel) PROVIDER_KEYS='STEEL_API_KEY' ;;
+            styne) PROVIDER_KEYS='STYNE_API_KEY' ;;
             tilion) PROVIDER_KEYS='TILION_API_KEY|TILION_BASE_URL' ;;
             *) PROVIDER_KEYS='' ;;
           esac
