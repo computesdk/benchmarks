@@ -24,7 +24,7 @@ pnpm add @benchsdk/cli
 
 1. `--api-key <key>` (passed to `resolveAuth` / `createApiClient`)
 2. `BENCHMARKS_PLATFORM_TOKEN`
-3. `BENCHMARKS_PLATFORM_API_KEY`
+3. `COMPUTESDK_API_KEY`
 4. OAuth tokens saved by `bench auth login` in `~/.benchsdk/credentials.json`
 
 At least one credential is required for commands that touch the platform.
@@ -46,7 +46,7 @@ Credentials are stored separately in `~/.benchsdk/credentials.json` with `0600` 
 ## Environment variables
 
 - `BENCHMARKS_PLATFORM_URL` — platform root URL (default: `https://platform.computesdk.com`)
-- `BENCHMARKS_PLATFORM_API_KEY`
+- `COMPUTESDK_API_KEY` — organization API key for ComputeSDK and localhost. For a custom host, pass `--api-key` explicitly.
 - `BENCHMARKS_PLATFORM_TOKEN`
 
 ## Programmatic usage

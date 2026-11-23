@@ -31,7 +31,7 @@ The CLI tries credentials in this order:
 
 1. `--api-key <key>`
 2. `BENCHMARKS_PLATFORM_TOKEN` (a better-auth session token — does not refresh)
-3. `BENCHMARKS_PLATFORM_API_KEY` (an org-scoped `bp_...` key)
+3. `COMPUTESDK_API_KEY` (an org-scoped `bp_...` key)
 4. OAuth tokens from `~/.benchsdk/credentials.json` (from `bench auth login`)
 
 API keys and tokens are useful for non-interactive environments. OAuth is
@@ -181,7 +181,7 @@ bench run path/to/file.bench.ts --iterations 4 --concurrency 2
 You can also use an org-scoped `bp_` key for non-interactive runs:
 
 ```bash
-BENCHMARKS_PLATFORM_API_KEY=bp_... bench run path/to/file.bench.ts
+COMPUTESDK_API_KEY=bp_... bench run path/to/file.bench.ts
 ```
 
 ## Non-interactive / CI use
@@ -190,7 +190,7 @@ Set environment variables so the CLI never tries to open a browser:
 
 ```bash
 export BENCHMARKS_PLATFORM_URL=https://platform.computesdk.com
-export BENCHMARKS_PLATFORM_API_KEY=bp_...
+export COMPUTESDK_API_KEY=bp_...
 
 bench benchmarks list --json --limit 100
 ```
@@ -200,7 +200,7 @@ If no credentials are present, the CLI fails fast with an `AuthError`.
 ## Environment variables
 
 - `BENCHMARKS_PLATFORM_URL` — platform root URL (default: `https://platform.computesdk.com`)
-- `BENCHMARKS_PLATFORM_API_KEY` — API key
+- `COMPUTESDK_API_KEY` — organization API key for ComputeSDK and localhost. For a custom host, pass `--api-key` explicitly.
 - `BENCHMARKS_PLATFORM_TOKEN` — bearer/session token
 - `CI` — when set, the CLI avoids interactive prompts
 
@@ -228,7 +228,7 @@ If no credentials are present, the CLI fails fast with an `AuthError`.
 - `Cannot find module .../dist/bin.cjs` — build `@benchsdk/runner` first:
   `pnpm --filter @benchsdk/runner build`.
 - `Your session has expired` — the refresh token is expired or revoked. Run
-  `bench auth login` again, or use `BENCHMARKS_PLATFORM_API_KEY`.
+  `bench auth login` again, or use `COMPUTESDK_API_KEY`.
 - 401/403 on list commands — verify the active org with `bench auth status` or
   pass `--org <slug>`.
 - The CLI auto-refreshes access tokens within 5 minutes of expiry. If a command
@@ -236,6 +236,6 @@ If no credentials are present, the CLI fails fast with an `AuthError`.
 
 ## Secrets needed
 
-None for local development with `BENCHMARKS_PLATFORM_API_KEY` if one is
-provided. For OAuth login in CI, prefer `BENCHMARKS_PLATFORM_API_KEY` or
+None for local development with `COMPUTESDK_API_KEY` if one is
+provided. For OAuth login in CI, prefer `COMPUTESDK_API_KEY` or
 `BENCHMARKS_PLATFORM_TOKEN` instead of `bench auth login`.

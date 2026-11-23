@@ -65,6 +65,7 @@ export function createCliHarness(): CliHarness & { restore(): void } {
   const exitCodes: (number | undefined)[] = [];
   const savedEnv = {
     BENCHMARKS_PLATFORM_URL: process.env.BENCHMARKS_PLATFORM_URL,
+    COMPUTESDK_API_KEY: process.env.COMPUTESDK_API_KEY,
     BENCHMARKS_PLATFORM_API_KEY: process.env.BENCHMARKS_PLATFORM_API_KEY,
     BENCHMARKS_PLATFORM_TOKEN: process.env.BENCHMARKS_PLATFORM_TOKEN,
   };
@@ -72,6 +73,7 @@ export function createCliHarness(): CliHarness & { restore(): void } {
   const ttyDescriptor = Object.getOwnPropertyDescriptor(process.stdin, 'isTTY');
 
   process.env.BENCHMARKS_PLATFORM_URL = PLATFORM_URL;
+  delete process.env.COMPUTESDK_API_KEY;
   process.env.BENCHMARKS_PLATFORM_API_KEY = 'bp_test_key';
   delete process.env.BENCHMARKS_PLATFORM_TOKEN;
 

@@ -15,7 +15,7 @@ npm install @benchsdk/client
 ## Authentication
 
 `createBenchmarkClient` requires a platform API key or OAuth token. Provide
-`apiKey`/`token` directly, or set `BENCHMARKS_PLATFORM_API_KEY` or
+`apiKey`/`token` directly, or set `COMPUTESDK_API_KEY` or
 `BENCHMARKS_PLATFORM_TOKEN` in the environment.
 
 ## Run A Worker
@@ -25,7 +25,7 @@ import { createBenchmarkClient } from '@benchsdk/client';
 import { compute } from 'computesdk';
 
 const client = createBenchmarkClient({
-  apiKey: process.env.BENCHMARKS_PLATFORM_API_KEY,
+  apiKey: process.env.COMPUTESDK_API_KEY,
 });
 
 // `task` is a raw function; declare named steps imperatively via `step(...)`,
@@ -65,7 +65,7 @@ Task results are flushed to the platform in batches of 1,000 records by default.
 import { createBenchmarkClient } from '@benchsdk/client';
 
 const client = createBenchmarkClient({
-  apiKey: process.env.BENCHMARKS_PLATFORM_API_KEY,
+  apiKey: process.env.COMPUTESDK_API_KEY,
 });
 
 await client.upsertBenchmark('scale', {

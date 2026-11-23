@@ -23,14 +23,14 @@ Use the [benchmark platform](https://platform.computesdk.com) to collect results
 
 1. Sign in at [platform.computesdk.com](https://platform.computesdk.com) to create your organization.
 2. Install the `bench` CLI: `npm install -g @benchsdk/runner`.
-3. Authenticate with `bench auth login` (device-code login), or create an API key under **Settings → API keys** and export it as `BENCHMARKS_PLATFORM_API_KEY`.
+3. Authenticate with `bench auth login` (device-code login), or create an API key under **Settings → API keys** and export it as `COMPUTESDK_API_KEY`.
 
 ### Run a benchmark in your organization
 
 Clone this repository, build the packages (see [Run locally](#run-locally)) and run any suite without `--no-ingest`. The run is uploaded to your organization, and its results, logs and artifacts appear on the platform dashboard.
 
 ```bash
-export BENCHMARKS_PLATFORM_API_KEY=bp_...   # or: bench auth login
+export COMPUTESDK_API_KEY=bp_...   # or: bench auth login
 export E2B_API_KEY=...                       # credentials for the providers you select
 pnpm exec tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --provider e2b --iterations 10
 ```
@@ -50,7 +50,7 @@ The dashboard has a **Fork** button on the benchmark overview that does the same
 1. Fork this repository.
 2. On the platform, connect your GitHub account (**Settings → Git Connections**) and enable your fork under **Actions → Repos**.
 3. Pick where jobs run under **Settings → Providers**: a provider from the router, or your own provider key.
-4. Add `BENCHMARKS_PLATFORM_API_KEY` and the credentials of the providers you benchmark as Actions secrets (**Settings → Actions setup**).
+4. Add `COMPUTESDK_API_KEY` and the credentials of the providers you benchmark as Actions secrets (**Settings → Actions setup**). In your fork, map these secrets to the benchmark step's environment variables.
 5. Start a workflow with the **Run workflow** button or the `compute` CLI ([`@computesdk/cli`](https://www.npmjs.com/package/@computesdk/cli)):
 
 ```bash
@@ -68,7 +68,7 @@ Public benchmarks are published by the `computesdk` organization (`sandbox-tti`,
 | Website | Public leaderboards at [computesdk.com/benchmarks](https://www.computesdk.com/benchmarks) |
 | Dashboard | Runs, results, logs and artifacts at [platform.computesdk.com](https://platform.computesdk.com) |
 | CLI | `bench results sandbox-tti --source-org computesdk`; also `bench runs list`, `bench reliability`, `bench export`. See the [CLI reference](packages/benchsdk-cli/README.md) |
-| API | `GET https://platform.computesdk.com/api/v1/benchmarks/~/computesdk/sandbox-tti/results` with `Authorization: Bearer $BENCHMARKS_PLATFORM_API_KEY`. The OpenAPI document is at `/api/v1/openapi.json` |
+| API | `GET https://platform.computesdk.com/api/v1/benchmarks/~/computesdk/sandbox-tti/results` with `Authorization: Bearer $COMPUTESDK_API_KEY`. The OpenAPI document is at `/api/v1/openapi.json` |
 | MCP | Connect an MCP client to `https://platform.computesdk.com/mcp` (OAuth or an org API key as a bearer token). Tools include `benchmarks_list`, `benchmarks_get_results`, `benchmarks_get_run_results` and `benchmarks_get_reliability` |
 
 ## Layout
@@ -132,7 +132,7 @@ pnpm install --frozen-lockfile --ignore-scripts
 pnpm -r --filter './packages/**' run build
 
 # Supply the provider credentials required by the suite.
-# Add BENCHMARKS_PLATFORM_API_KEY to ingest a run; --no-ingest keeps it local.
+# Add COMPUTESDK_API_KEY to ingest a run; --no-ingest keeps it local.
 pnpm exec tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --provider e2b --iterations 1 --no-ingest
 pnpm bench:stealth benchmarks/stealth/sandbox/cpu.bench.ts --provider e2b --iterations 1 --no-ingest
 ```

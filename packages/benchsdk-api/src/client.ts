@@ -1,5 +1,6 @@
 import { gunzip as gunzipCallback } from 'node:zlib';
 import { promisify } from 'node:util';
+import { getBenchmarkApiKeyFromEnv } from './auth-env';
 
 const gunzip = promisify(gunzipCallback);
 import type {
@@ -187,19 +188,13 @@ function iterationsExtraParams(input: BenchmarkRunIterationInput = {}): string {
   return value ? `&${value}` : '';
 }
 
-function getApiKey(input?: string): string | undefined {
-  if (input) return input;
-  if (typeof process === 'undefined') return undefined;
-  return process.env.BENCHMARKS_PLATFORM_API_KEY;
-}
-
-function getAuthToken(config: BenchmarkClientConfig): string | undefined {
+function getAuthToken(config: BenchmarkClientConfig, baseUrl: string): string | undefined {
   if (config.token) return config.token;
   if (config.apiKey) return config.apiKey;
   if (typeof process !== 'undefined' && process.env.BENCHMARKS_PLATFORM_TOKEN) {
     return process.env.BENCHMARKS_PLATFORM_TOKEN;
   }
-  return getApiKey(config.apiKey);
+  return getBenchmarkApiKeyFromEnv(baseUrl);
 }
 
 function getErrorCode(error: unknown): string {
@@ -333,10 +328,10 @@ async function uploadArtifactBody(
 
 export function createBenchmarkClient(config: BenchmarkClientConfig = {}): BenchmarkClient {
   const baseUrl = trimTrailingSlash(config.baseUrl ?? DEFAULT_BASE_URL);
-  const authToken = getAuthToken(config);
+  const authToken = getAuthToken(config, baseUrl);
   if (!authToken) {
     throw new Error(
-      'A platform API key or OAuth token is required. Set BENCHMARKS_PLATFORM_API_KEY or BENCHMARKS_PLATFORM_TOKEN in your environment, or pass apiKey/token to createBenchmarkClient. Create an API key at https://platform.computesdk.com in your organization settings (Settings → API keys).'
+      'A platform API key or OAuth token is required. Set COMPUTESDK_API_KEY or BENCHMARKS_PLATFORM_TOKEN in your environment, or pass apiKey/token to createBenchmarkClient. Create an API key at https://platform.computesdk.com in your organization settings (Settings → API keys).'
     );
   }
 

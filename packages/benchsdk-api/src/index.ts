@@ -1,4 +1,5 @@
 export { BenchmarkApiError, BenchmarkTaskSkippedError, createBenchmarkClient } from './client';
+export { getBenchmarkApiKeyFromEnv } from './auth-env';
 export type {
   BenchmarkArchiveResult,
   BenchmarkArtifactDownload,

@@ -12,13 +12,13 @@ npm install @benchsdk/api
 
 ## Query public benchmarks
 
-Create a platform API key in the [ComputeSDK dashboard](https://platform.computesdk.com) and set `BENCHMARKS_PLATFORM_API_KEY` in your environment.
+Create a platform API key in the [ComputeSDK dashboard](https://platform.computesdk.com) and set `COMPUTESDK_API_KEY` in your environment.
 
 ```typescript
 import { createBenchmarkClient } from '@benchsdk/api';
 
 const client = createBenchmarkClient({
-  apiKey: process.env.BENCHMARKS_PLATFORM_API_KEY,
+  apiKey: process.env.COMPUTESDK_API_KEY,
 });
 
 const benchmarks = await client.listBenchmarks({ group: 'public' });

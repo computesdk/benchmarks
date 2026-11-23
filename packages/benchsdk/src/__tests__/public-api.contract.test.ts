@@ -447,6 +447,19 @@ describe('transport layer', () => {
     }
   });
 
+  it('reads COMPUTESDK_API_KEY for the ComputeSDK platform', async () => {
+    vi.stubEnv('COMPUTESDK_API_KEY', 'compute-key');
+    vi.stubEnv('BENCHMARKS_PLATFORM_API_KEY', '');
+    vi.stubEnv('BENCHMARKS_PLATFORM_TOKEN', '');
+    try {
+      const { calls, fetchMock } = recordingClient(() => jsonResponse({ benchmark: benchmarkResource() }));
+      await createBenchmarkClient({ fetch: fetchMock }).getBenchmark('scale');
+      expect(calls[0].headers.Authorization).toBe('Bearer compute-key');
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it('VAL-SDK-006: sets Content-Type: application/json on all requests', async () => {
     const { calls } = await capture((c) => Promise.all([
       c.getBenchmark('scale'),
@@ -1447,6 +1460,7 @@ describe('BenchmarkReporter', () => {
   });
 
   it('returns null instead of rejecting when credentials are missing', async () => {
+    vi.stubEnv('COMPUTESDK_API_KEY', '');
     const prevApiKey = process.env.BENCHMARKS_PLATFORM_API_KEY;
     const prevToken = process.env.BENCHMARKS_PLATFORM_TOKEN;
     try {
@@ -1456,6 +1470,7 @@ describe('BenchmarkReporter', () => {
       const reporter = await BenchmarkReporter.claim({ ...reporterConfig, fetch: fetchMock });
       expect(reporter).toBeNull();
     } finally {
+      vi.unstubAllEnvs();
       if (prevApiKey === undefined) delete process.env.BENCHMARKS_PLATFORM_API_KEY;
       else process.env.BENCHMARKS_PLATFORM_API_KEY = prevApiKey;
       if (prevToken === undefined) delete process.env.BENCHMARKS_PLATFORM_TOKEN;

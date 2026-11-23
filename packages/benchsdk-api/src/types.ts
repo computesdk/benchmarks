@@ -4,7 +4,7 @@ export type JsonObject = { [key: string]: JsonValue };
 export interface BenchmarkClientConfig {
   /** API base URL. Defaults to https://platform.computesdk.com/api/v1. */
   baseUrl?: string;
-  /** Bearer token. Defaults to BENCHMARKS_PLATFORM_API_KEY. */
+  /** Bearer token. Defaults to COMPUTESDK_API_KEY for ComputeSDK and localhost. */
   apiKey?: string;
   /** OAuth/session token. Takes precedence over apiKey when both are set. */
   token?: string;
