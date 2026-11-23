@@ -170,7 +170,7 @@ jobs:
           LIGHTNING_INSTANCE_TYPE: cpu-8 # 8 vCPU / 16 GiB — the xlarge tier profile
           ARKER_PLATFORMS: graviton4 # same platform Arker uses for the standardized profile
         run: |
-          . ./benchmarks/stealth/scripts/load-vault-secrets.sh "$(benchmarks/stealth/scripts/vault-keys.sh benchmarks/stealth/sandbox/providers.ts BENCHMARKS_PLATFORM_API_KEY ARCHIL_DISK_ID_SANDBOX)"
+          . ./benchmarks/stealth/scripts/load-vault-secrets.sh "$(benchmarks/stealth/scripts/vault-keys.sh benchmarks/stealth/sandbox/providers.ts --provider "${{ matrix.provider }}" BENCHMARKS_PLATFORM_API_KEY ARCHIL_DISK_ID_SANDBOX)"
           if [ -n "${ARCHIL_DISK_ID_SANDBOX:-}" ]; then export ARCHIL_DISK_ID="$ARCHIL_DISK_ID_SANDBOX"; fi
 
           set -o pipefail

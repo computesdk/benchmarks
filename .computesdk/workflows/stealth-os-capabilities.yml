@@ -150,7 +150,7 @@ jobs:
           # Sandbox family: dedicated VM per create() instead of shared-disk exec.
           ARCHIL_EXECUTION: persistent
         run: |
-          . benchmarks/stealth/scripts/load-vault-secrets.sh "$(benchmarks/stealth/scripts/vault-keys.sh benchmarks/stealth/sandbox/providers.ts BENCHMARKS_PLATFORM_API_KEY)"
+          . benchmarks/stealth/scripts/load-vault-secrets.sh "$(benchmarks/stealth/scripts/vault-keys.sh benchmarks/stealth/sandbox/providers.ts --provider "${{ matrix.provider }}" BENCHMARKS_PLATFORM_API_KEY)"
 
           # Empty platform env vars must not survive: @benchsdk/runner >=0.3.0
           # resolves the platform URL with ?? so an empty string overrides the
