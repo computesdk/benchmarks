@@ -131,6 +131,7 @@ export const config = defineBenchmarkConfig({
 // Note: lightning is sized via LIGHTNING_INSTANCE_TYPE=cpu-8 (8 vCPU / 16 GiB), applied on
 // the provider factory in providers.ts — the SDK ignores an instanceType passed to create().
 const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
+  'run-cloud': { cpu: 8, memory: 16384, timeout: 900_000 },
   // archil maps vcpus -> vcpuCount, memoryMiB -> memSizeMiB on the VM create
   // (persistent mode only; ignored on the shared-disk exec path).
   // Agent37 tops out at 4 vCPU (sizes 2/4, 4/8, 4/16, 4/32 GB), so dax runs on
