@@ -358,6 +358,16 @@ export function buildMatrixDataset(
   };
 }
 
+/**
+ * Renamed provider ids, old → new (mirrors PROVIDER_ID_ALIASES in
+ * benchmarks-platform lib/providers/provider-aliases.ts). Run summaries keep
+ * the id a row was reported under, so old rows are read as the new id.
+ */
+export const PROVIDER_ID_ALIASES: Readonly<Record<string, string>> = {
+  tenki: 'luxor',
+  givemeanode: 'sfcompute',
+};
+
 /** Raw statuses that mean a run is still in flight on either row shape. */
 const IN_FLIGHT = new Set(['pending', 'queued', 'planned', 'running', 'in_progress', 'cancelling']);
 
@@ -554,7 +564,8 @@ function scoresFromSummary(summary: ResultsItem['run']['summary']): {
   for (const row of summary?.results ?? []) {
     if (row.skipped === true) continue;
     if (groupBy && (row.dimensions as Record<string, unknown> | undefined)?.[groupBy] !== undefined) continue;
-    const provider = String(row.provider);
+    const reported = String(row.provider);
+    const provider = Object.hasOwn(PROVIDER_ID_ALIASES, reported) ? PROVIDER_ID_ALIASES[reported] : reported;
     if (typeof row.compositeScore !== 'number' || !Number.isFinite(row.compositeScore)) {
       incomplete.add(provider);
       continue;

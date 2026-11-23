@@ -194,6 +194,8 @@ assert.throws(() => aggregateWeek([day(['sandbox-new-thing', 50])], sandbox), /s
     };
     const dayRuns = async (...items: unknown[]) => (await fixture(...items)).get(DAY) ?? [];
     assert.equal((await dayRuns(item({ results: [{ provider: 'fixture', compositeScore: 0 }] })))[0].scores.get('fixture'), 0);
+    const renamed = (await dayRuns(item({ results: [{ provider: 'tenki', compositeScore: 61 }] })))[0];
+    assert.deepEqual([...renamed.scores], [['luxor', 61]], 'old provider id read as the new id');
     const skipped = (await dayRuns(item({ results: [{ provider: 'fixture', compositeScore: null, skipped: true }] })))[0];
     assert.equal(skipped.scores.size + (skipped.incomplete?.size ?? 0), 0);
     const mixed = (
