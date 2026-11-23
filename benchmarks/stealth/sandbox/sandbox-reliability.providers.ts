@@ -29,6 +29,7 @@ import { runCloud } from '@computesdk/run-cloud';
 import { sandbox0 } from '@computesdk/sandbox0';
 import { sail } from '@computesdk/sail';
 import { sprites } from '@computesdk/sprites';
+import { styne } from '@computesdk/styne';
 import { superserve } from '@computesdk/superserve';
 import { tenki } from '@computesdk/tenki';
 import { tensorlake } from '@computesdk/tensorlake'
@@ -278,6 +279,11 @@ export const providers: ProviderConfig[] = [
     name: 'sprites',
     requiredEnvVars: ['SPRITES_TOKEN'],
     createCompute: () => sprites({ apiKey: process.env.SPRITES_TOKEN! }),
+  },
+  {
+    name: 'styne',
+    requiredEnvVars: ['STYNE_API_KEY'],
+    createCompute: () => styne({ apiKey: process.env.STYNE_API_KEY! }),
   },
   {
     name: 'superserve',

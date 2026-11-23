@@ -192,6 +192,9 @@ importers:
       '@computesdk/steel':
         specifier: ^0.2.30
         version: 0.2.30
+      '@computesdk/styne':
+        specifier: ^1.0.1
+        version: 1.0.1
       '@computesdk/superserve':
         specifier: ^0.2.27
         version: 0.2.27
@@ -982,6 +985,9 @@ packages:
 
   '@computesdk/steel@0.2.30':
     resolution: {integrity: sha512-vLYs3QXBiz/HFlLX5HaiGLNoqt3W+Ei12KQpOcdqmC+G86BDw7cP+33Jng1eaGEHRyw19NN1/wfuXtHZy4UZnA==}
+
+  '@computesdk/styne@1.0.1':
+    resolution: {integrity: sha512-b6DuQMdDIg58u+TCDZEYqLWjYs1Egh5IP4kRM/aSJRToVFz7Mch7fkPhvmcRauzq7C/JQoL6uh8gsOssQDaZcA==}
 
   '@computesdk/superserve@0.2.27':
     resolution: {integrity: sha512-ieaQCf6ym5LBGRa1/SkvRjnpt5quj3qcU7bhL42XToBETC9J0NDwTamYWFaNKCQikhgRlXCvhxkLdPAaSNrqrg==}
@@ -7273,6 +7279,11 @@ snapshots:
       steel-sdk: 0.18.0
     transitivePeerDependencies:
       - encoding
+
+  '@computesdk/styne@1.0.1':
+    dependencies:
+      '@computesdk/provider': 2.1.28
+      computesdk: 4.1.22
 
   '@computesdk/superserve@0.2.27':
     dependencies:

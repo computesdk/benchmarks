@@ -116,6 +116,7 @@ jobs:
           - run-cloud
           - sandbox0
           - sprites
+          - styne
           - superserve
           - luxor
           - tensorlake
@@ -222,6 +223,12 @@ jobs:
           # shared allowlist above.
           if [ "${{ matrix.provider }}" = "boat" ]; then
             . benchmarks/scripts/load-vault-secrets.sh '^(BOAT_API_KEY)'
+          fi
+
+          # styne's credential is loaded only in its own leg, not through the
+          # shared allowlist above.
+          if [ "${{ matrix.provider }}" = "styne" ]; then
+            . benchmarks/scripts/load-vault-secrets.sh '^(STYNE_API_KEY)'
           fi
 
           # kosa8's credential is loaded only in its own leg, not through the

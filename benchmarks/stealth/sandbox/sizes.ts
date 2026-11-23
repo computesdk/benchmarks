@@ -202,6 +202,9 @@ export const PROVIDER_SIZE_OPTIONS: Record<string, Partial<Record<MarketSize, Re
     large: { sizeClass: 'lg' },
     xlarge: { sizeClass: 'xl' },
   },
+  // Styne sizes small/default/large are 2/4, 4/8 and 8/16 (vCPU/GiB); it has
+  // no 1-vCPU size, so market small is unsupported.
+  styne: { small: null, medium: { size: 'small' }, large: { size: 'default' }, xlarge: { size: 'large' } },
   // Novita sizes at template build (cpuCount/memoryMB, E2B-compatible); tiers
   // are per-account setup (size-templates.ts). Raise the default 300s
   // lifetime — same backstop pattern as blaxel.

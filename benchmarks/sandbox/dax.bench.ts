@@ -208,6 +208,9 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   kosa8:        { timeout: 900_000 },
   // Boat sizes via fixed machine `type`; `large` is 8 vCPU / 16 GB.
   boat:         { type: 'large' },
+  // Styne `large` is 8 vCPU / 16 GiB; its default 300s lifetime is below the
+  // 10-min build deadline, so raise it (same backstop as blaxel/novita).
+  styne:        { size: 'large', timeout: 900_000 },
   // Railway sizes via `resources` on create(); matches the 8 vCPU / 16 GiB
   // DAX shape used in the stealth suite.
   railway:      { resources: { cpu: 8, memoryGB: 16 } },
