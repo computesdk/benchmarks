@@ -107,7 +107,7 @@ jobs:
           - e2b
           - ec2-firecrab  # manual dispatch only (gated in SHOULD_RUN)
           - freestyle
-          - givemeanode
+          - sfcompute
           - gravixlayer
           # - hopx  # parked — kept out of weekly tti/dax
           - isorun
@@ -126,10 +126,12 @@ jobs:
           # - quilt
           - railway
           - sail
+          - run-cloud
           - sandbox0
           - sprites
+          - styne
           - superserve
-          - tenki
+          - luxor
           - tensorlake
           # - uno  # parked — dax only for now (3-machine account cap)
           - upstash
@@ -216,6 +218,13 @@ jobs:
           LINE=$(./ec2-firecrab/host/pool-up.sh "${{ github.event.inputs.host_count }}" | tail -1)
           echo "$LINE"
           echo "POOL_SSH_TARGETS=${LINE#EC2_FIRECRAB_SSH_TARGETS=}" >> "$GITHUB_ENV"
+      - name: Build Archil image
+        if: env.SHOULD_RUN == 'true' && matrix.provider == 'archil'
+        # Without ARCHIL_IMAGE_ID the bench boots the image by tag instead.
+        continue-on-error: true
+        run: |
+          . benchmarks/scripts/load-vault-secrets.sh '^(ARCHIL_API_KEY|ARCHIL_REGION)'
+          npx tsx benchmarks/scripts/build-archil-image.ts
       - name: Run benchmark
         if: env.SHOULD_RUN == 'true'
         env:
@@ -235,6 +244,12 @@ jobs:
           # shared allowlist above.
           if [ "${{ matrix.provider }}" = "boat" ]; then
             . benchmarks/scripts/load-vault-secrets.sh '^(BOAT_API_KEY)'
+          fi
+
+          # styne's credential is loaded only in its own leg, not through the
+          # shared allowlist above.
+          if [ "${{ matrix.provider }}" = "styne" ]; then
+            . benchmarks/scripts/load-vault-secrets.sh '^(STYNE_API_KEY)'
           fi
 
           # kosa8's credential is loaded only in its own leg, not through the

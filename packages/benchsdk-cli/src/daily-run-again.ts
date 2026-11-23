@@ -15,7 +15,7 @@ export const RUN_AGAIN_TIMEOUT_EXIT_CODE = 3;
 // user_credential_required.
 function runAgainHint(status: number, envelope: ApiErrorEnvelope | null): string | undefined {
   if (status === 403 && envelope?.code === 'user_credential_required') {
-    return 'Run again needs a user login: run `bench auth login` (org API keys cannot run a benchmark again). Drop --api-key and BENCHMARKS_PLATFORM_API_KEY so the login is used.';
+    return 'Run again needs a user login: run `bench auth login` (org API keys cannot run a benchmark again). Remove --api-key and unset any API key environment variables so the login is used.';
   }
   if (status === 403 && envelope?.code === 'owner_only') {
     return "Only the daily benchmarks' owner organization can run this benchmark again.";

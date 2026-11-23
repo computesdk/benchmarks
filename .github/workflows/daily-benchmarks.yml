@@ -271,6 +271,14 @@ jobs:
         run: |
           . benchmarks/scripts/load-vault-secrets.sh "^($(paste -sd'|' /tmp/oss-vault-keys))="
           npx tsx benchmarks/scripts/find-northflank-plan.ts
+      - name: Build Archil image
+        if: (matrix.kind == 'sandbox' || matrix.kind == 'dax') && matrix.provider == 'archil'
+        # Without ARCHIL_IMAGE_ID the bench boots the image by tag instead.
+        continue-on-error: true
+        run: |
+          . benchmarks/scripts/load-vault-secrets.sh "^($(paste -sd'|' /tmp/oss-vault-keys))="
+          # DAX creates Archil sandboxes at 8 vCPU / 16 GiB (DAX_RESOURCE_OPTIONS).
+          npx tsx benchmarks/scripts/build-archil-image.ts ${{ matrix.kind == 'dax' && '8 16384' || '' }}
       - name: Run benchmark
         env:
           PROVIDER: ${{ matrix.provider }}

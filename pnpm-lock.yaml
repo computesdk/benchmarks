@@ -174,6 +174,9 @@ importers:
       '@computesdk/railway':
         specifier: ^2.0.26
         version: 2.0.26
+      '@computesdk/run-cloud':
+        specifier: ^1.0.22
+        version: 1.0.22(bufferutil@4.2.0)(utf-8-validate@6.0.6)
       '@computesdk/runloop':
         specifier: ^1.3.80
         version: 1.3.80
@@ -189,6 +192,9 @@ importers:
       '@computesdk/steel':
         specifier: ^0.2.30
         version: 0.2.30
+      '@computesdk/styne':
+        specifier: ^1.0.1
+        version: 1.0.1
       '@computesdk/superserve':
         specifier: ^0.2.27
         version: 0.2.27
@@ -249,6 +255,9 @@ importers:
       computesdk:
         specifier: ^4.1.22
         version: 4.1.22
+      disk:
+        specifier: ^1.14.0
+        version: 1.14.0(zod@4.6.7)
       dotenv:
         specifier: ^18.0.10
         version: 18.0.10
@@ -475,8 +484,13 @@ packages:
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
 
-  '@archildata/api-types@0.0.81':
-    resolution: {integrity: sha512-v5POIAOhko0pzVM9kQUvFJj31D3fDo/8kwHgmly0wNT20SepGPGThoB6qOcvUoA3rfiS3PGCkynLNfkoZf/QxQ==}
+  '@archildata/api-types@0.0.98':
+    resolution: {integrity: sha512-6IOTVZ9E6W8CSgjlBGH/GpKX+3rB2c9Jef8nAheOmDpnyAjPAn9HTl7r3SQ9MqeOAnldLPumtJWR7zE81GHn3A==}
+    peerDependencies:
+      '@bufbuild/protobuf': ^2.16.0
+    peerDependenciesMeta:
+      '@bufbuild/protobuf':
+        optional: true
 
   '@arker-ai/sdk@1.3.0':
     resolution: {integrity: sha512-YtH3yG7HEz0kNckuZRMKlqYL/UEEMhJJBJG1LCQdIBsqG0zGHB5svh7h1Eg7HPdiOtyDvUWbdamQVWdL7ghIbQ==}
@@ -952,6 +966,10 @@ packages:
     resolution: {integrity: sha512-mVTT8rKfHMxEOelhJ+AlHwRYMy36MQ4utcwIllH7lzgFCbXRJz+rIaiPYAaq+4xdkw7zSQwn+zJAXmvp5Ywblw==}
     engines: {node: '>=22'}
 
+  '@computesdk/run-cloud@1.0.22':
+    resolution: {integrity: sha512-UBTHz+GL3TOW6VCHL0eu3oGRBg7LaVdIAKNV/JKpK3Nj4wUMPeA2GRtWyM8yq3zL22P9le4Hj48AZg1DEIiAyw==}
+    engines: {node: '>=20'}
+
   '@computesdk/runloop@1.3.80':
     resolution: {integrity: sha512-OOOb+Jn0tIrJQ08bXIgVWcGD35409B/0Ec6Cyv3ulQUjTWvJkzN5U2ISLcYWJZaceEYzg9Jos0FJ3UyJBI2Oxg==}
 
@@ -967,6 +985,9 @@ packages:
 
   '@computesdk/steel@0.2.30':
     resolution: {integrity: sha512-vLYs3QXBiz/HFlLX5HaiGLNoqt3W+Ei12KQpOcdqmC+G86BDw7cP+33Jng1eaGEHRyw19NN1/wfuXtHZy4UZnA==}
+
+  '@computesdk/styne@1.0.1':
+    resolution: {integrity: sha512-b6DuQMdDIg58u+TCDZEYqLWjYs1Egh5IP4kRM/aSJRToVFz7Mch7fkPhvmcRauzq7C/JQoL6uh8gsOssQDaZcA==}
 
   '@computesdk/superserve@0.2.27':
     resolution: {integrity: sha512-ieaQCf6ym5LBGRa1/SkvRjnpt5quj3qcU7bhL42XToBETC9J0NDwTamYWFaNKCQikhgRlXCvhxkLdPAaSNrqrg==}
@@ -2572,6 +2593,10 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@run-cloud/sdk@0.66.0':
+    resolution: {integrity: sha512-E5YMkQGYsGaw5xMkZ0KjN+Urm/xYXnhX0TsPK/iauj0WxhatvdM1fLo/dYDUFEZB2BWsZigGlorIvqT2KzjbXA==}
+    engines: {node: '>=20'}
+
   '@runloop/api-client@1.32.0':
     resolution: {integrity: sha512-aCNKjlGzLVEAFl8WA42LmgiYkdIkaocOlFK/cMGppijsM0AGS+1hkw/RxroQxyHlkIhjyRaqLv7m5ZNMGhks7Q==}
 
@@ -2893,6 +2918,9 @@ packages:
 
   '@types/tedious@4.0.14':
     resolution: {integrity: sha512-KHPsfX/FoVbUGbyYvk1q9MMQHLPeRZhRJZdO45Q4YjvFkv4hMNghCWTvy7rdKessBsmtz4euWCWAB6/tVpI1Iw==}
+
+  '@types/ws@8.18.2':
+    resolution: {integrity: sha512-67MQl+fpWKVTT1NYdnmo3U4sc/xPo/zQBncVnI74qmQa0z/b+1g6iYqNmGCPbxO+zz2aklb08a0oHfegiVd0/w==}
 
   '@typespec/ts-http-runtime@0.3.10':
     resolution: {integrity: sha512-vddvvtZ7sejSlCv+OIkn2ztjB1O31Fc2JsxI/YK725r3elXXlF/J3o3lbXJFRhoeWRWK1tjdZ+GTi6Fdtrp+EA==}
@@ -3621,8 +3649,8 @@ packages:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
     engines: {node: '>=8'}
 
-  disk@1.12.1:
-    resolution: {integrity: sha512-KsvU2C8b8m0B0GnIsvNMOzhun7eoD1XkTHxnreX7NNdMDOiXl93KWLnq9Jb4S+Kf5cy3NsoKMjEJ5V9j8Ggfbg==}
+  disk@1.14.0:
+    resolution: {integrity: sha512-0AOa8Wv7t5+w4N9IhnL82bWFHBT+/IuSNM1TbhHRQN/aLTBrYj5hApVeOu8vYGPMyz7x3WwKTYbzQClKNIfCvg==}
     engines: {node: '>= 22.19.0'}
     hasBin: true
     peerDependencies:
@@ -6223,7 +6251,9 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
 
-  '@archildata/api-types@0.0.81': {}
+  '@archildata/api-types@0.0.98(@bufbuild/protobuf@2.17.0)':
+    optionalDependencies:
+      '@bufbuild/protobuf': 2.17.0
 
   '@arker-ai/sdk@1.3.0(@computesdk/daytona@1.7.58(bufferutil@4.2.0)(utf-8-validate@6.0.6))(@computesdk/e2b@1.7.77)(@computesdk/modal@1.9.35)(bufferutil@4.2.0)(computesdk@4.1.22)(utf-8-validate@6.0.6)':
     dependencies:
@@ -6876,7 +6906,7 @@ snapshots:
     dependencies:
       '@computesdk/provider': 2.1.28
       computesdk: 4.1.22
-      disk: 1.12.1(zod@4.6.7)
+      disk: 1.14.0(zod@4.6.7)
     transitivePeerDependencies:
       - zod
 
@@ -7203,6 +7233,15 @@ snapshots:
       computesdk: 4.1.22
       railway: 3.17.0
 
+  '@computesdk/run-cloud@1.0.22(bufferutil@4.2.0)(utf-8-validate@6.0.6)':
+    dependencies:
+      '@computesdk/provider': 2.1.28
+      '@run-cloud/sdk': 0.66.0(bufferutil@4.2.0)(utf-8-validate@6.0.6)
+      computesdk: 4.1.22
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   '@computesdk/runloop@1.3.80':
     dependencies:
       '@computesdk/provider': 2.1.28
@@ -7240,6 +7279,11 @@ snapshots:
       steel-sdk: 0.18.0
     transitivePeerDependencies:
       - encoding
+
+  '@computesdk/styne@1.0.1':
+    dependencies:
+      '@computesdk/provider': 2.1.28
+      computesdk: 4.1.22
 
   '@computesdk/superserve@0.2.27':
     dependencies:
@@ -8919,6 +8963,17 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.68.3':
     optional: true
 
+  '@run-cloud/sdk@0.66.0(bufferutil@4.2.0)(utf-8-validate@6.0.6)':
+    dependencies:
+      '@opentelemetry/api': 1.10.0
+      '@types/ws': 8.18.2
+      ignore: 7.0.14
+      tar: 7.5.23
+      ws: 8.23.0(bufferutil@4.2.0)(utf-8-validate@6.0.6)
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   '@runloop/api-client@1.32.0':
     dependencies:
       '@types/node': 18.19.130
@@ -9257,6 +9312,10 @@ snapshots:
     dependencies:
       '@types/node': 20.19.43
     optional: true
+
+  '@types/ws@8.18.2':
+    dependencies:
+      '@types/node': 20.19.43
 
   '@typespec/ts-http-runtime@0.3.10':
     dependencies:
@@ -10023,9 +10082,10 @@ snapshots:
     dependencies:
       path-type: 4.0.0
 
-  disk@1.12.1(zod@4.6.7):
+  disk@1.14.0(zod@4.6.7):
     dependencies:
-      '@archildata/api-types': 0.0.81
+      '@archildata/api-types': 0.0.98(@bufbuild/protobuf@2.17.0)
+      '@bufbuild/protobuf': 2.17.0
       undici: 8.12.4
     optionalDependencies:
       zod: 4.6.7

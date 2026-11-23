@@ -57,7 +57,7 @@ All of the following source is public. Platform access controls still apply to u
 | web data scrape | [task/config](../benchmarks/stealth/web-data/web-data-scrape.bench.ts) | [execution](../.computesdk/workflows/stealth-web-data-scrape.yml) |
 
 
-The [soak-state importer](../.computesdk/workflows/stealth-soak-state-import.yml) is an operational handoff tool, not a scored workload. See the [cutover runbook](migration.md) before changing schedules.
+See the [consolidation history and retirement checks](migration.md) for historical handoff context. The one-shot soak-state importer has been removed.
 
 ## Additional and historical tools
 

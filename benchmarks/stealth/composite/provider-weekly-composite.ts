@@ -29,6 +29,11 @@ const RESULTS_PAGE_SIZE = 100;
 const BENCH_CONCURRENCY = 8;
 
 export const WINDOW_DAYS = 7;
+/**
+ * Days with data a provider needs before it appears in the matrix, so a new
+ * provider can't top the leaderboard on one good day.
+ */
+export const MIN_DAYS_TO_RANK = 7;
 
 /** The previous `n` complete UTC days, oldest first: [YYYY-MM-DD]. */
 export function windowDays(n: number): string[] {
@@ -271,14 +276,17 @@ export interface MatrixDataset {
 }
 
 /**
- * Assemble the matrix dataset from run participants. Every run participant is
- * a column even when it scored nothing; every benchmark any participant scored
- * in is a row, sorted by slug. Cells a participant has no score for are
- * `state: 'missing'` (rendered '—').
+ * Assemble the matrix dataset from run participants. Only participants with
+ * at least MIN_DAYS_TO_RANK days of data are columns; every benchmark a shown
+ * participant scored in is a row, sorted by slug. Cells a participant has no
+ * score for are `state: 'missing'` (rendered '—').
  */
 export function buildMatrixDataset(
-  providers: { name: string; data: Record<string, unknown> | undefined }[],
+  allProviders: { name: string; data: Record<string, unknown> | undefined }[],
 ): MatrixDataset {
+  const providers = allProviders.filter(
+    (provider) => typeof provider.data?.daysWithData === 'number' && provider.data.daysWithData >= MIN_DAYS_TO_RANK,
+  );
   const perProvider = providers.map((provider) => {
     const raw = provider.data?.benchmarkScores;
     const scores = (Array.isArray(raw) ? raw : []).filter((s): s is BenchmarkScoreCell => {
@@ -349,6 +357,16 @@ export function buildMatrixDataset(
     cards,
   };
 }
+
+/**
+ * Renamed provider ids, old → new (mirrors PROVIDER_ID_ALIASES in
+ * benchmarks-platform lib/providers/provider-aliases.ts). Run summaries keep
+ * the id a row was reported under, so old rows are read as the new id.
+ */
+export const PROVIDER_ID_ALIASES: Readonly<Record<string, string>> = {
+  tenki: 'luxor',
+  givemeanode: 'sfcompute',
+};
 
 /** Raw statuses that mean a run is still in flight on either row shape. */
 const IN_FLIGHT = new Set(['pending', 'queued', 'planned', 'running', 'in_progress', 'cancelling']);
@@ -546,7 +564,8 @@ function scoresFromSummary(summary: ResultsItem['run']['summary']): {
   for (const row of summary?.results ?? []) {
     if (row.skipped === true) continue;
     if (groupBy && (row.dimensions as Record<string, unknown> | undefined)?.[groupBy] !== undefined) continue;
-    const provider = String(row.provider);
+    const reported = String(row.provider);
+    const provider = Object.hasOwn(PROVIDER_ID_ALIASES, reported) ? PROVIDER_ID_ALIASES[reported] : reported;
     if (typeof row.compositeScore !== 'number' || !Number.isFinite(row.compositeScore)) {
       incomplete.add(provider);
       continue;

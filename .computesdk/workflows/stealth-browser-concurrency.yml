@@ -61,7 +61,6 @@ env:
 
 jobs:
   setup:
-    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
     name: resolve-target-pages
     runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe
     permissions:
@@ -113,7 +112,6 @@ jobs:
           echo "Resolved ${#urls[@]} shared article URLs for all providers"
 
   bench:
-    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
     name: bench-${{ matrix.provider }}
     runs-on: ${{ matrix.provider == 'browserbase' && 'computesdk:computesdk:aws-us-west-2' || 'namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal' }}
     needs: setup

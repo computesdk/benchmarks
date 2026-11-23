@@ -35,7 +35,8 @@ describe('create-bench CLI', () => {
     );
 
     expect(pkg.name).toBe(path.basename(tempDir).toLowerCase());
-    expect(pkg.dependencies['@benchsdk/runner']).toBe('^0.5.0');
+    expect(pkg.dependencies['@benchsdk/runner']).toBe('^0.8.7');
+    expect(fs.readFileSync(path.join(tempDir, '.env.example'), 'utf8')).toContain('COMPUTESDK_API_KEY=');
   });
 
   it('sanitizes project names into valid package.json names', async () => {

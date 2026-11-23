@@ -1,8 +1,10 @@
 # @benchsdk/cli
 
-Programmatic CLI for authenticating with and querying the ComputeSDK benchmarks platform.
+Authenticate with the ComputeSDK benchmark platform and query runs, results, and artifacts from your own tools.
 
-You rarely need to install this package directly: it is bundled into the `bench` binary shipped by [`@benchsdk/runner`](../benchsdk-runner). Use this package when you want to build your own CLI or script on top of the same auth, config, and platform-query primitives.
+Install [`@benchsdk/runner`](https://www.npmjs.com/package/@benchsdk/runner) to use the `bench` command in a terminal. Install this package to reuse the same authentication, configuration, and commands in your own CLI or script.
+
+[Public benchmarks](https://www.computesdk.com/benchmarks) · [Bench CLI guide](https://github.com/computesdk/benchmarks/blob/master/.agents/skills/benchsdk-cli/SKILL.md)
 
 ## What it provides
 
@@ -22,7 +24,7 @@ pnpm add @benchsdk/cli
 
 1. `--api-key <key>` (passed to `resolveAuth` / `createApiClient`)
 2. `BENCHMARKS_PLATFORM_TOKEN`
-3. `BENCHMARKS_PLATFORM_API_KEY`
+3. `COMPUTESDK_API_KEY`
 4. OAuth tokens saved by `bench auth login` in `~/.benchsdk/credentials.json`
 
 At least one credential is required for commands that touch the platform.
@@ -44,7 +46,7 @@ Credentials are stored separately in `~/.benchsdk/credentials.json` with `0600` 
 ## Environment variables
 
 - `BENCHMARKS_PLATFORM_URL` — platform root URL (default: `https://platform.computesdk.com`)
-- `BENCHMARKS_PLATFORM_API_KEY`
+- `COMPUTESDK_API_KEY` — organization API key for ComputeSDK and localhost. For a custom host, pass `--api-key` explicitly.
 - `BENCHMARKS_PLATFORM_TOKEN`
 
 ## Programmatic usage

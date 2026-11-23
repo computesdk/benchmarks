@@ -3,7 +3,8 @@ import * as config from '../config.js';
 import { resolveAuth, createApiClient } from '../client.js';
 import { createBenchmarkClient } from '@benchsdk/api';
 
-vi.mock('@benchsdk/api', () => ({
+vi.mock('@benchsdk/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@benchsdk/api')>()),
   createBenchmarkClient: vi.fn(() => ({ client: 'fake' })),
 }));
 
@@ -12,9 +13,11 @@ describe('resolveAuth', () => {
 
   beforeEach(() => {
     vi.restoreAllMocks();
+    originalEnv['COMPUTESDK_API_KEY'] = process.env.COMPUTESDK_API_KEY;
     originalEnv['BENCHMARKS_PLATFORM_API_KEY'] = process.env.BENCHMARKS_PLATFORM_API_KEY;
     originalEnv['BENCHMARKS_PLATFORM_TOKEN'] = process.env.BENCHMARKS_PLATFORM_TOKEN;
     originalEnv['BENCHMARKS_PLATFORM_URL'] = process.env.BENCHMARKS_PLATFORM_URL;
+    delete process.env.COMPUTESDK_API_KEY;
     delete process.env.BENCHMARKS_PLATFORM_API_KEY;
     delete process.env.BENCHMARKS_PLATFORM_TOKEN;
     delete process.env.BENCHMARKS_PLATFORM_URL;
@@ -72,6 +75,57 @@ describe('resolveAuth', () => {
     expect(auth.baseUrl).toBe('https://platform.computesdk.com');
     expect(auth.orgSlug).toBeUndefined();
     expect(auth.orgId).toBeUndefined();
+  });
+
+  it('honors an existing benchmark-specific key when both environment variables are set', async () => {
+    process.env.COMPUTESDK_API_KEY = 'compute-key';
+    process.env.BENCHMARKS_PLATFORM_API_KEY = 'legacy-key';
+    vi.spyOn(config, 'loadConfig').mockResolvedValue({});
+    vi.spyOn(config, 'loadCredentials').mockResolvedValue({});
+
+    await expect(resolveAuth()).resolves.toMatchObject({ apiKey: 'legacy-key' });
+  });
+
+  it('uses the hosted platform when the scaffold leaves the platform URL empty', async () => {
+    process.env.BENCHMARKS_PLATFORM_URL = '';
+    process.env.COMPUTESDK_API_KEY = 'compute-key';
+    vi.spyOn(config, 'loadConfig').mockResolvedValue({});
+    vi.spyOn(config, 'loadCredentials').mockResolvedValue({});
+
+    await expect(resolveAuth()).resolves.toMatchObject({
+      apiKey: 'compute-key',
+      baseUrl: 'https://platform.computesdk.com',
+    });
+  });
+
+  it('does not use COMPUTESDK_API_KEY for a custom platform host', async () => {
+    process.env.COMPUTESDK_API_KEY = 'compute-key';
+    vi.spyOn(config, 'loadConfig').mockResolvedValue({ baseUrl: 'https://custom.example.com' });
+    vi.spyOn(config, 'loadCredentials').mockResolvedValue({});
+
+    await expect(resolveAuth()).rejects.toThrow('No credentials found');
+  });
+
+  it('preserves a saved custom platform login when the shared ComputeSDK key is set', async () => {
+    process.env.COMPUTESDK_API_KEY = 'compute-key';
+    vi.spyOn(config, 'loadConfig').mockResolvedValue({});
+    vi.spyOn(config, 'loadCredentials').mockResolvedValue({
+      token: 'saved-token',
+      kind: 'oauth',
+      baseUrl: 'https://custom.example.com',
+      orgSlug: 'saved-org',
+    });
+
+    await expect(resolveAuth()).resolves.toMatchObject({
+      apiKey: undefined,
+      token: 'saved-token',
+      baseUrl: 'https://custom.example.com',
+      orgSlug: 'saved-org',
+    });
+    await expect(resolveAuth({ baseUrl: 'https://platform.computesdk.com' })).resolves.toMatchObject({
+      apiKey: 'compute-key',
+      baseUrl: 'https://platform.computesdk.com',
+    });
   });
 
   it('prefers BENCHMARKS_PLATFORM_TOKEN over saved OAuth and does not inherit saved org/baseUrl', async () => {

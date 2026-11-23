@@ -34,7 +34,7 @@ function adminHint(status: number, envelope: ApiErrorEnvelope | null): string | 
   if (status !== 403) return undefined;
   const text = `${envelope?.error ?? ''} ${envelope?.message ?? ''}`;
   if (text.includes('insufficient_scope') || !/owner|admin/i.test(text)) return undefined;
-  return 'Changing benchmarks and archiving runs needs an organization owner or admin: sign in as one (`bench auth login`) or use an org API key (--api-key or BENCHMARKS_PLATFORM_API_KEY).';
+  return 'Changing benchmarks and archiving runs needs an organization owner or admin: sign in as one (`bench auth login`) or use an org API key (--api-key or COMPUTESDK_API_KEY).';
 }
 
 type HintPicker = (status: number, envelope: ApiErrorEnvelope | null) => string | undefined;

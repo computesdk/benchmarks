@@ -49,7 +49,6 @@ env:
 
 jobs:
   providers:
-    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
     name: Provider matrix
     runs-on: namespace-profile-default
     outputs:
@@ -64,7 +63,6 @@ jobs:
           node -e "const s=require('fs').readFileSync('benchmarks/stealth/sandbox/providers.ts','utf8');console.log('providers='+JSON.stringify([...s.matchAll(/^\s*name:\s*'([^']+)'/gm)].map(m=>m[1])))" >> "$GITHUB_OUTPUT"
 
   bench:
-    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
     name: bench-${{ matrix.provider }}
     runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
     needs: providers
@@ -134,7 +132,7 @@ jobs:
           BENCH_TRIGGER_REQUESTED_BY: ${{ github.event.inputs.trigger_requested_by || '' }}
           BENCH_TRIGGER_REQUEST_ID: ${{ github.event.inputs.trigger_request_id || '' }}
         run: |
-          . ./benchmarks/stealth/scripts/load-vault-secrets.sh "$(benchmarks/stealth/scripts/vault-keys.sh benchmarks/stealth/sandbox/providers.ts BENCHMARKS_PLATFORM_API_KEY)"
+          . ./benchmarks/stealth/scripts/load-vault-secrets.sh "$(benchmarks/stealth/scripts/vault-keys.sh benchmarks/stealth/sandbox/providers.ts --provider "${{ matrix.provider }}" BENCHMARKS_PLATFORM_API_KEY)"
           if [ -n "${ARCHIL_DISK_ID_FILESYSTEM:-}" ]; then export ARCHIL_DISK_ID="$ARCHIL_DISK_ID_FILESYSTEM"; fi
 
           set -o pipefail

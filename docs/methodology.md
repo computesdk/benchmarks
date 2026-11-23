@@ -18,7 +18,7 @@ For a local run, follow [README setup](../README.md#run-locally), select a provi
 4. Follow `scoring`, `onScore` and imported scoring helpers. A custom scoring path can differ from the shared scorer below. Compare the emitted scoring version and spec when available.
 5. Distinguish raw metrics, a run's composite, a weekly benchmark cell and the category rating. These are different aggregations.
 
-The [public-suite workflows](../.github/workflows/) and [Stealth platform workflows](../.computesdk/workflows/) supply execution settings. GitHub Actions does not discover `.computesdk/workflows/`. A checked-in schedule does not establish that it is enabled in production; the [cutover runbook](migration.md) covers that routing.
+The [public-suite workflows](../.github/workflows/) and [Stealth platform workflows](../.computesdk/workflows/) supply execution settings. GitHub Actions does not discover `.computesdk/workflows/`. A checked-in schedule does not establish that it is enabled in production; see [consolidation history and retirement checks](migration.md) before retiring legacy routing.
 
 ## Workload choices and measured boundaries
 
@@ -82,9 +82,11 @@ These are point estimates. The scorer does not produce confidence intervals, sig
 
 The [weekly task](../benchmarks/stealth/composite/provider-weekly-composite.bench.ts) and [aggregation helpers](../benchmarks/stealth/composite/provider-weekly-composite.ts) read the previous seven complete UTC days; they do not provision sandboxes or browsers themselves. Multiple scored runs for a benchmark on one day are averaged first.
 
-Sandbox category ratings average benchmark scores into five equally weighted groups: startup, compute, filesystem, state and reliability. The day's score averages the groups with data, then the week's score averages counted days. On a day where a provider has at least one real score, another benchmark that ran but has no scored row for that provider is zero-filled. A benchmark that did not run is excluded for everyone. A provider with no real scores for the entire day does not get a zero-filled day.
+Sandbox category ratings average benchmark scores into five equally weighted groups: startup, compute, filesystem, state and reliability. The day's score averages the groups with data, then the week's score averages counted days. On a day where a provider has at least one real score, another benchmark with a completed, non-cut run that scored at least one provider can zero-fill an absent provider row. An incomplete aggregate row with no finite score for that provider is excluded rather than zero-filled. A benchmark with no qualifying run is excluded unless it supplied a real provider score. Real scores from runs cut short still count; those runs alone cannot establish that an absent provider row should be zero-filled. A provider with no real scores for the entire day does not get a zero-filled day.
 
 Browser ratings use each benchmark as its own group and skip missing scores. This differs from sandbox zero-filling. Per-benchmark weekly cells average the days counted by the aggregation, including sandbox zero-fills; they are not always averages of measured observations alone. Existing zero is a score, and absent data remains distinguishable from zero. Category ratings depend on benchmark coverage as well as speed.
+
+Publication adds a provider-level eligibility gate: the weekly matrix and leaderboard include only providers with at least one real scored benchmark on **all seven complete UTC days** (`MIN_DAYS_TO_RANK = 7`). The aggregation can still calculate partial-week scores internally, but those providers are not published in the matrix. This rule does not require every individual benchmark cell to have seven measured days; cells can have fewer observations and, for sandboxes, zero-filled days.
 
 ## Limits of the evidence
 

@@ -3,6 +3,7 @@ import { archil } from '@computesdk/archil';
 import { arker } from '@computesdk/arker';
 import { beam } from '@computesdk/beam';
 import { blaxel } from '@computesdk/blaxel';
+import { boat } from '@computesdk/boat';
 import { briq } from '@computesdk/briq';
 import { buddy } from '@computesdk/buddy';
 import { cloudRun } from '@computesdk/gcp/cloud-run';
@@ -23,10 +24,12 @@ import { namespace } from '@computesdk/namespace';
 import { novita } from '@computesdk/novita';
 // import { quilt } from '@computesdk/quilt';
 import { railway } from '@computesdk/railway';
+import { runCloud } from '@computesdk/run-cloud';
 // import { runloop } from '@computesdk/runloop';
 import { sandbox0 } from '@computesdk/sandbox0';
 import { sail } from '@computesdk/sail';
 import { sprites } from '@computesdk/sprites';
+import { styne } from '@computesdk/styne';
 import { superserve } from '@computesdk/superserve';
 import { tenki } from '@computesdk/tenki';
 import { tensorlake } from '@computesdk/tensorlake'
@@ -60,7 +63,7 @@ export const providers: ProviderConfig[] = [
     }),
     // Short TTL: a create that outlives the 60s step timeout still finishes and
     // can't be destroyed, so Archil's TTL is what reaps it (a probe needs ~2 min).
-    sandboxOptions: { baseImage: 'node:24-bookworm', maxTtlSeconds: 300 },
+    sandboxOptions: { baseImage: 'node:24-trixie', maxTtlSeconds: 300 },
   },
   {
     // Arker sizes via `platforms` on the factory, not sandbox.create(), so like
@@ -85,6 +88,13 @@ export const providers: ProviderConfig[] = [
     name: 'blaxel',
     requiredEnvVars: ['BL_API_KEY', 'BL_WORKSPACE'],
     createCompute: () => blaxel({ apiKey: process.env.BL_API_KEY!, workspace: process.env.BL_WORKSPACE!, region: 'us-was-1' }),
+  },
+  {
+    name: 'boat',
+    requiredEnvVars: ['BOAT_API_KEY'],
+    // Give up on readiness before the 60s create step times out, so the SDK
+    // deletes an unready sandbox itself instead of leaving it to its TTL.
+    createCompute: () => boat({ apiKey: process.env.BOAT_API_KEY!, readyTimeout: 45_000 }),
   },
   {
     name: 'briq',
@@ -170,7 +180,7 @@ export const providers: ProviderConfig[] = [
     createCompute: () => freestyle({ apiKey: process.env.FREESTYLE_API_KEY! }),
   },
   {
-    name: 'givemeanode',
+    name: 'sfcompute',
     requiredEnvVars: ['GMN_TOKEN'],
     createCompute: () => givemeanode({ apiKey: process.env.GMN_TOKEN!, baseUrl: process.env.GMN_API_HOST }),
   },
@@ -245,6 +255,13 @@ export const providers: ProviderConfig[] = [
   //   createCompute: () => runloop({ apiKey: process.env.RUNLOOP_API_KEY! }),
   // },
   {
+    name: 'run-cloud',
+    requiredEnvVars: ['RUN_CLOUD_API_KEY'],
+    createCompute: () => runCloud({ apiKey: process.env.RUN_CLOUD_API_KEY! }),
+    sandboxOptions: { templateId: 'runcloud/agent-base', timeout: 900_000 },
+    supportsCreateNameOption: true,
+  },
+  {
     name: 'sandbox0',
     requiredEnvVars: ['SANDBOX0_TOKEN'],
     createCompute: () => sandbox0({ token: process.env.SANDBOX0_TOKEN! }),
@@ -264,6 +281,11 @@ export const providers: ProviderConfig[] = [
     createCompute: () => sprites({ apiKey: process.env.SPRITES_TOKEN! }),
   },
   {
+    name: 'styne',
+    requiredEnvVars: ['STYNE_API_KEY'],
+    createCompute: () => styne({ apiKey: process.env.STYNE_API_KEY! }),
+  },
+  {
     name: 'superserve',
     requiredEnvVars: ['SUPERSERVE_API_KEY'],
     createCompute: () => superserve({ apiKey: process.env.SUPERSERVE_API_KEY! }),
@@ -271,7 +293,7 @@ export const providers: ProviderConfig[] = [
     sandboxOptions: { templateId: 'superserve/node-22' },
   },
   {
-    name: 'tenki',
+    name: 'luxor',
     requiredEnvVars: ['TENKI_API_KEY'],
     createCompute: () => tenki({ apiKey: process.env.TENKI_API_KEY! }),
   },

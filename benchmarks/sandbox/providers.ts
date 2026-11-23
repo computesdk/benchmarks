@@ -33,15 +33,18 @@ import { novita } from '@computesdk/novita';
 import { promigence } from '@computesdk/promigence';
 // import { quilt } from '@computesdk/quilt';
 import { railway } from '@computesdk/railway';
+import { runCloud } from '@computesdk/run-cloud';
 import { sandbox0 } from '@computesdk/sandbox0';
 import { sail } from '@computesdk/sail';
 import { sprites } from '@computesdk/sprites';
+import { styne } from '@computesdk/styne';
 import { superserve } from '@computesdk/superserve';
 import { tenki } from '@computesdk/tenki';
 import { tensorlake } from '@computesdk/tensorlake'
 import { uno } from '@computesdk/uno';
 import { upstash } from '@computesdk/upstash';
 import { vercel } from '@computesdk/vercel';
+import { ARCHIL_BASE_IMAGE } from './archil-image.js';
 import type { ProviderConfig } from './types.js';
 
 /**
@@ -64,8 +67,9 @@ export const providers: ProviderConfig[] = [
     // disk. Workflows set ARCHIL_EXECUTION=persistent for sandbox-family
     // benches: create() then provisions a dedicated VM (own rootfs, state
     // persists across commands, destroy() actually deletes) instead of
-    // resolving a shared-disk exec handle. baseImage must carry node —
-    // Archil's default (ubuntu) fails the `node -v` readiness probe.
+    // resolving a shared-disk exec handle. Workflows that build the image
+    // first (scripts/build-archil-image.ts) set ARCHIL_IMAGE_ID; without it
+    // create() boots ARCHIL_BASE_IMAGE by tag.
     requiredEnvVars: process.env.ARCHIL_EXECUTION === 'persistent'
       ? ['ARCHIL_API_KEY', 'ARCHIL_REGION']
       : ['ARCHIL_API_KEY', 'ARCHIL_REGION', 'ARCHIL_DISK_ID'],
@@ -75,7 +79,12 @@ export const providers: ProviderConfig[] = [
       execution: process.env.ARCHIL_EXECUTION === 'persistent' ? 'persistent' : 'exec',
     }),
     sandboxOptions: process.env.ARCHIL_EXECUTION === 'persistent'
-      ? { baseImage: 'node:24-bookworm', maxTtlSeconds: 900 }
+      ? {
+          ...(process.env.ARCHIL_IMAGE_ID
+            ? { sandbox: { imageId: process.env.ARCHIL_IMAGE_ID } }
+            : { baseImage: ARCHIL_BASE_IMAGE }),
+          maxTtlSeconds: 900,
+        }
       : { diskId: process.env.ARCHIL_DISK_ID! },
   },
   {
@@ -202,7 +211,7 @@ export const providers: ProviderConfig[] = [
     createCompute: () => freestyle({ apiKey: process.env.FREESTYLE_API_KEY! }),
   },
   {
-    name: 'givemeanode',
+    name: 'sfcompute',
     requiredEnvVars: ['GMN_TOKEN'],
     createCompute: () => givemeanode({ apiKey: process.env.GMN_TOKEN!, baseUrl: process.env.GMN_API_HOST }),
   },
@@ -325,6 +334,12 @@ export const providers: ProviderConfig[] = [
     createCompute: () => railway({ token: process.env.RAILWAY_API_TOKEN!, environmentId: process.env.RAILWAY_ENVIRONMENT_ID! }),
   },
   {
+    name: 'run-cloud',
+    requiredEnvVars: ['RUN_CLOUD_API_KEY'],
+    createCompute: () => runCloud({ apiKey: process.env.RUN_CLOUD_API_KEY! }),
+    sandboxOptions: { templateId: 'runcloud/agent-base', timeout: 900_000 },
+  },
+  {
     name: 'sandbox0',
     requiredEnvVars: ['SANDBOX0_TOKEN'],
     createCompute: () => sandbox0({ token: process.env.SANDBOX0_TOKEN! }),
@@ -344,6 +359,11 @@ export const providers: ProviderConfig[] = [
     createCompute: () => sprites({ apiKey: process.env.SPRITES_TOKEN! }),
   },
   {
+    name: 'styne',
+    requiredEnvVars: ['STYNE_API_KEY'],
+    createCompute: () => styne({ apiKey: process.env.STYNE_API_KEY! }),
+  },
+  {
     name: 'superserve',
     requiredEnvVars: ['SUPERSERVE_API_KEY'],
     createCompute: () => superserve({ apiKey: process.env.SUPERSERVE_API_KEY! }),
@@ -351,7 +371,7 @@ export const providers: ProviderConfig[] = [
     sandboxOptions: { templateId: 'superserve/node-22' },
   },
   {
-    name: 'tenki',
+    name: 'luxor',
     requiredEnvVars: ['TENKI_API_KEY'],
     createCompute: () => tenki({ apiKey: process.env.TENKI_API_KEY! }),
   },

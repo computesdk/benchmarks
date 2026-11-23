@@ -24,6 +24,9 @@
  * contributes no row at all (a `requireData.hasData` failure would still land
  * a score-0 row).
  *
+ * Leaderboard: the matrix dataset only lists providers with data on all 7
+ * days (MIN_DAYS_TO_RANK), so a new provider can't top it on one good day.
+ *
  * Run once per category — each category gets its own platform run and
  * leaderboard via `BENCHMARK_SLUG=provider-weekly-composite-<category>`:
  *   pnpm bench benchmarks/stealth/composite/provider-weekly-composite.bench.ts \

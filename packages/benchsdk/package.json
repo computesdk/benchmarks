@@ -3,7 +3,7 @@
   "version": "0.5.17",
   "private": false,
   "type": "module",
-  "description": "Client and worker helpers for the ComputeSDK benchmark orchestrator",
+  "description": "Compatibility package for BenchSDK. Re-exports the runner and preserves the legacy benchmark client and worker helpers.",
   "author": "Garrison",
   "license": "MIT",
   "main": "./dist/index.cjs",
@@ -44,7 +44,7 @@
     "url": "https://github.com/computesdk/benchmarks.git",
     "directory": "packages/benchsdk"
   },
-  "homepage": "https://www.computesdk.com",
+  "homepage": "https://github.com/computesdk/benchmarks/tree/master/packages/benchsdk#readme",
   "bugs": {
     "url": "https://github.com/computesdk/benchmarks/issues"
   },

@@ -165,12 +165,12 @@ export const task = defineTask(async (ctx) => {
 
 Run it via the `bench run` CLI (under tsx so the `.bench.ts` module loads without a build):
 ```bash
-BENCHMARKS_PLATFORM_URL=http://localhost:3000 BENCHMARKS_PLATFORM_API_KEY=<org bp_ key> \
+BENCHMARKS_PLATFORM_URL=http://localhost:3000 COMPUTESDK_API_KEY=<org bp_ key> \
   npx tsx packages/benchsdk-runner/dist/bin.js run e2e-local/local.bench.ts --iterations 4 --concurrency 2
 ```
 `BENCHMARKS_PLATFORM_URL` is the **root** URL (the runner appends `/api/v1`).
 
-The runner authenticates with `BENCHMARKS_PLATFORM_API_KEY` (an org-scoped `bp_` key — mint one
+The runner authenticates with `COMPUTESDK_API_KEY` (an org-scoped `bp_` key — mint one
 locally per the section below) and pulls the owning org slug from the server, so the "View at:"
 URL it prints always points at the run's real org (no `BENCHMARKS_PLATFORM_ORG_SLUG` needed).
 

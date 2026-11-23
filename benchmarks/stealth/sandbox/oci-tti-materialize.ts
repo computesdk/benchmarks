@@ -226,7 +226,7 @@ const MATERIALIZERS: Record<string, () => Promise<{ ref: string; note?: string }
   },
 
   // --- raw-image providers that still need a resolved/pushed ref ---
-  async givemeanode() {
+  async sfcompute() {
     // No credentials needed: resolves the digest the provider requires.
     const [repo, tag] = REFERENCE_IMAGE.split(':');
     const ref = await resolveDockerHubDigest(repo!, tag!);

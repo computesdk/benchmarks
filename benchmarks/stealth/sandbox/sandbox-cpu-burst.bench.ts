@@ -115,6 +115,7 @@ const providerSpecific = (
 });
 
 const CPU_BURST_RESOURCE_OPTIONS: Record<string, CpuBurstResourceSpec> = {
+  'run-cloud': standard({ cpu: 1, memory: 2048 }),
   beam: standard({ cpu: 1, memory: 2048 }),
   blaxel: standard({ memory: 2048 }),
   createos: standard({ cpus: 1, memoryMb: 2048 }),
@@ -158,12 +159,17 @@ const CPU_BURST_RESOURCE_OPTIONS: Record<string, CpuBurstResourceSpec> = {
       custom_gb_memory: 2,
     },
   }),
+  sail: providerSpecific(
+    'Sail supports 1 vCPU as its sm size, with 16 GiB (its smallest memory limit); it does not offer the 2-GiB standard profile.',
+    { expectedCpu: 1, expectedMemoryMb: 16384 },
+    { sizeClass: 'sm' },
+  ),
   sandbox0: providerSpecific(
     'Sandbox0 exposes a memory setting but does not expose a benchmark-level CPU setting; CPU remains provider-controlled.',
     { expectedCpu: CPU_BURST_RESOURCE_PROFILE.cpu, expectedMemoryMb: CPU_BURST_RESOURCE_PROFILE.memoryMb },
     { memory: 2048 },
   ),
-  tenki: standard({ cpuCores: 1, memoryMb: 2048 }),
+  luxor: standard({ cpuCores: 1, memoryMb: 2048 }),
   tensorlake: standard({ cpus: 1, memoryMb: 2048 }),
   vercel: providerSpecific(
     'Vercel requests 1 vCPU, but its sandbox API does not expose a memory setting here.',

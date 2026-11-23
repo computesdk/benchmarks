@@ -28,7 +28,7 @@ test('moved suites resolve their relative imports from their new locations', () 
   }
 });
 
-test('imported workflows point to existing suites and keep scheduled execution gated', () => {
+test('imported workflows point to existing suites and run on schedule without a gate', () => {
   const workflows = files('.computesdk/workflows');
   const referenced = new Set();
   for (const file of workflows) {
@@ -37,19 +37,7 @@ test('imported workflows point to existing suites and keep scheduled execution g
       assert.ok(existsSync(path.join(root, name)), `${file}: missing ${name}`);
       referenced.add(name);
     }
-    const jobs = source.split('\njobs:\n')[1].split(/(?=^  [\w-]+:\n)/m).filter((job) => job.trim());
-    for (const job of jobs) {
-      if (file.endsWith('stealth-sandbox-reliability.yml')) {
-        // Reliability routing cut over: scheduled fires, no stealth gate.
-        assert.match(source, /^  schedule:/m, `${file}: reliability must be scheduled`);
-        continue;
-      }
-      if (file.endsWith('stealth-soak-state-import.yml')) {
-        assert.match(job, /vars\.STEALTH_BENCHMARKS_ENABLED != 'true'/);
-        continue;
-      }
-      assert.match(job, /^    if: .*vars\.STEALTH_BENCHMARKS_ENABLED == 'true'/m, `${file}: ungated job`);
-    }
+    assert.doesNotMatch(source, /STEALTH_BENCHMARKS_ENABLED/, `${file}: scheduled runs must not be gated`);
     assert.doesNotMatch(source, /^  collect:/m, file);
     if (!file.endsWith('oci-tti.yml')) {
       assert.doesNotMatch(source, /uses: actions\/upload-artifact@/, `${file}: public result artifact`);

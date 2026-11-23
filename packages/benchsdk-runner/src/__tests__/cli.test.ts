@@ -1,9 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runBenchmarkFile, runCheck } from '../cli';
 import { NoAvailableParticipantsError } from '../no-available-participants.js';
 import { AuthError } from '@benchsdk/cli';
 
 const fixture = (name: string) => `src/__tests__/fixtures/${name}`;
+
+beforeEach(() => vi.stubEnv('COMPUTESDK_API_KEY', ''));
+afterEach(() => vi.unstubAllEnvs());
 
 describe('runBenchmarkFile', () => {
   it('rejects retired imperative commands (there is no `create`)', async () => {
@@ -30,17 +33,13 @@ describe('runBenchmarkFile', () => {
   });
 
   it('imports a valid module and drives the run, surfacing NoAvailableParticipantsError', async () => {
-    process.env.BENCHMARKS_PLATFORM_API_KEY = 'test-key';
-    try {
-      // The fixture's participant requires an env var that is never set, so the
-      // run env-gates to zero participants after auth is validated. Extra CLI
-      // flags after the file are forwarded to the runner without error.
-      await expect(
-        runBenchmarkFile(['run', fixture('good.bench.ts'), '--iterations', '3']),
-      ).rejects.toBeInstanceOf(NoAvailableParticipantsError);
-    } finally {
-      delete process.env.BENCHMARKS_PLATFORM_API_KEY;
-    }
+    vi.stubEnv('COMPUTESDK_API_KEY', 'test-key');
+    // The fixture's participant requires an env var that is never set, so the
+    // run env-gates to zero participants after auth is validated. Extra CLI
+    // flags after the file are forwarded to the runner without error.
+    await expect(
+      runBenchmarkFile(['run', fixture('good.bench.ts'), '--iterations', '3']),
+    ).rejects.toBeInstanceOf(NoAvailableParticipantsError);
   });
 
   it('awaits the beforeExit export even when the run fails', async () => {

@@ -51,10 +51,11 @@ const allTiers = (
  */
 export const PROVIDER_SIZE_OPTIONS: Record<string, Partial<Record<MarketSize, Record<string, any> | null>>> = {
   // --- raw cpu/memory parameters: all four tiers ---
+  'run-cloud': allTiers((c, m) => ({ cpu: c, memory: m })),
   // Modal: 1 core = 2 vCPUs, so cpus/2 (fractional cores are supported).
   modal: allTiers((c, m) => ({ cpu: c / 2, cpuLimit: c / 2, memoryMiB: m, templateId: 'node:22' })),
   // diskSizeGb: default disk is small; 20 GiB headroom is harmless for cpu.
-  tenki: allTiers((c, m) => ({ cpuCores: c, memoryMb: m, diskSizeGb: 20 })),
+  luxor: allTiers((c, m) => ({ cpuCores: c, memoryMb: m, diskSizeGb: 20 })),
   // Tensorlake's bench account rejects creates over its per-sandbox RAM cap
   // of 16000 MB — xlarge must floor under it or create is a limit error.
   // small stays under the tighter quota observed earlier (run-6: 0/3 at 1c/2G).
@@ -72,7 +73,6 @@ export const PROVIDER_SIZE_OPTIONS: Record<string, Partial<Record<MarketSize, Re
     large: { vcpus: 4, memMiB: 8192 },
     xlarge: { vcpus: 8, memMiB: 16384 },
   },
-  // RunCloud accepts cpu (cores) / memory (MiB) per sandbox.
   runloop: allTiers((c, m) => ({
     launch_parameters: { resource_size_request: 'CUSTOM_SIZE', custom_cpu_cores: c, custom_gb_memory: m / 1024 },
   })),
@@ -107,7 +107,7 @@ export const PROVIDER_SIZE_OPTIONS: Record<string, Partial<Record<MarketSize, Re
   },
   buddy: allTiers((c, m) => ({ cpu: c, memoryMb: m })),
   miosa: allTiers((c, m) => ({ vcpus: c, memory: m })),
-  givemeanode: allTiers((c, m) => ({ vcpus: c, memoryMiB: m })),
+  sfcompute: allTiers((c, m) => ({ vcpus: c, memoryMiB: m })),
   // Sandbox0 exposes only memory — vcpus are reported by the benchmark script.
   sandbox0: allTiers((c, m) => ({ memory: m })),
   // daytona rejects `resources` combined with a snapshot (incl. the implicit
@@ -194,13 +194,17 @@ export const PROVIDER_SIZE_OPTIONS: Record<string, Partial<Record<MarketSize, Re
   promigence: { small: null, medium: {}, large: null, xlarge: null },
   // Railway sizes per create via resources {cpu, memoryGB} (railway >=3.16).
   railway: allTiers((c, m) => ({ resources: { cpu: c, memoryGB: m / 1024 } })),
-  // sail sizes s/m/l = 1/4/8 vCPU — market small/large/xlarge; there is no
-  // 2 vCPU offering for market medium.
+  // Sail's standard sizes sm/md/lg/xl are 1/2/4/8 vCPU, each with 16 GiB
+  // (its smallest memory limit).
   sail: {
-    small: { size: 's' },
-    large: { size: 'm' },
-    xlarge: { size: 'l' },
+    small: { sizeClass: 'sm' },
+    medium: { sizeClass: 'md' },
+    large: { sizeClass: 'lg' },
+    xlarge: { sizeClass: 'xl' },
   },
+  // Styne sizes small/default/large are 2/4, 4/8 and 8/16 (vCPU/GiB); it has
+  // no 1-vCPU size, so market small is unsupported.
+  styne: { small: null, medium: { size: 'small' }, large: { size: 'default' }, xlarge: { size: 'large' } },
   // Novita sizes at template build (cpuCount/memoryMB, E2B-compatible); tiers
   // are per-account setup (size-templates.ts). Raise the default 300s
   // lifetime — same backstop pattern as blaxel.

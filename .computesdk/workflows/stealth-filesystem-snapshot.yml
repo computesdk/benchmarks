@@ -72,7 +72,6 @@ env:
 
 jobs:
   providers:
-    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
     name: Provider matrix
     runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
     outputs:
@@ -87,7 +86,6 @@ jobs:
           node -e "const s=require('fs').readFileSync('benchmarks/stealth/sandbox/providers.ts','utf8');console.log('providers='+JSON.stringify([...s.matchAll(/^\s*name:\s*'([^']+)'/gm)].map(m=>m[1])))" >> "$GITHUB_OUTPUT"
 
   bench:
-    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
     name: Bench ${{ matrix.provider }}
     runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
     needs: providers
@@ -144,7 +142,7 @@ jobs:
         if: env.SHOULD_RUN == 'true'
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            pnpm update --ignore-scripts
+            pnpm update -r --ignore-scripts
           else
             pnpm install --frozen-lockfile --ignore-scripts
           fi
@@ -160,7 +158,7 @@ jobs:
           NSC_TOKEN: ${{ secrets.NSC_TOKEN }}
           BENCH_DOWNTIME_MS: ${{ github.event.inputs.downtime_ms || '60000' }}
         run: |
-          . benchmarks/stealth/scripts/load-vault-secrets.sh "$(benchmarks/stealth/scripts/vault-keys.sh benchmarks/stealth/sandbox/providers.ts BENCHMARKS_PLATFORM_API_KEY)"
+          . benchmarks/stealth/scripts/load-vault-secrets.sh "$(benchmarks/stealth/scripts/vault-keys.sh benchmarks/stealth/sandbox/providers.ts --provider "${{ matrix.provider }}" BENCHMARKS_PLATFORM_API_KEY)"
 
           # Empty platform env vars must not survive: @benchsdk/runner >=0.3.0
           # resolves the platform URL with ?? so an empty string overrides the

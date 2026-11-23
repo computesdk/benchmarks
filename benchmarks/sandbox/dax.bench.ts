@@ -131,6 +131,7 @@ export const config = defineBenchmarkConfig({
 // Note: lightning is sized via LIGHTNING_INSTANCE_TYPE=cpu-8 (8 vCPU / 16 GiB), applied on
 // the provider factory in providers.ts — the SDK ignores an instanceType passed to create().
 const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
+  'run-cloud': { cpu: 8, memory: 16384, timeout: 900_000 },
   // archil maps vcpus -> vcpuCount, memoryMiB -> memSizeMiB on the VM create
   // (persistent mode only; ignored on the shared-disk exec path).
   // Agent37 tops out at 4 vCPU (sizes 2/4, 4/8, 4/16, 4/32 GB), so dax runs on
@@ -143,7 +144,7 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // cores (16 vCPU equivalent). The 16 GiB memory request has no memoryLimitMiB,
   // so memory can also burst when host capacity is available.
   modal:        { cpu: 0.125, cpuLimit: 8, memoryMiB: 16384, templateId: 'node:22', runtime: 'vm' },
-  tenki:        { cpuCores: 8, memoryMb: 16384, diskSizeGb: 20 }, // default disk cannot hold the OpenCode install
+  luxor:        { cpuCores: 8, memoryMb: 16384, diskSizeGb: 20 }, // default disk cannot hold the OpenCode install
   tensorlake:   { cpus: 8, memoryMb: 16000 },            // Tensorlake caps memory at 16000 MB (16384 is rejected with a 400)
   isorun:       { vcpus: 8, memMiB: 16384 },
   runloop:      { launch_parameters: { resource_size_request: 'CUSTOM_SIZE', custom_cpu_cores: 8, custom_gb_memory: 16 } },
@@ -180,12 +181,12 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // givemeanode has no 8 vCPU / 16 GiB named shape; asking for 8 vCPU and 16 GiB
   // selects sandbox-lg (8 vCPU / 32 GiB). The actual memory is reported by the
   // benchmark script, so the mismatch is visible in results.
-  givemeanode:  { vcpus: 8, memoryMiB: 16384 },
+  sfcompute:  { vcpus: 8, memoryMiB: 16384 },
   gravixlayer:  { templateId: 'base-4xlarge' },                // built-in template requested by the Gravix team
   // Sandbox0 exposes only memory. Override the 128 MiB TTI size;
   // getSandboxOptionsWithResources preserves hardTtl from providers.ts.
   sandbox0:     { memory: 16384 },
-  sail:         { size: 'l' },
+  sail:         { sizeClass: 'xl' },                         // xl = 8 vCPU / 16 GiB
   // Novita sizes via templates (E2B-style), so dax runs on the base-8cpu-16gb
   // template built in the workflow pre-step (same pattern as superserve/e2b).
   // The provider's default sandbox lifetime (300s) is below the 10-min build
@@ -207,6 +208,9 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   kosa8:        { timeout: 900_000 },
   // Boat sizes via fixed machine `type`; `large` is 8 vCPU / 16 GB.
   boat:         { type: 'large' },
+  // Styne `large` is 8 vCPU / 16 GiB; its default 300s lifetime is below the
+  // 10-min build deadline, so raise it (same backstop as blaxel/novita).
+  styne:        { size: 'large', timeout: 900_000 },
   // Railway sizes via `resources` on create(); matches the 8 vCPU / 16 GiB
   // DAX shape used in the stealth suite.
   railway:      { resources: { cpu: 8, memoryGB: 16 } },

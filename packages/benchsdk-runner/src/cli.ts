@@ -177,7 +177,7 @@ export async function runCheck(argv: string[]): Promise<void> {
     ? []
     : auth
       ? []
-      : [['BENCHMARKS_PLATFORM_API_KEY or BENCHMARKS_PLATFORM_TOKEN', undefined]];
+      : [['COMPUTESDK_API_KEY or BENCHMARKS_PLATFORM_TOKEN', undefined]];
 
   for (const [name] of missingPlatformAuth) {
     console.warn(`[benchsdk] ${name} is not set`);

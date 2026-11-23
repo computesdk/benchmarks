@@ -81,7 +81,6 @@ env:
 
 jobs:
   providers:
-    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
     name: Provider matrix
     runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
     outputs:
@@ -96,7 +95,6 @@ jobs:
           node -e "const s=require('fs').readFileSync('benchmarks/stealth/sandbox/providers.ts','utf8');console.log('providers='+JSON.stringify([...s.matchAll(/^\s*name:\s*'([^']+)'/gm)].map(m=>m[1])))" >> "$GITHUB_OUTPUT"
 
   bench:
-    if: github.event_name == 'workflow_dispatch' || vars.STEALTH_BENCHMARKS_ENABLED == 'true'
     name: Bench ${{ matrix.provider }}
     runs-on: namespace-profile-default;permissions.additional_grant=vault/object:*:list;permissions.additional_grant=vault/object:*:describe;permissions.additional_grant=vault/object:*:reveal
     needs: providers
@@ -152,7 +150,7 @@ jobs:
         if: env.SHOULD_RUN == 'true'
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            pnpm update --ignore-scripts
+            pnpm update -r --ignore-scripts
           else
             pnpm install --frozen-lockfile --ignore-scripts
           fi
@@ -172,6 +170,23 @@ jobs:
           key: soak-state-${{ github.ref_name }}-${{ matrix.provider }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             soak-state-${{ github.ref_name }}-${{ matrix.provider }}-
+      # Renamed providers (tenki -> luxor, givemeanode -> sfcompute): pick up
+      # the state cached under the old id when none exists under the new one.
+      - name: Restore soak state saved under a renamed provider id
+        if: env.SHOULD_RUN == 'true' && (matrix.provider == 'luxor' || matrix.provider == 'sfcompute')
+        uses: actions/cache/restore@v4
+        with:
+          path: results/sandbox_soak/state/${{ matrix.provider == 'luxor' && 'tenki' || 'givemeanode' }}.json
+          key: soak-state-${{ github.ref_name }}-${{ matrix.provider == 'luxor' && 'tenki' || 'givemeanode' }}-legacy
+          restore-keys: |
+            soak-state-${{ github.ref_name }}-${{ matrix.provider == 'luxor' && 'tenki' || 'givemeanode' }}-
+      - name: Adopt soak state saved under a renamed provider id
+        if: env.SHOULD_RUN == 'true' && (matrix.provider == 'luxor' || matrix.provider == 'sfcompute')
+        run: |
+          dir=results/sandbox_soak/state
+          old=$dir/${{ matrix.provider == 'luxor' && 'tenki' || 'givemeanode' }}.json
+          new=$dir/${{ matrix.provider }}.json
+          if [ ! -f "$new" ] && [ -f "$old" ]; then mv "$old" "$new"; fi
       - name: Run benchmark
         if: env.SHOULD_RUN == 'true'
         env:
@@ -183,7 +198,7 @@ jobs:
           EPOCH_DAYS: ${{ github.event.inputs.epoch_days || '1' }}
           CHECK_INTERVAL_S: ${{ github.event.inputs.check_interval_s || '60' }}
         run: |
-          . benchmarks/stealth/scripts/load-vault-secrets.sh "$(benchmarks/stealth/scripts/vault-keys.sh benchmarks/stealth/sandbox/providers.ts BENCHMARKS_PLATFORM_API_KEY)"
+          . benchmarks/stealth/scripts/load-vault-secrets.sh "$(benchmarks/stealth/scripts/vault-keys.sh benchmarks/stealth/sandbox/providers.ts --provider "${{ matrix.provider }}" BENCHMARKS_PLATFORM_API_KEY)"
 
           # Empty platform env vars must not survive: @benchsdk/runner >=0.3.0
           # resolves the platform URL with ?? so an empty string overrides the

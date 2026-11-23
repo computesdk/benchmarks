@@ -104,6 +104,7 @@ const artifact = (
  */
 export const OCI_PARTICIPANTS: Record<string, OciParticipantSpec> = {
   // --- 'image': create() takes the OCI ref directly ---
+  'run-cloud': { mechanism: 'image', resolve: image({ templateId: REFERENCE_IMAGE }) },
   // archil defaults to exec mode where create() only resolves a disk handle;
   // ephemeral: false forces persistent mode, where image → baseImage.
   archil: { mechanism: 'image', resolve: image({ ephemeral: false }) },
@@ -119,7 +120,7 @@ export const OCI_PARTICIPANTS: Record<string, OciParticipantSpec> = {
   // daytona passes image through providerOptions into createParams.
   daytona: { mechanism: 'image', resolve: image({ autoStopInterval: 15, autoDeleteInterval: 0 }) },
   // givemeanode requires a digest-pinned ref — resolved by the materialize script.
-  givemeanode: { mechanism: 'image', resolve: artifact('givemeanode', (ref) => ({ image: ref })) },
+  sfcompute: { mechanism: 'image', resolve: artifact('sfcompute', (ref) => ({ image: ref })) },
   // buddy maps image → its `os` field; only the two Ubuntu refs are valid,
   // which is all REFERENCE_IMAGE needs.
   buddy: { mechanism: 'image', resolve: image() },
@@ -137,6 +138,8 @@ export const OCI_PARTICIPANTS: Record<string, OciParticipantSpec> = {
   northflank: { mechanism: 'image', resolve: image() },
   // promigence builds a snapshot from the image on first create, then reuses it.
   promigence: { mechanism: 'image', resolve: image() },
+  // sail builds the image on an account's first create, then reuses it.
+  sail: { mechanism: 'image', resolve: image() },
   // tenki has no spec: see UNSUPPORTED_REASONS.
   // vercel resolves image against its Container Registry — the ref must be
   // pushed there first (see oci-tti-materialize.ts --provider vercel).
@@ -169,7 +172,7 @@ export const OCI_PARTICIPANTS: Record<string, OciParticipantSpec> = {
  * specific than "no OCI_PARTICIPANTS spec".
  */
 const UNSUPPORTED_REASONS: Record<string, string> = {
-  tenki: "unsupported: tenki's image field only accepts refs in Tenki's own registry — no path imports an arbitrary OCI ref",
+  luxor: "unsupported: luxor's image field only accepts refs in Luxor's own registry — no path imports an arbitrary OCI ref",
 };
 
 /**

@@ -33,9 +33,11 @@ import { novita } from '@computesdk/novita';
 import { promigence } from '@computesdk/promigence';
 // import { quilt } from '@computesdk/quilt';
 import { railway } from '@computesdk/railway';
+import { runCloud } from '@computesdk/run-cloud';
 import { sandbox0 } from '@computesdk/sandbox0';
 import { sail } from '@computesdk/sail';
 import { sprites } from '@computesdk/sprites';
+import { styne } from '@computesdk/styne';
 import { superserve } from '@computesdk/superserve';
 import { tenki } from '@computesdk/tenki';
 import { tensorlake } from '@computesdk/tensorlake'
@@ -65,8 +67,9 @@ export const providers: ProviderConfig[] = [
     // actually deletes). Without it, create() resolves an exec handle on the
     // shared disk and every runCommand runs in a fresh VM, so a file written
     // with filesystem.writeFile outside /mnt/archil is gone by the next
-    // command. baseImage must carry node — Archil's default (ubuntu) fails
-    // the `node -v` readiness probe.
+    // command. node:24-trixie rather than bookworm: bookworm's coreutils
+    // hash in software, trixie's through OpenSSL (SHA-NI), which the CPU
+    // bench's `sha256sum` measures.
     requiredEnvVars: process.env.ARCHIL_EXECUTION === 'persistent'
       ? ['ARCHIL_API_KEY', 'ARCHIL_REGION']
       : ['ARCHIL_API_KEY', 'ARCHIL_REGION', 'ARCHIL_DISK_ID'],
@@ -76,7 +79,7 @@ export const providers: ProviderConfig[] = [
       execution: process.env.ARCHIL_EXECUTION === 'persistent' ? 'persistent' : 'exec',
     }),
     sandboxOptions: process.env.ARCHIL_EXECUTION === 'persistent'
-      ? { baseImage: 'node:24-bookworm', maxTtlSeconds: 900 }
+      ? { baseImage: 'node:24-trixie', maxTtlSeconds: 900 }
       : { diskId: process.env.ARCHIL_DISK_ID! },
   },
   {
@@ -169,7 +172,7 @@ export const providers: ProviderConfig[] = [
     createCompute: () => freestyle({ apiKey: process.env.FREESTYLE_API_KEY! }),
   },
   {
-    name: 'givemeanode',
+    name: 'sfcompute',
     requiredEnvVars: ['GMN_TOKEN'],
     createCompute: () => givemeanode({ apiKey: process.env.GMN_TOKEN!, baseUrl: process.env.GMN_API_HOST }),
   },
@@ -303,6 +306,13 @@ export const providers: ProviderConfig[] = [
     createCompute: () => railway({ token: process.env.RAILWAY_API_TOKEN!, environmentId: process.env.RAILWAY_ENVIRONMENT_ID! }),
   },
   {
+    name: 'run-cloud',
+    requiredEnvVars: ['RUN_CLOUD_API_KEY'],
+    createCompute: () => runCloud({ apiKey: process.env.RUN_CLOUD_API_KEY! }),
+    sandboxOptions: { templateId: 'runcloud/agent-base', timeout: 900_000 },
+    supportsCreateNameOption: true,
+  },
+  {
     name: 'sandbox0',
     requiredEnvVars: ['SANDBOX0_TOKEN'],
     createCompute: () => sandbox0({ token: process.env.SANDBOX0_TOKEN! }),
@@ -313,6 +323,7 @@ export const providers: ProviderConfig[] = [
   },
   {
     name: 'sail',
+    supportsCreateNameOption: true,
     requiredEnvVars: ['SAIL_API_KEY'],
     createCompute: () => sail({ apiKey: process.env.SAIL_API_KEY! }),
   },
@@ -320,6 +331,11 @@ export const providers: ProviderConfig[] = [
     name: 'sprites',
     requiredEnvVars: ['SPRITES_TOKEN'],
     createCompute: () => sprites({ apiKey: process.env.SPRITES_TOKEN! }),
+  },
+  {
+    name: 'styne',
+    requiredEnvVars: ['STYNE_API_KEY'],
+    createCompute: () => styne({ apiKey: process.env.STYNE_API_KEY! }),
   },
   {
     name: 'superserve',
@@ -332,7 +348,7 @@ export const providers: ProviderConfig[] = [
     sandboxOptions: { templateId: 'node-22-docker' },
   },
   {
-    name: 'tenki',
+    name: 'luxor',
     requiredEnvVars: ['TENKI_API_KEY'],
     createCompute: () => tenki({ apiKey: process.env.TENKI_API_KEY! }),
   },

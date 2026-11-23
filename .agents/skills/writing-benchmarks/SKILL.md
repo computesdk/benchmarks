@@ -139,7 +139,7 @@ pnpm -r --filter "./packages/**" build
 pnpm typecheck
 
 # Dry run still requires platform auth, but skips ingestion
-BENCHMARKS_PLATFORM_API_KEY=bp-... pnpm exec bench run \
+COMPUTESDK_API_KEY=bp_... pnpm exec bench run \
   benchmarks/<area>/<name>.bench.ts --provider <name> --iterations 2 --dry-run
 ```
 
