@@ -1,10 +1,13 @@
 name: Dependency bump
 
-# Opens a draft PR bumping runtime dependencies to their latest npm releases.
-# Thursday noon Central (18:00 UTC) so the bump PR can merge the same workday.
+# Daily: bumps runtime dependencies to their latest npm releases.
+# Caret-compatible bumps open a PR that auto-merges once required checks pass;
+# breaking bumps (new major, or new minor on 0.x) open a draft PR for review.
+# Runs at 18:00 UTC, after computesdk's 13:00 UTC provider SDK bump, so new
+# @computesdk/* adapter releases are picked up the same day.
 on:
   schedule:
-    - cron: '0 18 * * 4'
+    - cron: '0 18 * * *'
   workflow_dispatch:
 
 permissions:
@@ -13,9 +16,23 @@ permissions:
 
 jobs:
   bump:
-    name: Bump npm dependencies
+    name: Bump ${{ matrix.scope }} npm dependencies
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - scope: compatible
+            branch: chore/npm-deps-bump
+            title: 'chore(deps): bump benchmark packages to latest compatible npm releases'
+            draft: false
+            auto_merge: true
+          - scope: breaking
+            branch: chore/npm-deps-breaking-bump
+            title: 'chore(deps): bump benchmark packages to latest breaking npm releases'
+            draft: true
+            auto_merge: false
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -26,6 +43,7 @@ jobs:
 
       - name: Bump package.json specifiers
         env:
+          BUMP_SCOPE: ${{ matrix.scope }}
           BUMP_REPORT: ${{ runner.temp }}/bump.md
         run: node benchmarks/scripts/bump-deps.mjs
 
@@ -34,11 +52,19 @@ jobs:
         run: pnpm install --no-frozen-lockfile --ignore-scripts
 
       - name: Open PR
+        id: cpr
         uses: peter-evans/create-pull-request@v7
         with:
+          # A PAT is required so the PR triggers CI (GITHUB_TOKEN-created PRs do not).
           token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
-          branch: chore/npm-deps-bump
-          title: 'chore(deps): bump benchmark packages to latest npm releases'
+          branch: ${{ matrix.branch }}
+          title: ${{ matrix.title }}
           body-path: ${{ runner.temp }}/bump.md
-          draft: true
-          commit-message: 'chore(deps): bump benchmark packages to latest npm releases'
+          draft: ${{ matrix.draft }}
+          commit-message: ${{ matrix.title }}
+
+      - name: Enable auto-merge
+        if: matrix.auto_merge && steps.cpr.outputs.pull-request-number
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+        run: gh pr merge --auto --squash "${{ steps.cpr.outputs.pull-request-number }}"
