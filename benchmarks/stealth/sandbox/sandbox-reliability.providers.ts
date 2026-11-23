@@ -3,6 +3,7 @@ import { archil } from '@computesdk/archil';
 import { arker } from '@computesdk/arker';
 import { beam } from '@computesdk/beam';
 import { blaxel } from '@computesdk/blaxel';
+import { boat } from '@computesdk/boat';
 import { briq } from '@computesdk/briq';
 import { buddy } from '@computesdk/buddy';
 import { cloudRun } from '@computesdk/gcp/cloud-run';
@@ -86,6 +87,13 @@ export const providers: ProviderConfig[] = [
     name: 'blaxel',
     requiredEnvVars: ['BL_API_KEY', 'BL_WORKSPACE'],
     createCompute: () => blaxel({ apiKey: process.env.BL_API_KEY!, workspace: process.env.BL_WORKSPACE!, region: 'us-was-1' }),
+  },
+  {
+    name: 'boat',
+    requiredEnvVars: ['BOAT_API_KEY'],
+    // Give up on readiness before the 60s create step times out, so the SDK
+    // deletes an unready sandbox itself instead of leaving it to its TTL.
+    createCompute: () => boat({ apiKey: process.env.BOAT_API_KEY!, readyTimeout: 45_000 }),
   },
   {
     name: 'briq',
