@@ -67,6 +67,8 @@ export const LARGE_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   sail:         { sizeClass: 'xl' },                         // xl = 8 vCPU / 16 GiB
   freestyle:    { sizeClass: 'xl' },                         // applied by computesdk#1075; older adapters run 4/8
   railway:      { resources: { cpu: 8, memoryGB: 16 } },
+  // Styne `large` is 8 vCPU / 16 GiB; raise the default 300s lifetime.
+  styne:        { size: 'large', timeout: 900_000 },
 };
 
 export function getSandboxOptionsWithResources(providerName: string, baseOptions?: Record<string, any>): Record<string, any> {

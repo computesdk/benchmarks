@@ -277,6 +277,7 @@ jobs:
           - sail
           - run-cloud
           - sandbox0
+          - styne
           - superserve
           - luxor
           - tensorlake
@@ -372,6 +373,7 @@ jobs:
             sail) PROVIDER_KEYS='SAIL_API_KEY' ;;
             run-cloud) PROVIDER_KEYS='RUN_CLOUD_API_KEY' ;;
             sandbox0) PROVIDER_KEYS='SANDBOX0_TOKEN' ;;
+            styne) PROVIDER_KEYS='STYNE_API_KEY' ;;
             superserve) PROVIDER_KEYS='SUPERSERVE_API_KEY' ;;
             luxor) PROVIDER_KEYS='TENKI_API_KEY' ;;
             tensorlake) PROVIDER_KEYS='TENSORLAKE_API_KEY' ;;

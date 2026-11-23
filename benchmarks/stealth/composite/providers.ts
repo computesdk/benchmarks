@@ -50,6 +50,7 @@ const SANDBOX_PROVIDERS = [
   'sandbox0',
   'sail',
   'sprites',
+  'styne',
   'superserve',
   'luxor',
   'tensorlake',
