@@ -109,8 +109,8 @@ importers:
         specifier: ^1.2.22
         version: 1.2.22
       '@computesdk/gravixlayer':
-        specifier: ^1.0.23
-        version: 1.0.23(@opentelemetry/api@1.10.0)
+        specifier: ^1.0.24
+        version: 1.0.24(@opentelemetry/api@1.10.0)
       '@computesdk/hopx':
         specifier: ^0.2.52
         version: 0.2.52(bufferutil@4.2.0)(utf-8-validate@6.0.6)
@@ -192,9 +192,6 @@ importers:
       '@computesdk/steel':
         specifier: ^0.2.30
         version: 0.2.30
-      '@computesdk/styne':
-        specifier: ^1.0.1
-        version: 1.0.1
       '@computesdk/superserve':
         specifier: ^0.2.27
         version: 0.2.27
@@ -268,8 +265,8 @@ importers:
         specifier: ^0.8.3
         version: 0.8.3
       gravixlayer:
-        specifier: ^0.1.52
-        version: 0.1.52(@opentelemetry/api@1.10.0)
+        specifier: ^0.1.55
+        version: 0.1.55(@opentelemetry/api@1.10.0)
       microsandbox:
         specifier: ^0.7.16
         version: 0.7.16
@@ -476,8 +473,8 @@ importers:
 
 packages:
 
-  '@alcalzone/ansi-tokenize@0.3.1':
-    resolution: {integrity: sha512-cUD0PT0YX+rImRhfn7BfMRduP/tX/Zqt/N0dHlAyn2RlcJssCb5KsCJkhln61eh9vuJDkH8wKn3L8zJzzWXPFg==}
+  '@alcalzone/ansi-tokenize@0.3.2':
+    resolution: {integrity: sha512-GZdcaU9RV2Gn9SAg1hcsSoQ4nIWZfutPqIvxayUYsOzfBPJioJ+aQIXnMJiGDz+35Gg2pskkPxioYnSblPELEw==}
     engines: {node: '>=18'}
 
   '@ampproject/remapping@2.3.0':
@@ -859,6 +856,9 @@ packages:
   '@computesdk/cmd@0.4.1':
     resolution: {integrity: sha512-hhcYrwMnOpRSwWma3gkUeAVsDFG56nURwSaQx8vCepv0IuUv39bK4mMkgszolnUQrVjBDdW7b3lV+l5B2S8fRA==}
 
+  '@computesdk/cmd@0.4.2':
+    resolution: {integrity: sha512-T2gT9D8OXQWU4kRQ7G8W4UEbJuMaAVV4Vg6IZZtW1u8SjdjP/O6o5gyk50uYpQo1eeDGEnvlB7p50i5bBp+nDA==}
+
   '@computesdk/codesandbox@1.5.76':
     resolution: {integrity: sha512-AacZUGSKmCMBKOjV9N/QUSyNZqkf+GJlZC4oAX7zEY1mlSSDrduK3ofntCkYPMeiRXRqBDurrMMiKi952bVBZg==}
 
@@ -888,8 +888,8 @@ packages:
   '@computesdk/givemeanode@1.2.22':
     resolution: {integrity: sha512-rUZjHCDQnICJZdaJGRp/bWmhBzDpdeyhlR/sjrIICsT5eICGjA1neXZdNGoiDPSwY7JYBk7XSrVOJPQ18OHDwA==}
 
-  '@computesdk/gravixlayer@1.0.23':
-    resolution: {integrity: sha512-zxW1JJV5TvaIo2l0N1uegO70emlOXXobhFgAEHwSfb/QHXeLnNoVIK4Xl62IBBr1cFB8YdcNApF94kNojUlD9Q==}
+  '@computesdk/gravixlayer@1.0.24':
+    resolution: {integrity: sha512-Ky9wb2DVybR2DPtrq4JTrb3sStYdLbXiQGf7/1jKDvQ1RoCFU4cnlOrnWZNU9NozFm6ArqfhbPjJIb+jWUKr8Q==}
     engines: {node: '>=20.0.0'}
 
   '@computesdk/hopx@0.2.52':
@@ -958,6 +958,9 @@ packages:
   '@computesdk/provider@2.1.28':
     resolution: {integrity: sha512-0wnIcuyghq7EAll4DCSUOT86Eac7EXeCQFnuz3D0x6w+vf1Zq+rIlSwz7Sl0a0dKsGQ9L3SPsdiHUIGr/uTBJA==}
 
+  '@computesdk/provider@2.1.29':
+    resolution: {integrity: sha512-7LWLQ3xHqMi/JEuOzANTGj265giiYHcZ7VdY7h6oZ3U9pNK4Lg8NKVIE4iK9joJWKgDkw9HcwIO72aeha87fKw==}
+
   '@computesdk/quilt@1.0.26':
     resolution: {integrity: sha512-cYzZim0ntXJ+bUcartX6ZdY2A/onxZ/xov0/Xm51YSvQ7Cq5Tp9ODlCnTN3aRsEpDmhxYsFa442BFldP8Nt1ew==}
     engines: {node: '>=22'}
@@ -985,9 +988,6 @@ packages:
 
   '@computesdk/steel@0.2.30':
     resolution: {integrity: sha512-vLYs3QXBiz/HFlLX5HaiGLNoqt3W+Ei12KQpOcdqmC+G86BDw7cP+33Jng1eaGEHRyw19NN1/wfuXtHZy4UZnA==}
-
-  '@computesdk/styne@1.0.1':
-    resolution: {integrity: sha512-b6DuQMdDIg58u+TCDZEYqLWjYs1Egh5IP4kRM/aSJRToVFz7Mch7fkPhvmcRauzq7C/JQoL6uh8gsOssQDaZcA==}
 
   '@computesdk/superserve@0.2.27':
     resolution: {integrity: sha512-ieaQCf6ym5LBGRa1/SkvRjnpt5quj3qcU7bhL42XToBETC9J0NDwTamYWFaNKCQikhgRlXCvhxkLdPAaSNrqrg==}
@@ -3499,6 +3499,9 @@ packages:
   computesdk@4.1.22:
     resolution: {integrity: sha512-Z/BcYcM9lFkStFWUMkuKiga20u/SLPYFVRQH/ewQu+g+O0xZezwyYxdEoChoZzC/d/9mSVddAIZ12KrcGOOdFw==}
 
+  computesdk@4.1.23:
+    resolution: {integrity: sha512-QWmHrJwuHcDFal9v+BWXrGqJ/y+IESbHfAMYsQzICnFBUaeVjOAKzcGwQTmyYYjKy5wfWXGNJLAkTWLTmDYBtA==}
+
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
@@ -3558,6 +3561,11 @@ packages:
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
+
+  daemond@0.1.10:
+    resolution: {integrity: sha512-nFzBIv3yDCRLg62nnQZLGkmS65ts6U9debem4CmWqa2GErRu7WsFHQ11XddTR/tHBOiYzuOgVjqSAZcFGr3HgA==}
+    engines: {node: '>=22.0.0'}
+    os: [linux, darwin]
 
   daemond@0.1.9:
     resolution: {integrity: sha512-yNnvVVkAEQvvUgG7ow0jZlgzcmaWnQo6amRT7byr2UMHfzGJhO/nA4ZVszWR48B2d0Z6K3z4iW7fYHa/TDIiQw==}
@@ -4166,8 +4174,8 @@ packages:
     resolution: {integrity: sha512-32kz9FecohDiC/tgcViwnRXM7HFBVTPiW7pHO+DikKOI5KjhU/jNULOReXsrFqt2WAYbE9xFXsTffJw6iTO8qw==}
     engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
 
-  gravixlayer@0.1.52:
-    resolution: {integrity: sha512-Ng+tHNH3S3vkNO+/I4SQu3F9XeX/ULzUGwnR1vuGTXCkPFLHooeQatUx4r4v7kq7LAez09xbqJiU3OJV6GbQlQ==}
+  gravixlayer@0.1.55:
+    resolution: {integrity: sha512-As4rDPFZxMFXAaD67/9kWOy62A5G+F5Ad1VVA0oPu0WSpAskiK1lE876jHCzViElt3aRmj9C0beBqbTMRp4kQw==}
     engines: {node: '>=20'}
     peerDependencies:
       '@opentelemetry/api': ^1.0.0
@@ -4821,8 +4829,8 @@ packages:
   nice-grpc@2.1.18:
     resolution: {integrity: sha512-m1if7HuVIhhVo/obvLgoSco2tj46zfeIEKkavlAnAsjklBzmFthvYX/uoKZmMKIwpVJllYpj+HVFRb+qGxibrA==}
 
-  node-abi@3.101.0:
-    resolution: {integrity: sha512-bkb/RkuWCE64eWu1PCh3Fu2pGc9mKRs+kOE+FU2bGHRYlQa86/D321DSATV54AsCQMKz3/xSt9sRgraZTpqdhQ==}
+  node-abi@3.104.0:
+    resolution: {integrity: sha512-J2lVAHTQ8v1J7hl2k1eX70d/Fm+HE1EyUes2dOew59JgBlAW6NB7DABI8kdrgRPehhepJd18p1ivekA8BF7AOg==}
     engines: {node: '>=10'}
 
   node-addon-api@8.9.2:
@@ -5696,8 +5704,8 @@ packages:
   strnum@2.5.1:
     resolution: {integrity: sha512-UM4nTLWzQiDBseVxUGxN0wJzIk0UU89Qi7pKXz9qISo+lhviJikTuikBsK/oFRlpvYHvSdz0TVoLyQ+sEpYwxA==}
 
-  strtok3@10.7.0:
-    resolution: {integrity: sha512-iAqrCpp7UXD2FZiHWhLXqdJ6CmNeVzRkkHAyyhhKMVtbVm2KtPX3D/bJNonvtcyLTHS4rwqP2pz9fsjK1K4z0Q==}
+  strtok3@10.8.0:
+    resolution: {integrity: sha512-e6bW3fD6V01DPmcbLfNtn0cjsiHvTKS/hivgbzqYMfHb/nLes4QQ0H5QBxlkPQayF4xv08AvlSgptGwN86Eemw==}
     engines: {node: '>=18'}
 
   sucrase@3.35.1:
@@ -5725,8 +5733,8 @@ packages:
     resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
     engines: {node: '>=20'}
 
-  tar-fs@2.1.5:
-    resolution: {integrity: sha512-OboTd8mmMhZDNPV+UjQcK9yKAatXu2aJ+r1w4im1Otd4M4fl2hwvdoXUxIYHFTHWK/3y3FarBP70v3vwmGlOxw==}
+  tar-fs@2.1.6:
+    resolution: {integrity: sha512-vsdruOmnweDIXJXWpfc5aszWMVOj6qFI+dXxNuprh6Kt+WrGJh1MQL/2xYUEzI3EX86o9b2Rop8ziIF5Ol/UoQ==}
 
   tar-stream@2.2.0:
     resolution: {integrity: sha512-ujeqbceABgwMZxEJnk2HDY2DlnUZ+9oEcb1KzTVfYHio0UE6dG71n60d8D2I4qNvleWrrXpmjpt7vZeF1LnMZQ==}
@@ -6241,7 +6249,7 @@ packages:
 
 snapshots:
 
-  '@alcalzone/ansi-tokenize@0.3.1':
+  '@alcalzone/ansi-tokenize@0.3.2':
     dependencies:
       ansi-styles: 6.2.3
       is-fullwidth-code-point: 5.1.0
@@ -7001,6 +7009,8 @@ snapshots:
 
   '@computesdk/cmd@0.4.1': {}
 
+  '@computesdk/cmd@0.4.2': {}
+
   '@computesdk/codesandbox@1.5.76(@hey-api/openapi-ts@0.99.0(magicast@0.3.5)(typescript@5.9.3))(@xterm/xterm@5.5.0)(ink@7.1.1(bufferutil@4.2.0)(react@19.2.8)(utf-8-validate@6.0.6))':
     dependencies:
       '@codesandbox/sdk': 2.4.2(@hey-api/openapi-ts@0.99.0(magicast@0.3.5)(typescript@5.9.3))(@xterm/xterm@5.5.0)(ink@7.1.1(bufferutil@4.2.0)(react@19.2.8)(utf-8-validate@6.0.6))
@@ -7063,11 +7073,11 @@ snapshots:
       '@computesdk/provider': 2.1.28
       computesdk: 4.1.22
 
-  '@computesdk/gravixlayer@1.0.23(@opentelemetry/api@1.10.0)':
+  '@computesdk/gravixlayer@1.0.24(@opentelemetry/api@1.10.0)':
     dependencies:
-      '@computesdk/provider': 2.1.28
-      computesdk: 4.1.22
-      gravixlayer: 0.1.52(@opentelemetry/api@1.10.0)
+      '@computesdk/provider': 2.1.29
+      computesdk: 4.1.23
+      gravixlayer: 0.1.55(@opentelemetry/api@1.10.0)
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
@@ -7222,6 +7232,12 @@ snapshots:
       computesdk: 4.1.22
       daemond: 0.1.9
 
+  '@computesdk/provider@2.1.29':
+    dependencies:
+      '@computesdk/cmd': 0.4.2
+      computesdk: 4.1.23
+      daemond: 0.1.10
+
   '@computesdk/quilt@1.0.26':
     dependencies:
       '@computesdk/provider': 2.1.28
@@ -7279,11 +7295,6 @@ snapshots:
       steel-sdk: 0.18.0
     transitivePeerDependencies:
       - encoding
-
-  '@computesdk/styne@1.0.1':
-    dependencies:
-      '@computesdk/provider': 2.1.28
-      computesdk: 4.1.22
 
   '@computesdk/superserve@0.2.27':
     dependencies:
@@ -9978,6 +9989,12 @@ snapshots:
       '@computesdk/cmd': 0.4.1
       daemond: 0.1.9
 
+  computesdk@4.1.23:
+    dependencies:
+      '@benchsdk/cli': 0.9.5
+      '@computesdk/cmd': 0.4.2
+      daemond: 0.1.10
+
   concat-map@0.0.1: {}
 
   confbox@0.1.8: {}
@@ -10019,6 +10036,8 @@ snapshots:
       path-key: 3.1.1
       shebang-command: 2.0.0
       which: 2.0.2
+
+  daemond@0.1.10: {}
 
   daemond@0.1.9: {}
 
@@ -10528,7 +10547,7 @@ snapshots:
   file-type@21.3.4:
     dependencies:
       '@tokenizer/inflate': 0.4.1
-      strtok3: 10.7.0
+      strtok3: 10.8.0
       token-types: 6.2.0
       uint8array-extras: 1.6.0
     transitivePeerDependencies:
@@ -10783,7 +10802,7 @@ snapshots:
 
   graphql@16.15.0: {}
 
-  gravixlayer@0.1.52(@opentelemetry/api@1.10.0):
+  gravixlayer@0.1.55(@opentelemetry/api@1.10.0):
     optionalDependencies:
       '@opentelemetry/api': 1.10.0
 
@@ -10916,7 +10935,7 @@ snapshots:
 
   ink@7.1.1(bufferutil@4.2.0)(react@19.2.8)(utf-8-validate@6.0.6):
     dependencies:
-      '@alcalzone/ansi-tokenize': 0.3.1
+      '@alcalzone/ansi-tokenize': 0.3.2
       ansi-escapes: 7.3.0
       ansi-styles: 6.2.3
       auto-bind: 5.0.1
@@ -11419,7 +11438,7 @@ snapshots:
       abort-controller-x: 0.5.0
       nice-grpc-common: 2.0.4
 
-  node-abi@3.101.0:
+  node-abi@3.104.0:
     dependencies:
       semver: 7.8.6
     optional: true
@@ -11793,11 +11812,11 @@ snapshots:
       minimist: 1.2.8
       mkdirp-classic: 0.5.3
       napi-build-utils: 2.0.0
-      node-abi: 3.101.0
+      node-abi: 3.104.0
       pump: 3.0.4
       rc: 1.2.8
       simple-get: 4.0.1
-      tar-fs: 2.1.5
+      tar-fs: 2.1.6
       tunnel-agent: 0.6.0
     optional: true
 
@@ -12353,7 +12372,7 @@ snapshots:
     dependencies:
       anynum: 1.0.1
 
-  strtok3@10.7.0:
+  strtok3@10.8.0:
     dependencies:
       '@tokenizer/token': 0.3.0
 
@@ -12383,7 +12402,7 @@ snapshots:
 
   tagged-tag@1.0.0: {}
 
-  tar-fs@2.1.5:
+  tar-fs@2.1.6:
     dependencies:
       chownr: 1.1.4
       mkdirp-classic: 0.5.3
