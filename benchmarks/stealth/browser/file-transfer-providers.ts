@@ -5,15 +5,14 @@ import { hyperbrowser } from '@computesdk/hyperbrowser';
 import { kernel } from '@computesdk/kernel';
 import { notte } from '@computesdk/notte';
 import { steel } from '@computesdk/steel';
-import { styneBrowser } from '@computesdk/styne-browser';
 import { tilion } from '@computesdk/tilion';
 import type { ConcurrentProviderConfig } from './concurrent-types.js';
 
 /**
  * File-transfer provider configurations.
  *
- * Same 8 browser providers as concurrent-providers.ts (browserbase,
- * browseruse, hyperbrowser, kernel, notte, steel, styne, tilion) with the same
+ * Same 7 browser providers as concurrent-providers.ts (browserbase,
+ * browseruse, hyperbrowser, kernel, notte, steel, tilion) with the same
  * 1920x1080 viewport. On top of that, each provider can expose hooks that let
  * the benchmark retrieve downloaded bytes when the remote browser cannot hand
  * them back through playwright:
@@ -159,14 +158,6 @@ async function notteFetchSessionDownloads(sessionId: string): Promise<RetrievedF
   return out;
 }
 
-// ── styne: session VM files API (CDP mechanism) ─────────────────────────────
-async function styneFetchRemoteFile(sessionId: string, remotePath: string): Promise<Buffer> {
-  const base = (process.env.STYNE_API_URL || 'https://api.styne.ai').replace(/\/+$/, '');
-  return httpBytes(`${base}/sandboxes/${encodeURIComponent(sessionId)}/files?path=${encodeURIComponent(remotePath)}`, {
-    Authorization: `Bearer ${process.env.STYNE_API_KEY}`,
-  });
-}
-
 export const fileTransferProviders: FileTransferProviderConfig[] = [
   {
     name: 'browserbase',
@@ -271,21 +262,6 @@ export const fileTransferProviders: FileTransferProviderConfig[] = [
     // steel session filesystem is mounted at /files (files API / files.zip).
     downloadBehavior: { behavior: 'allow', downloadPath: '/files' },
     fetchSessionDownloads: steelFetchSessionDownloads,
-  },
-  {
-    name: 'styne',
-    requiredEnvVars: ['STYNE_API_KEY'],
-    createBrowserProvider: () => styneBrowser({
-      apiKey: process.env.STYNE_API_KEY!,
-    }),
-    sessionCreateOptions: {
-      stealth: false,
-      proxies: false,
-      headless: true,
-      viewport: VIEWPORT,
-    },
-    remoteDownloadDir: '/tmp/downloads',
-    fetchRemoteFile: styneFetchRemoteFile,
   },
   {
     name: 'tilion',

@@ -4,7 +4,6 @@ import { hyperbrowser } from '@computesdk/hyperbrowser';
 import { kernel } from '@computesdk/kernel';
 import { notte } from '@computesdk/notte';
 import { steel } from '@computesdk/steel';
-import { styneBrowser } from '@computesdk/styne-browser';
 import { tilion } from '@computesdk/tilion';
 
 export interface SessionPersistenceProviderConfig {
@@ -19,7 +18,7 @@ export interface SessionPersistenceProviderConfig {
 /**
  * Session persistence benchmark provider configurations.
  *
- * Same eight browser-agent providers as browser-concurrency, but sessions are
+ * Same seven browser-agent providers as browser-concurrency, but sessions are
  * created with `keepAlive: true`: the benchmark measures whether a session
  * survives a client disconnect, which is the flag providers expose for it.
  * Providers that reject the option are retried without it at create time and
@@ -108,20 +107,6 @@ export const sessionPersistenceProviders: SessionPersistenceProviderConfig[] = [
     requiredEnvVars: ['STEEL_API_KEY'],
     createBrowserProvider: () => steel({
       apiKey: process.env.STEEL_API_KEY!,
-    }),
-    sessionCreateOptions: {
-      stealth: false,
-      proxies: false,
-      headless: true,
-      viewport: VIEWPORT,
-      keepAlive: true,
-    },
-  },
-  {
-    name: 'styne',
-    requiredEnvVars: ['STYNE_API_KEY'],
-    createBrowserProvider: () => styneBrowser({
-      apiKey: process.env.STYNE_API_KEY!,
     }),
     sessionCreateOptions: {
       stealth: false,

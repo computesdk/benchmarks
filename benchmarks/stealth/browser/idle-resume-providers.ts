@@ -4,7 +4,6 @@ import { hyperbrowser } from '@computesdk/hyperbrowser';
 import { kernel } from '@computesdk/kernel';
 import { notte } from '@computesdk/notte';
 import { steel } from '@computesdk/steel';
-import { styneBrowser } from '@computesdk/styne-browser';
 import { tilion } from '@computesdk/tilion';
 
 export interface IdleResumeProviderConfig {
@@ -19,7 +18,7 @@ export interface IdleResumeProviderConfig {
 /**
  * Idle resume benchmark provider configurations.
  *
- * Same eight browser-agent providers as browser-session-persistence, and the
+ * Same seven browser-agent providers as browser-session-persistence, and the
  * same session options: sessions are created with `keepAlive: true`, the flag
  * providers expose for "outlive the client". Here the benchmark measures how
  * long a disconnected session stays resumable — the checkpointing story for
@@ -110,20 +109,6 @@ export const idleResumeProviders: IdleResumeProviderConfig[] = [
     requiredEnvVars: ['STEEL_API_KEY'],
     createBrowserProvider: () => steel({
       apiKey: process.env.STEEL_API_KEY!,
-    }),
-    sessionCreateOptions: {
-      stealth: false,
-      proxies: false,
-      headless: true,
-      viewport: VIEWPORT,
-      keepAlive: true,
-    },
-  },
-  {
-    name: 'styne',
-    requiredEnvVars: ['STYNE_API_KEY'],
-    createBrowserProvider: () => styneBrowser({
-      apiKey: process.env.STYNE_API_KEY!,
     }),
     sessionCreateOptions: {
       stealth: false,
