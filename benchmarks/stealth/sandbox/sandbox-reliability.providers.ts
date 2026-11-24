@@ -9,6 +9,7 @@ import { buddy } from '@computesdk/buddy';
 import { cloudRun } from '@computesdk/gcp/cloud-run';
 // import { collimate } from '@computesdk/collimate';
 import { cloudflare } from '@computesdk/cloudflare';
+import { createosSandbox } from '@computesdk/createos-sandbox';
 import { daytona } from '@computesdk/daytona';
 import { e2b } from '@computesdk/e2b';
 import { ec2Firecrab } from '@computesdk/ec2-firecrab';
@@ -126,6 +127,11 @@ export const providers: ProviderConfig[] = [
   //   requiredEnvVars: ['COLLIMATE_API_KEY'],
   //   createCompute: () => collimate({ apiKey: process.env.COLLIMATE_API_KEY! }),
   // },
+  {
+    name: 'createos',
+    requiredEnvVars: ['CREATEOS_SANDBOX_API_KEY'],
+    createCompute: () => createosSandbox({ apiKey: process.env.CREATEOS_SANDBOX_API_KEY! }),
+  },
   {
     name: 'daytona',
     requiredEnvVars: ['DAYTONA_API_KEY'],
