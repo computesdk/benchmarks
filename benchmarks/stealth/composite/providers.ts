@@ -61,7 +61,7 @@ const SANDBOX_PROVIDERS = [
 
 // Browser-only providers — benchmarks/stealth/browser/concurrent-providers.ts (and the
 // upstream computesdk/benchmarks browser registry).
-const BROWSER_PROVIDERS = ['browserbase', 'browseruse', 'hyperbrowser', 'kernel', 'notte', 'steel', 'tilion'] as const;
+const BROWSER_PROVIDERS = ['browserbase', 'browseruse', 'hyperbrowser', 'kernel', 'notte', 'steel', 'styne', 'tilion'] as const;
 
 // Storage-only providers — benchmarks/stealth/storage/providers.ts (tensorlake/archil
 // already appear in the sandbox list).
