@@ -155,6 +155,7 @@ const CREATE_MOUNT_PROVIDERS: Array<Pick<VolumeAdapter, 'provider' | 'storageCla
   { provider: 'microsandbox', storageClass: 'block' },
   { provider: 'sail', storageClass: 'object' },         // file system on object storage
   { provider: 'styne', storageClass: 'unknown' },
+  { provider: 'gravixlayer', storageClass: 'object' },  // managed bucket mounts
 ];
 
 const RUNTIME_ATTACH_PROVIDERS: Array<Pick<VolumeAdapter, 'provider' | 'storageClass'>> = [

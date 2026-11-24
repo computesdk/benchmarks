@@ -177,10 +177,10 @@ export const PROVIDER_SIZE_OPTIONS: Record<string, Partial<Record<MarketSize, Re
   // per-account setup (size-templates.ts), provisioned by the computesdk account-setup job.
   // https://docs.superserve.ai/llms-full.txt
   superserve: templateTiers('superserve'),
-  // Gravix built-ins: base-small 2/1G, base-medium 2/4G, base-large 4/8G,
-  // base-xlarge 8/16G. No 1 vCPU / 2 GiB tier.
+  // Gravix built-ins map 1:1 onto the market tiers: base-small 1/2G,
+  // base-medium 2/4G, base-large 4/8G, base-xlarge 8/16G.
   gravixlayer: {
-    small: null,
+    small: { templateId: 'base-small' },
     medium: { templateId: 'base-medium' },
     large: { templateId: 'base-large' },
     xlarge: { templateId: 'base-xlarge' },
