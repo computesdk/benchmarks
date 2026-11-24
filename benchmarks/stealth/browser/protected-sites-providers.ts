@@ -4,11 +4,12 @@ import { hyperbrowser } from '@computesdk/hyperbrowser';
 import { kernel } from '@computesdk/kernel';
 import { notte } from '@computesdk/notte';
 import { steel } from '@computesdk/steel';
+import { styneBrowser } from '@computesdk/styne-browser';
 import { tilion } from '@computesdk/tilion';
 import type { ConcurrentProviderConfig } from './concurrent-types.js';
 
 /**
- * Protected-sites provider configurations — the same seven providers as
+ * Protected-sites provider configurations — the same eight providers as
  * concurrent-providers.ts, but with `stealth: true` (and `proxies: true`
  * where the adapter maps it). Stealth support notes, per the current adapter
  * implementations:
@@ -30,6 +31,8 @@ import type { ConcurrentProviderConfig } from './concurrent-types.js';
  * - steel: stealth → stealthConfig.humanizeInteractions; proxies →
  *   useProxy/proxyUrl. `solveCaptcha` is not exposed through
  *   sessionCreateOptions.
+ * - styne: block-page unblocking and CAPTCHA clicks are on by default;
+ *   stealth → CAPTCHA solving; proxies → residential egress.
  * - tilion: the adapter ignores sessionCreateOptions entirely — sessions
  *   are always non-stealth on direct egress. Kept for coverage; expected to
  *   fail protected sites.
@@ -118,6 +121,19 @@ export const protectedSitesProviders: ConcurrentProviderConfig[] = [
     sessionCreateOptions: {
       stealth: true, // maps to stealthConfig.humanizeInteractions
       proxies: true,
+      headless: true,
+      viewport: VIEWPORT,
+    },
+  },
+  {
+    name: 'styne',
+    requiredEnvVars: ['STYNE_API_KEY'],
+    createBrowserProvider: () => styneBrowser({
+      apiKey: process.env.STYNE_API_KEY!,
+    }),
+    sessionCreateOptions: {
+      // Styne handles block pages by default; stealth adds CAPTCHA solving.
+      stealth: true,
       headless: true,
       viewport: VIEWPORT,
     },

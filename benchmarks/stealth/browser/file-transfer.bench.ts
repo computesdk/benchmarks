@@ -17,7 +17,7 @@
  *   1. playwright  — page.waitForEvent('download') + download.path()
  *   2. cdp         — Browser.setDownloadBehavior to a known remote dir, then
  *                    read the file back via the provider's remote-fs API
- *                    (providers with fetchRemoteFile: kernel)
+ *                    (providers with fetchRemoteFile: kernel, styne)
  *   3. provider-api— poll the provider's own session-downloads API for the
  *                    file (browserbase, browseruse, hyperbrowser, steel)
  *
