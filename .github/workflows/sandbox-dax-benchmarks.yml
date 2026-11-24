@@ -169,16 +169,19 @@ jobs:
         if: env.SHOULD_RUN == 'true' && matrix.provider == 'e2b'
         run: |
           . benchmarks/scripts/load-vault-secrets.sh '^(E2B_API_KEY)'
+          . benchmarks/scripts/apply-provider-test-env.sh
           npx tsx benchmarks/scripts/build-e2b-template.ts
       - name: Build Superserve template with 8 vCPU / 16 GiB
         if: env.SHOULD_RUN == 'true' && matrix.provider == 'superserve'
         run: |
           . benchmarks/scripts/load-vault-secrets.sh '^(SUPERSERVE_API_KEY)'
+          . benchmarks/scripts/apply-provider-test-env.sh
           npx tsx benchmarks/scripts/build-superserve-template.ts
       - name: Ensure GravixLayer default egress policy
         if: env.SHOULD_RUN == 'true' && matrix.provider == 'gravixlayer'
         run: |
           . benchmarks/scripts/load-vault-secrets.sh '^(GRAVIXLAYER_API_KEY)'
+          . benchmarks/scripts/apply-provider-test-env.sh
           npx tsx benchmarks/scripts/prepare-gravixlayer.ts
       - name: Build Novita template with 8 vCPU / 16 GiB
         if: env.SHOULD_RUN == 'true' && matrix.provider == 'novita'
@@ -186,6 +189,7 @@ jobs:
           # Tolerate a missing vault entry: without NOVITA_API_KEY the
           # benchmark reports skipped rather than failing the whole job here.
           . benchmarks/scripts/load-vault-secrets.sh '^(NOVITA_API_KEY)' || true
+          . benchmarks/scripts/apply-provider-test-env.sh
           if [ -z "${NOVITA_API_KEY:-}" ]; then
             echo "NOVITA_API_KEY not in the vault — skipping template build; the benchmark will report skipped."
             exit 0
@@ -195,6 +199,7 @@ jobs:
         if: env.SHOULD_RUN == 'true' && matrix.provider == 'northflank'
         run: |
           . benchmarks/scripts/load-vault-secrets.sh '^(NORTHFLANK_TOKEN|NORTHFLANK_PROJECT_ID)'
+          . benchmarks/scripts/apply-provider-test-env.sh
           npx tsx benchmarks/scripts/find-northflank-plan.ts
       - name: Run dax benchmark
         if: env.SHOULD_RUN == 'true'
@@ -205,18 +210,21 @@ jobs:
           ARCHIL_EXECUTION: persistent
         run: |
           . benchmarks/scripts/load-vault-secrets.sh '^(AGENT37_API_KEY|ARCHIL_API_KEY|ARCHIL_REGION|ARCHIL_DISK_ID_SANDBOX|ARKER_API_KEY|BEAM_TOKEN|BEAM_WORKSPACE_ID|BL_API_KEY|BL_WORKSPACE|BUDDY_TOKEN|BUDDY_WORKSPACE|BUDDY_PROJECT|BL_DAX_API_KEY|BL_DAX_WORKSPACE|CLOUD_RUN_SANDBOX_URL|CLOUD_RUN_SANDBOX_SECRET|CLOUDFLARE_SANDBOX_URL|SANDBOX_API_KEY|CSB_API_KEY|CREATEOS_SANDBOX_API_KEY|DAYTONA_API_KEY|DECLAW_API_KEY|E2B_API_KEY|FREESTYLE_API_KEY|GMN_API_HOST|GMN_TOKEN|GRAVIXLAYER_API_KEY|HOPX_API_KEY|ISORUN_API_KEY|LIGHTNING_API_KEY|MIOSA_API_KEY|MODAL_TOKEN_ID|MODAL_TOKEN_SECRET|MSB_API_KEY|MOSAIC_API_URL|MOSAIC_API_TOKEN|NSC_TOKEN|NORTHFLANK_TOKEN|NORTHFLANK_PROJECT_ID|NOVITA_API_KEY|OPENCOMPUTER_API_KEY|OPENCOMPUTER_API_URL|PROMIGENCE_API_KEY|RAILWAY_API_TOKEN|RAILWAY_ENVIRONMENT_ID|RUN_CLOUD_API_KEY|RUNLOOP_API_KEY|SAIL_API_KEY|SANDBOX0_TOKEN|SPRITES_TOKEN|SUPERSERVE_API_KEY|TENKI_API_KEY|TENSORLAKE_API_KEY|UPSTASH_BOX_API_KEY|VERCEL_TOKEN|VERCEL_TEAM_ID|VERCEL_PROJECT_ID|BENCHMARKS_PLATFORM_API_KEY)'
+          . benchmarks/scripts/apply-provider-test-env.sh
           if [ -n "${ARCHIL_DISK_ID_SANDBOX:-}" ]; then export ARCHIL_DISK_ID="$ARCHIL_DISK_ID_SANDBOX"; fi
 
           # uno's credential is loaded only in its own leg, not through the
           # shared allowlist above.
           if [ "${{ matrix.provider }}" = "uno" ]; then
             . benchmarks/scripts/load-vault-secrets.sh '^(UNO_API_KEY)'
+            . benchmarks/scripts/apply-provider-test-env.sh
           fi
 
           # briq's credential is loaded only in its own leg, not through the
           # shared allowlist above.
           if [ "${{ matrix.provider }}" = "briq" ]; then
             . benchmarks/scripts/load-vault-secrets.sh '^(BRIQ_API_KEY)'
+            . benchmarks/scripts/apply-provider-test-env.sh
           fi
 
           # boat's credential is loaded only in its own leg, not through the
@@ -235,6 +243,7 @@ jobs:
           # shared allowlist above.
           if [ "${{ matrix.provider }}" = "kosa8" ]; then
             . benchmarks/scripts/load-vault-secrets.sh '^(KOSA8_API_KEY)'
+            . benchmarks/scripts/apply-provider-test-env.sh
           fi
 
           # OpenComputer is kept in the daily runs but excluded from the weekly run.
