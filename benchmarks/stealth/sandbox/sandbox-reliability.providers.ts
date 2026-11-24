@@ -9,6 +9,7 @@ import { buddy } from '@computesdk/buddy';
 import { cloudRun } from '@computesdk/gcp/cloud-run';
 // import { collimate } from '@computesdk/collimate';
 import { cloudflare } from '@computesdk/cloudflare';
+import { createosSandbox } from '@computesdk/createos-sandbox';
 import { daytona } from '@computesdk/daytona';
 import { e2b } from '@computesdk/e2b';
 import { ec2Firecrab } from '@computesdk/ec2-firecrab';
@@ -22,6 +23,7 @@ import { miosa } from '@computesdk/miosa';
 import { mosaic } from '@computesdk/mosaic';
 import { namespace } from '@computesdk/namespace';
 import { novita } from '@computesdk/novita';
+import { promigence } from '@computesdk/promigence';
 // import { quilt } from '@computesdk/quilt';
 import { railway } from '@computesdk/railway';
 import { runCloud } from '@computesdk/run-cloud';
@@ -125,6 +127,11 @@ export const providers: ProviderConfig[] = [
   //   requiredEnvVars: ['COLLIMATE_API_KEY'],
   //   createCompute: () => collimate({ apiKey: process.env.COLLIMATE_API_KEY! }),
   // },
+  {
+    name: 'createos',
+    requiredEnvVars: ['CREATEOS_SANDBOX_API_KEY'],
+    createCompute: () => createosSandbox({ apiKey: process.env.CREATEOS_SANDBOX_API_KEY! }),
+  },
   {
     name: 'daytona',
     requiredEnvVars: ['DAYTONA_API_KEY'],
@@ -238,6 +245,11 @@ export const providers: ProviderConfig[] = [
     name: 'novita',
     requiredEnvVars: ['NOVITA_API_KEY'],
     createCompute: () => novita({ apiKey: process.env.NOVITA_API_KEY! }),
+  },
+  {
+    name: 'promigence',
+    requiredEnvVars: ['PROMIGENCE_API_KEY'],
+    createCompute: () => promigence({ apiKey: process.env.PROMIGENCE_API_KEY! }),
   },
   // {
   //   name: 'quilt',
