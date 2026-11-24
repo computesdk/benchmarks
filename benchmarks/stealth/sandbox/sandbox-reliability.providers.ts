@@ -22,6 +22,7 @@ import { miosa } from '@computesdk/miosa';
 import { mosaic } from '@computesdk/mosaic';
 import { namespace } from '@computesdk/namespace';
 import { novita } from '@computesdk/novita';
+import { promigence } from '@computesdk/promigence';
 // import { quilt } from '@computesdk/quilt';
 import { railway } from '@computesdk/railway';
 import { runCloud } from '@computesdk/run-cloud';
@@ -238,6 +239,11 @@ export const providers: ProviderConfig[] = [
     name: 'novita',
     requiredEnvVars: ['NOVITA_API_KEY'],
     createCompute: () => novita({ apiKey: process.env.NOVITA_API_KEY! }),
+  },
+  {
+    name: 'promigence',
+    requiredEnvVars: ['PROMIGENCE_API_KEY'],
+    createCompute: () => promigence({ apiKey: process.env.PROMIGENCE_API_KEY! }),
   },
   // {
   //   name: 'quilt',
