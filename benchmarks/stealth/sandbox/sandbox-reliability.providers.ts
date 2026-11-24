@@ -15,6 +15,7 @@ import { e2b } from '@computesdk/e2b';
 import { ec2Firecrab } from '@computesdk/ec2-firecrab';
 import { freestyle } from '@computesdk/freestyle';
 import { givemeanode } from '@computesdk/givemeanode';
+import { gravixlayer } from '@computesdk/gravixlayer';
 import { isorun } from '@computesdk/isorun';
 // import { lelantos } from '@computesdk/lelantos';
 import { modal } from '@computesdk/modal';
@@ -190,6 +191,16 @@ export const providers: ProviderConfig[] = [
     name: 'sfcompute',
     requiredEnvVars: ['GMN_TOKEN'],
     createCompute: () => givemeanode({ apiKey: process.env.GMN_TOKEN!, baseUrl: process.env.GMN_API_HOST }),
+  },
+  {
+    name: 'gravixlayer',
+    requiredEnvVars: ['GRAVIXLAYER_API_KEY'],
+    createCompute: () =>
+      gravixlayer({
+        apiKey: process.env.GRAVIXLAYER_API_KEY!,
+        cloud: process.env.GRAVIXLAYER_CLOUD ?? 'gravix',
+        region: process.env.GRAVIXLAYER_REGION ?? 'us-central-1',
+      }),
   },
   {
     name: 'isorun',

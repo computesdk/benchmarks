@@ -131,6 +131,8 @@ const MATERIALIZERS: Record<string, () => Promise<{ ref: string; note?: string }
     // default request timeout kills it mid-import.
     const t = await gravixlayer({
       apiKey: process.env.GRAVIXLAYER_API_KEY!,
+      cloud: process.env.GRAVIXLAYER_CLOUD ?? 'gravix',
+      region: process.env.GRAVIXLAYER_REGION ?? 'us-central-1',
       timeout: 10 * 60_000,
     }).template!.create({
       name: ARTIFACT_NAME,
