@@ -4,7 +4,6 @@ import { hyperbrowser } from '@computesdk/hyperbrowser';
 import { kernel } from '@computesdk/kernel';
 import { notte } from '@computesdk/notte';
 import { steel } from '@computesdk/steel';
-import { styneBrowser } from '@computesdk/styne-browser';
 import { tilion } from '@computesdk/tilion';
 import type { ConcurrentProviderConfig } from './concurrent-types.js';
 
@@ -92,19 +91,6 @@ export const concurrentProviders: ConcurrentProviderConfig[] = [
     requiredEnvVars: ['STEEL_API_KEY'],
     createBrowserProvider: () => steel({
       apiKey: process.env.STEEL_API_KEY!,
-    }),
-    sessionCreateOptions: {
-      stealth: false,
-      proxies: false,
-      headless: true,
-      viewport: VIEWPORT,
-    },
-  },
-  {
-    name: 'styne',
-    requiredEnvVars: ['STYNE_API_KEY'],
-    createBrowserProvider: () => styneBrowser({
-      apiKey: process.env.STYNE_API_KEY!,
     }),
     sessionCreateOptions: {
       stealth: false,
