@@ -640,6 +640,15 @@ async function runRound(ctx: RoundContext): Promise<{ round: RoundResult; harnes
             continue;
           }
 
+          // Some providers ignore the requested viewport; pin it so every
+          // provider screenshots the same page size.
+          const viewport = participant.sessionCreateOptions?.viewport as { width: number; height: number } | undefined;
+          if (viewport) {
+            await page.setViewportSize(viewport).catch((err) => {
+              log(`setViewportSize failed: ${errorMessage(err)}`, { level: 'warn' });
+            });
+          }
+
           pages.push(page);
           connectedSessions.push(session);
           connectedConnectMs.push(sessionConnectMs);
