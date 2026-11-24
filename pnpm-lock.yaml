@@ -111,6 +111,9 @@ importers:
       '@computesdk/gravixlayer':
         specifier: ^1.0.23
         version: 1.0.23(@opentelemetry/api@1.10.0)
+      '@computesdk/groundbox':
+        specifier: ^1.1.0
+        version: 1.1.0
       '@computesdk/hopx':
         specifier: ^0.2.52
         version: 0.2.52(bufferutil@4.2.0)(utf-8-validate@6.0.6)
@@ -165,6 +168,9 @@ importers:
       '@computesdk/opencomputer':
         specifier: ^1.0.28
         version: 1.0.28
+      '@computesdk/orble':
+        specifier: ^1.0.1
+        version: 1.0.1
       '@computesdk/promigence':
         specifier: ^1.0.16
         version: 1.0.16
@@ -198,6 +204,9 @@ importers:
       '@computesdk/superserve':
         specifier: ^0.2.27
         version: 0.2.27
+      '@computesdk/tangle':
+        specifier: ^1.1.1
+        version: 1.1.1(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))(bare-buffer@3.7.2)
       '@computesdk/tenki':
         specifier: ^0.1.28
         version: 0.1.28(bufferutil@4.2.0)(utf-8-validate@6.0.6)
@@ -895,6 +904,10 @@ packages:
     resolution: {integrity: sha512-zxW1JJV5TvaIo2l0N1uegO70emlOXXobhFgAEHwSfb/QHXeLnNoVIK4Xl62IBBr1cFB8YdcNApF94kNojUlD9Q==}
     engines: {node: '>=20.0.0'}
 
+  '@computesdk/groundbox@1.1.0':
+    resolution: {integrity: sha512-6thVEQiIng0/IJnyQKs/2JVGRZdbWUuLXKeVV8nOWD4xXbfGto95iP33dSoECGey/B857LZ7jDI4y2HQFfQX5A==}
+    engines: {node: '>=20'}
+
   '@computesdk/hopx@0.2.52':
     resolution: {integrity: sha512-OETDe5zg/U+eTnOaNbyUlHur3vJH7sAUK/LeO6dErH4p9rEKSbj8FOpaq+hQjINvGAM/IJ/qzCjrWPNimw9d0Q==}
 
@@ -954,6 +967,9 @@ packages:
   '@computesdk/opencomputer@1.0.28':
     resolution: {integrity: sha512-JXfHH7O+G3yVirvcg+9hAWPCDZ0Nlrr4RZXN1YdmuLlYEfFEz7wpm7gUkjW42wONA1QwNy1LjLkBPETt53+l/g==}
 
+  '@computesdk/orble@1.0.1':
+    resolution: {integrity: sha512-uEg/NTJeT521bXX/iskTBv1qec9d+uhfoVSaxdMNbR9H6HN7ONfwV621qfY21tn7VMGbDD9TxYOIZTFhn5YrrA==}
+
   '@computesdk/promigence@1.0.16':
     resolution: {integrity: sha512-1GvsD8pGnOyAOnE0MNaPqmIFnmEtpqLhQDafGNuNqEMoZnjSUyP+68tVie1K1H2e0zSjjclLeRbW6cEam3Vi3w==}
     engines: {node: '>=20'}
@@ -963,6 +979,9 @@ packages:
 
   '@computesdk/provider@2.1.29':
     resolution: {integrity: sha512-7LWLQ3xHqMi/JEuOzANTGj265giiYHcZ7VdY7h6oZ3U9pNK4Lg8NKVIE4iK9joJWKgDkw9HcwIO72aeha87fKw==}
+
+  '@computesdk/provider@2.1.30':
+    resolution: {integrity: sha512-j7wd+T1iIA4l5eHLsBUIU2inXLAPg84vlDXa/tzUx1FQDGC7rikZTIGmnG3q+y7CUkLVczDZq+bxYHzXrja2TA==}
 
   '@computesdk/quilt@1.0.26':
     resolution: {integrity: sha512-cYzZim0ntXJ+bUcartX6ZdY2A/onxZ/xov0/Xm51YSvQ7Cq5Tp9ODlCnTN3aRsEpDmhxYsFa442BFldP8Nt1ew==}
@@ -997,6 +1016,10 @@ packages:
 
   '@computesdk/superserve@0.2.27':
     resolution: {integrity: sha512-ieaQCf6ym5LBGRa1/SkvRjnpt5quj3qcU7bhL42XToBETC9J0NDwTamYWFaNKCQikhgRlXCvhxkLdPAaSNrqrg==}
+
+  '@computesdk/tangle@1.1.1':
+    resolution: {integrity: sha512-TcOpmZLz5K6yKz0edKCzY+vHC8/3TDiZPkfj074M1nLbR01B2jYppG18O0QZnCZV0aWoaPpRerrAgXB84MrSLw==}
+    engines: {node: '>=20.19.0'}
 
   '@computesdk/tenki@0.1.28':
     resolution: {integrity: sha512-Btw4qI0l1R6sn7MVaQ1mmxtDhRDLpVhSf6pP0Ss1zqTb4Q0bmSSeSj1vJzb4q0UC2NqgnLiHDznhKTw2tw1CXw==}
@@ -1569,6 +1592,10 @@ packages:
     peerDependencies:
       graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
 
+  '@groundbox/sdk@0.4.2':
+    resolution: {integrity: sha512-KXruKoF8VVkAmPynenNBEHU025DPSFlp3mtfePxRvwpMOAHDGEjk5rM3ciLwffq+tAXG/rgezC8RBmHSR6ginA==}
+    engines: {node: '>=20'}
+
   '@grpc/grpc-js@1.14.7':
     resolution: {integrity: sha512-W4W/fcBMGRVtG6dW2c7cw2mnpS3hvbBd+oQXjh2iYFTZDk1JJmcNqkM5KSaPubQpamlUUurrlb7G1s9NJeERmQ==}
     engines: {node: '>=12.10.0'}
@@ -1800,6 +1827,10 @@ packages:
     peerDependenciesMeta:
       ws:
         optional: true
+
+  '@noble/hashes@2.4.0':
+    resolution: {integrity: sha512-X5XaVWZIBCT7HHZGm5I7ZQXDwLG+bGXuSrMQAW+7Zvl87h1kmc1ZB1VSRJcpUfoUrGQp4Fkoxm5kZ+Ms+aW+eA==}
+    engines: {node: '>= 20.19.0'}
 
   '@nodable/entities@3.1.0':
     resolution: {integrity: sha512-LsS/DjHr+uDM647Gru/cA8+J3a3HfhttwCKLyuoyN7yXTFCxKBtSgMQBvrW9yNPa2/zDRUNuGPaH5QUFoa4arQ==}
@@ -2818,6 +2849,40 @@ packages:
   '@superserve/sdk@0.13.0':
     resolution: {integrity: sha512-6yiLyK64py5hhLOscg5JPvnQDdpPTwqCQTGokqihBcKOyTaeZ/MP2G43GHhps2Bx1z4pY+epoaWuTQQf52QNYQ==}
 
+  '@tangle-network/agent-core@1.0.4':
+    resolution: {integrity: sha512-rdZFr2b19oc0FMqqqNPnU3AIT2d5g9qtN1rYmmg85WxzmjBrTRT4G9zursoijwwsoQ3UJXhAPa7JBuhQ/DFFrw==}
+    peerDependencies:
+      '@modelcontextprotocol/sdk': ^1.30.0
+    peerDependenciesMeta:
+      '@modelcontextprotocol/sdk':
+        optional: true
+
+  '@tangle-network/agent-interface@5.10.31':
+    resolution: {integrity: sha512-hgoohEk45v+QxCp44mDO+uToLCLUtEphyhF95fICq3qLZCFW3u6eNT91SPwf8C7hnkQ2o13Gi2MC+9zQdGDp5g==}
+
+  '@tangle-network/agent-trace-contract@2.2.2':
+    resolution: {integrity: sha512-46CGFTHw1E+Fvykjdf3tS0ysQugv+DdM9TptHjALVeFzO+Z4Baiw6XWJLYiP3fx/UEk3QCIiITD1qoPi8XfgkA==}
+
+  '@tangle-network/sandbox@1.0.588':
+    resolution: {integrity: sha512-vOa20RKXMVJzM3HNdJNSkJCQIQmonUoyOiTr5kDVHKHR8moUR936fL4FTaZH0FtenXVzxaZuCVj38lFfaYVk3w==}
+    peerDependencies:
+      '@mastra/core': ^1.36.0
+      '@modelcontextprotocol/sdk': ^1.30.0
+      ai: ^6.0.175 || ^7.0.107
+      openai: ^6.36.0
+      viem: ^2.0.0
+    peerDependenciesMeta:
+      '@mastra/core':
+        optional: true
+      '@modelcontextprotocol/sdk':
+        optional: true
+      ai:
+        optional: true
+      openai:
+        optional: true
+      viem:
+        optional: true
+
   '@tenkicloud/sandbox@1.5.3':
     resolution: {integrity: sha512-R7V9FdM4/UwzZTfEBdmbgKao+aYMH3w6qAc4FZa+h6eQRF3bnMbxC2EBHMFhMQpurP+Jl5cgZYBFukSR2eNV6Q==}
     engines: {node: '>=18'}
@@ -3507,6 +3572,9 @@ packages:
 
   computesdk@4.1.23:
     resolution: {integrity: sha512-QWmHrJwuHcDFal9v+BWXrGqJ/y+IESbHfAMYsQzICnFBUaeVjOAKzcGwQTmyYYjKy5wfWXGNJLAkTWLTmDYBtA==}
+
+  computesdk@4.1.24:
+    resolution: {integrity: sha512-/GUWQdJgjnpquHWTfIs1Ebu0L1+x+e6An8E4k4EF72qqKl4aifLdFFmtK54/cvynVJF8uajBpHNDHDKdl3E7Ww==}
 
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
@@ -5600,6 +5668,15 @@ packages:
   spawndamnit@3.0.1:
     resolution: {integrity: sha512-MmnduQUuHCoFckZoWnXsTg7JaiLBJrKFj9UI2MbRPGaJeVpsLcVBu6P/IGZovziM/YBsellCmsprgNA+w0CzVg==}
 
+  spdx-exceptions@2.5.0:
+    resolution: {integrity: sha512-PiU42r+xO4UbUS1buo3LPJkjlO7430Xn5SVAhdpzzsPHsjbYVflnnFdATgabnLude+Cqu25p6N+g2lw/PFsa4w==}
+
+  spdx-expression-parse@5.0.0:
+    resolution: {integrity: sha512-vngmw3Rgn+o2arXNbnZaj5UtOEBuWBfvaI+Wc8GFfykIhA5/vdK9/Sp/XkLv63dykz2rxKDvKEHupF5P0FORcQ==}
+
+  spdx-license-ids@3.0.24:
+    resolution: {integrity: sha512-cLS9TtWkIQFyLkJ3/5aFQAOHOSKTlOs/7WDut/XPSdjom1fJhUdkepeJAKXa9Y05+FabHd0sti+Et559vDtkpQ==}
+
   split2@4.2.0:
     resolution: {integrity: sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg==}
     engines: {node: '>= 10.x'}
@@ -5933,6 +6010,10 @@ packages:
 
   undici@8.10.0:
     resolution: {integrity: sha512-HvltHd7avK13QIw/oLe4qoOLyoVSoafqJ2jYOrtMRBkbYT31eiBQ8O0ehRKZiEZCMEyLFQNIADpgCWC5fALvYQ==}
+    engines: {node: '>=22.19.0'}
+
+  undici@8.12.3:
+    resolution: {integrity: sha512-+fdndUTwBP86cVjihTp21hZHo7d6oj1c/47XPA3lL8mM0XHs+C4EkcjmgRsFnFk2f/UONGDy9ItBItmXsLOQHw==}
     engines: {node: '>=22.19.0'}
 
   undici@8.12.4:
@@ -7087,6 +7168,12 @@ snapshots:
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
+  '@computesdk/groundbox@1.1.0':
+    dependencies:
+      '@computesdk/provider': 2.1.30
+      '@groundbox/sdk': 0.4.2
+      computesdk: 4.1.24
+
   '@computesdk/hopx@0.2.52(bufferutil@4.2.0)(utf-8-validate@6.0.6)':
     dependencies:
       '@computesdk/provider': 2.1.28
@@ -7226,6 +7313,11 @@ snapshots:
       '@opencomputer/sdk': 2.3.1
       computesdk: 4.1.22
 
+  '@computesdk/orble@1.0.1':
+    dependencies:
+      '@computesdk/provider': 2.1.30
+      computesdk: 4.1.24
+
   '@computesdk/promigence@1.0.16':
     dependencies:
       '@computesdk/provider': 2.1.28
@@ -7242,6 +7334,12 @@ snapshots:
     dependencies:
       '@computesdk/cmd': 0.4.2
       computesdk: 4.1.23
+      daemond: 0.1.10
+
+  '@computesdk/provider@2.1.30':
+    dependencies:
+      '@computesdk/cmd': 0.4.2
+      computesdk: 4.1.24
       daemond: 0.1.10
 
   '@computesdk/quilt@1.0.26':
@@ -7312,6 +7410,21 @@ snapshots:
       '@computesdk/provider': 2.1.28
       '@superserve/sdk': 0.12.1
       computesdk: 4.1.22
+
+  '@computesdk/tangle@1.1.1(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))(bare-buffer@3.7.2)':
+    dependencies:
+      '@computesdk/provider': 2.1.30
+      '@tangle-network/sandbox': 1.0.588(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))(bare-buffer@3.7.2)
+      computesdk: 4.1.24
+    transitivePeerDependencies:
+      - '@mastra/core'
+      - '@modelcontextprotocol/sdk'
+      - ai
+      - bare-abort-controller
+      - bare-buffer
+      - openai
+      - react-native-b4a
+      - viem
 
   '@computesdk/tenki@0.1.28(bufferutil@4.2.0)(utf-8-validate@6.0.6)':
     dependencies:
@@ -7774,6 +7887,10 @@ snapshots:
     dependencies:
       graphql: 16.15.0
 
+  '@groundbox/sdk@0.4.2':
+    dependencies:
+      zod: 4.6.7
+
   '@grpc/grpc-js@1.14.7':
     dependencies:
       '@grpc/proto-loader': 0.8.1
@@ -8056,6 +8173,8 @@ snapshots:
       openapi-fetch: 0.17.0
     optionalDependencies:
       ws: 8.22.2(bufferutil@4.2.0)(utf-8-validate@6.0.6)
+
+  '@noble/hashes@2.4.0': {}
 
   '@nodable/entities@3.1.0': {}
 
@@ -9198,6 +9317,37 @@ snapshots:
 
   '@superserve/sdk@0.13.0': {}
 
+  '@tangle-network/agent-core@1.0.4(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))':
+    dependencies:
+      '@tangle-network/agent-interface': 5.10.31
+      '@tangle-network/agent-trace-contract': 2.2.2
+      zod: 4.6.7
+    optionalDependencies:
+      '@modelcontextprotocol/sdk': 1.32.2(zod@4.6.7)
+
+  '@tangle-network/agent-interface@5.10.31':
+    dependencies:
+      '@noble/hashes': 2.4.0
+      spdx-expression-parse: 5.0.0
+      zod: 4.6.7
+
+  '@tangle-network/agent-trace-contract@2.2.2': {}
+
+  '@tangle-network/sandbox@1.0.588(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))(bare-buffer@3.7.2)':
+    dependencies:
+      '@tangle-network/agent-core': 1.0.4(@modelcontextprotocol/sdk@1.32.2(zod@4.6.7))
+      '@tangle-network/agent-interface': 5.10.31
+      '@tangle-network/agent-trace-contract': 2.2.2
+      tar-stream: 3.2.2(bare-buffer@3.7.2)
+      zod: 4.6.7
+    optionalDependencies:
+      '@modelcontextprotocol/sdk': 1.32.2(zod@4.6.7)
+      undici: 8.12.3
+    transitivePeerDependencies:
+      - bare-abort-controller
+      - bare-buffer
+      - react-native-b4a
+
   '@tenkicloud/sandbox@1.5.3(bufferutil@4.2.0)(utf-8-validate@6.0.6)':
     dependencies:
       '@bufbuild/protobuf': 2.12.1
@@ -10001,6 +10151,12 @@ snapshots:
       daemond: 0.1.9
 
   computesdk@4.1.23:
+    dependencies:
+      '@benchsdk/cli': 0.9.5
+      '@computesdk/cmd': 0.4.2
+      daemond: 0.1.10
+
+  computesdk@4.1.24:
     dependencies:
       '@benchsdk/cli': 0.9.5
       '@computesdk/cmd': 0.4.2
@@ -12269,6 +12425,15 @@ snapshots:
       cross-spawn: 7.0.6
       signal-exit: 4.1.0
 
+  spdx-exceptions@2.5.0: {}
+
+  spdx-expression-parse@5.0.0:
+    dependencies:
+      spdx-exceptions: 2.5.0
+      spdx-license-ids: 3.0.24
+
+  spdx-license-ids@3.0.24: {}
+
   split2@4.2.0: {}
 
   sprintf-js@1.0.3: {}
@@ -12624,6 +12789,9 @@ snapshots:
   undici@7.30.2: {}
 
   undici@8.10.0: {}
+
+  undici@8.12.3:
+    optional: true
 
   undici@8.12.4: {}
 

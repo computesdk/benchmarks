@@ -211,6 +211,11 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // Styne `large` is 8 vCPU / 16 GiB; its default 300s lifetime is below the
   // 10-min build deadline, so raise it (same backstop as blaxel/novita).
   styne:        { size: 'large', timeout: 900_000 },
+  // Groundbox/Orble xl is 8 vCPU / 16 GiB. Tangle takes raw cpu/memory (MB);
+  // its server-default lifetime is unpublished, so set the same backstop.
+  groundbox:    { sizeClass: 'xl' },
+  orble:        { sizeClass: 'xl' },
+  tangle:       { cpu: 8, memory: 16384, timeout: 900_000 },
   // Railway sizes via `resources` on create(); matches the 8 vCPU / 16 GiB
   // DAX shape used in the stealth suite.
   railway:      { resources: { cpu: 8, memoryGB: 16 } },
