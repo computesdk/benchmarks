@@ -120,15 +120,15 @@ async function buildBlaxelImage(): Promise<string> {
     '',
   ].join('\n');
   const name = `${ARTIFACT_NAME}-${createHash('sha256').update(dockerfile).digest('hex').slice(0, 8)}`;
-  const path = { resourceType: BLAXEL_IMAGE_TYPE, imageName: name };
+  const imageRef = { resourceType: BLAXEL_IMAGE_TYPE, imageName: name };
 
-  const before = await getImage({ path });
+  const before = await getImage({ path: imageRef });
   const existed = before.error === undefined;
   if (!existed && before.response?.status !== 404) {
     throw new Error(`blaxel image ${name}: read HTTP ${before.response?.status}`);
   }
   const lastEventBefore = Math.max(0, ...(before.data?.metadata?.events ?? []).map(blaxelEventTime));
-  const tagsBefore = new Set(existed ? (await listBlaxelTags(path)).map((t) => t.name) : []);
+  const tagsBefore = new Set(existed ? (await listBlaxelTags(imageRef)).map((t) => t.name) : []);
 
   await blaxelSettings.authenticate();
   const created = await fetch(`${blaxelSettings.baseUrl}/images?upload=true`, {
@@ -154,7 +154,7 @@ async function buildBlaxelImage(): Promise<string> {
   const deadline = Date.now() + BLAXEL_BUILD_TIMEOUT_MS;
   let builtAt: number | undefined;
   for (;;) {
-    const { data, error, response } = await getImage({ path });
+    const { data, error, response } = await getImage({ path: imageRef });
     if (error !== undefined && response?.status !== 404) {
       throw new Error(`blaxel image ${name}: read HTTP ${response?.status}`);
     }
@@ -168,7 +168,7 @@ async function buildBlaxelImage(): Promise<string> {
       builtAt ??= Date.now();
       // A new build adds a tag; an identical rebuild reuses one without
       // saying so, so after the settle time any tag of this image will do.
-      const tags = await listBlaxelTags(path);
+      const tags = await listBlaxelTags(imageRef);
       const fresh = tags.find((t) => t.name && !tagsBefore.has(t.name));
       const settled = Date.now() - builtAt >= BLAXEL_TAG_SETTLE_MS;
       const tag = fresh ?? (settled ? newestBlaxelTag(tags) : undefined);
@@ -182,12 +182,12 @@ async function buildBlaxelImage(): Promise<string> {
 }
 
 /** Every tag of a Blaxel image, following the list's pages. */
-async function listBlaxelTags(path: { resourceType: string; imageName: string }): Promise<BlaxelImageTag[]> {
+async function listBlaxelTags(imageRef: { resourceType: string; imageName: string }): Promise<BlaxelImageTag[]> {
   const tags: BlaxelImageTag[] = [];
   let cursor: string | undefined;
   do {
-    const { data, error, response } = await listImageTags({ path, query: { limit: 100, ...(cursor ? { cursor } : {}) } });
-    if (error !== undefined || !data) throw new Error(`blaxel image ${path.imageName}: tags HTTP ${response?.status}`);
+    const { data, error, response } = await listImageTags({ path: imageRef, query: { limit: 100, ...(cursor ? { cursor } : {}) } });
+    if (error !== undefined || !data) throw new Error(`blaxel image ${imageRef.imageName}: tags HTTP ${response?.status}`);
     tags.push(...data.data);
     cursor = data.meta?.hasMore ? data.meta.nextCursor : undefined;
   } while (cursor);
