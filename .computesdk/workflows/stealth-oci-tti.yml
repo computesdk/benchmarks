@@ -278,6 +278,9 @@ jobs:
           - run-cloud
           - sandbox0
           - styne
+          - groundbox
+          - orble
+          - tangle
           - superserve
           - luxor
           - tensorlake
@@ -374,6 +377,9 @@ jobs:
             run-cloud) PROVIDER_KEYS='RUN_CLOUD_API_KEY' ;;
             sandbox0) PROVIDER_KEYS='SANDBOX0_TOKEN' ;;
             styne) PROVIDER_KEYS='STYNE_API_KEY' ;;
+            groundbox) PROVIDER_KEYS='GROUNDBOX_API_KEY' ;;
+            orble) PROVIDER_KEYS='ORBLE_API_KEY' ;;
+            tangle) PROVIDER_KEYS='TANGLE_API_KEY' ;;
             superserve) PROVIDER_KEYS='SUPERSERVE_API_KEY' ;;
             luxor) PROVIDER_KEYS='TENKI_API_KEY' ;;
             tensorlake) PROVIDER_KEYS='TENSORLAKE_API_KEY' ;;

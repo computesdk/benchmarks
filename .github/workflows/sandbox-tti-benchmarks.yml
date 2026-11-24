@@ -130,6 +130,9 @@ jobs:
           - sandbox0
           - sprites
           - styne
+          - groundbox
+          - orble
+          - tangle
           - superserve
           - luxor
           - tensorlake
@@ -250,6 +253,24 @@ jobs:
           # shared allowlist above.
           if [ "${{ matrix.provider }}" = "styne" ]; then
             . benchmarks/scripts/load-vault-secrets.sh '^(STYNE_API_KEY)'
+          fi
+
+          # groundbox's credential is loaded only in its own leg, not through the
+          # shared allowlist above.
+          if [ "${{ matrix.provider }}" = "groundbox" ]; then
+            . benchmarks/scripts/load-vault-secrets.sh '^(GROUNDBOX_API_KEY)'
+          fi
+
+          # orble's credential is loaded only in its own leg, not through the
+          # shared allowlist above.
+          if [ "${{ matrix.provider }}" = "orble" ]; then
+            . benchmarks/scripts/load-vault-secrets.sh '^(ORBLE_API_KEY)'
+          fi
+
+          # tangle's credential is loaded only in its own leg, not through the
+          # shared allowlist above.
+          if [ "${{ matrix.provider }}" = "tangle" ]; then
+            . benchmarks/scripts/load-vault-secrets.sh '^(TANGLE_API_KEY)'
           fi
 
           # kosa8's credential is loaded only in its own leg, not through the

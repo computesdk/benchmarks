@@ -205,6 +205,12 @@ export const PROVIDER_SIZE_OPTIONS: Record<string, Partial<Record<MarketSize, Re
   // Styne sizes small/default/large are 2/4, 4/8 and 8/16 (vCPU/GiB); it has
   // no 1-vCPU size, so market small is unsupported.
   styne: { small: null, medium: { size: 'small' }, large: { size: 'default' }, xlarge: { size: 'large' } },
+  // Groundbox and Orble size by ComputeSDK sizeClass: sm/md/lg/xl are
+  // 1/2, 2/4, 4/8 and 8/16 (vCPU/GiB), sent as exactly that shape.
+  groundbox: { small: { sizeClass: 'sm' }, medium: { sizeClass: 'md' }, large: { sizeClass: 'lg' }, xlarge: { sizeClass: 'xl' } },
+  orble: { small: { sizeClass: 'sm' }, medium: { sizeClass: 'md' }, large: { sizeClass: 'lg' }, xlarge: { sizeClass: 'xl' } },
+  // Tangle takes raw cpu (cores) / memory (MB) on create.
+  tangle: allTiers((c, m) => ({ cpu: c, memory: m })),
   // Novita sizes at template build (cpuCount/memoryMB, E2B-compatible); tiers
   // are per-account setup (size-templates.ts). Raise the default 300s
   // lifetime — same backstop pattern as blaxel.

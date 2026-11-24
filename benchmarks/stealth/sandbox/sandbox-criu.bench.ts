@@ -42,7 +42,7 @@ const PUBLIC_PROVIDERS = new Set([
   'createos', 'daytona', 'e2b', 'freestyle', 'sfcompute', 'gravixlayer', 'hopx', 'isorun', 'kosa8',
   'lelantos', 'modal', 'microsandbox', 'promigence', 'miosa', 'mosaic', 'namespace', 'neevcloud',
   'northflank', 'novita', 'railway', 'run-cloud', 'sandbox0', 'sail', 'sprites', 'styne', 'superserve',
-  'luxor', 'tensorlake', 'upstash', 'vercel',
+  'luxor', 'groundbox', 'orble', 'tangle', 'tensorlake', 'upstash', 'vercel',
 ]);
 const criuProviders = providers.filter((p) => PUBLIC_PROVIDERS.has(p.name));
 

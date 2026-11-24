@@ -38,6 +38,9 @@ import { sandbox0 } from '@computesdk/sandbox0';
 import { sail } from '@computesdk/sail';
 import { sprites } from '@computesdk/sprites';
 import { styne } from '@computesdk/styne';
+import { groundbox } from '@computesdk/groundbox';
+import { orble } from '@computesdk/orble';
+import { tangle } from '@computesdk/tangle';
 import { superserve } from '@computesdk/superserve';
 import { tenki } from '@computesdk/tenki';
 import { tensorlake } from '@computesdk/tensorlake'
@@ -362,6 +365,21 @@ export const providers: ProviderConfig[] = [
     name: 'styne',
     requiredEnvVars: ['STYNE_API_KEY'],
     createCompute: () => styne({ apiKey: process.env.STYNE_API_KEY! }),
+  },
+  {
+    name: 'groundbox',
+    requiredEnvVars: ['GROUNDBOX_API_KEY'],
+    createCompute: () => groundbox({ apiKey: process.env.GROUNDBOX_API_KEY! }),
+  },
+  {
+    name: 'orble',
+    requiredEnvVars: ['ORBLE_API_KEY'],
+    createCompute: () => orble({ apiKey: process.env.ORBLE_API_KEY! }),
+  },
+  {
+    name: 'tangle',
+    requiredEnvVars: ['TANGLE_API_KEY'],
+    createCompute: () => tangle({ apiKey: process.env.TANGLE_API_KEY!, agent: false }),
   },
   {
     name: 'superserve',
