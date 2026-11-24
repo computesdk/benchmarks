@@ -4,18 +4,20 @@ import { browseruse } from '@computesdk/browseruse';
 import { hyperbrowser } from '@computesdk/hyperbrowser';
 import { kernel } from '@computesdk/kernel';
 import { notte } from '@computesdk/notte';
+import { outcrawl } from '@computesdk/outcrawl';
 import { steel } from '@computesdk/steel';
+import { styneBrowser } from '@computesdk/styne-browser';
 import { tilion } from '@computesdk/tilion';
 import type { ConcurrentProviderConfig } from './concurrent-types.js';
 
 /**
  * File-transfer provider configurations.
  *
- * Same 7 browser providers as concurrent-providers.ts (browserbase,
- * browseruse, hyperbrowser, kernel, notte, steel, tilion) with the same
- * 1920x1080 viewport. On top of that, each provider can expose hooks that let
- * the benchmark retrieve downloaded bytes when the remote browser cannot hand
- * them back through playwright:
+ * Same 9 browser providers as concurrent-providers.ts (browserbase,
+ * browseruse, hyperbrowser, kernel, notte, outcrawl, steel, styne, tilion)
+ * with the same 1920x1080 viewport. On top of that, each provider can expose
+ * hooks that let the benchmark retrieve downloaded bytes when the remote
+ * browser cannot hand them back through playwright:
  *
  *   fetchRemoteFile — read an absolute path from the remote browser's
  *     filesystem. Enables the `cdp` mechanism (Browser.setDownloadBehavior to
@@ -24,9 +26,9 @@ import type { ConcurrentProviderConfig } from './concurrent-types.js';
  *     downloads. Enables the `provider-api` mechanism (poll the provider's
  *     own downloads/files API for the file the page triggered).
  *
- * Providers with no hook (tilion) can still pass via the `playwright`
- * mechanism; if that fails the download step records a capability result of
- * unsupported rather than failing the task.
+ * Providers with no hook (outcrawl, styne, tilion) can still pass via the
+ * `playwright` mechanism; if that fails the download step records a
+ * capability result of unsupported rather than failing the task.
  */
 
 export interface RetrievedFile {
@@ -248,6 +250,19 @@ export const fileTransferProviders: FileTransferProviderConfig[] = [
     fetchSessionDownloads: notteFetchSessionDownloads,
   },
   {
+    name: 'outcrawl',
+    requiredEnvVars: ['OUTCRAWL_API_KEY'],
+    createBrowserProvider: () => outcrawl({
+      apiKey: process.env.OUTCRAWL_API_KEY!,
+    }),
+    sessionCreateOptions: {
+      stealth: false,
+      proxies: false,
+      headless: true,
+      viewport: VIEWPORT,
+    },
+  },
+  {
     name: 'steel',
     requiredEnvVars: ['STEEL_API_KEY'],
     createBrowserProvider: () => steel({
@@ -262,6 +277,19 @@ export const fileTransferProviders: FileTransferProviderConfig[] = [
     // steel session filesystem is mounted at /files (files API / files.zip).
     downloadBehavior: { behavior: 'allow', downloadPath: '/files' },
     fetchSessionDownloads: steelFetchSessionDownloads,
+  },
+  {
+    name: 'styne',
+    requiredEnvVars: ['STYNE_API_KEY'],
+    createBrowserProvider: () => styneBrowser({
+      apiKey: process.env.STYNE_API_KEY!,
+    }),
+    sessionCreateOptions: {
+      stealth: false,
+      proxies: false,
+      headless: true,
+      viewport: VIEWPORT,
+    },
   },
   {
     name: 'tilion',

@@ -3,12 +3,14 @@ import { browseruse } from '@computesdk/browseruse';
 import { hyperbrowser } from '@computesdk/hyperbrowser';
 import { kernel } from '@computesdk/kernel';
 import { notte } from '@computesdk/notte';
+import { outcrawl } from '@computesdk/outcrawl';
 import { steel } from '@computesdk/steel';
+import { styneBrowser } from '@computesdk/styne-browser';
 import { tilion } from '@computesdk/tilion';
 import type { ConcurrentProviderConfig } from './concurrent-types.js';
 
 /**
- * Protected-sites provider configurations — the same seven providers as
+ * Protected-sites provider configurations — the same nine providers as
  * concurrent-providers.ts, but with `stealth: true` (and `proxies: true`
  * where the adapter maps it). Stealth support notes, per the current adapter
  * implementations:
@@ -30,6 +32,10 @@ import type { ConcurrentProviderConfig } from './concurrent-types.js';
  * - steel: stealth → stealthConfig.humanizeInteractions; proxies →
  *   useProxy/proxyUrl. `solveCaptcha` is not exposed through
  *   sessionCreateOptions.
+ * - outcrawl: every session is already a stealth browser on a residential
+ *   exit; the adapter adds no params for `stealth`/`proxies: true`.
+ * - styne: stealth → `captcha: 'solve'` (metered per solve, on top of the
+ *   default unblock + CAPTCHA click); proxies → residential exit.
  * - tilion: the adapter ignores sessionCreateOptions entirely — sessions
  *   are always non-stealth on direct egress. Kept for coverage; expected to
  *   fail protected sites.
@@ -110,6 +116,20 @@ export const protectedSitesProviders: ConcurrentProviderConfig[] = [
     },
   },
   {
+    name: 'outcrawl',
+    requiredEnvVars: ['OUTCRAWL_API_KEY'],
+    createBrowserProvider: () => outcrawl({
+      apiKey: process.env.OUTCRAWL_API_KEY!,
+    }),
+    sessionCreateOptions: {
+      // Every Outcrawl session is stealth on a residential exit already.
+      stealth: true,
+      proxies: true,
+      headless: true,
+      viewport: VIEWPORT,
+    },
+  },
+  {
     name: 'steel',
     requiredEnvVars: ['STEEL_API_KEY'],
     createBrowserProvider: () => steel({
@@ -117,6 +137,19 @@ export const protectedSitesProviders: ConcurrentProviderConfig[] = [
     }),
     sessionCreateOptions: {
       stealth: true, // maps to stealthConfig.humanizeInteractions
+      proxies: true,
+      headless: true,
+      viewport: VIEWPORT,
+    },
+  },
+  {
+    name: 'styne',
+    requiredEnvVars: ['STYNE_API_KEY'],
+    createBrowserProvider: () => styneBrowser({
+      apiKey: process.env.STYNE_API_KEY!,
+    }),
+    sessionCreateOptions: {
+      stealth: true,
       proxies: true,
       headless: true,
       viewport: VIEWPORT,
