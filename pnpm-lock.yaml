@@ -171,6 +171,9 @@ importers:
       '@computesdk/orble':
         specifier: ^1.0.1
         version: 1.0.1
+      '@computesdk/outcrawl':
+        specifier: ^0.1.1
+        version: 0.1.1
       '@computesdk/promigence':
         specifier: ^1.0.16
         version: 1.0.16
@@ -201,6 +204,9 @@ importers:
       '@computesdk/styne':
         specifier: ^1.0.1
         version: 1.0.1
+      '@computesdk/styne-browser':
+        specifier: ^0.1.1
+        version: 0.1.1
       '@computesdk/superserve':
         specifier: ^0.2.27
         version: 0.2.27
@@ -970,6 +976,9 @@ packages:
   '@computesdk/orble@1.0.1':
     resolution: {integrity: sha512-uEg/NTJeT521bXX/iskTBv1qec9d+uhfoVSaxdMNbR9H6HN7ONfwV621qfY21tn7VMGbDD9TxYOIZTFhn5YrrA==}
 
+  '@computesdk/outcrawl@0.1.1':
+    resolution: {integrity: sha512-JwYBmp4worSMNjmBLMPnB1gXSWSTi762lFHnuN1u/ppEWejVBYuAGojDvdVU6/KsMyUfB0RjzeeIj0YeUNCxjw==}
+
   '@computesdk/promigence@1.0.16':
     resolution: {integrity: sha512-1GvsD8pGnOyAOnE0MNaPqmIFnmEtpqLhQDafGNuNqEMoZnjSUyP+68tVie1K1H2e0zSjjclLeRbW6cEam3Vi3w==}
     engines: {node: '>=20'}
@@ -1010,6 +1019,9 @@ packages:
 
   '@computesdk/steel@0.2.30':
     resolution: {integrity: sha512-vLYs3QXBiz/HFlLX5HaiGLNoqt3W+Ei12KQpOcdqmC+G86BDw7cP+33Jng1eaGEHRyw19NN1/wfuXtHZy4UZnA==}
+
+  '@computesdk/styne-browser@0.1.1':
+    resolution: {integrity: sha512-KVO+RcX2XcvrGW0AdyVBJd2XmcO8FX9dG6MOXmd+PHS49gapyGWr6EArm+XdsckMyFP/aEqWf41EifT5WdLQhw==}
 
   '@computesdk/styne@1.0.1':
     resolution: {integrity: sha512-b6DuQMdDIg58u+TCDZEYqLWjYs1Egh5IP4kRM/aSJRToVFz7Mch7fkPhvmcRauzq7C/JQoL6uh8gsOssQDaZcA==}
@@ -7318,6 +7330,11 @@ snapshots:
       '@computesdk/provider': 2.1.30
       computesdk: 4.1.24
 
+  '@computesdk/outcrawl@0.1.1':
+    dependencies:
+      '@computesdk/provider': 2.1.30
+      computesdk: 4.1.24
+
   '@computesdk/promigence@1.0.16':
     dependencies:
       '@computesdk/provider': 2.1.28
@@ -7399,6 +7416,11 @@ snapshots:
       steel-sdk: 0.18.0
     transitivePeerDependencies:
       - encoding
+
+  '@computesdk/styne-browser@0.1.1':
+    dependencies:
+      '@computesdk/provider': 2.1.30
+      computesdk: 4.1.24
 
   '@computesdk/styne@1.0.1':
     dependencies:
