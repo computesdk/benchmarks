@@ -61,6 +61,7 @@ for (const failSetup of [false, true]) {
       };
       const page = {
         context: () => context,
+        url: () => 'https://en.wikipedia.org/wiki/Fixture',
         goto: async () => {
           assert.equal(hasCookie, true, 'first navigation has a cookie');
           assert.equal(prepared, sessions, 'all contexts are ready before any action');
@@ -143,6 +144,7 @@ for (const failSetup of [false, true]) {
     };
     const page = {
       context: () => context,
+      url: () => 'https://en.wikipedia.org/wiki/Fixture',
       goto: async () => { assert.ok(prepared); navigations++; return { status: () => 200 }; },
       waitForSelector: async () => ({}), screenshot: async () => Buffer.alloc(0),
       textContent: async () => 'Fixture', goBack: async () => {},

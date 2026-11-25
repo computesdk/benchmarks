@@ -12,11 +12,13 @@ import type { Page, ElementHandle } from 'playwright-native-core';
 import { withTimeout } from '../src/util/timeout.js';
 import type { ActionResult, ActionType } from './playwright-types.js';
 import { safeError } from './playwright-providers.js';
+import { firstWikipediaArticleLink } from '../../browser/wikipedia.js';
+
+export { WIKIPEDIA_ARTICLE_LINK_SELECTOR as ARTICLE_LINK_SELECTOR } from '../../browser/wikipedia.js';
 
 const LOOPS_PER_SESSION = 5;
 export const ACTIONS_PER_SESSION = LOOPS_PER_SESSION * 10;
 export const ACTION_TIMEOUT_MS = 30_000;
-export const ARTICLE_LINK_SELECTOR = '#mw-content-text a[href*="/wiki/"]';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -54,14 +56,7 @@ export interface PageState {
 }
 
 export async function firstArticleLink(page: Page): Promise<ElementHandle> {
-  await page.waitForSelector(ARTICLE_LINK_SELECTOR, { timeout: 10_000 });
-  const links = await page.$$(ARTICLE_LINK_SELECTOR);
-  for (const link of links) {
-    const href = await link.getAttribute('href');
-    const match = href?.match(/\/wiki\/([^#]*)/);
-    if (match && !match[1].includes(':')) return link;
-  }
-  throw new Error('No article body link found on page');
+  return firstWikipediaArticleLink(page);
 }
 
 export async function runActionLoop(page: Page, url: string, actions: ActionResult[], state: PageState = {}): Promise<void> {

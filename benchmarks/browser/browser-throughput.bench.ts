@@ -20,7 +20,7 @@ import { chromium, type Browser, type Page } from 'playwright-core';
 import { defineBenchmarkConfig, defineTask, TaskError } from '@benchsdk/runner';
 import type { JsonValue } from '@benchsdk/api';
 import { withTimeout } from '../src/util/timeout.js';
-import { seedWikipediaCookie } from './wikipedia.js';
+import { firstWikipediaArticleLink, seedWikipediaCookie } from './wikipedia.js';
 import { throughputProviders as allProviders } from './throughput-providers.js';
 import { selectProviders } from '../scripts/provider-selection.js';
 import { writeThroughputLegacyResults } from './browser-throughput-legacy-results.js';
@@ -99,11 +99,6 @@ const ACTION_TIMEOUT_MS = 30_000;
 // Match article-body links across classic MediaWiki HTML (relative "/wiki/Foo"),
 // Parsoid read-HTML (protocol-relative "//en.wikipedia.org/wiki/Foo"), and the
 // newer absolute form ("https://en.wikipedia.org/wiki/Foo").
-// We can't use :not([href*=":"]) because that also rejects https: URLs. Instead
-// we select all /wiki/ links in the content area and filter in JS by checking
-// that the path segment after /wiki/ has no namespace colon (Help:, File:, etc.).
-const ARTICLE_LINK_SELECTOR = '#mw-content-text a[href*="/wiki/"]';
-
 // Providers must be benchmarked against the same pages to be comparable, but in
 // CI each provider runs as a separate job/process — so `Special:Random` makes
 // each one draw different articles. The workflow resolves one concrete article
@@ -134,14 +129,6 @@ function parseNavUrls(): string[] {
 function navUrlForIteration(i: number): string {
   if (NAV_URLS.length > 0) return NAV_URLS[i % NAV_URLS.length];
   return RANDOM_URL;
-}
-
-/** Returns true if an href points to a real article (not a namespace page). */
-function isArticleLink(href: string | null): boolean {
-  if (!href) return false;
-  const match = href.match(/\/wiki\/([^#]*)/);
-  if (!match) return false;
-  return !match[1].includes(':');
 }
 
 async function timeAction<T>(
@@ -244,23 +231,11 @@ async function runActionLoop(page: Page, results: ActionResult[], navigateUrl: s
       results.push({ index: baseIdx + 4, type: 'textContent', durationMs: r.durationMs, success: r.success, error: r.error });
     }
 
-    // 5. Click first article link (filter out meta pages like Help:, File:, etc.)
+    // 5. Click the first visible, same-origin article link.
     let clickSucceeded = false;
     {
       const r = await timeAction(async () => {
-        // Wait for any /wiki/ link to appear, then filter in JS for article
-        // links (no namespace colon after /wiki/). This handles relative,
-        // protocol-relative, and absolute https:// URL formats.
-        await page.waitForSelector(ARTICLE_LINK_SELECTOR, { timeout: 10_000 });
-        const links = await page.$$(ARTICLE_LINK_SELECTOR);
-        for (const link of links) {
-          const href = await link.getAttribute('href');
-          if (isArticleLink(href)) {
-            await link.click();
-            return;
-          }
-        }
-        throw new Error('No article body link found on page');
+        await (await firstWikipediaArticleLink(page)).click();
       });
       clickSucceeded = r.success;
       results.push({ index: baseIdx + 5, type: 'click', durationMs: r.durationMs, success: r.success, error: r.error });

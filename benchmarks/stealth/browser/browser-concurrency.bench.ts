@@ -36,7 +36,7 @@ import path from 'node:path';
 import { continuousScoring } from '../sandbox/performance-runtime-scoring.js';
 import { fileURLToPath } from 'node:url';
 import { chromium, type Browser, type Page } from 'playwright-core';
-import { seedWikipediaCookie } from '../../browser/wikipedia.js';
+import { firstWikipediaArticleLink, seedWikipediaCookie } from '../../browser/wikipedia.js';
 import { defineBenchmarkConfig, defineTask, TaskError, type TaskContext } from '@benchsdk/runner';
 import type { JsonValue } from '@benchsdk/client';
 import { withTimeout } from '../src/util/timeout.js';
@@ -197,7 +197,6 @@ export const config = defineBenchmarkConfig({
 // ── Wikipedia action loop (same as throughput benchmark, 1 loop = 10 actions) ─
 const RANDOM_URL = 'https://en.wikipedia.org/wiki/Special:Random';
 const FIRST_HEADING = '#firstHeading';
-const ARTICLE_LINK_SELECTOR = '#mw-content-text a[href*="/wiki/"]';
 
 const NAV_URLS: string[] = parseNavUrls();
 
@@ -227,13 +226,6 @@ function parseNavUrls(): string[] {
 function navUrlForSession(concurrencyLevel: number, roundIndex: number, sessionIndex: number): string {
   if (NAV_URLS.length === 0) return RANDOM_URL;
   return NAV_URLS[(roundIndex * concurrencyLevel + sessionIndex) % NAV_URLS.length];
-}
-
-function isArticleLink(href: string | null): boolean {
-  if (!href) return false;
-  const match = href.match(/\/wiki\/([^#]*)/);
-  if (!match) return false;
-  return !match[1].includes(':');
 }
 
 async function timeAction<T>(
@@ -353,20 +345,11 @@ async function runActionLoop(
       results.push({ index: baseIdx + 4, type: 'textContent', durationMs: r.durationMs, success: r.success, error: r.error });
     }
 
-    // 5. Click first article link
+    // 5. Click the first visible, same-origin article link.
     let clickSucceeded = false;
     {
       const r = await timeAction(async () => {
-        await page.waitForSelector(ARTICLE_LINK_SELECTOR, { timeout: 10_000 });
-        const links = await page.$$(ARTICLE_LINK_SELECTOR);
-        for (const link of links) {
-          const href = await link.getAttribute('href');
-          if (isArticleLink(href)) {
-            await link.click();
-            return;
-          }
-        }
-        throw new Error('No article body link found on page');
+        await (await firstWikipediaArticleLink(page)).click();
       });
       clickSucceeded = r.success;
       results.push({ index: baseIdx + 5, type: 'click', durationMs: r.durationMs, success: r.success, error: r.error });
