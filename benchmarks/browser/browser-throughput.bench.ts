@@ -1,4 +1,3 @@
-
 /**
  * Browser throughput benchmark: each session runs a fixed action loop; sessions
  * are interleaved across providers (groupBy 'round') so every provider runs its
@@ -21,6 +20,7 @@ import { defineBenchmarkConfig, defineTask, TaskError } from '@benchsdk/runner';
 import type { JsonValue } from '@benchsdk/api';
 import { withTimeout } from '../src/util/timeout.js';
 import { seedWikipediaCookie } from './wikipedia.js';
+import { installNavigationRecovery } from './navigation-recovery.js';
 import { throughputProviders as allProviders } from './throughput-providers.js';
 import { selectProviders } from '../scripts/provider-selection.js';
 import { writeThroughputLegacyResults } from './browser-throughput-legacy-results.js';
@@ -191,123 +191,132 @@ function pushSkippedActions(results: ActionResult[], baseIdx: number, indexes: n
 }
 
 async function runActionLoop(page: Page, results: ActionResult[], navigateUrl: string): Promise<void> {
-  let navStatus: number | null = null;
-  for (let loop = 0; loop < LOOPS_PER_SESSION; loop++) {
-    const baseIdx = loop * ACTIONS_PER_LOOP;
+  const recovery = installNavigationRecovery(page, { timeoutMs: ACTION_TIMEOUT_MS });
+  const record = (action: ActionResult) => {
+    const navigationEvents = recovery.drainEvents();
+    results.push({ ...action, ...(navigationEvents.length ? { navigationEvents } : {}) });
+  };
+  try {
+    let navStatus: number | null = null;
+    for (let loop = 0; loop < LOOPS_PER_SESSION; loop++) {
+      const baseIdx = loop * ACTIONS_PER_LOOP;
 
-    // 1. Navigate to the article for this iteration (shared across providers)
-    {
-      const r = await timeAction(() =>
-        page.goto(navigateUrl, { waitUntil: 'load' }) as Promise<unknown>,
-      );
-      navStatus = (r.value as { status?: () => number } | null | undefined)?.status?.() ?? null;
-      const navBlocked = !r.success || (navStatus !== null && navStatus >= 400);
-      // An error page (rate limit, block page, dead target) has no article
-      // content — letting the loop run burns ~70s of selector timeouts per
-      // page and can push a leg over the job timeout. Record the navigate as
-      // failed and skip the rest, same as the click-fail path below.
-      results.push({
-        index: baseIdx + 1,
-        type: 'navigate',
-        durationMs: r.durationMs,
-        success: r.success && !navBlocked,
-        error: navBlocked && r.success ? `HTTP ${navStatus}` : r.error,
-      });
-      if (navBlocked) {
-        const reason = !r.success ? `navigate failed: ${r.error}` : `navigate returned HTTP ${navStatus}`;
-        pushSkippedActions(results, baseIdx, [2, 3, 4, 5, 6, 7, 8, 9, 10], reason);
+      // 1. Navigate to the article for this iteration (shared across providers)
+      {
+        const r = await timeAction(() =>
+          recovery.navigate(navigateUrl) as Promise<unknown>,
+        );
+        navStatus = (r.value as { status?: () => number } | null | undefined)?.status?.() ?? null;
+        const navBlocked = !r.success || (navStatus !== null && navStatus >= 400);
+        // An error page (rate limit, block page, dead target) has no article
+        // content — letting the loop run burns ~70s of selector timeouts per
+        // page and can push a leg over the job timeout. Record the navigate as
+        // failed and skip the rest, same as the click-fail path below.
+        record({
+          index: baseIdx + 1,
+          type: 'navigate',
+          durationMs: r.durationMs,
+          success: r.success && !navBlocked,
+          error: navBlocked && r.success ? `HTTP ${navStatus}` : r.error,
+        });
+        if (navBlocked) {
+          const reason = !r.success ? `navigate failed: ${r.error}` : `navigate returned HTTP ${navStatus}`;
+          pushSkippedActions(results, baseIdx, [2, 3, 4, 5, 6, 7, 8, 9, 10], reason);
+          continue;
+        }
+      }
+
+      // 2. Wait for #firstHeading
+      {
+        const r = await timeAction(() => recovery.waitForSelector(FIRST_HEADING));
+        // Record what the browser actually landed on, so a missing heading can be
+        // told apart from a block page, a redirect, or an empty document.
+        // The diagnostic read counts toward this action so taskMs stays wall-clock.
+        const diagStart = performance.now();
+        const error = r.success ? r.error : `${r.error} [${await pageDiagnostics(page, navStatus)}]`;
+        const durationMs = r.durationMs + (r.success ? 0 : performance.now() - diagStart);
+        record({ index: baseIdx + 2, type: 'waitForSelector', durationMs, success: r.success, error });
+      }
+
+      // 3. Screenshot
+      {
+        const r = await timeAction(() => page.screenshot());
+        record({ index: baseIdx + 3, type: 'screenshot', durationMs: r.durationMs, success: r.success, error: r.error });
+      }
+
+      // 4. Read text content of #firstHeading
+      {
+        const r = await timeAction(() => page.textContent(FIRST_HEADING));
+        record({ index: baseIdx + 4, type: 'textContent', durationMs: r.durationMs, success: r.success, error: r.error });
+      }
+
+      // 5. Click first article link (filter out meta pages like Help:, File:, etc.)
+      let clickSucceeded = false;
+      {
+        const r = await timeAction(async () => {
+          // Wait for any /wiki/ link to appear, then filter in JS for article
+          // links (no namespace colon after /wiki/). This handles relative,
+          // protocol-relative, and absolute https:// URL formats.
+          await page.waitForSelector(ARTICLE_LINK_SELECTOR, { timeout: 10_000 });
+          const links = await page.$$(ARTICLE_LINK_SELECTOR);
+          for (const link of links) {
+            const href = await link.getAttribute('href');
+            if (isArticleLink(href)) {
+              await link.click();
+              return;
+            }
+          }
+          throw new Error('No article body link found on page');
+        });
+        clickSucceeded = r.success;
+        record({ index: baseIdx + 5, type: 'click', durationMs: r.durationMs, success: r.success, error: r.error });
+      }
+
+      // If the click failed (e.g. stub article with no body links), skip the
+      // remaining actions that depend on having navigated to a new page.
+      // Without this, goBack navigates to a blank page and the final
+      // waitForSelector times out for 30s, inflating task time.
+      if (!clickSucceeded) {
+        pushSkippedActions(results, baseIdx, [6, 7, 8, 9, 10], 'click failed');
         continue;
       }
-    }
 
-    // 2. Wait for #firstHeading
-    {
-      const r = await timeAction(() => page.waitForSelector(FIRST_HEADING));
-      // Record what the browser actually landed on, so a missing heading can be
-      // told apart from a block page, a redirect, or an empty document.
-      // The diagnostic read counts toward this action so taskMs stays wall-clock.
-      const diagStart = performance.now();
-      const error = r.success ? r.error : `${r.error} [${await pageDiagnostics(page, navStatus)}]`;
-      const durationMs = r.durationMs + (r.success ? 0 : performance.now() - diagStart);
-      results.push({ index: baseIdx + 2, type: 'waitForSelector', durationMs, success: r.success, error });
-    }
+      // 6. Wait for #firstHeading on the new page
+      {
+        const r = await timeAction(() => recovery.waitForSelector(FIRST_HEADING));
+        record({ index: baseIdx + 6, type: 'waitForSelector', durationMs: r.durationMs, success: r.success, error: r.error });
+      }
 
-    // 3. Screenshot
-    {
-      const r = await timeAction(() => page.screenshot());
-      results.push({ index: baseIdx + 3, type: 'screenshot', durationMs: r.durationMs, success: r.success, error: r.error });
-    }
+      // 7. Screenshot the new page
+      {
+        const r = await timeAction(() => page.screenshot());
+        record({ index: baseIdx + 7, type: 'screenshot', durationMs: r.durationMs, success: r.success, error: r.error });
+      }
 
-    // 4. Read text content of #firstHeading
-    {
-      const r = await timeAction(() => page.textContent(FIRST_HEADING));
-      results.push({ index: baseIdx + 4, type: 'textContent', durationMs: r.durationMs, success: r.success, error: r.error });
-    }
+      // 8. Read text content of #firstHeading on the new page
+      {
+        const r = await timeAction(() => page.textContent(FIRST_HEADING));
+        record({ index: baseIdx + 8, type: 'textContent', durationMs: r.durationMs, success: r.success, error: r.error });
+      }
 
-    // 5. Click first article link (filter out meta pages like Help:, File:, etc.)
-    let clickSucceeded = false;
-    {
-      const r = await timeAction(async () => {
-        // Wait for any /wiki/ link to appear, then filter in JS for article
-        // links (no namespace colon after /wiki/). This handles relative,
-        // protocol-relative, and absolute https:// URL formats.
-        await page.waitForSelector(ARTICLE_LINK_SELECTOR, { timeout: 10_000 });
-        const links = await page.$$(ARTICLE_LINK_SELECTOR);
-        for (const link of links) {
-          const href = await link.getAttribute('href');
-          if (isArticleLink(href)) {
-            await link.click();
-            return;
-          }
-        }
-        throw new Error('No article body link found on page');
-      });
-      clickSucceeded = r.success;
-      results.push({ index: baseIdx + 5, type: 'click', durationMs: r.durationMs, success: r.success, error: r.error });
-    }
+      // 9. Go back. Use `waitUntil: 'commit'` because back-forward cache restores
+      // fire `pageshow` instead of `load`, and Playwright's default
+      // `waitUntil: 'load'` hangs for the full timeout on a bfcache restore.
+      // Resolving on commit returns as soon as the navigation lands; the next
+      // waitForSelector confirms #firstHeading is present.
+      {
+        const r = await timeAction(() => page.goBack({ waitUntil: 'commit' }) as Promise<unknown>);
+        record({ index: baseIdx + 9, type: 'goBack', durationMs: r.durationMs, success: r.success, error: r.error });
+      }
 
-    // If the click failed (e.g. stub article with no body links), skip the
-    // remaining actions that depend on having navigated to a new page.
-    // Without this, goBack navigates to a blank page and the final
-    // waitForSelector times out for 30s, inflating task time.
-    if (!clickSucceeded) {
-      pushSkippedActions(results, baseIdx, [6, 7, 8, 9, 10], 'click failed');
-      continue;
+      // 10. Wait for #firstHeading on the previous page
+      {
+        const r = await timeAction(() => recovery.waitForSelector(FIRST_HEADING));
+        record({ index: baseIdx + 10, type: 'waitForSelector', durationMs: r.durationMs, success: r.success, error: r.error });
+      }
     }
-
-    // 6. Wait for #firstHeading on the new page
-    {
-      const r = await timeAction(() => page.waitForSelector(FIRST_HEADING));
-      results.push({ index: baseIdx + 6, type: 'waitForSelector', durationMs: r.durationMs, success: r.success, error: r.error });
-    }
-
-    // 7. Screenshot the new page
-    {
-      const r = await timeAction(() => page.screenshot());
-      results.push({ index: baseIdx + 7, type: 'screenshot', durationMs: r.durationMs, success: r.success, error: r.error });
-    }
-
-    // 8. Read text content of #firstHeading on the new page
-    {
-      const r = await timeAction(() => page.textContent(FIRST_HEADING));
-      results.push({ index: baseIdx + 8, type: 'textContent', durationMs: r.durationMs, success: r.success, error: r.error });
-    }
-
-    // 9. Go back. Use `waitUntil: 'commit'` because back-forward cache restores
-    // fire `pageshow` instead of `load`, and Playwright's default
-    // `waitUntil: 'load'` hangs for the full timeout on a bfcache restore.
-    // Resolving on commit returns as soon as the navigation lands; the next
-    // waitForSelector confirms #firstHeading is present.
-    {
-      const r = await timeAction(() => page.goBack({ waitUntil: 'commit' }) as Promise<unknown>);
-      results.push({ index: baseIdx + 9, type: 'goBack', durationMs: r.durationMs, success: r.success, error: r.error });
-    }
-
-    // 10. Wait for #firstHeading on the previous page
-    {
-      const r = await timeAction(() => page.waitForSelector(FIRST_HEADING));
-      results.push({ index: baseIdx + 10, type: 'waitForSelector', durationMs: r.durationMs, success: r.success, error: r.error });
-    }
+  } finally {
+    recovery.dispose();
   }
 }
 

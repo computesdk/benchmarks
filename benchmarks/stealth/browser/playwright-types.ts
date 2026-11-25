@@ -1,3 +1,5 @@
+import type { NavigationRecoveryEvent } from '../../browser/navigation-recovery.js';
+
 import type { JsonObject } from '@benchsdk/client';
 
 export interface PlaywrightSession {
@@ -25,4 +27,6 @@ export interface ActionResult {
   durationMs: number;
   success: boolean;
   error?: string;
+  /** Initial HTTP 429s and every timed recovery attempt, including successful recoveries. */
+  navigationEvents?: NavigationRecoveryEvent[];
 }

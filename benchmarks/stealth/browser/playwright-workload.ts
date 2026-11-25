@@ -12,6 +12,7 @@ import type { Page, ElementHandle } from 'playwright-native-core';
 import { withTimeout } from '../src/util/timeout.js';
 import type { ActionResult, ActionType } from './playwright-types.js';
 import { safeError } from './playwright-providers.js';
+import { installNavigationRecovery } from '../../browser/navigation-recovery.js';
 
 const LOOPS_PER_SESSION = 5;
 export const ACTIONS_PER_SESSION = LOOPS_PER_SESSION * 10;
@@ -65,49 +66,59 @@ export async function firstArticleLink(page: Page): Promise<ElementHandle> {
 }
 
 export async function runActionLoop(page: Page, url: string, actions: ActionResult[], state: PageState = {}): Promise<void> {
-  const operations: [ActionType, () => Promise<unknown>][] = [
-    ['navigate', async () => {
-      const response = await page.goto(url, { waitUntil: 'load' });
-      state.lastHttpStatus = response?.status() ?? undefined;
-    }],
-    ['waitForSelector', () => page.waitForSelector('#firstHeading')],
-    ['screenshot', () => page.screenshot()],
-    ['textContent', () => page.textContent('#firstHeading')],
-    ['click', async () => { await (await firstArticleLink(page)).click(); }],
-    ['waitForSelector', () => page.waitForSelector('#firstHeading')],
-    ['screenshot', () => page.screenshot()],
-    ['textContent', () => page.textContent('#firstHeading')],
-    ['goBack', () => page.goBack({ waitUntil: 'commit' })],
-    ['waitForSelector', () => page.waitForSelector('#firstHeading')],
-  ];
-  for (let loop = 0; loop < LOOPS_PER_SESSION; loop++) {
-    let clickFailed = false;
-    for (const [offset, [type, operation]] of operations.entries()) {
-      const index = loop * operations.length + offset + 1;
-      if (clickFailed && offset >= 5) {
-        actions.push({ index, type, durationMs: 0, success: false, error: 'skipped: click failed' });
-        continue;
-      }
-      const start = performance.now();
-      try {
-        await withTimeout(operation(), ACTION_TIMEOUT_MS, 'Action timed out');
-        actions.push({ index, type, durationMs: performance.now() - start, success: true });
-      } catch (error) {
-        // Record where the page actually landed — distinguishes "selector
-        // missing" (wrong page / blocked) from a slow load.
-        let diag = '';
+  const recovery = installNavigationRecovery(page, { timeoutMs: ACTION_TIMEOUT_MS });
+  const record = (action: ActionResult) => {
+    const navigationEvents = recovery.drainEvents();
+    actions.push({ ...action, ...(navigationEvents.length ? { navigationEvents } : {}) });
+  };
+  try {
+    const operations: [ActionType, () => Promise<unknown>][] = [
+      ['navigate', async () => {
+        const response = await recovery.navigate(url);
+        state.lastHttpStatus = response?.status() ?? undefined;
+      }],
+      ['waitForSelector', () => recovery.waitForSelector('#firstHeading')],
+      ['screenshot', () => page.screenshot()],
+      ['textContent', () => page.textContent('#firstHeading')],
+      ['click', async () => { await (await firstArticleLink(page)).click(); }],
+      ['waitForSelector', () => recovery.waitForSelector('#firstHeading')],
+      ['screenshot', () => page.screenshot()],
+      ['textContent', () => page.textContent('#firstHeading')],
+      ['goBack', () => page.goBack({ waitUntil: 'commit' })],
+      ['waitForSelector', () => recovery.waitForSelector('#firstHeading')],
+    ];
+    for (let loop = 0; loop < LOOPS_PER_SESSION; loop++) {
+      let clickFailed = false;
+      for (const [offset, [type, operation]] of operations.entries()) {
+        const index = loop * operations.length + offset + 1;
+        if (clickFailed && offset >= 5) {
+          record({ index, type, durationMs: 0, success: false, error: 'skipped: click failed' });
+          continue;
+        }
+        const start = performance.now();
         try {
-          const title = await withTimeout(page.title(), 2_000, 'title read timed out');
-          const status = state.lastHttpStatus !== undefined ? ` status=${state.lastHttpStatus}` : '';
-          // Body text carries the server's own error message (e.g. Wikimedia's
-          // "Request from <ip> blocked" detail) — keep it short and single-line.
-          const body = (await withTimeout(page.textContent('body'), 2_000, 'body read timed out'))
-            ?.replace(/\s+/g, ' ').trim().slice(0, 200);
-          diag = ` [url=${page.url()}${status} title=${JSON.stringify(title)}${body ? ` body=${JSON.stringify(body)}` : ''}]`;
-        } catch { /* page may be gone */ }
-        actions.push({ index, type, durationMs: performance.now() - start, success: false, error: safeError(error) + diag });
-        if (offset === 4) clickFailed = true;
+          await withTimeout(operation(), ACTION_TIMEOUT_MS, 'Action timed out');
+          record({ index, type, durationMs: performance.now() - start, success: true });
+        } catch (error) {
+          // Record where the page actually landed — distinguishes "selector
+          // missing" (wrong page / blocked) from a slow load.
+          let diag = '';
+          try {
+            const title = await withTimeout(page.title(), 2_000, 'title read timed out');
+            const lastStatus = recovery.lastHttpStatus() ?? state.lastHttpStatus;
+            const status = lastStatus !== undefined ? ` status=${lastStatus}` : '';
+            // Body text carries the server's own error message (e.g. Wikimedia's
+            // "Request from <ip> blocked" detail) — keep it short and single-line.
+            const body = (await withTimeout(page.textContent('body'), 2_000, 'body read timed out'))
+              ?.replace(/\s+/g, ' ').trim().slice(0, 200);
+            diag = ` [url=${page.url()}${status} title=${JSON.stringify(title)}${body ? ` body=${JSON.stringify(body)}` : ''}]`;
+          } catch { /* page may be gone */ }
+          record({ index, type, durationMs: performance.now() - start, success: false, error: safeError(error) + diag });
+          if (offset === 4) clickFailed = true;
+        }
       }
     }
+  } finally {
+    recovery.dispose();
   }
 }

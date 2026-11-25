@@ -47,6 +47,12 @@ jobs:
       - name: Test Wikipedia browser setup
         run: node --import tsx --test benchmarks/browser/wikipedia.test.ts
 
+      - name: Install Chromium for navigation recovery tests
+        run: pnpm exec playwright-core install --with-deps chromium
+
+      - name: Test browser HTTP 429 recovery
+        run: node --import tsx --test benchmarks/browser/navigation-recovery.test.ts
+
       - name: Test
         run: pnpm --filter @benchsdk/client run test
 

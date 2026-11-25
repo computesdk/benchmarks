@@ -42,6 +42,7 @@ for (const failSetup of [false, true]) {
     const steps: string[] = [];
     // A virtual clock makes exclusion of cookie setup from totalMs exact.
     let clock = 0;
+    const cookieSetupCostMs = 10_000;
     t.mock.method(performance, 'now', () => ++clock);
     t.mock.method(chromium, 'connectOverCDP', async (url: string) => {
       const index = Number(url.split('/').at(-1));
@@ -50,7 +51,7 @@ for (const failSetup of [false, true]) {
         addCookies: async (cookies: Parameters<BrowserContext['addCookies']>[0]) => {
           // Different completion times expose a missing all-context barrier.
           await delay(index);
-          clock += 100;
+          clock += cookieSetupCostMs;
           assert.equal(navigated, 0, 'cookie installation sends no warm-up request');
           if (failSetup && index === 2) throw new Error('Cookie jar unavailable');
           assert.equal(cookies[0].domain, '.wikipedia.org');
@@ -61,6 +62,7 @@ for (const failSetup of [false, true]) {
       };
       const page = {
         context: () => context,
+        on: () => page, off: () => page,
         goto: async () => {
           assert.equal(hasCookie, true, 'first navigation has a cookie');
           assert.equal(prepared, sessions, 'all contexts are ready before any action');
@@ -99,7 +101,8 @@ for (const failSetup of [false, true]) {
       assert.equal(result.data?.sessionsAlive, sessions);
       assert.ok(navigated >= sessions);
       const rounds = result.data?.rounds as Array<{ totalMs: number }>;
-      assert.ok(rounds[0].totalMs < 500, '500ms of cookie setup is excluded from round timing');
+      assert.ok(rounds[0].totalMs < cookieSetupCostMs * sessions,
+        'cookie setup is excluded even as ordinary action bookkeeping changes');
     }
     assert.equal(prepared, failSetup ? sessions - 1 : sessions);
     assert.equal(closed, sessions, 'every CDP connection is closed');
@@ -143,6 +146,7 @@ for (const failSetup of [false, true]) {
     };
     const page = {
       context: () => context,
+      on: () => page, off: () => page,
       goto: async () => { assert.ok(prepared); navigations++; return { status: () => 200 }; },
       waitForSelector: async () => ({}), screenshot: async () => Buffer.alloc(0),
       textContent: async () => 'Fixture', goBack: async () => {},

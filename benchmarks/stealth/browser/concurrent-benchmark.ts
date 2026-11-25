@@ -287,6 +287,7 @@ export async function writeConcurrentResultsJson(
           durationMs: a.durationMs,
           success: a.success,
           ...(a.error ? { error: a.error } : {}),
+          ...(a.navigationEvents?.length ? { navigationEvents: a.navigationEvents } : {}),
         })),
         ...(s.error ? { error: s.error } : {}),
       })),
