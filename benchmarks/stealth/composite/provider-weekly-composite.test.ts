@@ -180,7 +180,7 @@ assert.throws(() => aggregateWeek([day(['sandbox-new-thing', 50])], sandbox), /s
   process.env.BENCHMARKS_PLATFORM_API_KEY = 'offline-fixture';
   try {
     const api = new PlatformApi();
-    const bench = { slug: 'oci-tti-stealth', organizationSlug: 'computesdk', category: 'sandbox', name: null };
+    const bench = { slug: 'oci-tti-stealth', organizationSlug: 'computesdk', category: 'sandbox', tier: 'stealth', name: null };
     const DAY = '2026-11-16';
     const item = (summary: unknown, overrides: Record<string, unknown> = {}) => ({
       run: { id: 'offline-run', status: 'completed', createdAt: `${DAY}T09:00:00Z`, totalTasks: 2, summary },

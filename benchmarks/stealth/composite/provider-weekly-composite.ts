@@ -51,9 +51,9 @@ export function nextDay(day: string): string {
 }
 
 /**
- * The five equally weighted sandbox groups. Every categorized sandbox bench
- * must appear here: `sandboxGroup` throws on an unknown slug so a newly
- * categorized bench can't silently skew (or skip) the composite.
+ * The five equally weighted sandbox groups. `SANDBOX_BENCH_GROUPS` is the
+ * complete list of benches the sandbox composite scores; platform categories
+ * play no part, so a bench counts only once it is added here.
  */
 export const SANDBOX_GROUPS = ['startup', 'compute', 'filesystem', 'state', 'reliability'] as const;
 export type SandboxGroup = (typeof SANDBOX_GROUPS)[number];
@@ -215,6 +215,8 @@ export interface ListedBenchmark {
   slug: string;
   organizationSlug: string;
   category: string | null;
+  /** `public` or `stealth`; null when the platform doesn't return it. */
+  tier: string | null;
   /** Display name when the list endpoint returns one. */
   name: string | null;
 }
@@ -429,6 +431,7 @@ export class PlatformApi {
           organizationSlug: String(item.organizationSlug ?? ''),
           // `category` ships via a companion PR; a missing field reads as null.
           category: typeof item.category === 'string' ? item.category : null,
+          tier: typeof item.tier === 'string' ? item.tier : null,
           name: typeof item.name === 'string' ? item.name : null,
         });
       }
@@ -436,7 +439,26 @@ export class PlatformApi {
     }
   }
 
-  /** Benchmarks in one category. `public` is a visibility flag, not a domain. */
+  /**
+   * The benches in `SANDBOX_BENCH_GROUPS`, whatever their platform category.
+   * `missing` lists mapped slugs the API key can't see (renamed or deleted).
+   */
+  async sandboxBenchmarks(): Promise<{ benchmarks: ListedBenchmark[]; missing: string[] }> {
+    const bySlug = new Map<string, ListedBenchmark>();
+    for (const item of await this.listBenchmarks()) {
+      if (item.slug in SANDBOX_BENCH_GROUPS && !bySlug.has(item.slug)) bySlug.set(item.slug, item);
+    }
+    const slugs = Object.keys(SANDBOX_BENCH_GROUPS);
+    return {
+      benchmarks: slugs.flatMap((slug) => bySlug.get(slug) ?? []),
+      missing: slugs.filter((slug) => !bySlug.has(slug)),
+    };
+  }
+
+  /**
+   * Stealth benchmarks in one category. Public benchmarks share the category
+   * slug but carry `tier: 'public'`; the composite scores stealth runs only.
+   */
   async categorizedBenchmarks(category: string): Promise<ListedBenchmark[]> {
     const items = await this.listBenchmarks();
     return items.filter(
@@ -444,6 +466,7 @@ export class PlatformApi {
         item.category !== null &&
         item.category !== 'public' &&
         item.category === category &&
+        item.tier !== 'public' &&
         // Never read our own runs: if a composite slug gets assigned a
         // category it would fold its own scores back into the average.
         !item.slug.startsWith('provider-weekly-composite'),
