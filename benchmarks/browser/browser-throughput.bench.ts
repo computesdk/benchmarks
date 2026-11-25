@@ -381,7 +381,7 @@ export const task = defineTask<ThroughputProviderConfig>(async (ctx) => {
     // screenshots the same page size.
     const viewport = participant.sessionCreateOptions?.viewport as { width: number; height: number } | undefined;
     if (viewport) {
-      await page.setViewportSize(viewport).catch((err: unknown) =>
+      await withTimeout(page.setViewportSize(viewport), 10_000, 'setViewportSize timed out').catch((err: unknown) =>
         log('setViewportSize failed', { level: 'warn', meta: { error: err instanceof Error ? err.message : String(err) } }));
     }
 
