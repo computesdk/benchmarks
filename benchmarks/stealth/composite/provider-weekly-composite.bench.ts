@@ -50,6 +50,7 @@ import {
   aggregateWeek,
   resolveBenchDay,
   sandboxGroup,
+  SANDBOX_GROUPS,
 } from './provider-weekly-composite.js';
 import type { BenchDay, ListedBenchmark } from './provider-weekly-composite.js';
 import { fullPrecisionScoring } from '../src/util/scoring.js';
@@ -165,6 +166,12 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
         level: 'warn',
         meta: { provider, missing: listed.missing },
       });
+    }
+    const emptyGroups = SANDBOX_GROUPS.filter((g) => !benchmarks.some((b) => sandboxGroup(b.slug) === g));
+    if (emptyGroups.length > 0) {
+      throw new Error(
+        `sandbox composite: no listed benches for group(s) ${emptyGroups.join(', ')} — refusing to reweight`,
+      );
     }
   } else {
     benchmarks = await api.categorizedBenchmarks(CATEGORY);
