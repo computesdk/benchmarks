@@ -199,13 +199,20 @@ function extractMaxOutputTokens(model: AnyModel): number | undefined {
 // OpenRouter prices speech/transcription models with no unit: a bare `prompt`
 // rate is per second for some and per character for others, so don't guess one.
 // With a `completion` rate too (e.g. gpt-4o-transcribe), both are per token.
+// Paid non-text models with only zero rates (most video and rerank) have no
+// listed price, so their unit is unknown rather than $0 per token.
 const AUDIO_OUTPUTS = new Set(['speech', 'transcription']);
 
-function openRouterAudioPricingUnit(model: AnyModel): AIGatewayModelPricingUnit | undefined {
+function openRouterPricingUnit(model: AnyModel): AIGatewayModelPricingUnit | undefined {
   const outputs = asModel(model.architecture)?.output_modalities;
-  if (!Array.isArray(outputs) || !outputs.some((o) => AUDIO_OUTPUTS.has(String(o)))) return undefined;
-  const completion = Number(asModel(model.pricing)?.completion ?? 0);
-  return completion > 0 ? 'per_token' : 'unknown';
+  if (!Array.isArray(outputs)) return undefined;
+  const pricing = asModel(model.pricing) ?? {};
+  if (outputs.some((o) => AUDIO_OUTPUTS.has(String(o)))) {
+    return Number(pricing.completion ?? 0) > 0 ? 'per_token' : 'unknown';
+  }
+  const nonText = outputs.some((o) => o !== 'text');
+  const allZero = Object.values(pricing).every((v) => !Number(v));
+  return nonText && allZero && !String(model.id).endsWith(':free') ? 'unknown' : undefined;
 }
 
 function normalizeModel(
@@ -229,7 +236,7 @@ function normalizeModel(
     maxOutputTokens: extractMaxOutputTokens(model),
     createdAt: normalizeTimestamp(model.created ?? model.created_at ?? model.release_date),
     pricing: extractPricing(model),
-    pricingUnit: format === 'openrouter' ? openRouterAudioPricingUnit(model) : undefined,
+    pricingUnit: format === 'openrouter' ? openRouterPricingUnit(model) : undefined,
     providerPricing: extractProviderPricing(model),
   };
 }
