@@ -2,7 +2,7 @@
 /**
  * Materialize OCI artifacts for the oci-tti benchmark: for every
  * 'template'-mechanism provider, build the artifact their create() takes —
- * an e2b template, a runloop blueprint, a blaxel image import — FROM the
+ * an e2b template, a runloop blueprint, a blaxel image build — FROM the
  * reference image, and write the resulting refs into
  * benchmarks/stealth/sandbox/oci-tti-artifacts.json (committed).
  *
@@ -18,17 +18,28 @@
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdtempSync, writeFileSync as writeFile, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  SANDBOX_API_IMAGE,
+  SANDBOX_API_PATH,
+  getImage,
+  initialize as initializeBlaxel,
+  listImageTags,
+  settings as blaxelSettings,
+  type ImageTag as BlaxelImageTag,
+} from '@blaxel/core';
 import { gravixlayer } from '@computesdk/gravixlayer';
 import { mosaic } from '@computesdk/mosaic';
 import { novita } from '@computesdk/novita';
 import { runloop } from '@computesdk/runloop';
 import { ConflictError, Template as SuperserveTemplate } from '@superserve/sdk';
 import { Template } from 'e2b';
+import { strToU8, zipSync } from 'fflate';
 
 import {
   ARTIFACTS_PATH,
@@ -81,6 +92,115 @@ async function resolveDockerHubDigest(repo: string, tag: string): Promise<string
   if (!digest) throw new Error('docker hub manifest: no docker-content-digest header');
   // givemeanode rejects refs that name no registry host — fully qualify.
   return `docker.io/library/${repo}@${digest}`;
+}
+
+const BLAXEL_IMAGE_TYPE = 'sandbox';
+const BLAXEL_BUILD_TIMEOUT_MS = 5 * 60_000;
+/** How long a rebuild waits for a new tag before it takes one the image already had. */
+const BLAXEL_TAG_SETTLE_MS = 10_000;
+
+/**
+ * Build REFERENCE_IMAGE into a Blaxel sandbox image and return the ref
+ * create() boots (`sandbox/<name>:<tag>`). Blaxel boots only images whose
+ * entrypoint is its sandbox API, so the build adds it, the same Dockerfile
+ * the Blaxel adapter's template build uses. A bare registry import has no
+ * sandbox API and never answers.
+ *
+ * The image is named after a hash of the Dockerfile: Blaxel reuses an
+ * identical build without saying which tag it reused, so one image per
+ * distinct build keeps the tag exact. The build result comes from the
+ * image's events; the tag comes from the image's tags list, since the image
+ * read no longer carries tags.
+ */
+async function buildBlaxelImage(): Promise<string> {
+  const dockerfile = [
+    `FROM ${REFERENCE_IMAGE}`,
+    `COPY --from=${SANDBOX_API_IMAGE}:latest /sandbox-api ${SANDBOX_API_PATH}`,
+    `ENTRYPOINT ["${SANDBOX_API_PATH}"]`,
+    '',
+  ].join('\n');
+  const name = `${ARTIFACT_NAME}-${createHash('sha256').update(dockerfile).digest('hex').slice(0, 8)}`;
+  const imageRef = { resourceType: BLAXEL_IMAGE_TYPE, imageName: name };
+
+  const before = await getImage({ path: imageRef });
+  const existed = before.error === undefined;
+  if (!existed && before.response?.status !== 404) {
+    throw new Error(`blaxel image ${name}: read HTTP ${before.response?.status}`);
+  }
+  const lastEventBefore = Math.max(0, ...(before.data?.metadata?.events ?? []).map(blaxelEventTime));
+  const tagsBefore = new Set(existed ? (await listBlaxelTags(imageRef)).map((t) => t.name) : []);
+
+  await blaxelSettings.authenticate();
+  const created = await fetch(`${blaxelSettings.baseUrl}/images?upload=true`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...blaxelSettings.headers },
+    body: JSON.stringify({ name, resourceType: BLAXEL_IMAGE_TYPE }),
+  });
+  const uploadUrl = created.headers.get('x-blaxel-upload-url');
+  if (!created.ok || !uploadUrl) {
+    throw new Error(`blaxel image build ${name}: HTTP ${created.status} ${(await created.text()).slice(0, 400)}`);
+  }
+  const uploaded = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/zip' },
+    body: zipSync({ Dockerfile: strToU8(dockerfile) }),
+  });
+  if (!uploaded.ok) {
+    throw new Error(`blaxel image upload ${name}: HTTP ${uploaded.status} ${(await uploaded.text()).slice(0, 400)}`);
+  }
+
+  // The build is done when the image records a result newer than any event
+  // it had before the upload.
+  const deadline = Date.now() + BLAXEL_BUILD_TIMEOUT_MS;
+  let builtAt: number | undefined;
+  for (;;) {
+    const { data, error, response } = await getImage({ path: imageRef });
+    if (error !== undefined && response?.status !== 404) {
+      throw new Error(`blaxel image ${name}: read HTTP ${response?.status}`);
+    }
+    const result = (data?.metadata?.events ?? []).find(
+      (e) => blaxelEventTime(e) > lastEventBefore && (e.status === 'BUILT' || e.status === 'FAILED'),
+    );
+    if (result?.status === 'FAILED') {
+      throw new Error(`blaxel image build ${name} failed: ${result.message?.replace(/\s+/g, ' ').trim() || 'no message'}`);
+    }
+    if (result) {
+      builtAt ??= Date.now();
+      // A new build adds a tag; an identical rebuild reuses one without
+      // saying so, so after the settle time any tag of this image will do.
+      const tags = await listBlaxelTags(imageRef);
+      const fresh = tags.find((t) => t.name && !tagsBefore.has(t.name));
+      const settled = Date.now() - builtAt >= BLAXEL_TAG_SETTLE_MS;
+      const tag = fresh ?? (settled ? newestBlaxelTag(tags) : undefined);
+      if (tag?.name) return `${BLAXEL_IMAGE_TYPE}/${name}:${tag.name}`;
+    }
+    if (Date.now() >= deadline) {
+      throw new Error(`blaxel image ${name}: ${result ? 'built but no tag listed' : 'build did not finish'} in ${BLAXEL_BUILD_TIMEOUT_MS / 60_000} min`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, result ? 1_000 : 2_000));
+  }
+}
+
+/** Every tag of a Blaxel image, following the list's pages. */
+async function listBlaxelTags(imageRef: { resourceType: string; imageName: string }): Promise<BlaxelImageTag[]> {
+  const tags: BlaxelImageTag[] = [];
+  let cursor: string | undefined;
+  do {
+    const { data, error, response } = await listImageTags({ path: imageRef, query: { limit: 100, ...(cursor ? { cursor } : {}) } });
+    if (error !== undefined || !data) throw new Error(`blaxel image ${imageRef.imageName}: tags HTTP ${response?.status}`);
+    tags.push(...data.data);
+    cursor = data.meta?.hasMore ? data.meta.nextCursor : undefined;
+  } while (cursor);
+  return tags;
+}
+
+function blaxelEventTime(event: { time?: string }): number {
+  return Date.parse(event.time ?? '') || 0;
+}
+
+function newestBlaxelTag(tags: BlaxelImageTag[]): BlaxelImageTag | undefined {
+  const time = (t: BlaxelImageTag) => Date.parse(t.updatedAt ?? t.createdAt ?? '') || 0;
+  return [...tags].sort((a, b) => time(b) - time(a))[0];
 }
 
 async function buildE2bStyle(opts: { apiKey: string; domain?: string }): Promise<string> {
@@ -180,29 +300,8 @@ const MATERIALIZERS: Record<string, () => Promise<{ ref: string; note?: string }
   },
   async blaxel() {
     needEnv('BL_API_KEY', 'BL_WORKSPACE');
-    // Registry-image import: Blaxel converts the OCI ref into a named image.
-    const res = await fetch('https://api.blaxel.ai/v0/images', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Blaxel-Authorization': `Bearer ${process.env.BL_API_KEY}`,
-        'X-Blaxel-Workspace': process.env.BL_WORKSPACE!,
-      },
-      body: JSON.stringify({
-        name: ARTIFACT_NAME,
-        image: REFERENCE_IMAGE,
-        resourceType: 'sandbox',
-      }),
-    });
-    const text = await res.text();
-    if (!res.ok) throw new Error(`blaxel image import: HTTP ${res.status} ${text.slice(0, 400)}`);
-    let registered: string | undefined;
-    try {
-      registered = (JSON.parse(text) as { image?: string }).image;
-    } catch {
-      // non-JSON body — fall back to the name:tag form
-    }
-    return { ref: registered ?? `${ARTIFACT_NAME}:latest`, note: `import response: ${text.slice(0, 200)}` };
+    initializeBlaxel({ apikey: process.env.BL_API_KEY!, workspace: process.env.BL_WORKSPACE! });
+    return { ref: await buildBlaxelImage(), note: 'reference image built with the Blaxel sandbox API as entrypoint' };
   },
   async codesandbox() {
     needEnv('CSB_API_KEY');

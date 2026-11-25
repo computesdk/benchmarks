@@ -154,7 +154,8 @@ export const OCI_PARTICIPANTS: Record<string, OciParticipantSpec> = {
   },
 
   // --- 'template': create() takes a materialized artifact ---
-  // blaxel cannot boot a library image; POST /v0/images imports it as a named image.
+  // blaxel cannot boot a library image; the materializer builds it into a
+  // workspace image with Blaxel's sandbox API as entrypoint.
   blaxel: { mechanism: 'template', resolve: artifact('blaxel', (ref) => ({ image: ref })) },
   // mosaic create() maps image → snapshot_id (a named environment), never an
   // OCI ref; template.create({image}) builds that environment first.
