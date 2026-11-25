@@ -199,9 +199,10 @@ function extractMaxOutputTokens(model: AnyModel): number | undefined {
 // OpenRouter prices speech/transcription models with no unit: a bare `prompt`
 // rate is per second for some and per character for others, so don't guess one.
 // With a `completion` rate too (e.g. gpt-4o-transcribe), both are per token.
-// Paid non-text models with only zero rates (most video and rerank) have no
-// listed price, so their unit is unknown rather than $0 per token.
+// Paid video, rerank and music models list only zero rates, so their price is
+// unlisted rather than $0 per token.
 const AUDIO_OUTPUTS = new Set(['speech', 'transcription']);
+const ZERO_RATE_UNPRICED_OUTPUTS = new Set(['video', 'rerank', 'audio']);
 
 function openRouterPricingUnit(model: AnyModel): AIGatewayModelPricingUnit | undefined {
   const outputs = asModel(model.architecture)?.output_modalities;
@@ -210,9 +211,9 @@ function openRouterPricingUnit(model: AnyModel): AIGatewayModelPricingUnit | und
   if (outputs.some((o) => AUDIO_OUTPUTS.has(String(o)))) {
     return Number(pricing.completion ?? 0) > 0 ? 'per_token' : 'unknown';
   }
-  const nonText = outputs.some((o) => o !== 'text');
+  const unpriced = outputs.some((o) => ZERO_RATE_UNPRICED_OUTPUTS.has(String(o)));
   const allZero = Object.values(pricing).every((v) => !Number(v));
-  return nonText && allZero && !String(model.id).endsWith(':free') ? 'unknown' : undefined;
+  return unpriced && allZero && !String(model.id).endsWith(':free') ? 'unknown' : undefined;
 }
 
 function normalizeModel(
