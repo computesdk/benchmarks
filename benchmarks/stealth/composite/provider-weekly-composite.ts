@@ -215,6 +215,8 @@ export interface ListedBenchmark {
   slug: string;
   organizationSlug: string;
   category: string | null;
+  /** `public` or `stealth`; null when the platform doesn't return it. */
+  tier: string | null;
   /** Display name when the list endpoint returns one. */
   name: string | null;
 }
@@ -429,6 +431,7 @@ export class PlatformApi {
           organizationSlug: String(item.organizationSlug ?? ''),
           // `category` ships via a companion PR; a missing field reads as null.
           category: typeof item.category === 'string' ? item.category : null,
+          tier: typeof item.tier === 'string' ? item.tier : null,
           name: typeof item.name === 'string' ? item.name : null,
         });
       }
@@ -436,7 +439,10 @@ export class PlatformApi {
     }
   }
 
-  /** Benchmarks in one category. `public` is a visibility flag, not a domain. */
+  /**
+   * Stealth benchmarks in one category. Public benchmarks share the category
+   * slug but carry `tier: 'public'`; the composite scores stealth runs only.
+   */
   async categorizedBenchmarks(category: string): Promise<ListedBenchmark[]> {
     const items = await this.listBenchmarks();
     return items.filter(
@@ -444,6 +450,7 @@ export class PlatformApi {
         item.category !== null &&
         item.category !== 'public' &&
         item.category === category &&
+        item.tier !== 'public' &&
         // Never read our own runs: if a composite slug gets assigned a
         // category it would fold its own scores back into the average.
         !item.slug.startsWith('provider-weekly-composite'),
