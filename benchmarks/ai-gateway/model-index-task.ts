@@ -196,7 +196,22 @@ function extractMaxOutputTokens(model: AnyModel): number | undefined {
   return undefined;
 }
 
-function normalizeModel(model: AnyModel): AIGatewayModelIndexEntry | undefined {
+// OpenRouter prices speech/transcription models with no unit: a bare `prompt`
+// rate is per second for some and per character for others, so don't guess one.
+// With a `completion` rate too (e.g. gpt-4o-transcribe), both are per token.
+const AUDIO_OUTPUTS = new Set(['speech', 'transcription']);
+
+function openRouterAudioPricingUnit(model: AnyModel): AIGatewayModelPricingUnit | undefined {
+  const outputs = asModel(model.architecture)?.output_modalities;
+  if (!Array.isArray(outputs) || !outputs.some((o) => AUDIO_OUTPUTS.has(String(o)))) return undefined;
+  const completion = Number(asModel(model.pricing)?.completion ?? 0);
+  return completion > 0 ? 'per_token' : 'unknown';
+}
+
+function normalizeModel(
+  model: AnyModel,
+  format?: AIGatewayModelListFormat,
+): AIGatewayModelIndexEntry | undefined {
   const id = model.id;
   if (typeof id !== 'string' || !id) return undefined;
 
@@ -214,6 +229,7 @@ function normalizeModel(model: AnyModel): AIGatewayModelIndexEntry | undefined {
     maxOutputTokens: extractMaxOutputTokens(model),
     createdAt: normalizeTimestamp(model.created ?? model.created_at ?? model.release_date),
     pricing: extractPricing(model),
+    pricingUnit: format === 'openrouter' ? openRouterAudioPricingUnit(model) : undefined,
     providerPricing: extractProviderPricing(model),
   };
 }
@@ -340,7 +356,7 @@ function normalizeModels(
   return filterAutoRouteModels(data
     .map(asModel)
     .filter((m): m is AnyModel => !!m)
-    .map(normalizeModel)
+    .map((m) => normalizeModel(m, format))
     .filter((m): m is AIGatewayModelIndexEntry => !!m));
 }
 
@@ -608,7 +624,7 @@ function addPricingUnits(
   gateway: string,
   models: AIGatewayModelIndexEntry[],
 ): AIGatewayModelIndexEntry[] {
-  return models.map((model) => ({ ...model, pricingUnit: inferPricingUnit(gateway, model) }));
+  return models.map((model) => ({ ...model, pricingUnit: model.pricingUnit ?? inferPricingUnit(gateway, model) }));
 }
 
 export async function runModelIndexTask(
