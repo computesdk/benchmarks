@@ -166,7 +166,7 @@ node --test tests/stealth/cpu-local/*.test.mjs
 
 The public CI and stealth harness workflows run without provider credentials. Live stealth workflows live only in `.computesdk/workflows/` and run through the platform, where run/log access follows platform permissions. GitHub Actions does not discover that directory. The platform also supports `.github/workflows/`, but prefers `.computesdk/workflows/` when basenames match. Live jobs require provider and platform credentials, loaded from the Namespace vault in CI.
 
-The weekly sandbox composite scores five equally weighted groups. `sandbox-reliability` publishes uptime separately. The composite uses `sandbox-tti-daily`, `sandbox-dax-daily`, and `sandbox-fs-api-stealth` for their workloads. A newly categorized sandbox input needs an explicit group in `SANDBOX_BENCH_GROUPS`.
+The weekly sandbox composite scores the benchmarks listed in `SANDBOX_BENCH_GROUPS` across five equally weighted groups. `sandbox-reliability` publishes uptime separately. The composite uses `sandbox-tti-daily`, `sandbox-dax-daily`, and `sandbox-fs-api-stealth` for their workloads. CRIU and heavy snapshot contribute to the state group.
 
 ## License
 

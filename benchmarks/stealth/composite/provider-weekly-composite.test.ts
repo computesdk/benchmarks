@@ -182,16 +182,18 @@ assert.throws(() => aggregateWeek([day(['sandbox-new-thing', 50])], sandbox), /s
   process.env.BENCHMARKS_PLATFORM_API_KEY = 'offline-fixture';
   try {
     const api = new PlatformApi();
-    const bench = { slug: 'oci-tti-stealth', organizationSlug: 'computesdk', category: 'sandbox', name: null };
-    const ranked = ['sandbox-criu', 'sandbox-heavy-snapshot-stealth', 'sandbox-fs-api-stealth', 'sandbox-dax-daily', 'sandbox-tti-daily'];
-    const excluded = ['provider-weekly-composite-sandbox', 'sandbox-reliability', 'sandbox-fs-api', 'sandbox-dax', 'sandbox-tti'];
+    const bench = { slug: 'oci-tti-stealth', organizationSlug: 'computesdk', category: 'sandbox', tier: 'stealth', name: null };
+    const ranked = ['sandbox-tti-daily', 'sandbox-dax-daily', 'sandbox-fs-api-stealth', 'sandbox-heavy-snapshot-stealth', 'sandbox-criu'];
+    const excluded = ['provider-weekly-composite-sandbox', 'sandbox-reliability', 'sandbox-fs-api', 'sandbox-dax', 'sandbox-tti', 'sandbox-unmapped'];
     globalThis.fetch = async () => Response.json({ items: [
-      ...[...excluded, ...ranked, 'sandbox-unmapped'].map((slug) => ({ ...bench, slug })),
+      ...excluded.map((slug) => ({ ...bench, slug })),
+      ...[...ranked].reverse().map((slug) => ({ ...bench, slug, category: null })),
       { ...bench, slug: 'browser-input', category: 'browser' },
+      { ...bench, slug: 'browser-public', category: 'browser', tier: 'public' },
     ] });
-    const sandboxInputs = (await api.categorizedBenchmarks('sandbox')).map(({ slug }) => slug);
-    assert.deepEqual(sandboxInputs, [...ranked, 'sandbox-unmapped']);
-    assert.throws(() => sandboxInputs.forEach(sandboxGroup), /sandbox-unmapped.*SANDBOX_BENCH_GROUPS/);
+    const sandboxInputs = await api.sandboxBenchmarks();
+    assert.deepEqual(sandboxInputs.benchmarks.map(({ slug }) => slug), ranked);
+    assert.ok(sandboxInputs.missing.includes('oci-tti-stealth'));
     assert.deepEqual((await api.categorizedBenchmarks('browser')).map(({ slug }) => slug), ['browser-input']);
 
     const DAY = '2026-11-16';

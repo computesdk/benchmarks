@@ -3,8 +3,11 @@
  *
  * Each participant is a provider identity (e2b, vercel, modal, …). Its task
  * reads that provider's daily composite scores from the benchmarks-platform
- * v1 API across the scoring inputs in ONE category (env `BENCHMARK_CATEGORY`,
- * default `sandbox`) over the previous 7 complete UTC days, then averages:
+ * v1 API over the previous 7 complete UTC days for ONE category leg (env
+ * `BENCHMARK_CATEGORY`, default `sandbox`). The sandbox leg scores exactly the
+ * benches in SANDBOX_BENCH_GROUPS, ignoring platform categories; other legs
+ * read every stealth-tier benchmark the platform puts in that category. It
+ * then averages:
  *
  *   1. per benchmark per day — average compositeScore across ALL of that
  *      benchmark's runs that day (retriggers get folded in, not picked),
@@ -47,8 +50,9 @@ import {
   aggregateWeek,
   resolveBenchDay,
   sandboxGroup,
+  SANDBOX_GROUPS,
 } from './provider-weekly-composite.js';
-import type { BenchDay } from './provider-weekly-composite.js';
+import type { BenchDay, ListedBenchmark } from './provider-weekly-composite.js';
 import { fullPrecisionScoring } from '../src/util/scoring.js';
 
 
@@ -152,15 +156,30 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
   const provider = ctx.participant.name;
   const api = new PlatformApi();
 
-  const benchmarks = await api.categorizedBenchmarks(CATEGORY);
-  ctx.log('categorized benchmarks', {
+  const sandbox = CATEGORY === 'sandbox';
+  let benchmarks: ListedBenchmark[];
+  if (sandbox) {
+    const listed = await api.sandboxBenchmarks();
+    benchmarks = listed.benchmarks;
+    if (listed.missing.length > 0) {
+      ctx.log('SANDBOX_BENCH_GROUPS slugs not found on the platform', {
+        level: 'warn',
+        meta: { provider, missing: listed.missing },
+      });
+    }
+    const emptyGroups = SANDBOX_GROUPS.filter((g) => !benchmarks.some((b) => sandboxGroup(b.slug) === g));
+    if (emptyGroups.length > 0) {
+      throw new Error(
+        `sandbox composite: no listed benches for group(s) ${emptyGroups.join(', ')} — refusing to reweight`,
+      );
+    }
+  } else {
+    benchmarks = await api.categorizedBenchmarks(CATEGORY);
+  }
+  ctx.log('composite benchmarks', {
     level: 'info',
     meta: { provider, category: CATEGORY, count: benchmarks.length, slugs: benchmarks.map((b) => b.slug) },
   });
-
-  const sandbox = CATEGORY === 'sandbox';
-  // Fail loudly before any fetch: an ungrouped bench would silently reweight the composite.
-  if (sandbox) for (const bench of benchmarks) sandboxGroup(bench.slug);
 
   // One paged /results read per benchmark covers the whole window — the old
   // day-list + per-run-detail fanout (×36 parallel workers) overloaded the API.
