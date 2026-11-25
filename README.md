@@ -7,6 +7,8 @@
 
 # ComputeSDK Benchmarks
 
+Open source workloads for sandbox, browser, object storage and AI gateway providers, plus the BenchSDK packages that run them. Suites previously maintained separately, including the former private Stealth suites, now live here.
+
 We use the sandbox benchmark results as a reference when developing [ComputeSDK Sandbox Router](https://www.computesdk.com/sandbox-router). The benchmarks run directly against providers to measure startup time, build performance, and reliability independently of the router.
 
 Browse reproducible performance measurements for [sandboxes](https://www.computesdk.com/benchmarks/sandboxes), [browsers](https://www.computesdk.com/benchmarks/browsers), [storage](https://www.computesdk.com/benchmarks/storage), and [AI gateways](https://www.computesdk.com/benchmarks/ai-gateway).
@@ -71,6 +73,14 @@ Public benchmarks are published by the `computesdk` organization (`sandbox-tti`,
 | API | `GET https://platform.computesdk.com/api/v1/benchmarks/~/computesdk/sandbox-tti/results` with `Authorization: Bearer $COMPUTESDK_API_KEY`. The OpenAPI document is at `/api/v1/openapi.json` |
 | MCP | Connect an MCP client to `https://platform.computesdk.com/mcp` (OAuth or an org API key as a bearer token). Tools include `benchmarks_list`, `benchmarks_get_results`, `benchmarks_get_run_results` and `benchmarks_get_reliability` |
 
+## Evaluate the benchmarks
+
+Start with the [technical methodology](docs/methodology.md): measured boundaries, provider differences, sample trimming, scoring formulas, weekly aggregation and limitations. The [suite index](docs/suites.md) links each workload to its execution workflow. The [website methodology](https://www.computesdk.com/methodology) is a shorter overview.
+
+Source code is public, including `benchmarks/stealth/`; no subscription is needed to inspect it. Platform permissions govern access to results, run details and logs. Published weekly Stealth scores do not expose the underlying daily measurements. Public source alone does not make restricted runs independently auditable.
+
+To report a problem, [open an issue](https://github.com/computesdk/benchmarks/issues) with the suite, source commit, run/date, provider, configuration and the measurement or scoring decision you question. Reproduction instructions are below; provider credentials and usage charges still apply.
+
 ## Layout
 
 ```text
@@ -132,7 +142,8 @@ pnpm install --frozen-lockfile --ignore-scripts
 pnpm -r --filter './packages/**' run build
 
 # Supply the provider credentials required by the suite.
-# Add COMPUTESDK_API_KEY to ingest a run; --no-ingest keeps it local.
+# Add COMPUTESDK_API_KEY to ingest a run.
+# --no-ingest runs locally without platform auth or uploads; provider calls still run.
 pnpm exec tsx packages/benchsdk-runner/dist/bin.js run benchmarks/sandbox/tti.bench.ts --provider e2b --iterations 1 --no-ingest
 pnpm bench:stealth benchmarks/stealth/sandbox/cpu.bench.ts --provider e2b --iterations 1 --no-ingest
 ```

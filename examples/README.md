@@ -1,12 +1,12 @@
 # benchsdk Examples
 
-Each `*.bench.ts` file here demonstrates one benchsdk capability. All examples are self-contained and use only local Node APIs, but `bench run` requires a platform API key or OAuth token even with `--dry-run` (the flag only skips uploading).
+Each `*.bench.ts` file here demonstrates one benchsdk capability. All examples are self-contained and use only local Node APIs. Use `--no-ingest` (or its alias `--dry-run`) to execute them without platform authentication or uploads. Provider benchmark suites, unlike these examples, still need provider credentials and can incur usage charges.
 
 ## Running an example
 
 ```bash
 pnpm -r --filter "./packages/**" build
-COMPUTESDK_API_KEY=bp_... pnpm exec bench run examples/01-hello.bench.ts --dry-run
+pnpm exec tsx packages/benchsdk-runner/dist/bin.js run examples/01-hello.bench.ts --no-ingest
 ```
 
 ## Examples

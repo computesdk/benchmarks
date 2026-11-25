@@ -67,7 +67,7 @@ Run it with the CLI (flags override the config knobs):
 bench run benchmarks/sandbox/tti.bench.ts --iterations 100 --concurrency 20 --provider e2b,modal
 ```
 
-`bench run` uses `COMPUTESDK_API_KEY`, `BENCHMARKS_PLATFORM_TOKEN`, or a session saved by `bench auth login` to upload results. Use `--dry-run`, `--no-ingest`, or `BENCHSDK_NO_INGEST=1` for local runs without platform credentials.
+`bench run` uses `COMPUTESDK_API_KEY`, `BENCHMARKS_PLATFORM_TOKEN`, or a session saved by `bench auth login` to upload results. Use `--dry-run`, `--no-ingest`, or `BENCHSDK_NO_INGEST=1` for local runs without platform credentials. These options still execute the workload: provider credentials, resource creation and usage charges still apply. See the [repository methodology](../../docs/methodology.md) and [suite index](../../docs/suites.md) to evaluate the included provider benchmarks.
 
 To load a TypeScript benchmark without a build step, run the CLI under a TS loader:
 
