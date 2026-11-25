@@ -122,6 +122,7 @@ export const OCI_PARTICIPANTS: Record<string, OciParticipantSpec> = {
       imageRef: REFERENCE_IMAGE,
     }),
   },
+  createos: { mechanism: 'image', resolve: image() },
   // daytona passes image through providerOptions into createParams.
   daytona: { mechanism: 'image', resolve: image({ autoStopInterval: 15, autoDeleteInterval: 0 }) },
   // givemeanode requires a digest-pinned ref — resolved by the materialize script.
