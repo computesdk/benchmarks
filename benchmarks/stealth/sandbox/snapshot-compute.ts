@@ -1,5 +1,5 @@
 import { CreateosSandboxClient, pollUntil } from '@nodeops-createos/sandbox';
-import { CREATE_TIMEOUT_MS, snapshotCapabilities, type Compute } from '../src/util/snapshot.js';
+import { CREATE_TIMEOUT_MS, type SnapshotCapabilities, type Compute } from '../src/util/snapshot.js';
 import type { ProviderConfig } from './types.js';
 
 interface CreateosSnapshot {
@@ -15,7 +15,14 @@ export function snapshotCompute(provider: ProviderConfig): Compute {
   const { http } = new CreateosSandboxClient();
   const snapshotPath = (id: string) => `/v1/snapshots/${encodeURIComponent(id)}`;
   const snapshot = {
-    capabilities: snapshotCapabilities(compute),
+    capabilities: {
+      scope: 'rootfs',
+      memory: true,
+      destroysSource: false,
+      source: 'kept',
+      fork: true,
+      readiness: 'immediate', // create() waits for the full artifact to become ready.
+    } satisfies SnapshotCapabilities,
     async create(id: string, options?: { name?: string }) {
       const artifact = await http.request<CreateosSnapshot>(
         'POST', `/v1/sandboxes/${encodeURIComponent(id)}/snapshots`,
