@@ -51,9 +51,9 @@ export function nextDay(day: string): string {
 }
 
 /**
- * The five equally weighted sandbox groups. Every categorized sandbox bench
- * must appear here: `sandboxGroup` throws on an unknown slug so a newly
- * categorized bench can't silently skew (or skip) the composite.
+ * The five equally weighted sandbox groups. `SANDBOX_BENCH_GROUPS` is the
+ * complete list of benches the sandbox composite scores; platform categories
+ * play no part, so a bench counts only once it is added here.
  */
 export const SANDBOX_GROUPS = ['startup', 'compute', 'filesystem', 'state', 'reliability'] as const;
 export type SandboxGroup = (typeof SANDBOX_GROUPS)[number];
@@ -437,6 +437,22 @@ export class PlatformApi {
       }
       if (page.length < LIST_PAGE_SIZE) return items;
     }
+  }
+
+  /**
+   * The benches in `SANDBOX_BENCH_GROUPS`, whatever their platform category.
+   * `missing` lists mapped slugs the API key can't see (renamed or deleted).
+   */
+  async sandboxBenchmarks(): Promise<{ benchmarks: ListedBenchmark[]; missing: string[] }> {
+    const bySlug = new Map<string, ListedBenchmark>();
+    for (const item of await this.listBenchmarks()) {
+      if (item.slug in SANDBOX_BENCH_GROUPS && !bySlug.has(item.slug)) bySlug.set(item.slug, item);
+    }
+    const slugs = Object.keys(SANDBOX_BENCH_GROUPS);
+    return {
+      benchmarks: slugs.flatMap((slug) => bySlug.get(slug) ?? []),
+      missing: slugs.filter((slug) => !bySlug.has(slug)),
+    };
   }
 
   /**
