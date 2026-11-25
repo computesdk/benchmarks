@@ -16,7 +16,7 @@ export const modelIndexProviders: AIGatewayModelIndexProviderConfig[] = [
     name: 'openrouter',
     requiredEnvVars: ['OPENROUTER_API_KEY'],
     host: 'openrouter.ai',
-    modelsPath: '/api/v1/models',
+    modelsPath: '/api/v1/models?output_modalities=all',
     modelListFormat: 'openrouter',
     buildHeaders: () => ({
       Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
