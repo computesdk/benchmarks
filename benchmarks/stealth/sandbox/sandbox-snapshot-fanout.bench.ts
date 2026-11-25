@@ -30,6 +30,7 @@ import type { JsonObject } from '@benchsdk/client';
 import { defineBenchmarkConfig, defineTask, TaskError } from '@benchsdk/runner';
 import { reciprocalScoring } from '../src/util/scoring.js';
 import { providers } from './providers.js';
+import { snapshotCompute } from './snapshot-compute.js';
 import type { ProviderConfig } from './types.js';
 import {
   DEFAULT_FANOUT_COUNT,
@@ -58,7 +59,6 @@ import {
   withSnapshotCreateOptions,
   type SnapshotDirSource,
   verifyFiles,
-  type Compute,
   type FileExpectation,
   type SnapshotSandbox,
   type VerifyOutcome,
@@ -134,7 +134,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
   const { participant, log, step, measure } = ctx;
   const p = participant;
 
-  const compute = p.createCompute() as Compute;
+  const compute = snapshotCompute(p);
   const createTimeout = p.timeout ?? CREATE_TIMEOUT_MS;
   const cleanupTimeout = p.destroyTimeoutMs ?? DESTROY_TIMEOUT_MS;
   const fanoutCount = resolveFanoutCount();
@@ -222,6 +222,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
             compute.snapshot!.create(sandbox!.sandboxId, { name: `snap-fanout-${runId}`, scope: 'full' }),
             createTimeout,
             'Snapshot creation timed out',
+            p.name === 'createos' ? (late) => compute.snapshot!.delete(late.id) : undefined,
           ),
         );
         snapshotCreateMs = performance.now() - snapStart;

@@ -23,6 +23,7 @@ import type { JsonObject } from '@benchsdk/client';
 import { defineBenchmarkConfig, defineTask, TaskError } from '@benchsdk/runner';
 import { reciprocalScoring } from '../src/util/scoring.js';
 import { providers } from './providers.js';
+import { snapshotCompute } from './snapshot-compute.js';
 import type { ProviderConfig } from './types.js';
 import { SNAPSHOT_CEILINGS_MS, SUITE_CONFIG, writeSnapshotLegacyResults } from './sandbox-snapshot.js';
 import { formatError } from '../src/util/error.js';
@@ -47,7 +48,6 @@ import {
   snapshotCapabilityMeta,
   withSnapshotCreateOptions,
   verifyFiles,
-  type Compute,
   type FileExpectation,
   type SnapshotSandbox,
 } from '../src/util/snapshot.js';
@@ -127,7 +127,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
   const { participant, log, step, measure } = ctx;
   const p = participant;
 
-  const compute = p.createCompute() as Compute;
+  const compute = snapshotCompute(p);
   const createTimeout = p.timeout ?? CREATE_TIMEOUT_MS;
   const cleanupTimeout = p.destroyTimeoutMs ?? DESTROY_TIMEOUT_MS;
 
@@ -210,6 +210,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
             compute.snapshot!.create(sandbox!.sandboxId, { name: `snap-${runId}`, scope: 'full' }),
             createTimeout,
             'Snapshot creation timed out',
+            p.name === 'createos' ? (late) => compute.snapshot!.delete(late.id) : undefined,
           ),
         );
         snapshotCreateMs = performance.now() - snapStart;
