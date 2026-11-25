@@ -377,6 +377,14 @@ export const task = defineTask<ThroughputProviderConfig>(async (ctx) => {
     });
     connectMs = performance.now() - connectStart;
 
+    // Some providers ignore the requested viewport; pin it so every provider
+    // screenshots the same page size.
+    const viewport = participant.sessionCreateOptions?.viewport as { width: number; height: number } | undefined;
+    if (viewport) {
+      await withTimeout(page.setViewportSize(viewport), 10_000, 'setViewportSize timed out').catch((err: unknown) =>
+        log('setViewportSize failed', { level: 'warn', meta: { error: err instanceof Error ? err.message : String(err) } }));
+    }
+
     // Seed identical Wikipedia cookie state for every provider. Fresh,
     // cookieless sessions on some cloud networks receive HTTP 429. Setting
     // the cookie locally avoids warming DNS, TLS, or the article connection.

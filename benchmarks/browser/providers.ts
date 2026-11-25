@@ -3,7 +3,9 @@ import { browseruse } from '@computesdk/browseruse';
 import { hyperbrowser } from '@computesdk/hyperbrowser';
 import { kernel } from '@computesdk/kernel';
 import { notte } from '@computesdk/notte';
+import { outcrawl } from '@computesdk/outcrawl';
 import { steel } from '@computesdk/steel';
+import { styneBrowser } from '@computesdk/styne-browser';
 import { tilion } from '@computesdk/tilion';
 import type { BrowserProviderConfig } from './types.js';
 
@@ -69,10 +71,26 @@ export const browserProviders: BrowserProviderConfig[] = [
     },
   },
   {
+    name: 'outcrawl',
+    requiredEnvVars: ['OUTCRAWL_API_KEY'],
+    createBrowserProvider: () => outcrawl({
+      apiKey: process.env.OUTCRAWL_API_KEY!,
+    }),
+    sessionCreateOptions: { stealth: false },
+  },
+  {
     name: 'steel',
     requiredEnvVars: ['STEEL_API_KEY'],
     createBrowserProvider: () => steel({
       apiKey: process.env.STEEL_API_KEY!
+    }),
+    sessionCreateOptions: { stealth: false },
+  },
+  {
+    name: 'styne',
+    requiredEnvVars: ['STYNE_API_KEY'],
+    createBrowserProvider: () => styneBrowser({
+      apiKey: process.env.STYNE_API_KEY!,
     }),
     sessionCreateOptions: { stealth: false },
   },

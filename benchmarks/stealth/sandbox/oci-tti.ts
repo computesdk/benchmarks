@@ -105,6 +105,11 @@ const artifact = (
 export const OCI_PARTICIPANTS: Record<string, OciParticipantSpec> = {
   // --- 'image': create() takes the OCI ref directly ---
   'run-cloud': { mechanism: 'image', resolve: image({ templateId: REFERENCE_IMAGE }) },
+  arker: { mechanism: 'image', resolve: image() },
+  // groundbox turns a public Docker image into a disk at create.
+  groundbox: { mechanism: 'image', resolve: image() },
+  // tangle's create() sends `image` as its `environment` (a container image ref).
+  tangle: { mechanism: 'image', resolve: image() },
   // archil defaults to exec mode where create() only resolves a disk handle;
   // ephemeral: false forces persistent mode, where image → baseImage.
   archil: { mechanism: 'image', resolve: image({ ephemeral: false }) },

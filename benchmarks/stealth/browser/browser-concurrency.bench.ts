@@ -663,6 +663,15 @@ async function runRound(ctx: RoundContext): Promise<{ round: RoundResult; harnes
       });
     }
 
+    // Some providers ignore the requested viewport; pin it so every provider
+    // screenshots the same page size. Kept out of connect/action timings.
+    const viewport = participant.sessionCreateOptions?.viewport as { width: number; height: number } | undefined;
+    if (viewport) {
+      await Promise.all(pages.map(page =>
+        withTimeout(page.setViewportSize(viewport), 10_000, 'setViewportSize timed out')
+          .catch((err) => log(`setViewportSize failed: ${errorMessage(err)}`, { level: 'warn' }))));
+    }
+
     // Prepare every context before releasing the action barrier. Keep this
     // local cookie setup out of connect/action timings and the level budget.
     const cookieSetupStart = performance.now();

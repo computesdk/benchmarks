@@ -143,6 +143,8 @@ jobs:
           - notte
           - steel
           - tilion
+          - outcrawl
+          - styne
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -184,6 +186,18 @@ jobs:
           THROUGHPUT_URLS: ${{ needs.setup.outputs.urls }}
         run: |
           . benchmarks/scripts/load-vault-secrets.sh '^(BROWSERBASE_API_KEY|BROWSERBASE_PROJECT_ID|BROWSER_USE_API_KEY|HYPERBROWSER_API_KEY|KERNEL_API_KEY|NOTTE_API_KEY|STEEL_API_KEY|TILION_API_KEY|TILION_BASE_URL|BENCHMARKS_PLATFORM_API_KEY)'
+
+          # outcrawl's credential is loaded only in its own leg, not through the
+          # shared allowlist above.
+          if [ "${{ matrix.provider }}" = "outcrawl" ]; then
+            . benchmarks/scripts/load-vault-secrets.sh '^(OUTCRAWL_API_KEY|BENCHMARKS_PLATFORM_API_KEY)'
+          fi
+
+          # styne's credential is loaded only in its own leg, not through the
+          # shared allowlist above.
+          if [ "${{ matrix.provider }}" = "styne" ]; then
+            . benchmarks/scripts/load-vault-secrets.sh '^(STYNE_API_KEY|BENCHMARKS_PLATFORM_API_KEY)'
+          fi
 
           # One invocation covers the whole sweep: the benchmark runs one task
           # per concurrency level, and --levels picks which levels run (the

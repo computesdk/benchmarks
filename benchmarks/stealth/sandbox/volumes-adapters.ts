@@ -143,6 +143,7 @@ function sdkRuntimeAttach(args: MountArgs, attach: (sandbox: any) => Promise<voi
 /* ------------------------------ adapters ------------------------------ */
 
 const CREATE_MOUNT_PROVIDERS: Array<Pick<VolumeAdapter, 'provider' | 'storageClass'>> = [
+  { provider: 'arker', storageClass: 'object' },        // shared filesystem on object storage
   { provider: 'daytona', storageClass: 'object' },      // S3-backed fuse mount
   { provider: 'e2b', storageClass: 'object' },
   { provider: 'modal', storageClass: 'unknown' },
@@ -156,6 +157,7 @@ const CREATE_MOUNT_PROVIDERS: Array<Pick<VolumeAdapter, 'provider' | 'storageCla
   { provider: 'sail', storageClass: 'object' },         // file system on object storage
   { provider: 'styne', storageClass: 'unknown' },
   { provider: 'gravixlayer', storageClass: 'object' },  // managed bucket mounts
+  { provider: 'groundbox', storageClass: 'unknown' },   // attached at create only
 ];
 
 const RUNTIME_ATTACH_PROVIDERS: Array<Pick<VolumeAdapter, 'provider' | 'storageClass'>> = [

@@ -51,6 +51,9 @@ const SANDBOX_PROVIDERS = [
   'sail',
   'sprites',
   'styne',
+  'groundbox',
+  'orble',
+  'tangle',
   'superserve',
   'luxor',
   'tensorlake',
@@ -61,7 +64,7 @@ const SANDBOX_PROVIDERS = [
 
 // Browser-only providers — benchmarks/stealth/browser/concurrent-providers.ts (and the
 // upstream computesdk/benchmarks browser registry).
-const BROWSER_PROVIDERS = ['browserbase', 'browseruse', 'hyperbrowser', 'kernel', 'notte', 'steel', 'tilion'] as const;
+const BROWSER_PROVIDERS = ['browserbase', 'browseruse', 'hyperbrowser', 'kernel', 'notte', 'outcrawl', 'steel', 'tilion'] as const;
 
 // Storage-only providers — benchmarks/stealth/storage/providers.ts (tensorlake/archil
 // already appear in the sandbox list).
@@ -107,6 +110,7 @@ const MULTI_CATEGORY: Record<string, readonly CompositeCategory[]> = {
   tensorlake: ['sandbox', 'storage'],
   neon: ['storage', 'ai-gateway'],
   novita: ['sandbox', 'ai-gateway'],
+  styne: ['sandbox', 'browser'],
 };
 
 export const providers: CategorizedProvider[] = [
