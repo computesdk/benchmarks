@@ -3,7 +3,7 @@
  *
  * Each participant is a provider identity (e2b, vercel, modal, …). Its task
  * reads that provider's daily composite scores from the benchmarks-platform
- * v1 API across every benchmark in ONE category (env `BENCHMARK_CATEGORY`,
+ * v1 API across the scoring inputs in ONE category (env `BENCHMARK_CATEGORY`,
  * default `sandbox`) over the previous 7 complete UTC days, then averages:
  *
  *   1. per benchmark per day — average compositeScore across ALL of that

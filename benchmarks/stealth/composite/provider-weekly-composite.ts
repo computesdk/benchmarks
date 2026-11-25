@@ -51,7 +51,7 @@ export function nextDay(day: string): string {
 }
 
 /**
- * The five equally weighted sandbox groups. Every categorized sandbox bench
+ * The five equally weighted sandbox groups. Every sandbox composite input
  * must appear here: `sandboxGroup` throws on an unknown slug so a newly
  * categorized bench can't silently skew (or skip) the composite.
  */
@@ -73,13 +73,22 @@ export const SANDBOX_BENCH_GROUPS: Readonly<Record<string, SandboxGroup>> = {
   'sandbox-tmp-filesystem-daily': 'filesystem',
   'sandbox-snapshot-stealth': 'state',
   'sandbox-snapshot-fanout-stealth': 'state',
+  'sandbox-heavy-snapshot-stealth': 'state',
   'filesystem-snapshot-stealth': 'state',
+  'sandbox-criu': 'state',
   'sandbox-fidelity-stealth': 'state',
   'sandbox-pause-resume-stealth': 'state',
   'sandbox-soak-stealth': 'reliability',
   'sandbox-burst-survival-stealth': 'reliability',
   'os-capabilities-stealth': 'reliability',
 };
+
+const SANDBOX_COMPOSITE_EXCLUSIONS = new Set([
+  'sandbox-reliability', // Uptime is published separately.
+  'sandbox-fs-api', // Use sandbox-fs-api-stealth.
+  'sandbox-dax', // Use sandbox-dax-daily.
+  'sandbox-tti', // Use sandbox-tti-daily.
+]);
 
 export function sandboxGroup(slug: string): SandboxGroup {
   const group = SANDBOX_BENCH_GROUPS[slug];
@@ -446,7 +455,8 @@ export class PlatformApi {
         item.category === category &&
         // Never read our own runs: if a composite slug gets assigned a
         // category it would fold its own scores back into the average.
-        !item.slug.startsWith('provider-weekly-composite'),
+        !item.slug.startsWith('provider-weekly-composite') &&
+        (category !== 'sandbox' || !SANDBOX_COMPOSITE_EXCLUSIONS.has(item.slug)),
     );
   }
 
