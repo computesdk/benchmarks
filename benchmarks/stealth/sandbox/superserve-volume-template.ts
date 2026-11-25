@@ -72,7 +72,10 @@ export async function ensureSuperserveVolumeTemplate(apiKey: string, api: Templa
     template = await api.connect(match.id, { apiKey });
     const info = await template.getInfo();
     if (info.status === 'ready') return template.id;
-    if (info.status === 'failed') await template.rebuild();
+    if (info.status === 'failed') {
+      await template.rebuild();
+      template = await api.connect(template.id, { apiKey });
+    }
   }
 
   await template.waitUntilReady();

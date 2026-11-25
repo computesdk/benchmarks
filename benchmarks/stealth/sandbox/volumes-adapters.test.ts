@@ -143,10 +143,30 @@ test('a ready name collision resolves the exact template UUID and reuses it', as
   ]);
 });
 
-test('a failed existing template is rebuilt and awaited instead of silently skipped', async () => {
-  const { api, actions } = templateFixture('failed', new Error('HTTP 409: name already exists'));
-  await ensureSuperserveVolumeTemplate('fixture-key', api);
-  assert.deepEqual(actions.slice(-3), ['info', 'rebuild', 'wait']);
+test('a failed existing template waits for the replacement build after reconnecting', async () => {
+  let latestBuildId = 'failed-build';
+  const waitedBuilds: string[] = [];
+  const api = {
+    create: async () => { throw new Error('HTTP 409: name already exists'); },
+    list: async () => [{ id: 'template-id', name: SUPERSERVE_VOLUME_TEMPLATE_NAME }],
+    connect: async (id: string, options: { apiKey: string }) => {
+      assert.equal(id, 'template-id');
+      assert.deepEqual(options, { apiKey: 'fixture-key' });
+      const cachedBuildId = latestBuildId;
+      return {
+        id,
+        getInfo: async () => ({ status: cachedBuildId === 'failed-build' ? 'failed' : 'building' }),
+        rebuild: async () => { latestBuildId = 'replacement-build'; },
+        waitUntilReady: async () => {
+          waitedBuilds.push(cachedBuildId);
+          if (cachedBuildId === 'failed-build') throw new Error('Template build failed: failed-build');
+        },
+      };
+    },
+  };
+  assert.equal(await ensureSuperserveVolumeTemplate('fixture-key', api), 'template-id');
+  assert.equal(latestBuildId, 'replacement-build');
+  assert.deepEqual(waitedBuilds, ['replacement-build']);
 });
 
 test('an in-progress existing template is awaited without starting another build', async () => {
