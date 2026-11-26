@@ -33,9 +33,6 @@ import {
 
 const CREATE_TIMEOUT_MS = 240_000;
 const DATA_TIMEOUT_MS = 300_000;
-// Pass a deadline to the SDK as well as the outer step timer. The router's
-// buffered-command limit is 290 seconds; leave 10 seconds for the response.
-const DATA_COMMAND_TIMEOUT_MS = 290_000;
 const PROBE_TIMEOUT_MS = 60_000;
 // Window inside mount-verify's probe budget for async mounts (in-VM agent,
 // fuse setup) to register before recording realMount=0.
@@ -239,7 +236,6 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
           // sequential write throughput, not dd availability.
           const r = await sandbox.runCommand(
             timed(`head -c ${SEQ_MB * 1048576} /dev/zero > ${dir}/seq.bin && sync`),
-            { timeout: DATA_COMMAND_TIMEOUT_MS },
           );
           if (r.exitCode !== 0) throw new Error(`seq write failed: ${r.stderr}`);
           return parseNs(r.stdout);
@@ -255,7 +251,6 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
         (async () => {
           const r = await sandbox.runCommand(
             timed(`cat ${dir}/seq.bin > /dev/null`),
-            { timeout: DATA_COMMAND_TIMEOUT_MS },
           );
           if (r.exitCode !== 0) throw new Error(`seq read failed: ${r.stderr}`);
           return parseNs(r.stdout);
@@ -275,7 +270,6 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
               // buffered writes, not what a small-file op costs on the mount.
               `mkdir -p ${dir}/small && cd ${dir}/small && for i in $(seq 1 ${SMALL_FILES}); do head -c ${SMALL_FILE_KB * 1024} /dev/zero > f$i && (command -v fsync >/dev/null 2>&1 && fsync f$i || sync) || exit 1; done`,
             ),
-            { timeout: DATA_COMMAND_TIMEOUT_MS },
           );
           if (r.exitCode !== 0) throw new Error(`small files failed: ${r.stderr}`);
           return parseNs(r.stdout);
@@ -405,7 +399,6 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
           // file lost before manifest capture can't hash-verify clean.
           const r = await reattachSandbox.runCommand(
             `(cat ${dir}/marker2.txt 2>/dev/null || cat ${dir}/marker.txt; echo); sha256sum ${dir}/seq.bin ${dir}/small/* | sha256sum | cut -d' ' -f1; ls ${dir}/small | wc -l; stat -c%s ${dir}/seq.bin 2>/dev/null || echo 0`,
-            { timeout: DATA_COMMAND_TIMEOUT_MS },
           );
           const lines = (r.stdout ?? '').trim().split('\n');
           const markerOk = (lines[0] ?? '').startsWith(marker);
