@@ -13,6 +13,10 @@ assert.equal(getCiSandboxOptions('sail', base, 240_000, 'deadline').timeout, 240
 assert.deepEqual(getCiSandboxOptions('sandbox0', { hardTtl: 900 }, lease), { memory: 16384, timeout: lease, ttl: 3600, hardTtl: 3600 });
 assert.deepEqual(getCiSandboxOptions('sandbox0', { hardTtl: 900 }, 240_000, 'deadline'), { timeout: 240_000, ttl: 240, hardTtl: 240 });
 assert.equal(getCiSandboxOptions('e2b', { timeout: 600_000 }, lease).timeout, lease);
+assert.deepEqual(getCiSandboxOptions('modal', {}, lease), {
+  cpu: 0.125, cpuLimit: 8, memoryMiB: 16384, templateId: 'node:22', timeout: lease,
+});
+assert.deepEqual(getCiSandboxOptions('modal', {}, 240_000, 'deadline'), { timeout: 240_000 });
 const mosaic = getCiSandboxOptions('mosaic', {}, lease);
 for (const [key, value] of Object.entries(PROVIDER_SIZE_OPTIONS.mosaic.xlarge!)) assert.equal(mosaic[key], value);
 
