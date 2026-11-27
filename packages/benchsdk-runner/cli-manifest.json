@@ -563,6 +563,51 @@
     },
     {
       "path": [
+        "exclusions",
+        "list"
+      ],
+      "args": [],
+      "flags": [
+        "--participant"
+      ],
+      "summary": "The org's participant exclusions: windows where a participant's results don't count",
+      "since": "0.9.6",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "exclusions",
+        "add"
+      ],
+      "args": [],
+      "flags": [
+        "--participant",
+        "--start",
+        "--end",
+        "--reason",
+        "--benchmark"
+      ],
+      "summary": "Stop counting a participant's results from --start to --end on the org's benchmarks (or only --benchmark ones)",
+      "since": "0.9.6",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
+        "exclusions",
+        "remove"
+      ],
+      "args": [
+        "<exclusion-id>"
+      ],
+      "flags": [
+        "--yes"
+      ],
+      "summary": "Remove a participant exclusion so its results count again (asks first; -y to skip)",
+      "since": "0.9.6",
+      "package": "@benchsdk/cli"
+    },
+    {
+      "path": [
         "run-again"
       ],
       "args": [

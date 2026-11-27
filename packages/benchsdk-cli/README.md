@@ -75,6 +75,7 @@ When installed with `@benchsdk/runner`, these are available through the `bench` 
 - `bench benchmarks describe <slug> [--tagline <text>] [--description <text>] [--description-file <path>] [--clear-tagline] [--clear-description]`
 - `bench benchmarks mute <slug>` / `bench benchmarks unmute <slug>` — the org mute that hides a benchmark from the org run feed
 - `bench benchmarks pause <slug> [--start <iso>] [--end <iso>]` / `bench benchmarks resume <slug>` — reliability benchmarks only
+- `bench exclusions list [--participant <slug>]` / `bench exclusions add --participant <slug> --start <iso> --end <iso> --reason <text> [--benchmark <slug>]...` / `bench exclusions remove <id> [-y]` — windows where a participant's results don't count (scored runs come back `compositeScore: null, excluded: true`; reliability checks in the window don't count). Org-wide unless `--benchmark` narrows it; nothing stored changes.
 - `bench runs list [slug] [--limit N] [--offset N] [--participant <list>] [--since <when>] [--until <when>] [--day YYYY-MM-DD] [--tz <zone>] [--source-org <slug>] [--archived exclude|include|only] [--include-muted]` (`--include-muted` only without a slug)
 - `bench runs show <slug> <runId> [--rank-by <option>] [--stat min|median|p95|p99|max] [--dimension <value>]` — the run and its Overview ranking (`overview` in `--json`; `null` when unavailable)
 - `bench runs run-again <slug> <runId> [--wait] [--timeout <seconds>]`
@@ -104,7 +105,7 @@ Every command accepts `--json`.
 
 ### Managing benchmarks and runs
 
-The management writes (`benchmarks archive|restore|describe|mute|unmute|pause|resume`, `runs archive|unarchive`) need an organization owner or admin login, or an org API key. A member login gets the platform's 403 message plus a hint saying so.
+The management writes (`benchmarks archive|restore|describe|mute|unmute|pause|resume`, `runs archive|unarchive`, `exclusions add|remove`) need an organization owner or admin login, or an org API key. A member login gets the platform's 403 message plus a hint saying so.
 
 `benchmarks archive`, `runs archive` and `runs unarchive` hide or bring back data, so they ask for confirmation first:
 

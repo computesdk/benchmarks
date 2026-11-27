@@ -13,6 +13,8 @@ import type {
   BenchmarkParticipant,
   BenchmarkParticipantLogs,
   BenchmarkPauseInput,
+  ParticipantExclusion,
+  ParticipantExclusionInput,
   BenchmarkPauseState,
   BenchmarkReliabilityDay,
   BenchmarkReliabilityInput,
@@ -514,6 +516,26 @@ export function createBenchmarkClient(config: BenchmarkClientConfig = {}): Bench
 
     async resumeBenchmark(slug) {
       return request<BenchmarkPauseState>('DELETE', `/benchmarks/${encodePath(slug)}/pause`);
+    },
+
+    async listParticipantExclusions() {
+      const data = await request<{ exclusions: ParticipantExclusion[] }>('GET', '/participants/exclusions');
+      return data.exclusions;
+    },
+
+    async createParticipantExclusion(input: ParticipantExclusionInput) {
+      const body: JsonObject = {
+        participant: input.participant,
+        start: input.start,
+        end: input.end,
+        reason: input.reason,
+      };
+      if (input.benchmarks !== undefined) body.benchmarks = input.benchmarks;
+      return request<ParticipantExclusion>('POST', '/participants/exclusions', body);
+    },
+
+    async deleteParticipantExclusion(id) {
+      return request<{ deleted: string }>('DELETE', `/participants/exclusions/${encodePath(id)}`);
     },
 
     async getRunFeed(options: RunFeedOptions = {}) {

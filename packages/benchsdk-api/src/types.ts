@@ -113,6 +113,29 @@ export interface BenchmarkPauseState {
   pauses: { start: string; end: string | null }[];
 }
 
+/** A window where one participant's results don't count on the org's benchmarks. */
+export interface ParticipantExclusion {
+  id: string;
+  participant: string;
+  /** ISO 8601; results at or after it are excluded. */
+  start: string;
+  /** ISO 8601; results before it are excluded. */
+  end: string;
+  reason: string;
+  /** Benchmark slugs it covers; null for every scored and reliability benchmark the org owns. */
+  benchmarks: string[] | null;
+  createdAt: string;
+}
+
+export interface ParticipantExclusionInput {
+  participant: string;
+  start: string;
+  end: string;
+  reason: string;
+  /** Limit it to these benchmark slugs; omit for every benchmark the org owns. */
+  benchmarks?: string[];
+}
+
 /** Filters shared by the org-wide run feed routes (`runs/summary`, `runs/days`, `runs/day/{day}`). */
 export interface RunFeedFilter {
   /** Sent as `benchmarkSlugs=a,b`; `~org/slug` names one owner's benchmark. At most 50. */
@@ -1478,6 +1501,12 @@ export interface BenchmarkClient {
   pauseBenchmark(slug: string, input?: BenchmarkPauseInput): Promise<BenchmarkPauseState>;
   /** DELETE /benchmarks/{slug}/pause — resume a paused reliability benchmark. */
   resumeBenchmark(slug: string): Promise<BenchmarkPauseState>;
+  /** GET /participants/exclusions — the org's participant exclusions. */
+  listParticipantExclusions(): Promise<ParticipantExclusion[]>;
+  /** POST /participants/exclusions — stop counting a participant's results in a window (owners/admins). */
+  createParticipantExclusion(input: ParticipantExclusionInput): Promise<ParticipantExclusion>;
+  /** DELETE /participants/exclusions/{id} — the participant's results count again (owners/admins). */
+  deleteParticipantExclusion(id: string): Promise<{ deleted: string }>;
   /** GET /benchmarks/runs/summary — the org's newest runs across benchmarks, with stats. */
   getRunFeed(options?: RunFeedOptions): Promise<RunFeed>;
   /** GET /benchmarks/runs/days — run counts per local day. */

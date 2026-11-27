@@ -37,6 +37,7 @@ import {
   handleRunsFeed,
 } from './feed.js';
 import { handleRunAgain, handleRunAgainStatus } from './daily-run-again.js';
+import { handleExclusionsAdd, handleExclusionsList, handleExclusionsRemove } from './exclusions.js';
 import {
   handleArtifactsDownload,
   handleMatrix,
@@ -152,6 +153,13 @@ Commands:
   reliability cards [--include-muted] The org's reliability cards
   activity [--days N] [--benchmark <slug>]
                                      Run counts per day (N from 1 to 90)
+  exclusions list [--participant <slug>]
+                                     The org's participant exclusions
+  exclusions add --participant <slug> --start <iso> --end <iso> --reason <text>
+             [--benchmark <slug>]... Stop counting a participant's results in a
+                                     window (every benchmark, or only --benchmark)
+  exclusions remove <exclusion-id> [-y]
+                                     Remove an exclusion; its results count again
   run-again <benchmark-slug> [--wait] [--timeout <sec>] [--interval <sec>]
                                      Run a daily benchmark again (once per org
                                      and UTC day; needs a user login; --wait
@@ -187,7 +195,8 @@ Options:
   --version                          Show version
   --help                             Show this help
 
-Writes that hide data (benchmarks archive, runs archive|unarchive) ask for
+Writes that hide data (benchmarks archive, runs archive|unarchive, exclusions
+remove) ask for
 confirmation on a terminal; elsewhere they need -y/--yes or exit 1 unchanged.
 `;
 
@@ -280,6 +289,7 @@ const subcommandOptionSchema: Record<string, { type: OptionType }> = {
   tagline: { type: 'string' },
   description: { type: 'string' },
   'description-file': { type: 'string' },
+  reason: { type: 'string' },
   'clear-tagline': { type: 'boolean' },
   'clear-description': { type: 'boolean' },
   start: { type: 'string' },
@@ -499,6 +509,22 @@ muted ones stay out unless --include-muted.`;
 
 Run counts per day for the organization, or for one benchmark. --days takes
 1 to 90 (the platform defaults to 30).`;
+    case 'exclusions':
+      return `Usage: bench exclusions list [--participant <slug>]
+       bench exclusions add --participant <slug> --start <iso> --end <iso> --reason <text>
+                    [--benchmark <slug>]...
+       bench exclusions remove <exclusion-id> [-y]
+
+A participant exclusion stops one participant's results counting in a window,
+for an incident that was not the participant's fault (say, an expired
+benchmark token). Scored runs created in [--start, --end) come back with
+compositeScore null and excluded: true, so composites skip them; reliability
+checks in the window don't count. Nothing stored changes, and removing the
+exclusion restores the numbers. It covers every benchmark the org owns, or
+only the --benchmark ones (repeatable or comma-separated).
+
+Members can list exclusions; add and remove need an organization owner or
+admin login, or an org API key.`;
     case 'run-again':
       return `Usage: bench run-again <benchmark-slug> [--wait] [--timeout <sec>] [--interval <sec>]
        bench run-again status <benchmark-slug> [--request <runAgainId>]
@@ -1702,6 +1728,18 @@ export async function run(argv: string[]): Promise<void> {
       case 'activity': {
         const { options } = parseSubcommandOptions(rest, flagsOf('activity'));
         await handleActivity(options, overrides, outputOptions);
+        break;
+      }
+      case 'exclusions': {
+        const [sub, ...subRest] = rest;
+        if (!findCommand(['exclusions', sub])) throw new Error(commandHelp('exclusions'));
+        const { options, positionals: subPositionals } = parseSubcommandOptions(subRest, flagsOf('exclusions', sub));
+        if (subPositionals.length > (sub === 'remove' ? 1 : 0)) {
+          throw new Error(`Unexpected argument: ${subPositionals[sub === 'remove' ? 1 : 0]}\n${commandHelp('exclusions')}`);
+        }
+        if (sub === 'list') await handleExclusionsList(options, overrides, outputOptions);
+        else if (sub === 'add') await handleExclusionsAdd(options, overrides, outputOptions);
+        else await handleExclusionsRemove(subPositionals[0], options, overrides, outputOptions);
         break;
       }
       case 'run-again': {

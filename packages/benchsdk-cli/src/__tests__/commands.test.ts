@@ -76,6 +76,7 @@ const POSITIONAL_SAMPLES: Record<string, string> = {
   '<day>': '2026-11-01',
   '<workerId>': 'worker-1',
   '<artifactId>': 'artifact-1',
+  '<exclusion-id>': 'exclusion-1',
 };
 
 /** A sample value per flag; `null` marks a switch that takes no value. */
@@ -85,6 +86,7 @@ const FLAG_SAMPLES: Record<string, string | null> = {
   'max-lines': '10',
   run: 'run-1',
   participant: 'e2b',
+  reason: 'incident',
   steps: 'create',
   worker: 'worker-1',
   out: '/tmp/bench-export',
