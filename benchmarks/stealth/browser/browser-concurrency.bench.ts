@@ -37,6 +37,7 @@ import { continuousScoring } from '../sandbox/performance-runtime-scoring.js';
 import { fileURLToPath } from 'node:url';
 import { chromium, type Browser, type Page } from 'playwright-core';
 import { seedWikipediaCookie } from '../../browser/wikipedia.js';
+import { installNavigationRecovery } from '../../browser/navigation-recovery.js';
 import { defineBenchmarkConfig, defineTask, TaskError, type TaskContext } from '@benchsdk/runner';
 import type { JsonValue } from '@benchsdk/client';
 import { withTimeout } from '../src/util/timeout.js';
@@ -319,6 +320,11 @@ async function runActionLoop(
   options: ActionLoopOptions,
 ): Promise<void> {
   const { loops, deadline, track } = options;
+  const recovery = installNavigationRecovery(page, { timeoutMs: ACTION_TIMEOUT_MS });
+  const record = (action: ActionResult) => {
+    const navigationEvents = recovery.drainEvents();
+    results.push({ ...action, ...(navigationEvents.length ? { navigationEvents } : {}) });
+  };
   const release = track.enter();
   try {
   for (let loop = 0; loop < loops; loop++) {
@@ -330,27 +336,27 @@ async function runActionLoop(
     // 1. Navigate
     {
       const r = await timeAction(() =>
-        page.goto(navigateUrl, { waitUntil: 'load' }) as Promise<unknown>,
+        recovery.navigate(navigateUrl) as Promise<unknown>,
       );
-      results.push({ index: baseIdx + 1, type: 'navigate', durationMs: r.durationMs, success: r.success, error: r.error });
+      record({ index: baseIdx + 1, type: 'navigate', durationMs: r.durationMs, success: r.success, error: r.error });
     }
 
     // 2. Wait for #firstHeading
     {
-      const r = await timeAction(() => page.waitForSelector(FIRST_HEADING));
-      results.push({ index: baseIdx + 2, type: 'waitForSelector', durationMs: r.durationMs, success: r.success, error: r.error });
+      const r = await timeAction(() => recovery.waitForSelector(FIRST_HEADING));
+      record({ index: baseIdx + 2, type: 'waitForSelector', durationMs: r.durationMs, success: r.success, error: r.error });
     }
 
     // 3. Screenshot
     {
       const r = await timeAction(() => page.screenshot());
-      results.push({ index: baseIdx + 3, type: 'screenshot', durationMs: r.durationMs, success: r.success, error: r.error });
+      record({ index: baseIdx + 3, type: 'screenshot', durationMs: r.durationMs, success: r.success, error: r.error });
     }
 
     // 4. Read text content of #firstHeading
     {
       const r = await timeAction(() => page.textContent(FIRST_HEADING));
-      results.push({ index: baseIdx + 4, type: 'textContent', durationMs: r.durationMs, success: r.success, error: r.error });
+      record({ index: baseIdx + 4, type: 'textContent', durationMs: r.durationMs, success: r.success, error: r.error });
     }
 
     // 5. Click first article link
@@ -369,12 +375,12 @@ async function runActionLoop(
         throw new Error('No article body link found on page');
       });
       clickSucceeded = r.success;
-      results.push({ index: baseIdx + 5, type: 'click', durationMs: r.durationMs, success: r.success, error: r.error });
+      record({ index: baseIdx + 5, type: 'click', durationMs: r.durationMs, success: r.success, error: r.error });
     }
 
     if (!clickSucceeded) {
       for (const idx of [6, 7, 8, 9, 10]) {
-        results.push({
+        record({
           index: baseIdx + idx,
           type: idx <= 8 ? (idx === 6 || idx === 10 ? 'waitForSelector' : idx === 7 ? 'screenshot' : 'textContent') : 'goBack',
           durationMs: 0,
@@ -387,35 +393,36 @@ async function runActionLoop(
 
     // 6. Wait for #firstHeading on the new page
     {
-      const r = await timeAction(() => page.waitForSelector(FIRST_HEADING));
-      results.push({ index: baseIdx + 6, type: 'waitForSelector', durationMs: r.durationMs, success: r.success, error: r.error });
+      const r = await timeAction(() => recovery.waitForSelector(FIRST_HEADING));
+      record({ index: baseIdx + 6, type: 'waitForSelector', durationMs: r.durationMs, success: r.success, error: r.error });
     }
 
     // 7. Screenshot the new page
     {
       const r = await timeAction(() => page.screenshot());
-      results.push({ index: baseIdx + 7, type: 'screenshot', durationMs: r.durationMs, success: r.success, error: r.error });
+      record({ index: baseIdx + 7, type: 'screenshot', durationMs: r.durationMs, success: r.success, error: r.error });
     }
 
     // 8. Read text content of #firstHeading on the new page
     {
       const r = await timeAction(() => page.textContent(FIRST_HEADING));
-      results.push({ index: baseIdx + 8, type: 'textContent', durationMs: r.durationMs, success: r.success, error: r.error });
+      record({ index: baseIdx + 8, type: 'textContent', durationMs: r.durationMs, success: r.success, error: r.error });
     }
 
     // 9. Go back (waitUntil: 'commit' for bfcache compatibility)
     {
       const r = await timeAction(() => page.goBack({ waitUntil: 'commit' }) as Promise<unknown>);
-      results.push({ index: baseIdx + 9, type: 'goBack', durationMs: r.durationMs, success: r.success, error: r.error });
+      record({ index: baseIdx + 9, type: 'goBack', durationMs: r.durationMs, success: r.success, error: r.error });
     }
 
     // 10. Wait for #firstHeading on the previous page
     {
-      const r = await timeAction(() => page.waitForSelector(FIRST_HEADING));
-      results.push({ index: baseIdx + 10, type: 'waitForSelector', durationMs: r.durationMs, success: r.success, error: r.error });
+      const r = await timeAction(() => recovery.waitForSelector(FIRST_HEADING));
+      record({ index: baseIdx + 10, type: 'waitForSelector', durationMs: r.durationMs, success: r.success, error: r.error });
     }
   }
   } finally {
+    recovery.dispose();
     release();
   }
 }

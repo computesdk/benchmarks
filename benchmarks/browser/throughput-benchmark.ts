@@ -113,6 +113,7 @@ export async function writeThroughputResultsJson(
         durationMs: round(a.durationMs),
         success: a.success,
         ...(a.error ? { error: a.error } : {}),
+        ...(a.navigationEvents?.length ? { navigationEvents: a.navigationEvents } : {}),
       })),
       ...(i.error ? { error: i.error } : {}),
     })),

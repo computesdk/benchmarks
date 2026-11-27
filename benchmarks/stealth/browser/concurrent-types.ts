@@ -1,3 +1,5 @@
+import type { NavigationRecoveryEvent } from '../../browser/navigation-recovery.js';
+
 /**
  * Types for the browser concurrent sessions benchmark.
  *
@@ -182,6 +184,8 @@ export interface ActionResult {
   durationMs: number;
   success: boolean;
   error?: string;
+  /** Initial HTTP 429s and every timed recovery attempt, including successful recoveries. */
+  navigationEvents?: NavigationRecoveryEvent[];
 }
 
 /** Per-session timing data collected during one barrier round. */

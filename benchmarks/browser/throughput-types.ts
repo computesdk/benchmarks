@@ -1,3 +1,5 @@
+import type { NavigationRecoveryEvent } from './navigation-recovery.js';
+
 /** How many times the fixed action loop repeats within a single session. */
 export const LOOPS_PER_SESSION = 1;
 /** Number of discrete actions in one loop (fixed to the actions defined in the benchmark). */
@@ -23,6 +25,8 @@ export interface ActionResult {
   durationMs: number;
   success: boolean;
   error?: string;
+  /** Initial HTTP 429s and every timed recovery attempt, including successful recoveries. */
+  navigationEvents?: NavigationRecoveryEvent[];
 }
 
 export interface ThroughputTimingResult {
