@@ -58,25 +58,14 @@ import {
   type SnapshotSandbox,
 } from '../src/util/snapshot.js';
 
-
-/**
- * providers.ts runs vercel with `persistent: false` to disable
- * auto-snapshot-on-stop (cheaper teardown for suites that never resume).
- * Pause + resume needs the stopped box to keep its snapshot, so this bench
- * forces persistence back on for vercel — the only per-provider override.
- */
-/**
- * Other pause-only overrides put each provider in its pausable mode:
- * - upstash `ephemeral: true` boxes cannot pause.
- * - tensorlake only suspends NAMED sandboxes.
- * - miosa's default SOMA runtime has no pause; firecracker does.
- */
+/* Select each provider's pausable sandbox mode for this suite. */
 function pauseParticipant(p: ProviderConfig): ProviderConfig {
   const opts: Record<string, any> = { ...p.sandboxOptions };
   if (p.name === 'vercel') opts.persistent = true;
   if (p.name === 'upstash') opts.ephemeral = false;
   if (p.name === 'tensorlake') opts.name ??= `bench-pause-${newRunId()}`;
   if (p.name === 'miosa') opts.runtime = 'firecracker';
+  if (p.name === 'modal') opts.experimentalPersistent = true;
   return { ...p, sandboxOptions: opts };
 }
 
@@ -244,6 +233,17 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
   const compute = p.createCompute() as Compute;
   const createTimeout = p.timeout ?? CREATE_TIMEOUT_MS;
   const cleanupTimeout = p.destroyTimeoutMs ?? DESTROY_TIMEOUT_MS;
+  const isModal = p.name === 'modal';
+  const destroySandbox = async (box: SnapshotSandbox) => {
+    if (isModal) {
+      // The persistent handle owns the lifecycle across backing sessions.
+      const terminate = verb(nativeHandle(box), 'terminate');
+      if (!terminate) throw new Error('Modal persistent Sandbox has no terminate method');
+      await terminate();
+      return;
+    }
+    await box.destroy();
+  };
 
   const runId = newRunId();
   const markerContent = `verify-content-${runId}`;
@@ -278,7 +278,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
         compute.sandbox.create(withSnapshotCreateOptions(compute, p.sandboxOptions)),
         createTimeout,
         'Sandbox creation timed out',
-        (s) => s.destroy(),
+        destroySandbox,
       ),
     );
     createMs = performance.now() - createStart;
@@ -315,7 +315,8 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
       const pauseCandidates: Array<{ name: string; via: 'shared' | 'native' | 'manager'; call: () => Promise<unknown> }> = [];
       const shared = verb(sandbox, 'pause');
       if (shared && verb(sandbox, 'resume')) pauseCandidates.push({ name: 'pause', via: 'shared', call: () => shared() });
-      for (const name of [PAUSE_AND_WAIT_VERB, ...PAUSE_VERBS]) {
+      const nativePauseVerbs = isModal ? ['experimentalPause'] : [PAUSE_AND_WAIT_VERB, ...PAUSE_VERBS];
+      for (const name of nativePauseVerbs) {
         const fn = verb(native, name);
         if (fn) pauseCandidates.push({ name, via: 'native', call: () => fn() });
       }
@@ -333,8 +334,8 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
           withTimeout(
             (async () => {
               await pauseVerb.call();
-              // pauseAndWait already committed; everything else may be async.
-              if (pauseVerb.name !== PAUSE_AND_WAIT_VERB) {
+              // Both wait-style and Modal pause calls return after the session stops.
+              if (pauseVerb.name !== PAUSE_AND_WAIT_VERB && pauseVerb.name !== 'experimentalPause') {
                 pausedStatus = await waitForPaused(sandbox!, native, createTimeout);
               }
             })(),
@@ -410,7 +411,8 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
                 // Pair the verb that paused the box: resume/start on the same
                 // handle (instance methods take no args), then on its
                 // client.sandboxes manager (manager methods take the id).
-                for (const name of RESUME_VERBS) {
+                const nativeResumeVerbs = isModal ? ['experimentalResume'] : RESUME_VERBS;
+                for (const name of nativeResumeVerbs) {
                   const fn = verb(native, name);
                   if (!fn) continue;
                   await fn();
@@ -511,7 +513,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
       const destroyStart = performance.now();
       await step(
         'destroy-resumed',
-        () => withTimeout(resumedSandbox!.destroy(), cleanupTimeout, 'Destroy resumed timeout'),
+        () => withTimeout(destroySandbox(resumedSandbox!), cleanupTimeout, 'Destroy resumed timeout'),
         { reportConcurrency: false },
       ).catch((err: unknown) =>
         log('destroy resumed failed', { level: 'warn', meta: { error: formatError(err) } }),
@@ -520,13 +522,12 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
       measure({ destroyMs });
     }
 
-    // Never snapshot.delete a box-identity "snapshot" — that deletes the
-    // paused box itself. Same-box teardown goes through sandbox.destroy().
+    // The original handle owns teardown for a same-box resume.
     if (sandbox) {
       const destroyStart = performance.now();
       await step(
         'destroy',
-        () => withTimeout(sandbox!.destroy(), cleanupTimeout, 'Destroy timeout'),
+        () => withTimeout(destroySandbox(sandbox!), cleanupTimeout, 'Destroy timeout'),
         { reportConcurrency: false },
       ).catch((err: unknown) =>
         log('destroy failed', { level: 'warn', meta: { error: formatError(err) } }),

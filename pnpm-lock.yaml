@@ -56,7 +56,7 @@ importers:
         version: 0.4.37(zod@4.6.7)
       '@computesdk/arker':
         specifier: ^0.1.30
-        version: 0.1.30(@computesdk/daytona@1.7.58(bufferutil@4.2.0)(utf-8-validate@6.0.6))(@computesdk/e2b@1.7.77)(@computesdk/modal@1.9.35)(bufferutil@4.2.0)(utf-8-validate@6.0.6)
+        version: 0.1.30(@computesdk/daytona@1.7.58(bufferutil@4.2.0)(utf-8-validate@6.0.6))(@computesdk/e2b@1.7.77)(@computesdk/modal@1.9.37)(bufferutil@4.2.0)(utf-8-validate@6.0.6)
       '@computesdk/beam':
         specifier: ^0.3.32
         version: 0.3.32(bufferutil@4.2.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
@@ -145,8 +145,8 @@ importers:
         specifier: ^1.2.13
         version: 1.2.13(bufferutil@4.2.0)(utf-8-validate@6.0.6)
       '@computesdk/modal':
-        specifier: ^1.9.35
-        version: 1.9.35
+        specifier: ^1.9.37
+        version: 1.9.37
       '@computesdk/mosaic':
         specifier: ^0.1.29
         version: 0.1.29
@@ -948,8 +948,8 @@ packages:
   '@computesdk/miosa@1.2.13':
     resolution: {integrity: sha512-tT+En/X+2XdiY9mAfU0mNg58huB48FN6hitKbdLKHUSqZHuLYl2hLZ1P8XZtEBQVMKu+UULtemC48NXoPB0wTA==}
 
-  '@computesdk/modal@1.9.35':
-    resolution: {integrity: sha512-JK3aGnuBGrTbgvZ4K+nzRLrzPWjGtsQYka5N34SLYM6mJvz3HDsZxbINGFyrZsteVXQTwOkVJ+Z0utqOEZaBCg==}
+  '@computesdk/modal@1.9.37':
+    resolution: {integrity: sha512-zIP6k3cLJ+lwpTlZq4YIdg8YLoYjCWE8qQ7fAgpEjTuH6Z37BlSyp4Q3hBsRBBHOJ6rqCRl2Z4PuRmDCVNTwsg==}
 
   '@computesdk/mosaic@0.1.29':
     resolution: {integrity: sha512-8N3VQlGXof6JNfuhaOTDLDShikydL0c5Pt3vKIEuuEBfICx1jd1fR4K6ibCwgPOnAaJEfu4ki2DGGidjp74+lw==}
@@ -4866,9 +4866,6 @@ packages:
   mlly@1.8.2:
     resolution: {integrity: sha512-d+ObxMQFmbt10sretNDytwt85VrbkhhUA/JBGm1MPaWJ65Cl4wOgLaB1NYvJSZ0Ef03MMEU/0xpPMXUIQ29UfA==}
 
-  modal@0.11.0:
-    resolution: {integrity: sha512-Kvy2nejPkice2FI82p5e8TJrFDy0BaSYZjJVmvnTnu51bOH9Ok7IRtp8NavBQqMuXhbpbj6gRULwxsjNkweF6A==}
-
   modal@0.11.2:
     resolution: {integrity: sha512-niCPjxpacby5aWDKE5uq0hvYGZJ1md0vRhSxIZYsozSi2Y6ddEdoaXYFjh/zI6cczhIW5uL3m+juhsxaO8yd0Q==}
 
@@ -6362,7 +6359,7 @@ snapshots:
     optionalDependencies:
       '@bufbuild/protobuf': 2.17.0
 
-  '@arker-ai/sdk@1.3.0(@computesdk/daytona@1.7.58(bufferutil@4.2.0)(utf-8-validate@6.0.6))(@computesdk/e2b@1.7.77)(@computesdk/modal@1.9.35)(bufferutil@4.2.0)(computesdk@4.1.23)(utf-8-validate@6.0.6)':
+  '@arker-ai/sdk@1.3.0(@computesdk/daytona@1.7.58(bufferutil@4.2.0)(utf-8-validate@6.0.6))(@computesdk/e2b@1.7.77)(@computesdk/modal@1.9.37)(bufferutil@4.2.0)(computesdk@4.1.23)(utf-8-validate@6.0.6)':
     dependencies:
       dockerfile-ast: 0.7.1
       tar: 7.5.23
@@ -6370,7 +6367,7 @@ snapshots:
     optionalDependencies:
       '@computesdk/daytona': 1.7.58(bufferutil@4.2.0)(utf-8-validate@6.0.6)
       '@computesdk/e2b': 1.7.77
-      '@computesdk/modal': 1.9.35
+      '@computesdk/modal': 1.9.37
       computesdk: 4.1.23
     transitivePeerDependencies:
       - bufferutil
@@ -7017,9 +7014,9 @@ snapshots:
     transitivePeerDependencies:
       - zod
 
-  '@computesdk/arker@0.1.30(@computesdk/daytona@1.7.58(bufferutil@4.2.0)(utf-8-validate@6.0.6))(@computesdk/e2b@1.7.77)(@computesdk/modal@1.9.35)(bufferutil@4.2.0)(utf-8-validate@6.0.6)':
+  '@computesdk/arker@0.1.30(@computesdk/daytona@1.7.58(bufferutil@4.2.0)(utf-8-validate@6.0.6))(@computesdk/e2b@1.7.77)(@computesdk/modal@1.9.37)(bufferutil@4.2.0)(utf-8-validate@6.0.6)':
     dependencies:
-      '@arker-ai/sdk': 1.3.0(@computesdk/daytona@1.7.58(bufferutil@4.2.0)(utf-8-validate@6.0.6))(@computesdk/e2b@1.7.77)(@computesdk/modal@1.9.35)(bufferutil@4.2.0)(computesdk@4.1.23)(utf-8-validate@6.0.6)
+      '@arker-ai/sdk': 1.3.0(@computesdk/daytona@1.7.58(bufferutil@4.2.0)(utf-8-validate@6.0.6))(@computesdk/e2b@1.7.77)(@computesdk/modal@1.9.37)(bufferutil@4.2.0)(computesdk@4.1.23)(utf-8-validate@6.0.6)
       '@computesdk/provider': 2.1.29
       computesdk: 4.1.23
     transitivePeerDependencies:
@@ -7270,11 +7267,11 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@computesdk/modal@1.9.35':
+  '@computesdk/modal@1.9.37':
     dependencies:
-      '@computesdk/provider': 2.1.28
-      computesdk: 4.1.22
-      modal: 0.11.0
+      '@computesdk/provider': 2.1.30
+      computesdk: 4.1.24
+      modal: 0.11.2
 
   '@computesdk/mosaic@0.1.29':
     dependencies:
@@ -11570,15 +11567,6 @@ snapshots:
       pathe: 2.0.3
       pkg-types: 1.3.1
       ufo: 1.6.4
-
-  modal@0.11.0:
-    dependencies:
-      cbor-x: 1.6.9
-      long: 5.3.2
-      nice-grpc: 2.1.18
-      protobufjs: 7.6.6
-      smol-toml: 1.9.1
-      uuid: 11.1.1
 
   modal@0.11.2:
     dependencies:
