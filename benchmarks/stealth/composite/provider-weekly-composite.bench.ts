@@ -231,6 +231,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
   const aggregate = {
     weeklyComposite: week.weeklyComposite,
     daysWithData: week.daysWithData,
+    daysExcluded: week.daysExcluded,
     benchmarksContributing: week.benchmarks.filter((bench) => bench.state === 'data').length,
     benchmarksZeroFilled: week.benchmarks.filter((bench) => bench.state === 'zero-filled').length,
   };
@@ -256,6 +257,7 @@ export const task = defineTask<ProviderConfig>(async (ctx) => {
       dailyComposites: week.dailyComposites,
       weeklyComposite: aggregate.weeklyComposite ?? 0,
       daysWithData: aggregate.daysWithData,
+      daysExcluded: aggregate.daysExcluded,
       benchmarksContributing: aggregate.benchmarksContributing,
       benchmarksZeroFilled: aggregate.benchmarksZeroFilled,
       ...(sandbox ? { groupScores: week.groupScores } : {}),
