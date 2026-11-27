@@ -23,19 +23,21 @@ for (const [slug, group] of Object.entries(SANDBOX_BENCH_GROUPS)) {
 }
 assert.deepEqual(new Set(Object.values(SANDBOX_BENCH_GROUPS)), new Set(SANDBOX_GROUPS));
 
-// Every sandbox bench categorized on the platform as of 2026-11-06.
+// Daily and stealth sandbox inputs from the platform catalog.
 for (const slug of [
   'sandbox-tti-daily', 'oci-tti-stealth', 'sandbox-cpu-stealth', 'sandbox-cpu-burst-stealth', 'sandbox-dax-daily',
   'sandbox-fs-api-stealth', 'sandbox-fs-io-stealth', 'sandbox-rootfs-stealth', 'sandbox-volumes-stealth',
   'sandbox-tmp-filesystem-daily', 'sandbox-ci-capabilities-stealth',
   'sandbox-snapshot-stealth', 'sandbox-snapshot-fanout-stealth', 'filesystem-snapshot-stealth',
   'sandbox-fidelity-stealth', 'sandbox-pause-resume-stealth', 'sandbox-soak-stealth',
-  'sandbox-burst-survival-stealth', 'os-capabilities-stealth',
+  'sandbox-burst-survival-stealth', 'os-capabilities-stealth', 'sandbox-criu', 'sandbox-heavy-snapshot-stealth',
 ]) {
   assert.doesNotThrow(() => sandboxGroup(slug), slug);
 }
 
 assert.equal(sandboxGroup('sandbox-ci-capabilities-stealth'), 'compute');
+assert.equal(sandboxGroup('sandbox-criu'), 'state');
+assert.equal(sandboxGroup('sandbox-heavy-snapshot-stealth'), 'state');
 
 // An unknown slug fails loudly, naming the slug — in the mapper and in the aggregate.
 assert.throws(() => sandboxGroup('sandbox-new-thing'), /sandbox-new-thing.*SANDBOX_BENCH_GROUPS/);
@@ -181,6 +183,19 @@ assert.throws(() => aggregateWeek([day(['sandbox-new-thing', 50])], sandbox), /s
   try {
     const api = new PlatformApi();
     const bench = { slug: 'oci-tti-stealth', organizationSlug: 'computesdk', category: 'sandbox', tier: 'stealth', name: null };
+    const ranked = ['sandbox-tti-daily', 'sandbox-dax-daily', 'sandbox-fs-api-stealth', 'sandbox-heavy-snapshot-stealth', 'sandbox-criu'];
+    const excluded = ['provider-weekly-composite-sandbox', 'sandbox-reliability', 'sandbox-fs-api', 'sandbox-dax', 'sandbox-tti', 'sandbox-unmapped'];
+    globalThis.fetch = async () => Response.json({ items: [
+      ...excluded.map((slug) => ({ ...bench, slug })),
+      ...[...ranked].reverse().map((slug) => ({ ...bench, slug, category: null })),
+      { ...bench, slug: 'browser-input', category: 'browser' },
+      { ...bench, slug: 'browser-public', category: 'browser', tier: 'public' },
+    ] });
+    const sandboxInputs = await api.sandboxBenchmarks();
+    assert.deepEqual(sandboxInputs.benchmarks.map(({ slug }) => slug), ranked);
+    assert.ok(sandboxInputs.missing.includes('oci-tti-stealth'));
+    assert.deepEqual((await api.categorizedBenchmarks('browser')).map(({ slug }) => slug), ['browser-input']);
+
     const DAY = '2026-11-16';
     const item = (summary: unknown, overrides: Record<string, unknown> = {}) => ({
       run: { id: 'offline-run', status: 'completed', createdAt: `${DAY}T09:00:00Z`, totalTasks: 2, summary },
