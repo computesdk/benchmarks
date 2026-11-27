@@ -286,7 +286,7 @@ jobs:
             groundbox) PROVIDER_KEYS='GROUNDBOX_API_KEY' ;;
             orble) PROVIDER_KEYS='ORBLE_API_KEY' ;;
             tangle) PROVIDER_KEYS='TANGLE_API_KEY' ;;
-            superserve) PROVIDER_KEYS='SUPERSERVE_API_KEY' ;;
+            superserve) PROVIDER_KEYS='SUPERSERVE_API_KEY|SUPERSERVE_VOLUME_TEMPLATE_ID' ;;
             luxor) PROVIDER_KEYS='TENKI_API_KEY' ;;
             tensorlake) PROVIDER_KEYS='TENSORLAKE_API_KEY' ;;
             uno) PROVIDER_KEYS='UNO_API_KEY' ;;
@@ -301,6 +301,12 @@ jobs:
           fi
           . ./benchmarks/stealth/scripts/load-vault-secrets.sh "$KEYS"
           if [ -n "${ARCHIL_DISK_ID_FILESYSTEM:-}" ]; then export ARCHIL_DISK_ID="$ARCHIL_DISK_ID_FILESYSTEM"; fi
+
+          if [ "$PROVIDER" == "superserve" ] && [ -n "${SUPERSERVE_API_KEY:-}" ]; then
+            # A setup failure must still produce the benchmark's failed record.
+            pnpm exec tsx benchmarks/stealth/scripts/build-superserve-volume-template.ts || \
+              echo 'Superserve volume template setup failed; continuing to record the benchmark result.'
+          fi
 
           # createos: dedicated CREATEOS_S3_* vault entries win; otherwise map
           # the storage lanes' Tigris (S3-compatible) creds onto them.
