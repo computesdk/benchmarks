@@ -99,6 +99,8 @@ export interface BenchDay {
   ran: boolean;
   /** This provider's average compositeScore that day, or null when it has no scored row. */
   score: number | null;
+  /** The platform excluded this provider's row (participant exclusion window) and it has no real score. */
+  excluded?: boolean;
 }
 
 export interface AggregateOptions {
@@ -129,6 +131,11 @@ export interface WeeklyAggregate {
   weeklyComposite: number | null;
   dailyComposites: number[];
   daysWithData: number;
+  /**
+   * Days with no real score where at least one bench row was excluded by a
+   * participant exclusion. They don't count against MIN_DAYS_TO_RANK.
+   */
+  daysExcluded: number;
   /** Per-group weekly score: average of the group's daily average across counted days. */
   groupScores: Record<string, number>;
   benchmarks: BenchWeekScore[];
@@ -145,8 +152,13 @@ export function aggregateWeek(days: BenchDay[][], options: AggregateOptions): We
   const groupDaily = new Map<string, number[]>();
   const benchValues = new Map<string, { group: string; values: number[]; real: number; filled: number }>();
 
+  let daysExcluded = 0;
+
   for (const day of days) {
-    if (!day.some((bench) => bench.score !== null)) continue;
+    if (!day.some((bench) => bench.score !== null)) {
+      if (day.some((bench) => bench.excluded)) daysExcluded++;
+      continue;
+    }
     const groupValues = new Map<string, number[]>();
     for (const bench of day) {
       const group = options.groupOf(bench.slug);
@@ -183,6 +195,7 @@ export function aggregateWeek(days: BenchDay[][], options: AggregateOptions): We
     weeklyComposite: dailyComposites.length ? average(dailyComposites) : null,
     dailyComposites,
     daysWithData: dailyComposites.length,
+    daysExcluded,
     groupScores,
     benchmarks: [...benchValues]
       .sort(([a], [b]) => a.localeCompare(b))
@@ -226,6 +239,8 @@ export interface ScoredRun {
   scores: ReadonlyMap<string, number>;
   /** Providers whose aggregate row has no finite score; excluded, never 0-filled. */
   incomplete?: ReadonlySet<string>;
+  /** Incomplete providers the platform flagged `excluded: true` (participant exclusion window). */
+  excluded?: ReadonlySet<string>;
 }
 
 /**
@@ -237,10 +252,12 @@ export interface ScoredRun {
 export function resolveBenchDay(slug: string, runs: ScoredRun[], provider: string): BenchDay {
   const scores = runs.map((run) => run.scores.get(provider)).filter((score): score is number => score !== undefined);
   const incomplete = runs.some((run) => run.incomplete?.has(provider));
+  const excluded = scores.length === 0 && runs.some((run) => run.excluded?.has(provider));
   return {
     slug,
     ran: scores.length > 0 || (!incomplete && runs.some((run) => !run.cut && run.scores.size > 0)),
     score: scores.length ? average(scores) : null,
+    ...(excluded ? { excluded: true } : {}),
   };
 }
 
@@ -279,16 +296,20 @@ export interface MatrixDataset {
 
 /**
  * Assemble the matrix dataset from run participants. Only participants with
- * at least MIN_DAYS_TO_RANK days of data are columns; every benchmark a shown
+ * at least MIN_DAYS_TO_RANK days of data (days fully excluded by a participant
+ * exclusion count toward it) are columns; every benchmark a shown
  * participant scored in is a row, sorted by slug. Cells a participant has no
  * score for are `state: 'missing'` (rendered '—').
  */
 export function buildMatrixDataset(
   allProviders: { name: string; data: Record<string, unknown> | undefined }[],
 ): MatrixDataset {
-  const providers = allProviders.filter(
-    (provider) => typeof provider.data?.daysWithData === 'number' && provider.data.daysWithData >= MIN_DAYS_TO_RANK,
-  );
+  const providers = allProviders.filter((provider) => {
+    const daysWithData = provider.data?.daysWithData;
+    if (typeof daysWithData !== 'number' || daysWithData === 0) return false;
+    const daysExcluded = typeof provider.data?.daysExcluded === 'number' ? provider.data.daysExcluded : 0;
+    return daysWithData + daysExcluded >= MIN_DAYS_TO_RANK;
+  });
   const perProvider = providers.map((provider) => {
     const raw = provider.data?.benchmarkScores;
     const scores = (Array.isArray(raw) ? raw : []).filter((s): s is BenchmarkScoreCell => {
@@ -337,12 +358,14 @@ export function buildMatrixDataset(
     const data = provider.data ?? {};
     const weeklyComposite = typeof data.weeklyComposite === 'number' ? data.weeklyComposite : null;
     const daysWithData = typeof data.daysWithData === 'number' ? data.daysWithData : 0;
+    const daysExcluded = typeof data.daysExcluded === 'number' ? data.daysExcluded : 0;
     const benchmarksContributing =
       typeof data.benchmarksContributing === 'number' ? data.benchmarksContributing : 0;
     cards[provider.name] = {
       ...(weeklyComposite === null ? {} : { headline: { label: 'Weekly composite', value: weeklyComposite } }),
       facts: [
         { label: 'Days with data', value: `${daysWithData}/7` },
+        ...(daysExcluded > 0 ? [{ label: 'Days excluded', value: String(daysExcluded) }] : []),
         { label: 'Benchmarks contributing', value: String(benchmarksContributing) },
         ...(typeof data.benchmarksZeroFilled === 'number' && data.benchmarksZeroFilled > 0
           ? [{ label: 'Benchmarks counted as 0', value: String(data.benchmarksZeroFilled) }]
@@ -576,9 +599,11 @@ function runCut(item: ResultsItem): boolean {
 function scoresFromSummary(summary: ResultsItem['run']['summary']): {
   scores: Map<string, number>;
   incomplete: Set<string>;
+  excluded: Set<string>;
 } {
   const scores = new Map<string, number>();
   const incomplete = new Set<string>();
+  const excluded = new Set<string>();
   // Platform rule (lib/benchmarks/stealth/org-benchmarks.ts): a grouped run emits one
   // row per groupBy dimension value plus a run-wide aggregate that omits it.
   // Run-config dimensions (tasks, file_sizes, iterations, …) are stamped on
@@ -591,12 +616,16 @@ function scoresFromSummary(summary: ResultsItem['run']['summary']): {
     const provider = Object.hasOwn(PROVIDER_ID_ALIASES, reported) ? PROVIDER_ID_ALIASES[reported] : reported;
     if (typeof row.compositeScore !== 'number' || !Number.isFinite(row.compositeScore)) {
       incomplete.add(provider);
+      if (row.excluded === true) excluded.add(provider);
       continue;
     }
     if (!scores.has(provider)) scores.set(provider, row.compositeScore);
   }
-  for (const provider of scores.keys()) incomplete.delete(provider);
-  return { scores, incomplete };
+  for (const provider of scores.keys()) {
+    incomplete.delete(provider);
+    excluded.delete(provider);
+  }
+  return { scores, incomplete, excluded };
 }
 
 /**

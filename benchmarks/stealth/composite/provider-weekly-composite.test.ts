@@ -173,6 +173,33 @@ assert.throws(() => aggregateWeek([day(['sandbox-new-thing', 50])], sandbox), /s
   assert.deepEqual(Object.keys(dataset.cells['sandbox-tti-daily']), ['old']);
 }
 
+// Excluded days (participant exclusion window) count toward MIN_DAYS_TO_RANK; real data days are still required.
+{
+  const week = aggregateWeek(
+    [
+      day(['sandbox-tti-daily', 80]),
+      [{ slug: 'sandbox-tti-daily', ran: false, score: null, excluded: true }],
+      day(['sandbox-tti-daily', null, false]),
+    ],
+    sandbox,
+  );
+  assert.equal(week.daysWithData, 1);
+  assert.equal(week.daysExcluded, 1);
+  close(week.weeklyComposite, 80, 'excluded day not 0-filled');
+  const scores = [{ slug: 'sandbox-tti-daily', compositeScore: 72, daysWithData: 6, state: 'data' }];
+  const dataset = buildMatrixDataset([
+    { name: 'excluded', data: { weeklyComposite: 72, daysWithData: 6, daysExcluded: 1, benchmarkScores: scores } },
+    { name: 'short', data: { weeklyComposite: 72, daysWithData: 6, benchmarkScores: scores } },
+    { name: 'all-excluded', data: { weeklyComposite: 0, daysWithData: 0, daysExcluded: 7, benchmarkScores: [] } },
+  ]);
+  assert.deepEqual(dataset.participants.map((p) => p.key), ['excluded']);
+  assert.ok(dataset.cards.excluded.facts.some((f) => f.label === 'Days excluded' && f.value === '1'));
+  const run = { cut: false, scores: new Map([['e2b', 70]]), incomplete: new Set(['vercel']), excluded: new Set(['vercel']) };
+  assert.deepEqual(resolveBenchDay('sandbox-cpu-stealth', [run], 'vercel'), { slug: 'sandbox-cpu-stealth', ran: false, score: null, excluded: true });
+  const retry = { cut: false, scores: new Map([['vercel', 64]]) };
+  assert.deepEqual(resolveBenchDay('sandbox-cpu-stealth', [run, retry], 'vercel'), { slug: 'sandbox-cpu-stealth', ran: true, score: 64 }, 'real score wins over exclusion');
+}
+
 // Exercise the real weekly reader without network access or platform writes.
 {
   const fetchBefore = globalThis.fetch;
@@ -210,6 +237,9 @@ assert.throws(() => aggregateWeek([day(['sandbox-new-thing', 50])], sandbox), /s
     )[0];
     assert.deepEqual([...mixed.scores], [['valid', 72.5]]);
     assert.deepEqual([...(mixed.incomplete ?? [])], ['broken']);
+    assert.equal(mixed.excluded?.size, 0, 'incomplete without the platform flag is not excluded');
+    const flagged = (await dayRuns(item({ results: [{ provider: 'vercel', compositeScore: null, excluded: true }] })))[0];
+    assert.deepEqual([...(flagged.excluded ?? [])], ['vercel']);
     // Cut short: fewer tasks recorded than planned → cut; in-flight → dropped.
     const short = (
       await dayRuns({
