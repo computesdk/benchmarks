@@ -52,8 +52,8 @@ const allTiers = (
 export const PROVIDER_SIZE_OPTIONS: Record<string, Partial<Record<MarketSize, Record<string, any> | null>>> = {
   // --- raw cpu/memory parameters: all four tiers ---
   'run-cloud': allTiers((c, m) => ({ cpu: c, memory: m })),
-  // Modal: 1 core = 2 vCPUs, so cpus/2 (fractional cores are supported).
-  modal: allTiers((c, m) => ({ cpu: c / 2, cpuLimit: c / 2, memoryMiB: m, templateId: 'node:22' })),
+  // Modal's VM runtime sizes guest vCPUs from the CPU limit in whole cores.
+  modal: allTiers((c, m) => ({ cpu: c, cpuLimit: c, memoryMiB: m, templateId: 'node:22' })),
   // diskSizeGb: default disk is small; 20 GiB headroom is harmless for cpu.
   luxor: allTiers((c, m) => ({ cpuCores: c, memoryMb: m, diskSizeGb: 20 })),
   // Tensorlake's bench account rejects creates over its per-sandbox RAM cap
