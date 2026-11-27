@@ -23,6 +23,8 @@ async function adminWrite<T>(call: () => Promise<T>): Promise<T> {
 
 function requiredOption(options: SubcommandOptions, key: string): string {
   const value = optionString(options, key)?.trim();
+  // The shared parser takes the next token as the value, so `--reason --benchmark x` would read `--benchmark` as the reason.
+  if (value?.startsWith('--')) throw new Error(`--${key} requires a value`);
   if (!value) throw new Error(`--${key} is required: bench exclusions add --participant <slug> --start <iso> --end <iso> --reason <text>`);
   return value;
 }

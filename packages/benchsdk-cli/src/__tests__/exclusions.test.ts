@@ -104,6 +104,13 @@ describe('bench exclusions add', () => {
     expect(cli.requests).toHaveLength(0);
   });
 
+  it('rejects a flag swallowed as a value instead of excluding org-wide', async () => {
+    const result = await cli.invoke([...args.slice(0, -1), '--benchmark=alpha']);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('--reason requires a value');
+    expect(cli.requests).toHaveLength(0);
+  });
+
   it('adds the owner/admin hint to a 403', async () => {
     cli.routes['POST /participants/exclusions'] = () => ({
       status: 403,
@@ -129,6 +136,13 @@ describe('bench exclusions remove', () => {
     expect(result.exitCode).toBe(0);
     expect(cli.requests[0]).toMatchObject({ method: 'DELETE', path: `/participants/exclusions/${ID}` });
     expect(result.stdout).toContain(`Removed exclusion ${ID}`);
+  });
+
+  it('rejects more than one id and sends nothing', async () => {
+    const result = await cli.invoke(['exclusions', 'remove', ID, 'other-id', '-y']);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('Unexpected argument: other-id');
+    expect(cli.requests).toHaveLength(0);
   });
 
   it('requires an id', async () => {

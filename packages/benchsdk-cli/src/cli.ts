@@ -1734,6 +1734,9 @@ export async function run(argv: string[]): Promise<void> {
         const [sub, ...subRest] = rest;
         if (!findCommand(['exclusions', sub])) throw new Error(commandHelp('exclusions'));
         const { options, positionals: subPositionals } = parseSubcommandOptions(subRest, flagsOf('exclusions', sub));
+        if (subPositionals.length > (sub === 'remove' ? 1 : 0)) {
+          throw new Error(`Unexpected argument: ${subPositionals[sub === 'remove' ? 1 : 0]}\n${commandHelp('exclusions')}`);
+        }
         if (sub === 'list') await handleExclusionsList(options, overrides, outputOptions);
         else if (sub === 'add') await handleExclusionsAdd(options, overrides, outputOptions);
         else await handleExclusionsRemove(subPositionals[0], options, overrides, outputOptions);
