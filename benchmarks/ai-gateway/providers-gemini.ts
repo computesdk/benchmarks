@@ -8,6 +8,10 @@ import { resolveNeonHost } from './neon-host.js';
  * `providers-openai.ts` (the OpenAI family): every gateway is hit directly
  * with the same model — `gemini-3.6-flash` — so the comparison is
  * apples-to-apples, and `gemini-direct` is the no-gateway control.
+ * Every gateway that can choose a Google backend is pinned to Google AI
+ * Studio (the Gemini API `gemini-direct` calls), not Vertex AI. Neon is the
+ * exception: it serves Gemini through Databricks Model Serving and has no
+ * provider pin.
  *
  * Unlike the OpenAI family, only two gateways here get the native
  * `wireFormat: 'gemini'` treatment: Cloudflare AI Gateway and Neon AI Gateway,
@@ -41,8 +45,9 @@ export const providers: AIGatewayProviderConfig[] = [
     // platform is built around one normalized, OpenAI-Chat-Completions-
     // shaped endpoint across its entire catalog, not per-provider native
     // passthroughs. `google/gemini-3.6-flash` is OpenRouter's confirmed
-    // provider/model catalog convention. Same provider-order pinning
-    // mechanism as the Anthropic and OpenAI family entries.
+    // provider/model catalog convention. OpenRouter serves it from both
+    // `google-ai-studio` and `google-vertex`; `only` restricts routing to
+    // AI Studio, the same backend as `gemini-direct`.
     name: 'openrouter',
     requiredEnvVars: ['OPENROUTER_API_KEY'],
     wireFormat: 'openai',
@@ -53,7 +58,7 @@ export const providers: AIGatewayProviderConfig[] = [
       Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
     }),
     extraBody: {
-      provider: { order: ['google'] },
+      provider: { only: ['google-ai-studio'] },
     },
     extractResolvedProvider: (buf) => buf.match(/"provider"\s*:\s*"([^"]+)"/)?.[1],
   },
@@ -63,9 +68,10 @@ export const providers: AIGatewayProviderConfig[] = [
     // passthroughs) — its docs describe one unified endpoint across
     // providers via the `creator/model-name` convention, with no
     // Gemini-specific route documented. `google/gemini-3.6-flash` follows
-    // that confirmed convention. Provider-order pinning and
-    // `resolvedProvider` extraction reuse the same mechanism as the other
-    // families' Vercel entries.
+    // that confirmed convention. Vercel's `google` provider is the Gemini
+    // API (AI Studio); `vertex` is a separate provider, so `only: ['google']`
+    // keeps every request on AI Studio. `resolvedProvider` extraction reuses
+    // the same mechanism as the other families' Vercel entries.
     name: 'vercel-ai-gateway',
     requiredEnvVars: ['VERCEL_AI_GATEWAY_API_KEY'],
     wireFormat: 'openai',
@@ -76,7 +82,7 @@ export const providers: AIGatewayProviderConfig[] = [
       Authorization: `Bearer ${process.env.VERCEL_AI_GATEWAY_API_KEY}`,
     }),
     extraBody: {
-      providerOptions: { gateway: { order: ['google'] } },
+      providerOptions: { gateway: { only: ['google'] } },
     },
     extractResolvedProvider: (buf) => buf.match(/"resolvedProvider"\s*:\s*"([^"]+)"/)?.[1],
   },
@@ -129,21 +135,15 @@ export const providers: AIGatewayProviderConfig[] = [
   },
   {
     // No native Gemini passthrough documented for Concentrate AI either.
-    // `google/gemini-3.6-flash` follows the same creator-name provider-
-    // prefix convention confirmed for this gateway's Anthropic and OpenAI
-    // entries elsewhere in this repo (`anthropic/...`, `openai/...`) — NOT
-    // independently confirmed for Google specifically: Concentrate's
-    // underlying routing is litellm-based, and litellm's own convention for
-    // Google's API-key-authenticated route is the abbreviation `gemini/`
-    // rather than `google/` (with unprefixed model ids defaulting to
-    // Vertex AI, per litellm's docs) — Concentrate may or may not preserve
-    // that exact abbreviation for its own API consumers. Lower confidence
-    // than this file's other model-id claims; worth confirming with a live
-    // request before trusting this specific entry.
+    // Concentrate's model prefix is a provider slug, not the model's author:
+    // `GET https://api.concentrate.ai/v1/models/providers` lists `google` as
+    // an alias of `vertex`, and `ai-studio` as Google AI Studio. A pinned
+    // `provider/model` does not fall back to other providers, so
+    // `ai-studio/gemini-3.6-flash` stays on AI Studio.
     name: 'concentrate-ai-gateway',
     requiredEnvVars: ['CONCENTRATE_AI_GATEWAY_API_KEY'],
     wireFormat: 'openai',
-    model: 'google/gemini-3.6-flash',
+    model: 'ai-studio/gemini-3.6-flash',
     host: 'api.concentrate.ai',
     path: '/v1/chat/completions/',
     buildHeaders: () => ({
