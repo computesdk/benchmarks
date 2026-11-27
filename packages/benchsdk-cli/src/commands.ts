@@ -28,6 +28,8 @@ const MANAGEMENT_SINCE = '0.9.5';
 const FEED_SINCE = '0.9.5';
 // Run analytics reads (overview, timeline, tasks, workers, matrices, artifact download) ship in the same release.
 const ANALYTICS_SINCE = '0.9.5';
+// Participant exclusions: the first @benchsdk/cli release after 0.9.5.
+const EXCLUSIONS_SINCE = '0.9.6';
 
 export const COMMANDS: readonly BenchCommand[] = [
   { path: ['auth', 'login'], args: [], flags: [], since: '0.2.0', summary: 'Authenticate with OAuth device flow' },
@@ -269,6 +271,27 @@ export const COMMANDS: readonly BenchCommand[] = [
     flags: ['days', 'benchmark'],
     since: FEED_SINCE,
     summary: 'Run counts per day for the organization or one benchmark (--days 1..90)',
+  },
+  {
+    path: ['exclusions', 'list'],
+    args: [],
+    flags: ['participant'],
+    since: EXCLUSIONS_SINCE,
+    summary: "The org's participant exclusions: windows where a participant's results don't count",
+  },
+  {
+    path: ['exclusions', 'add'],
+    args: [],
+    flags: ['participant', 'start', 'end', 'reason', 'benchmark'],
+    since: EXCLUSIONS_SINCE,
+    summary: "Stop counting a participant's results from --start to --end on the org's benchmarks (or only --benchmark ones)",
+  },
+  {
+    path: ['exclusions', 'remove'],
+    args: ['<exclusion-id>'],
+    flags: ['yes'],
+    since: EXCLUSIONS_SINCE,
+    summary: "Remove a participant exclusion so its results count again (asks first; -y to skip)",
   },
   {
     path: ['run-again'],

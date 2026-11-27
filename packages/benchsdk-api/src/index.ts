@@ -16,6 +16,8 @@ export type {
   BenchmarkRunOverviewParticipant,
   BenchmarkRunWorkerSummary,
   BenchmarkPauseInput,
+  ParticipantExclusion,
+  ParticipantExclusionInput,
   BenchmarkPauseState,
   BenchmarkArtifact,
   BenchmarkClient,
