@@ -189,9 +189,7 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // Sail keeps part of a Sailbox's memory for the system, so at xl (8 vCPU /
   // 16 GiB) commands can use 14.6 GiB. The type check fills that and is
   // sometimes killed for memory pressure, so dax asks for the next memory
-  // limit up, 32 GiB (Sail rounds limits up to a power of two). Memory is
-  // added as it is used, so memory_kib, which the script reads at the start,
-  // still shows about 15.6 GiB.
+  // limit up, 32 GiB (Sail rounds limits up to a power of two).
   sail:         { vcpuCount: 8, memoryGib: 32 },
   // Novita sizes via templates (E2B-style), so dax runs on the base-8cpu-16gb
   // template built in the workflow pre-step (same pattern as superserve/e2b).
