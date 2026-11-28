@@ -186,7 +186,11 @@ const DAX_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // Sandbox0 exposes only memory. Override the 128 MiB TTI size;
   // getSandboxOptionsWithResources preserves hardTtl from providers.ts.
   sandbox0:     { memory: 16384 },
-  sail:         { sizeClass: 'xl' },                         // xl = 8 vCPU / 16 GiB
+  // Sail keeps part of a Sailbox's memory for the system, so at xl (8 vCPU /
+  // 16 GiB) commands can use 14.6 GiB. The type check fills that and is
+  // sometimes killed for memory pressure, so dax asks for the next memory
+  // limit up, 32 GiB (Sail rounds limits up to a power of two).
+  sail:         { vcpuCount: 8, memoryGib: 32 },
   // Novita sizes via templates (E2B-style), so dax runs on the base-8cpu-16gb
   // template built in the workflow pre-step (same pattern as superserve/e2b).
   // The provider's default sandbox lifetime (300s) is below the 10-min build
