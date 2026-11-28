@@ -54,7 +54,13 @@ export const PROVIDER_SIZE_OPTIONS: Record<string, Partial<Record<MarketSize, Re
   'run-cloud': allTiers((c, m) => ({ cpu: c, memory: m })),
   // Modal's VM runtime sizes guest vCPUs from the CPU limit. The JS SDK
   // requires a request alongside the limit, so use the Sandbox default.
-  modal: allTiers((c, m) => ({ cpu: 0.125, cpuLimit: c, memoryMiB: m, templateId: 'node:22' })),
+  modal: allTiers((c, m) => ({
+    cpu: 0.125,
+    cpuLimit: c,
+    memoryMiB: m,
+    // Pin the amd64 image so each tier uses the same OpenSSL-backed sha256sum.
+    templateId: 'node:22-trixie@sha256:cf8b3006b7a76f12dee020c7937e045a55cb9080456a26b480e2f536968eb1b5',
+  })),
   // diskSizeGb: default disk is small; 20 GiB headroom is harmless for cpu.
   luxor: allTiers((c, m) => ({ cpuCores: c, memoryMb: m, diskSizeGb: 20 })),
   // Tensorlake's bench account rejects creates over its per-sandbox RAM cap
