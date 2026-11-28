@@ -24,7 +24,7 @@ export const LARGE_RESOURCE_OPTIONS: Record<string, Record<string, any>> = {
   // (persistent mode only; ignored on the shared-disk exec path).
   archil:       { vcpus: 8, memoryMiB: 16384 },
   arker:        { templateId: 'ubuntu-full-8' },           // 8 vCPU / 16 GiB golden
-  modal:        { ...PROVIDER_SIZE_OPTIONS.modal.xlarge },
+  modal:        { cpu: 4, cpuLimit: 4, memoryMiB: 16384, templateId: 'node:22' }, // Modal: 1 core = 2 vCPUs, so 4 cores = 8 vCPUs
   luxor:        { cpuCores: 8, memoryMb: 16384, diskSizeGb: 20 }, // default disk cannot hold the OpenCode install
   tensorlake:   { cpus: 8, memoryMb: 16000 },               // per-sandbox RAM cap is 16000 MB
   isorun:       { vcpus: 8, memMiB: 16384 },
